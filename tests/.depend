@@ -1,0 +1,3 @@
+antlr_test.cmo antlr_test.cmi antlr_test.cmx: ../local-install/lib/antlr/META
+antlr_test.cmo :
+antlr_test.cmx :
