@@ -2,9 +2,8 @@
 #camlp5o ;;
 #require "camlp5.pr_o";;
 
-#require "pa_ppx.testutils";;
-open Pa_ppx_testutils ;;
-#require "pa_ppx_fmtformat";;
+#require "pa_ppx_regexp";;
+#require "antlr";;
 
 (*
 ;;; Local Variables: ***
