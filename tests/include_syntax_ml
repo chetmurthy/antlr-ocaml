@@ -4,6 +4,11 @@
 
 #require "pa_ppx_regexp";;
 #require "antlr";;
+(*
+#trace Antlr.Atn.readState1 ;;
+ *)
+
+"/home/chet/Hack/Antlr/src/calc/gen-java/CalcLexer.interp" |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_raw |> Antlr.Atn.deser ;;
 
 (*
 ;;; Local Variables: ***
