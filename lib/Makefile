@@ -14,7 +14,7 @@ ML=\
 	range.ml intervalSet.ml interp.ml interp_syntax.ml types.ml atn.ml \
 
 TOOLSML = mk_meta.ml
-allsrc=$(ML) $(TOOLSML)
+ALLSRC=$(ML) $(TOOLSML)
 ALLPACKAGES=$(PACKAGES)
 
 OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Antlr

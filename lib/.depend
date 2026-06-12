@@ -1,1 +1,31 @@
-range.cmo intervalSet.cmo atn.cmo interp.cmo interp_syntax.cmo atn.cmo range.cmi intervalSet.cmi atn.cmi interp.cmi interp_syntax.cmi atn.cmi range.cmx intervalSet.cmx atn.cmx interp.cmx interp_syntax.cmx atn.cmx: 
+range.cmo intervalSet.cmo interp.cmo interp_syntax.cmo types.cmo atn.cmo range.cmi intervalSet.cmi interp.cmi interp_syntax.cmi types.cmi atn.cmi range.cmx intervalSet.cmx interp.cmx interp_syntax.cmx types.cmx atn.cmx: 
+range.cmo :
+range.cmx :
+intervalSet.cmo : \
+    range.cmo
+intervalSet.cmx : \
+    range.cmx
+interp.cmo :
+interp.cmx :
+interp_syntax.cmo : \
+    interp.cmo
+interp_syntax.cmx : \
+    interp.cmx
+types.cmo : \
+    range.cmo \
+    intervalSet.cmo
+types.cmx : \
+    range.cmx \
+    intervalSet.cmx
+atn.cmo : \
+    types.cmo \
+    range.cmo \
+    intervalSet.cmo \
+    interp.cmo
+atn.cmx : \
+    types.cmx \
+    range.cmx \
+    intervalSet.cmx \
+    interp.cmx
+mk_meta.cmo :
+mk_meta.cmx :

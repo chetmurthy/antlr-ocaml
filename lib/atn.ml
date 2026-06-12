@@ -72,6 +72,25 @@ let deser_state_type bp = function
    Fmt.(failwithf "pos %d: deser_state_type with invalid arg %d" bp n)
 end
 
+module Edge = struct
+  module RuleTransition = Types.RuleTransition
+  module PredicateTransition = Types.PredicateTransition
+  module ActionTransition = Types.ActionTransition
+
+  type t = [%import: Types.edge_t
+           ]
+  and raw_edge_t = [%import: Types.raw_edge_t]
+
+let mkEpsilonTransition ?(outermostPrecedenceReturn= -1) (target) =
+  { target ; it = EpsilonTransition outermostPrecedenceReturn }
+
+let mkRangeTransition target start stop =
+  { target ; it = RangeTransition (Range.mk ~start stop) }
+
+let mkRuleTransition ruleStart ruleIndex precedence followState =
+  { target = followState ; it = RuleTransition (RuleTransition.mk ~ruleStart ~ruleIndex ~precedence) }
+end
+
 module State = struct
   type t = [%import: Types.state_t
             [@with node_t := Node.t]
@@ -249,18 +268,21 @@ let readSets strm =
      iset) m strm in
   Array.of_list l
 
-(*
+
+let _Token_EOF = -1
+
 let edgeFactory states ty src trg arg1 arg2 arg3 sets =
   let target = trg in
   let target_state = states.(trg) in
   if ty = 0 then None
   else Some
   (match ty with
-    1 -> EpsilonTransition(target)
+    1 -> Edge.mkEpsilonTransition (target)
   | 2 -> if arg3 <> 0 then
-              RangeTransition(target, Token.EOF, arg2)
-            else RangeTransition(target, arg1, arg2)
-  | 3 -> RuleTransition(atn.states[arg1], arg2, arg3, target)
+              Edge.mkRangeTransition target _Token_EOF arg2
+            else Edge.mkRangeTransition target  arg1  arg2
+  | 3 -> Edge.mkRuleTransition arg1 arg2 arg3 target
+(*
   | 4 -> PredicateTransition(target, arg1, arg2, arg3 <> 0)
   | 5 -> if arg3 <> 0 then
            AtomTransition(target, Token.EOF)
@@ -269,9 +291,9 @@ let edgeFactory states ty src trg arg1 arg2 arg3 sets =
   | 7 ->  SetTransition(target, sets.(arg1))
   | 8 -> NotSetTransition(target, sets.(arg1))
   | 9 -> WildcardTransition(target)
-  | 10 ->  PrecedencePredicateTransition(target, arg1))
+  | 10 ->  PrecedencePredicateTransition(target, arg1)
  *)
-
+  )
 (*
 let readEdges strm =
   let nedges = readInt strm in
