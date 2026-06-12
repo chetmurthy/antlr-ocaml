@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.import *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -22,26 +22,7 @@ let plistn elem i =
 let _SERIALIZED_VERSION = 4
 
 module Node = struct
-type t =
-  BasicState
-| RuleStartState
-| BasicBlockStartState of int
-| PlusBlockStartState of int
-| StarBlockStartState of int
-| TokensStartState
-| RuleStopState
-| BlockEndState
-| StarLoopbackState
-| StarLoopEntryState
-| PlusLoopbackState
-| LoopEndState of int
-and state_t = {
-      num : int
-    ; mutable node : (t * int) option
-    ; mutable nonGreedy : bool
-    ; mutable isPrecedenceRule : bool
-    ; mutable stopState : int option
-    }
+type t = [%import: Types.node_t]
 [@@deriving show]
 
 let rule_index_of_node = function
@@ -92,13 +73,10 @@ let deser_state_type bp = function
 end
 
 module State = struct
-  type t = Node.state_t = {
-      num : int
-    ; mutable node : (Node.t * int) option
-    ; mutable nonGreedy : bool
-    ; mutable isPrecedenceRule : bool
-    ; mutable stopState : int option
-    }
+  type t = [%import: Types.state_t
+            [@with node_t := Node.t]
+           ]
+  [@@deriving show]
 
   let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState num node =
     { num ; node ; nonGreedy ; isPrecedenceRule ; stopState }
@@ -227,7 +205,7 @@ let readStates strm =
   states
 
 let readRules (grammarType, states) strm =
-  let open Node in
+  let open State in
   let nrules = readInt strm in
   let (ruleToStartState, ruleToTokenType_opt) =
     match grammarType with
