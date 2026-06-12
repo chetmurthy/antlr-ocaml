@@ -1,3 +1,7 @@
+(**pp -syntax camlp5o *)
+
+open Pa_ppx_utils
+open Std
 
 type t =
   { start : int
@@ -30,3 +34,7 @@ let merge r1 r2 =
     Some (mk ~start:r2.start (max r1.stop r2.stop))
   else
     None
+
+let must_merge r1 r2 =
+  assert (0 = compare r1 r2)
+  ; outSome(merge r1 r2)

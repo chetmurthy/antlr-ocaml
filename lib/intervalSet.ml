@@ -1,3 +1,4 @@
+(**pp -syntax camlp5o *)
 
 type t = {
     intervals : Range.t list

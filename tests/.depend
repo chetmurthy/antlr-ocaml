@@ -1,3 +1,5 @@
-antlr_test.cmo antlr_test.cmi antlr_test.cmx: ../local-install/lib/antlr/META
+lib_test.cmo antlr_test.cmo lib_test.cmi antlr_test.cmi lib_test.cmx antlr_test.cmx: ../local-install/lib/antlr/META
+lib_test.cmo :
+lib_test.cmx :
 antlr_test.cmo :
 antlr_test.cmx :

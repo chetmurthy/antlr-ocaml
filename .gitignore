@@ -1,9 +1,9 @@
 *.cm*
-*/*.byte
-*/*.opt
+*.byte
 *.opt
+*.exe
 */camlp5.*
-tests-*/_build
+tests*/_build
 */*.o
 */*.a
 local-install
