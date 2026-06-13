@@ -1,8 +1,9 @@
-(**pp -syntax camlp5o *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std *)
 
 type t = {
     intervals : Range.t list
   }
+  [@@deriving show]
 
 let mk () = { intervals = [] }
 

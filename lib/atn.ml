@@ -19,6 +19,13 @@ let plistn elem i =
      [< e = elem; strm >] -> plist_rec (e::accum) i strm
   in plist_rec [] i
 
+let insert_after n l v =
+  let rec insrec = function
+      (0,l) -> v::l
+    | (n,h::t) -> h::(insrec (n-1,t))
+    | (_,[]) -> [v]
+  in insrec (n,l)
+
 let _SERIALIZED_VERSION = 4
 
 module Node = struct
@@ -84,6 +91,7 @@ module Edge = struct
 
   type t = [%import: Types.edge_t
            ]
+  [@@deriving show]
 let mkEpsilonTransition = Types.mkEpsilonTransition
 let mkRangeTransition = Types.mkRangeTransition
 let mkRuleTransition = Types.mkRuleTransition
@@ -94,16 +102,24 @@ let mkSetTransition = Types.mkSetTransition
 let mkNotSetTransition = Types.mkNotSetTransition
 let mkWildcardTransition = Types.mkWildcardTransition
 let mkPrecedencePredicateTransition = Types.mkPrecedencePredicateTransition
+let isEpsilon = Types.isEpsilon
 end
 
 module State = struct
   type t = [%import: Types.state_t
             [@with node_t := Node.t]
+            [@with edge_t := Edge.t]
            ]
   [@@deriving show]
 
-  let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState num node =
-    { num ; node ; nonGreedy ; isPrecedenceRule ; stopState }
+  let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) num node =
+    let epsilonOnlyTransitions = List.for_all Edge.isEpsilon transitions in
+    { num ; node ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
+
+  let addTransition st ?(index= -1) edge =
+    st.transitions <- edge ::st.transitions ;
+    
+    st.epsilonOnlyTransitions <- List.for_all Edge.isEpsilon st.transitions
 
 end
 
@@ -276,9 +292,12 @@ let readSets strm =
 
 let Token._EOF = -1
 
-let edgeFactory ty src trg arg1 arg2 arg3 sets =
+let edgeFactory ~bp ty src trg arg1 arg2 arg3 sets =
   let target = trg in
-  if ty = 0 then None
+  if ty = 0 then begin
+      Fmt.(pf stderr "pos %d: edgeFactory: edge type = 0!" bp) ;
+      None
+    end
   else Some
   (match ty with
     1 -> Edge.mkEpsilonTransition ~target ()
@@ -299,14 +318,20 @@ let edgeFactory ty src trg arg1 arg2 arg3 sets =
 
 let readEdges states sets strm =
   let nedges = readInt strm in
-  let l = plistn (parser
-    [< src = readInt ;
+  let l = plistn (parser bp
+   [< src = readInt ;
      trg = readInt ;
      ttype = readInt ;
      arg1 = readInt ;
      arg2 = readInt ;
      arg3 = readInt >] ->
-                  (src, edgeFactory ttype src trg arg1 arg2 arg3 sets)) nedges strm in
+                  (src, edgeFactory ~bp ttype src trg arg1 arg2 arg3 sets)) nedges strm in
+  l |> List.iter (fun (src, edge) ->
+           match edge with
+             None -> ()
+           | Some e ->
+              State.addTransition states.(src) e
+         ) ;
   l
 
 

@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_utils
 open Std
@@ -8,6 +8,7 @@ type t =
   ; stop : int
   ; step : int
   }
+  [@@deriving show]
 
 let mk ?(step=1) ?start stop =
   let start = match start with
