@@ -1,9 +1,12 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std *)
 
+type state_id = STID of int
+  [@@deriving show]
+
 module EpsilonTransition = struct
 type t =
   {
-    target : int
+    target : state_id
   ; outermostPrecedenceReturn : int
   }
   [@@deriving show]
@@ -16,7 +19,7 @@ end
 module RangeTransition = struct
 type t =
   {
-    target : int
+    target : state_id
   ; start : int
   ; stop : int
   }
@@ -33,7 +36,7 @@ type t =
     ruleStart : int
   ; ruleIndex : int
   ; precedence : int
-  ; followState : int
+  ; followState : state_id
   }
   [@@deriving show]
 
@@ -45,7 +48,7 @@ end
 module PredicateTransition = struct
   type t =
     {
-      target : int
+      target : state_id
     ; ruleIndex : int
     ; predIndex : int
     ; isCtxDependent : bool
@@ -60,7 +63,7 @@ end
 module ActionTransition = struct
 type t =
   {
-    target : int
+    target : state_id
   ; ruleIndex : int
   ; actionIndex : int
   ; isCtxDependent : bool
@@ -75,7 +78,7 @@ end
 module SetTransition = struct
 type t =
   {
-    target : int
+    target : state_id
   ; set : IntervalSet.t
   }
   [@@deriving show]
@@ -88,7 +91,7 @@ end
 module PrecedencePredicateTransition = struct
 type t =
   {
-    target : int
+    target : state_id
   ; precedence : int
   }
   [@@deriving show]
@@ -101,7 +104,7 @@ end
 module AtomTransition = struct
 type t =
   {
-    target : int
+    target : state_id
   ; label : int
   }
   [@@deriving show]
@@ -114,22 +117,22 @@ end
 type node_t =
   BasicState
 | RuleStartState
-| BasicBlockStartState of int
-| PlusBlockStartState of int
-| StarBlockStartState of int
+| BasicBlockStartState of state_id
+| PlusBlockStartState of state_id
+| StarBlockStartState of state_id
 | TokensStartState
 | RuleStopState
 | BlockEndState
 | StarLoopbackState
 | StarLoopEntryState
 | PlusLoopbackState
-| LoopEndState of int
+| LoopEndState of state_id
 and state_t = {
-      num : int
+      num : state_id
     ; mutable node : (node_t * int) option
     ; mutable nonGreedy : bool
     ; mutable isPrecedenceRule : bool
-    ; mutable stopState : int option
+    ; mutable stopState : state_id option
     ; mutable transitions : edge_t list
     ; mutable epsilonOnlyTransitions : bool
     }
@@ -142,7 +145,7 @@ and edge_t =
 | ActionTransition of ActionTransition.t
 | SetTransition of SetTransition.t
 | NotSetTransition of SetTransition.t
-| WildcardTransition of int
+| WildcardTransition of state_id
 | PrecedencePredicateTransition of PrecedencePredicateTransition.t
 
 let isEpsilon = function
@@ -177,11 +180,17 @@ let mkActionTransition ~target ~ruleIndex ~actionIndex ~isCtxDependent () =
   ActionTransition (ActionTransition.mk ~target ~ruleIndex ~actionIndex ~isCtxDependent)
 
 let mkSetTransition ~target ?set () =
-  let set = match set with None -> IntervalSet.(() |> mk |> addOne Token._INVALID_TYPE) in
+  let set = match set with
+      None -> IntervalSet.(() |> mk |> addOne Token._INVALID_TYPE)
+    | Some set -> set
+  in
   SetTransition (SetTransition.mk ~target ~set)
 
 let mkNotSetTransition ~target ?set () =
-  let set = match set with None -> IntervalSet.(() |> mk |> addOne Token._INVALID_TYPE) in
+  let set = match set with
+      None -> IntervalSet.(() |> mk |> addOne Token._INVALID_TYPE)
+    | Some set -> set
+  in
   NotSetTransition (SetTransition.mk ~target ~set)
 
 let mkWildcardTransition ~target () =

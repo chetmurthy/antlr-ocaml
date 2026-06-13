@@ -26,10 +26,19 @@ let insert_after n l v =
     | (_,[]) -> [v]
   in insrec (n,l)
 
+let pa_pair pa1 pa2 =
+  parser [< p1 = pa1 ; p2 = pa2 >] -> (p1, p2)
+
+let readInt = parser [< 'n >] -> n
+
+let readBool = parser [< 'n >] -> n<>0
+
 let _SERIALIZED_VERSION = 4
 
 module Node = struct
-type t = [%import: Types.node_t]
+type t = [%import: Types.node_t
+          [@with state_id := Types.state_id]
+         ]
 [@@deriving show]
 
 let rule_index_of_node = function
@@ -90,6 +99,7 @@ module Edge = struct
   module SetTransition = Types.SetTransition
 
   type t = [%import: Types.edge_t
+            [@with state_id := Types.state_id]
            ]
   [@@deriving show]
 let mkEpsilonTransition = Types.mkEpsilonTransition
@@ -106,9 +116,12 @@ let isEpsilon = Types.isEpsilon
 end
 
 module State = struct
+  let mk_id n = Types.STID n
+
   type t = [%import: Types.state_t
             [@with node_t := Node.t]
             [@with edge_t := Edge.t]
+            [@with state_id := Types.state_id]
            ]
   [@@deriving show]
 
@@ -121,6 +134,15 @@ module State = struct
     
     st.epsilonOnlyTransitions <- List.for_all Edge.isEpsilon st.transitions
 
+  type states_t = STATES of t array
+  let mk_states nstates = STATES (Array.init nstates (fun i -> mk (mk_id i) None))
+  let get_state t i =
+    match (t,i) with
+      (STATES t, Types.STID i) -> t.(i)
+
+  let iter f (STATES t) =
+    Array.iter f t
+
 end
 
 type atn_type_t =
@@ -130,11 +152,11 @@ type atn_type_t =
 type t = {
     grammarType : atn_type_t
   ; maxTokenType : int
-  ; states : State.t array
-  ; ruleToStartState : int array
+  ; states : State.states_t
+  ; ruleToStartState : Types.state_id array
   ; ruleToTokenType_opt : int array option
-  ; ruleToStopState : int array
-  ; modeToStartState : int array
+  ; ruleToStopState : Types.state_id array
+  ; modeToStartState : Types.state_id array
   ; sets : IntervalSet.t array
   }
 let check_version = parser
@@ -148,16 +170,11 @@ let pa_ATNType = parser
   | [< '1 >]-> PARSER
   | [< 'n >] -> Fmt.(failwithf "unrecognized ATN Type %d" n)
 
-let pa_pair pa1 pa2 =
-  parser [< p1 = pa1 ; p2 = pa2 >] -> (p1, p2)
-
-let readInt = parser [< 'n >] -> n
-
-let readBool = parser [< 'n >] -> n<>0
-
 let readATN = parser
   [< ty = pa_ATNType ; 'maxTokenType >] -> (ty, maxTokenType)
     
+let readSTID = parser [< 'n >] -> State.mk_id n
+
 let readNode states =
   let open Node in
   parser
@@ -175,17 +192,17 @@ let readNode states =
              Some (st, ruleIndex)
             )
          | BLOCK_START ->
-            (parser [< 'ruleIndex ; 'endStateNumber >] ->
+            (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
              let st = BasicBlockStartState endStateNumber in
              Some (st, ruleIndex)
             )
          | PLUS_BLOCK_START ->
-            (parser [< 'ruleIndex ; 'endStateNumber >] ->
+            (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
              let st = PlusBlockStartState endStateNumber in
              Some (st, ruleIndex)
             )
          | STAR_BLOCK_START ->
-            (parser [< 'ruleIndex ; 'endStateNumber >] ->
+            (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
              let st = StarBlockStartState endStateNumber in
              Some (st, ruleIndex)
             )
@@ -220,7 +237,7 @@ let readNode states =
              Some (st, ruleIndex)
             )
          | LOOP_END ->
-            (parser [< 'ruleIndex ; 'loopbackStateNumber >] ->
+            (parser [< 'ruleIndex ; loopbackStateNumber=readSTID >] ->
              let st = LoopEndState loopbackStateNumber in
              Some (st, ruleIndex)
             )
@@ -231,47 +248,47 @@ let readStates strm =
   let loopEndStates = ref [] in
   let loopbackStateNumber = ref [] in
   let nstates = readInt strm in
-  let states = Array.init nstates (fun i -> State.mk i None) in
+  let states = State.mk_states nstates in
   let nodes = plistn (readNode states) nstates strm in
-  nodes |> List.iteri (fun i node -> states.(i).node <- node) ;
+  nodes |> List.iteri (fun i node -> (State.get_state states (State.mk_id i)).node <- node) ;
   let numNonGreedyStates = readInt strm in
   for i = 0 to numNonGreedyStates-1 do
-    states.(i).nonGreedy <- true
+    (State.get_state states (State.mk_id i)).nonGreedy <- true
   done ;
   let numPrecedenceStates = readInt strm in
   for i = 0 to numPrecedenceStates-1 do
-    states.(i).isPrecedenceRule <- true
+    (State.get_state states (State.mk_id i)).isPrecedenceRule <- true
   done ;
   states
 
-let readRules (grammarType, states) strm =
+let readRules (grammarType, (states : State.states_t)) strm =
   let open State in
   let nrules = readInt strm in
   let (ruleToStartState, ruleToTokenType_opt) =
     match grammarType with
     | PARSER ->
-       let ruleToStartState = plistn readInt nrules strm in
+       let ruleToStartState = plistn readSTID nrules strm in
        (Array.of_list ruleToStartState, None)
     | LEXER ->
-       let pl = plistn (pa_pair readInt readInt) nrules strm in
+       let pl = plistn (pa_pair readSTID readInt) nrules strm in
        let (ruleToStartState, ruleToTokenType) = split pl  in
        (Array.of_list ruleToStartState, Some (Array.of_list ruleToTokenType))
   in
-  let ruleToStopState = Array.make nrules 0 in
+  let ruleToStopState = Array.make nrules (State.mk_id 0) in
     states
-    |> Array.iter
+    |> State.iter
          (fun st ->
            match st.node with
              Some (RuleStopState, _) | None -> ()
              | Some (n, ruleIndex) ->
                 ruleToStopState.(ruleIndex) <- st.num ;
-                states.(ruleToStartState.(ruleIndex)).stopState <- Some st.num
+                (State.get_state states (ruleToStartState.(ruleIndex))).stopState <- Some st.num
          ) ;
     (ruleToStartState, ruleToTokenType_opt, ruleToStopState)
 
 let readModes strm =
   let nmodes = readInt strm in
-  let modeToStartState = plistn readInt nmodes strm in
+  let modeToStartState = plistn readSTID nmodes strm in
   Array.of_list modeToStartState
 
 let readSets strm =
@@ -320,7 +337,7 @@ let readEdges states sets strm =
   let nedges = readInt strm in
   let l = plistn (parser bp
    [< src = readInt ;
-     trg = readInt ;
+     trg = readSTID ;
      ttype = readInt ;
      arg1 = readInt ;
      arg2 = readInt ;
