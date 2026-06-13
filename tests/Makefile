@@ -24,6 +24,13 @@ lib_test.exe: lib_test.cmo
 antlr_test.exe: antlr_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
+
+test-python::
+	python3 deserialize_test.py /home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/test/org/antlr/v4/test/runtime/java/api/JavaLexer.interp
+
+test-all-python::
+	find $(ANTLRROOT) -name '*.interp' -print | xargs -n 1 --verbose python3 deserialize_test.py 
+
 clean::
 	rm -rf *.cm* _build *.exe
 

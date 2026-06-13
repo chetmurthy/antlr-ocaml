@@ -125,17 +125,17 @@ module State = struct
            ]
   [@@deriving show]
 
-  let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) num node =
+  let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) num (node, ruleIndex) =
     let epsilonOnlyTransitions = List.for_all Edge.isEpsilon transitions in
-    { num ; node ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
+    { num ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
 
   let addTransition st ?(index= -1) edge =
-    st.transitions <- edge ::st.transitions ;
+    st.transitions <- st.transitions @ [edge] ;
     
     st.epsilonOnlyTransitions <- List.for_all Edge.isEpsilon st.transitions
 
   type states_t = STATES of t array
-  let mk_states nstates = STATES (Array.init nstates (fun i -> mk (mk_id i) None))
+  let mk_states l = STATES (Array.of_list (List.mapi (fun i x -> mk (mk_id i) x) l))
   let get_state t i =
     match (t,i) with
       (STATES t, Types.STID i) -> t.(i)
@@ -175,71 +175,72 @@ let readATN = parser
     
 let readSTID = parser [< 'n >] -> State.mk_id n
 
-let readNode states =
+let readNode =
   let open Node in
   parser
   bp [< 'stype ;
    node = (match deser_state_type bp stype with
-           INVALID_TYPE -> (parser [< >] -> None)
+           INVALID_TYPE ->
+            Fmt.(failwithf "pos %d: Invalid state found in deserialization" bp)
          | BASIC ->
             (parser [< 'ruleIndex >] ->
              let st = BasicState in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | RULE_START ->
             (parser [< 'ruleIndex >] ->
              let st = RuleStartState in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | BLOCK_START ->
             (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
              let st = BasicBlockStartState endStateNumber in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | PLUS_BLOCK_START ->
             (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
              let st = PlusBlockStartState endStateNumber in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | STAR_BLOCK_START ->
             (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
              let st = StarBlockStartState endStateNumber in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | TOKEN_START ->
             (parser [< 'ruleIndex >] ->
              let st = TokensStartState in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | RULE_STOP ->
             (parser [< 'ruleIndex >] ->
              let st = RuleStopState in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | BLOCK_END ->
             (parser [< 'ruleIndex >] ->
              let st = BlockEndState in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | STAR_LOOP_BACK ->
             (parser [< 'ruleIndex >] ->
              let st = StarLoopbackState in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | STAR_LOOP_ENTRY ->
             (parser [< 'ruleIndex >] ->
              let st = StarLoopEntryState in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | PLUS_LOOP_BACK ->
             (parser [< 'ruleIndex >] ->
              let st = PlusLoopbackState in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
          | LOOP_END ->
             (parser [< 'ruleIndex ; loopbackStateNumber=readSTID >] ->
              let st = LoopEndState loopbackStateNumber in
-             Some (st, ruleIndex)
+             (st, ruleIndex)
             )
 
         ) >] -> node
@@ -248,9 +249,8 @@ let readStates strm =
   let loopEndStates = ref [] in
   let loopbackStateNumber = ref [] in
   let nstates = readInt strm in
-  let states = State.mk_states nstates in
-  let nodes = plistn (readNode states) nstates strm in
-  nodes |> List.iteri (fun i node -> (State.get_state states (State.mk_id i)).node <- node) ;
+  let nodes = plistn readNode nstates strm in
+  let states = State.mk_states nodes in
   let numNonGreedyStates = readInt strm in
   for i = 0 to numNonGreedyStates-1 do
     (State.get_state states (State.mk_id i)).nonGreedy <- true
@@ -279,10 +279,10 @@ let readRules (grammarType, (states : State.states_t)) strm =
     |> State.iter
          (fun st ->
            match st.node with
-             Some (RuleStopState, _) | None -> ()
-             | Some (n, ruleIndex) ->
-                ruleToStopState.(ruleIndex) <- st.num ;
-                (State.get_state states (ruleToStartState.(ruleIndex))).stopState <- Some st.num
+             RuleStopState ->
+             ruleToStopState.(st.ruleIndex) <- st.num ;
+             (State.get_state states (ruleToStartState.(st.ruleIndex))).stopState <- Some st.num
+           | _ -> ()
          ) ;
     (ruleToStartState, ruleToTokenType_opt, ruleToStopState)
 
@@ -321,7 +321,7 @@ let edgeFactory ~bp ty src trg arg1 arg2 arg3 sets =
   | 2 -> if arg3 <> 0 then
               Edge.mkRangeTransition ~target ~start:Token._EOF ~stop:arg2 ()
             else Edge.mkRangeTransition ~target  ~start:arg1  ~stop:arg2 ()
-  | 3 -> Edge.mkRuleTransition ~ruleStart:arg1 ~ruleIndex:arg2 ~precedence:arg3 ~followState:target ()
+  | 3 -> Edge.mkRuleTransition ~ruleStart:(State.mk_id arg1) ~ruleIndex:arg2 ~precedence:arg3 ~followState:target ()
   | 4 -> Edge.mkPredicateTransition ~target ~ruleIndex:arg1 ~predIndex:arg2 ~isCtxDependent:(arg3 <> 0) ()
   | 5 -> if arg3 <> 0 then
            Edge.mkAtomTransition ~target ~label:Token._EOF ()
@@ -333,10 +333,10 @@ let edgeFactory ~bp ty src trg arg1 arg2 arg3 sets =
   | 10 ->  Edge.mkPrecedencePredicateTransition ~target ~precedence:arg1 ()
   )
 
-let readEdges states sets strm =
+let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
   let nedges = readInt strm in
   let l = plistn (parser bp
-   [< src = readInt ;
+   [< src = readSTID ;
      trg = readSTID ;
      ttype = readInt ;
      arg1 = readInt ;
@@ -347,8 +347,56 @@ let readEdges states sets strm =
            match edge with
              None -> ()
            | Some e ->
-              State.addTransition states.(src) e
+              State.addTransition (State.get_state states src) e
          ) ;
+  states
+  |> State.iter
+       (fun st ->
+         st.transitions
+         |> List.iter
+              (function
+                 Edge.RuleTransition rt ->
+                  let outermostPrecedenceReturn = -1 in
+                  let outermostPrecedenceReturn =
+                    if (State.get_state states ruleToStartState.((State.get_state states (Edge.RuleTransition.target rt)).ruleIndex)).isPrecedenceRule &&
+                         rt.precedence = 0 then
+                      (State.get_state states (Edge.RuleTransition.target rt)).ruleIndex
+                    else outermostPrecedenceReturn in
+                  let trans = Edge.mkEpsilonTransition ~target:rt.followState ~outermostPrecedenceReturn () in
+                  State.addTransition (State.get_state states ruleToStopState.((State.get_state states (Edge.RuleTransition.target rt)).ruleIndex)) trans
+
+               | _ -> ()
+              )
+       ) ;
+(*
+  states
+  |> State.iter
+       (fun state ->
+         match state.node with
+           Node.BlockStartState ->
+
+            if isinstance(state, BlockStartState):
+                # we need to know the end state to set its start state
+                if state.endState is None:
+                    raise Exception("IllegalState")
+                # block end states can only be associated to a single block start state
+                if state.endState.startState is not None:
+                    raise Exception("IllegalState")
+                state.endState.startState = state
+
+            if isinstance(state, PlusLoopbackState):
+                for i in range(0, len(state.transitions)):
+                    target = state.transitions[i].target
+                    if isinstance(target, PlusBlockStartState):
+                        target.loopBackState = state
+            elif isinstance(state, StarLoopbackState):
+                for i in range(0, len(state.transitions)):
+                    target = state.transitions[i].target
+                    if isinstance(target, StarLoopEntryState):
+                        target.loopBackState = state
+
+       )
+ *)
   l
 
 

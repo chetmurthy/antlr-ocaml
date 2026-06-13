@@ -6,34 +6,34 @@ type state_id = STID of int
 module EpsilonTransition = struct
 type t =
   {
-    target : state_id
+    _target : state_id
   ; outermostPrecedenceReturn : int
   }
   [@@deriving show]
 
 let mk ~target ~outermostPrecedenceReturn =
-  { target ; outermostPrecedenceReturn }
-let target t = t.target
+  { _target=target ; outermostPrecedenceReturn }
+let target t = t._target
 end
 
 module RangeTransition = struct
 type t =
   {
-    target : state_id
+    _target : state_id
   ; start : int
   ; stop : int
   }
   [@@deriving show]
 
 let mk ~target ~start ~stop =
-  { target ; start ; stop }
-let target t = t.target
+  { _target=target ; start ; stop }
+let target t = t._target
 end
 
 module RuleTransition = struct
 type t =
   {
-    ruleStart : int
+    ruleStart : state_id
   ; ruleIndex : int
   ; precedence : int
   ; followState : state_id
@@ -48,7 +48,7 @@ end
 module PredicateTransition = struct
   type t =
     {
-      target : state_id
+      _target : state_id
     ; ruleIndex : int
     ; predIndex : int
     ; isCtxDependent : bool
@@ -56,14 +56,14 @@ module PredicateTransition = struct
   [@@deriving show]
 
   let mk ~target ~ruleIndex ~predIndex ~isCtxDependent =
-    { target ; ruleIndex ; predIndex ; isCtxDependent }
-  let target t = t.target
+    { _target=target ; ruleIndex ; predIndex ; isCtxDependent }
+  let target t = t._target
 end
 
 module ActionTransition = struct
 type t =
   {
-    target : state_id
+    _target : state_id
   ; ruleIndex : int
   ; actionIndex : int
   ; isCtxDependent : bool
@@ -71,47 +71,47 @@ type t =
   [@@deriving show]
 
 let mk ~target ~ruleIndex ~actionIndex ~isCtxDependent =
-  { target ; ruleIndex ; actionIndex ; isCtxDependent }
-let target t = t.target
+  { _target=target ; ruleIndex ; actionIndex ; isCtxDependent }
+let target t = t._target
 end
 
 module SetTransition = struct
 type t =
   {
-    target : state_id
+    _target : state_id
   ; set : IntervalSet.t
   }
   [@@deriving show]
 
 let mk ~target ~set =
-  { target ; set }
-let target t = t.target
+  { _target=target ; set }
+let target t = t._target
 end
 
 module PrecedencePredicateTransition = struct
 type t =
   {
-    target : state_id
+    _target : state_id
   ; precedence : int
   }
   [@@deriving show]
 
 let mk ~target ~precedence =
-  { target ; precedence }
-let target t = t.target
+  { _target=target ; precedence }
+let target t = t._target
 end
 
 module AtomTransition = struct
 type t =
   {
-    target : state_id
+    _target : state_id
   ; label : int
   }
   [@@deriving show]
 
 let mk ~target ~label =
-  { target ; label }
-let target t = t.target
+  { _target=target ; label }
+let target t = t._target
 end
 
 type node_t =
@@ -129,7 +129,8 @@ type node_t =
 | LoopEndState of state_id
 and state_t = {
       num : state_id
-    ; mutable node : (node_t * int) option
+    ; mutable node : node_t
+    ; mutable ruleIndex : int
     ; mutable nonGreedy : bool
     ; mutable isPrecedenceRule : bool
     ; mutable stopState : state_id option
