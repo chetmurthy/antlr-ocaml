@@ -128,14 +128,14 @@ type node_t =
 | PlusLoopbackState
 | LoopEndState of state_id
 and state_t = {
-      num : state_id
+      stateNumber : state_id
     ; mutable node : node_t
     ; mutable ruleIndex : int
+    ; mutable epsilonOnlyTransitions : bool
+    ; mutable transitions : edge_t list
     ; mutable nonGreedy : bool
     ; mutable isPrecedenceRule : bool
     ; mutable stopState : state_id option
-    ; mutable transitions : edge_t list
-    ; mutable epsilonOnlyTransitions : bool
     }
 and edge_t =
   EpsilonTransition of EpsilonTransition.t

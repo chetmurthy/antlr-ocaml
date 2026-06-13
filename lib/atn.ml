@@ -125,9 +125,9 @@ module State = struct
            ]
   [@@deriving show]
 
-  let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) num (node, ruleIndex) =
+  let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) stateNumber (node, ruleIndex) =
     let epsilonOnlyTransitions = List.for_all Edge.isEpsilon transitions in
-    { num ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
+    { stateNumber ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
 
   let addTransition st ?(index= -1) edge =
     st.transitions <- st.transitions @ [edge] ;
@@ -280,8 +280,8 @@ let readRules (grammarType, (states : State.states_t)) strm =
          (fun st ->
            match st.node with
              RuleStopState ->
-             ruleToStopState.(st.ruleIndex) <- st.num ;
-             (State.get_state states (ruleToStartState.(st.ruleIndex))).stopState <- Some st.num
+             ruleToStopState.(st.ruleIndex) <- st.stateNumber ;
+             (State.get_state states (ruleToStartState.(st.ruleIndex))).stopState <- Some st.stateNumber
            | _ -> ()
          ) ;
     (ruleToStartState, ruleToTokenType_opt, ruleToStopState)
