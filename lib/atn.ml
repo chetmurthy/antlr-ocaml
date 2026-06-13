@@ -73,22 +73,27 @@ let deser_state_type bp = function
 end
 
 module Edge = struct
-  module RuleTransition = Types.RuleTransition
+  module EpsilonTransition = Types.EpsilonTransition
   module PredicateTransition = Types.PredicateTransition
+  module RangeTransition = Types.RangeTransition
+  module RuleTransition = Types.RuleTransition
+  module PrecedencePredicateTransition = Types.PrecedencePredicateTransition
+  module AtomTransition = Types.AtomTransition
   module ActionTransition = Types.ActionTransition
+  module SetTransition = Types.SetTransition
 
   type t = [%import: Types.edge_t
            ]
-  and raw_edge_t = [%import: Types.raw_edge_t]
-
-let mkEpsilonTransition ?(outermostPrecedenceReturn= -1) (target) =
-  { target ; it = EpsilonTransition outermostPrecedenceReturn }
-
-let mkRangeTransition target start stop =
-  { target ; it = RangeTransition (Range.mk ~start stop) }
-
-let mkRuleTransition ruleStart ruleIndex precedence followState =
-  { target = followState ; it = RuleTransition (RuleTransition.mk ~ruleStart ~ruleIndex ~precedence) }
+let mkEpsilonTransition = Types.mkEpsilonTransition
+let mkRangeTransition = Types.mkRangeTransition
+let mkRuleTransition = Types.mkRuleTransition
+let mkPredicateTransition = Types.mkPredicateTransition
+let mkAtomTransition = Types.mkAtomTransition
+let mkActionTransition = Types.mkActionTransition
+let mkSetTransition = Types.mkSetTransition
+let mkNotSetTransition = Types.mkNotSetTransition
+let mkWildcardTransition = Types.mkWildcardTransition
+let mkPrecedencePredicateTransition = Types.mkPrecedencePredicateTransition
 end
 
 module State = struct
@@ -264,38 +269,35 @@ let readSets strm =
        else ranges in
      let ranges = List.map (fun (start,stop) -> Range.mk ~start stop) ranges in
      let iset =
-       List.fold_left IntervalSet.add (IntervalSet.mk()) ranges in
+       IntervalSet.(List.fold_right IntervalSet.add ranges (mk())) in
      iset) m strm in
   Array.of_list l
 
 
-let _Token_EOF = -1
+let Token._EOF = -1
 
-let edgeFactory states ty src trg arg1 arg2 arg3 sets =
+let edgeFactory ty src trg arg1 arg2 arg3 sets =
   let target = trg in
-  let target_state = states.(trg) in
   if ty = 0 then None
   else Some
   (match ty with
-    1 -> Edge.mkEpsilonTransition (target)
+    1 -> Edge.mkEpsilonTransition ~target ()
   | 2 -> if arg3 <> 0 then
-              Edge.mkRangeTransition target _Token_EOF arg2
-            else Edge.mkRangeTransition target  arg1  arg2
-  | 3 -> Edge.mkRuleTransition arg1 arg2 arg3 target
-(*
-  | 4 -> PredicateTransition(target, arg1, arg2, arg3 <> 0)
+              Edge.mkRangeTransition ~target ~start:Token._EOF ~stop:arg2 ()
+            else Edge.mkRangeTransition ~target  ~start:arg1  ~stop:arg2 ()
+  | 3 -> Edge.mkRuleTransition ~ruleStart:arg1 ~ruleIndex:arg2 ~precedence:arg3 ~followState:target ()
+  | 4 -> Edge.mkPredicateTransition ~target ~ruleIndex:arg1 ~predIndex:arg2 ~isCtxDependent:(arg3 <> 0) ()
   | 5 -> if arg3 <> 0 then
-           AtomTransition(target, Token.EOF)
-         else AtomTransition(target, arg1)
-  | 6 -> ActionTransition(target, arg1, arg2, arg3 <> 0)
-  | 7 ->  SetTransition(target, sets.(arg1))
-  | 8 -> NotSetTransition(target, sets.(arg1))
-  | 9 -> WildcardTransition(target)
-  | 10 ->  PrecedencePredicateTransition(target, arg1)
- *)
+           Edge.mkAtomTransition ~target ~label:Token._EOF ()
+         else Edge.mkAtomTransition ~target ~label:arg1 ()
+  | 6 -> Edge.mkActionTransition ~target ~ruleIndex:arg1 ~actionIndex:arg2 ~isCtxDependent:(arg3 <> 0) ()
+  | 7 ->  Edge.mkSetTransition ~target ~set:sets.(arg1) ()
+  | 8 -> Edge.mkNotSetTransition ~target ~set:sets.(arg1) ()
+  | 9 -> Edge.mkWildcardTransition ~target ()
+  | 10 ->  Edge.mkPrecedencePredicateTransition ~target ~precedence:arg1 ()
   )
-(*
-let readEdges strm =
+
+let readEdges states sets strm =
   let nedges = readInt strm in
   let l = plistn (parser
     [< src = readInt ;
@@ -303,8 +305,9 @@ let readEdges strm =
      ttype = readInt ;
      arg1 = readInt ;
      arg2 = readInt ;
-     arg3 = readInt >] -> (src, trg, ttype, arg1, arg2, arg3)) nedges strm in
- *)
+     arg3 = readInt >] ->
+                  (src, edgeFactory ttype src trg arg1 arg2 arg3 sets)) nedges strm in
+  l
 
 
 let deser1 = parser

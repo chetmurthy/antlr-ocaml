@@ -11,7 +11,7 @@ TARGET_PACKAGE=antlr
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
-	range.ml intervalSet.ml interp.ml interp_syntax.ml types.ml atn.ml \
+	range.ml intervalSet.ml interp.ml interp_syntax.ml token.ml types.ml atn.ml \
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)

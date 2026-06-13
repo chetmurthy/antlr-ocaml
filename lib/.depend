@@ -1,4 +1,4 @@
-range.cmo intervalSet.cmo interp.cmo interp_syntax.cmo types.cmo atn.cmo range.cmi intervalSet.cmi interp.cmi interp_syntax.cmi types.cmi atn.cmi range.cmx intervalSet.cmx interp.cmx interp_syntax.cmx types.cmx atn.cmx: 
+range.cmo intervalSet.cmo interp.cmo interp_syntax.cmo token.cmo types.cmo atn.cmo range.cmi intervalSet.cmi interp.cmi interp_syntax.cmi token.cmi types.cmi atn.cmi range.cmx intervalSet.cmx interp.cmx interp_syntax.cmx token.cmx types.cmx atn.cmx: 
 range.cmo :
 range.cmx :
 intervalSet.cmo : \
@@ -11,19 +11,23 @@ interp_syntax.cmo : \
     interp.cmo
 interp_syntax.cmx : \
     interp.cmx
+token.cmo :
+token.cmx :
 types.cmo : \
-    range.cmo \
+    token.cmo \
     intervalSet.cmo
 types.cmx : \
-    range.cmx \
+    token.cmx \
     intervalSet.cmx
 atn.cmo : \
     types.cmo \
+    token.cmo \
     range.cmo \
     intervalSet.cmo \
     interp.cmo
 atn.cmx : \
     types.cmx \
+    token.cmx \
     range.cmx \
     intervalSet.cmx \
     interp.cmx

@@ -6,7 +6,7 @@ type t = {
 
 let mk () = { intervals = [] }
 
-let add t v =
+let add v t =
   let open Range in
   let rec addrec acc v = function
       [] -> (List.rev acc) @ [v]
@@ -23,3 +23,8 @@ let add t v =
           addrec acc v tl
   in
   { intervals = addrec [] v t.intervals }
+
+let addOne n t =
+  let v = Range.mk ~start:n (n+1) in
+  add v t
+
