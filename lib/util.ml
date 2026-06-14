@@ -20,3 +20,6 @@ let insert_after n l v =
     | (n,h::t) -> h::(insrec (n-1,t))
     | (_,[]) -> [v]
   in insrec (n,l)
+
+let pa_pair pa1 pa2 =
+  parser [< p1 = pa1 ; p2 = pa2 >] -> (p1, p2)
