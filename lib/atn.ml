@@ -129,6 +129,15 @@ module State = struct
     let epsilonOnlyTransitions = List.for_all Edge.isEpsilon transitions in
     { stateNumber ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
 
+  let mkBasicBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
+    Node.BasicBlockStartState { decision ; nonGreedy ; endState }
+
+  let mkPlusBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState ?loopBackState () =
+    Node.PlusBlockStartState { decision ; nonGreedy ; endState ; loopBackState }
+
+  let mkBlockEndState ?startState () =
+    Node.BlockEndState { startState }
+
   let addTransition st ?(index= -1) edge =
     st.transitions <- st.transitions @ [edge] ;
     
@@ -194,12 +203,12 @@ let readNode =
             )
          | BLOCK_START ->
             (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
-             let st = BasicBlockStartState endStateNumber in
+             let st = State.mkBasicBlockStartState ~endState:endStateNumber () in
              (st, ruleIndex)
             )
          | PLUS_BLOCK_START ->
             (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
-             let st = PlusBlockStartState endStateNumber in
+             let st = State.mkPlusBlockStartState ~endState:endStateNumber () in
              (st, ruleIndex)
             )
          | STAR_BLOCK_START ->
@@ -219,7 +228,7 @@ let readNode =
             )
          | BLOCK_END ->
             (parser [< 'ruleIndex >] ->
-             let st = BlockEndState in
+             let st = State.mkBlockEndState () in
              (st, ruleIndex)
             )
          | STAR_LOOP_BACK ->

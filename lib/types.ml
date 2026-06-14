@@ -114,32 +114,6 @@ let mk ~target ~label =
 let target t = t._target
 end
 
-module BasicBlockStartState = struct
-  let mk ?(decision = -1) ?(nonGreedy = false) ?endState () =
-    BasicBlockStartState { decision ; nonGreedy ; endState }
-end
-
-module BlockEndState = struct
-  type t =
-    {
-      mutable startState : state_id option
-    }
-  let mk ?startState () =
-    { startState }
-end
-
-module PlusBlockStartState = struct
-  type t =
-    {
-      mutable decision : int
-    ; mutable nonGreedy : bool
-    ; mutable endState : state_id option
-    ; mutable loopBackState : state_id option
-    }
-  let mk ?(decision = -1) ?(nonGreedy = false) ?endState ?loopBackState () =
-    { decision ; nonGreedy ; endState ; loopBackState }
-end
-
 type node_t =
   BasicState
 | RuleStartState
