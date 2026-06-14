@@ -392,17 +392,35 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
                | _ -> ()
               )
        ) ;
-(*
+
   states
   |> State.iter
        (fun state ->
          match state.node with
            Node.BasicBlockStartState n ->
-            if n.endState = None then
-              Fmt.(failwithf "state=%a: endState = None: %a"
-                     pp_state_id n.stateNumber
-                     State.pp state) ;
- *)
+            let endState_id = match n.endState with
+                None ->
+                Fmt.(failwithf "state=%a: endState = None: %a"
+                       pp_state_id state.stateNumber
+                       State.pp state)
+              | Some n -> n in
+            let endState = State.get_state states endState_id in
+            (match endState.node with
+               Node.BlockEndState n ->
+                if n.startState <> None then
+                  Fmt.(failwithf "state=%a: startState <> None: %a"
+                         pp_state_id endState.stateNumber
+                         State.pp endState) ;
+                n.startState <- Some state.stateNumber
+               | _ ->
+                  Fmt.(failwithf "state=%a: endState should have been BlockEndState, was =%a"
+                         pp_state_id endState.stateNumber
+                         State.pp endState)
+            )
+       ) ;
+      
+            
+
 (*
   states
   |> State.iter
