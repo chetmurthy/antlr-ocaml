@@ -17,7 +17,11 @@ type node_t =
     ; mutable endState : state_id option
     ; mutable loopBackState : state_id option
     }
-| StarBlockStartState of state_id
+| StarBlockStartState of {
+    mutable decision : int
+  ; mutable nonGreedy : bool
+  ; mutable endState : state_id option
+  }
 | TokensStartState
 | RuleStopState
 | BlockEndState of {

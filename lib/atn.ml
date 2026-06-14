@@ -171,6 +171,9 @@ module State = struct
   let mkPlusBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState ?loopBackState () =
     Node.PlusBlockStartState { decision ; nonGreedy ; endState ; loopBackState }
 
+  let mkStarBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
+    Node.StarBlockStartState { decision ; nonGreedy ; endState }
+
   let mkBlockEndState ?startState () =
     Node.BlockEndState { startState }
 
@@ -249,7 +252,7 @@ let readNode =
             )
          | STAR_BLOCK_START ->
             (parser [< 'ruleIndex ; endStateNumber=readSTID >] ->
-             let st = StarBlockStartState endStateNumber in
+             let st = State.mkStarBlockStartState ~endState:endStateNumber () in
              (st, ruleIndex)
             )
          | TOKEN_START ->
