@@ -12,10 +12,12 @@ let readBool = parser [< 'n >] -> n<>0
 
 let _SERIALIZED_VERSION = 4
 
+type state_id = [%import: Types.state_id]
+[@@deriving show]
+
+
 module Node = struct
-type t = [%import: Types.node_t
-          [@with state_id := Types.state_id]
-         ]
+type t = [%import: Types.node_t]
 [@@deriving show]
 
 let rule_index_of_node = function
@@ -66,9 +68,7 @@ let deser_state_type bp = function
 end
 
 module Edge = struct
-  type t = [%import: Types.edge_t
-            [@with state_id := Types.state_id]
-           ]
+  type t = [%import: Types.edge_t]
   [@@deriving show]
 
 let mkEpsilonTransition ~target ?(outermostPrecedenceReturn = -1) () =
@@ -134,7 +134,6 @@ module State = struct
   type t = [%import: Types.state_t
             [@with node_t := Node.t]
             [@with edge_t := Edge.t]
-            [@with state_id := Types.state_id]
            ]
   [@@deriving show]
 
@@ -178,10 +177,10 @@ type t = {
     grammarType : atn_type_t
   ; maxTokenType : int
   ; states : State.states_t
-  ; ruleToStartState : Types.state_id array
+  ; ruleToStartState : state_id array
   ; ruleToTokenType_opt : int array option
-  ; ruleToStopState : Types.state_id array
-  ; modeToStartState : Types.state_id array
+  ; ruleToStopState : state_id array
+  ; modeToStartState : state_id array
   ; sets : IntervalSet.t array
   }
 let check_version = parser
