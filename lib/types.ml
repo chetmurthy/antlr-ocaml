@@ -3,25 +3,23 @@
 type state_id = STID of int
   [@@deriving show]
 
+type 'a block_start_node_t =
+  {
+    mutable decision : int
+  ; mutable nonGreedy : bool
+  ; mutable endState : state_id option
+  ; extra : 'a
+  }
+
+type plus_block_start_node_t =
+  { mutable loopBackState : state_id option }
+
 type node_t =
   BasicState
 | RuleStartState
-| BasicBlockStartState of {
-    mutable decision : int
-  ; mutable nonGreedy : bool
-  ; mutable endState : state_id option
-  }
-| PlusBlockStartState of {
-      mutable decision : int
-    ; mutable nonGreedy : bool
-    ; mutable endState : state_id option
-    ; mutable loopBackState : state_id option
-    }
-| StarBlockStartState of {
-    mutable decision : int
-  ; mutable nonGreedy : bool
-  ; mutable endState : state_id option
-  }
+| BasicBlockStartState of unit block_start_node_t
+| PlusBlockStartState of plus_block_start_node_t block_start_node_t
+| StarBlockStartState of unit block_start_node_t
 | TokensStartState
 | RuleStopState
 | BlockEndState of {

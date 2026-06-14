@@ -17,7 +17,11 @@ type state_id = [%import: Types.state_id]
 
 
 module Node = struct
+[%%typedecls
 type t = [%import: Types.node_t]
+type 'a block_start_node_t = [%import: 'a Types.block_start_node_t]
+type plus_block_start_node_t = [%import: Types.plus_block_start_node_t]
+]
 [@@deriving show]
 
 let rule_index_of_node = function
@@ -142,13 +146,13 @@ module State = struct
     { stateNumber ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
 
   let mkBasicBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
-    Node.BasicBlockStartState { decision ; nonGreedy ; endState }
+    Node.BasicBlockStartState { decision ; nonGreedy ; endState ; extra = () }
 
   let mkPlusBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState ?loopBackState () =
-    Node.PlusBlockStartState { decision ; nonGreedy ; endState ; loopBackState }
+    Node.PlusBlockStartState { decision ; nonGreedy ; endState ; extra = { loopBackState } }
 
   let mkStarBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
-    Node.StarBlockStartState { decision ; nonGreedy ; endState }
+    Node.StarBlockStartState { decision ; nonGreedy ; endState ; extra = () }
 
   let mkBlockEndState ?startState () =
     Node.BlockEndState { startState }
@@ -397,28 +401,39 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
   |> State.iter
        (fun state ->
          match state.node with
-           Node.BasicBlockStartState n ->
-            let endState_id = match n.endState with
-                None ->
+           (Node.BasicBlockStartState _
+            | Node.PlusBlockStartState _
+           | Node.StarBlockStartState _) ->
+           let endState_id_opt =
+             match state.node with
+               Node.BasicBlockStartState n -> n.endState
+             | Node.PlusBlockStartState n -> n.endState
+             | Node.StarBlockStartState n -> n.endState
+             | _ -> assert false in
+           let endState_id = match endState_id_opt with
+               None ->
                 Fmt.(failwithf "state=%a: endState = None: %a"
                        pp_state_id state.stateNumber
                        State.pp state)
-              | Some n -> n in
-            let endState = State.get_state states endState_id in
-            (match endState.node with
-               Node.BlockEndState n ->
-                if n.startState <> None then
-                  Fmt.(failwithf "state=%a: startState <> None: %a"
-                         pp_state_id endState.stateNumber
-                         State.pp endState) ;
-                n.startState <- Some state.stateNumber
-               | _ ->
-                  Fmt.(failwithf "state=%a: endState should have been BlockEndState, was =%a"
-                         pp_state_id endState.stateNumber
-                         State.pp endState)
-            )
+             | Some n -> n in
+           let endState = State.get_state states endState_id in
+           (match endState.node with
+              Node.BlockEndState n ->
+               if n.startState <> None then
+                 Fmt.(failwithf "state=%a: startState <> None: %a"
+                        pp_state_id endState.stateNumber
+                        State.pp endState) ;
+               n.startState <- Some state.stateNumber
+              | _ ->
+                 Fmt.(failwithf "state=%a: endState should have been BlockEndState, was =%a"
+                        pp_state_id endState.stateNumber
+                        State.pp endState)
+           )
+
+         | _ -> ()
+
        ) ;
-      
+
             
 
 (*
