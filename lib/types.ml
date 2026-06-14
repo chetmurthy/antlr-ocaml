@@ -149,16 +149,50 @@ and state_t = {
     ; mutable stopState : state_id option
     }
 and edge_t =
-  EpsilonTransition of EpsilonTransition.t
-| RangeTransition of RangeTransition.t
-| RuleTransition of RuleTransition.t
-| PredicateTransition of PredicateTransition.t
-| AtomTransition of AtomTransition.t
-| ActionTransition of ActionTransition.t
-| SetTransition of SetTransition.t
-| NotSetTransition of SetTransition.t
+  EpsilonTransition of {
+    _target : state_id
+  ; outermostPrecedenceReturn : int
+  }
+| RangeTransition of {
+    _target : state_id
+  ; start : int
+  ; stop : int
+  }
+| RuleTransition of {
+    ruleStart : state_id
+  ; ruleIndex : int
+  ; precedence : int
+  ; followState : state_id
+  }
+| PredicateTransition of {
+      _target : state_id
+    ; ruleIndex : int
+    ; predIndex : int
+    ; isCtxDependent : bool
+    }
+| AtomTransition of {
+    _target : state_id
+  ; label : int
+  }
+| ActionTransition of {
+    _target : state_id
+  ; ruleIndex : int
+  ; actionIndex : int
+  ; isCtxDependent : bool
+  }
+| SetTransition of {
+    _target : state_id
+  ; set : IntervalSet.t
+  }
+| NotSetTransition of {
+    _target : state_id
+  ; set : IntervalSet.t
+  }
 | WildcardTransition of state_id
-| PrecedencePredicateTransition of PrecedencePredicateTransition.t
+| PrecedencePredicateTransition of {
+    _target : state_id
+  ; precedence : int
+  }
 
 let isEpsilon = function
     (EpsilonTransition _
@@ -172,41 +206,3 @@ let isEpsilon = function
     | SetTransition _
     | NotSetTransition _
     | WildcardTransition _) -> false
-
-let mkEpsilonTransition ?(outermostPrecedenceReturn= -1) ~target () =
-  EpsilonTransition (EpsilonTransition.mk ~target ~outermostPrecedenceReturn)
-
-let mkRangeTransition ~target ~start ~stop () =
-  RangeTransition (RangeTransition.mk ~target ~start ~stop)
-
-let mkRuleTransition ~ruleStart ~ruleIndex ~precedence ~followState () =
-  RuleTransition (RuleTransition.mk ~ruleStart ~ruleIndex ~precedence ~followState)
-
-let mkPredicateTransition ~target ~ruleIndex ~predIndex ~isCtxDependent () =
-  PredicateTransition (PredicateTransition.mk ~target ~ruleIndex ~predIndex ~isCtxDependent)
-
-let mkAtomTransition ~target ~label () =
-  AtomTransition (AtomTransition.mk ~target ~label)
-
-let mkActionTransition ~target ~ruleIndex ~actionIndex ~isCtxDependent () =
-  ActionTransition (ActionTransition.mk ~target ~ruleIndex ~actionIndex ~isCtxDependent)
-
-let mkSetTransition ~target ?set () =
-  let set = match set with
-      None -> IntervalSet.(() |> mk |> addOne Token._INVALID_TYPE)
-    | Some set -> set
-  in
-  SetTransition (SetTransition.mk ~target ~set)
-
-let mkNotSetTransition ~target ?set () =
-  let set = match set with
-      None -> IntervalSet.(() |> mk |> addOne Token._INVALID_TYPE)
-    | Some set -> set
-  in
-  NotSetTransition (SetTransition.mk ~target ~set)
-
-let mkWildcardTransition ~target () =
-  WildcardTransition target
-
-let mkPrecedencePredicateTransition ~target ~precedence () =
-  PrecedencePredicateTransition (PrecedencePredicateTransition.mk ~target  ~precedence)

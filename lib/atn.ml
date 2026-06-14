@@ -89,30 +89,66 @@ let deser_state_type bp = function
 end
 
 module Edge = struct
-  module EpsilonTransition = Types.EpsilonTransition
-  module PredicateTransition = Types.PredicateTransition
-  module RangeTransition = Types.RangeTransition
-  module RuleTransition = Types.RuleTransition
-  module PrecedencePredicateTransition = Types.PrecedencePredicateTransition
-  module AtomTransition = Types.AtomTransition
-  module ActionTransition = Types.ActionTransition
-  module SetTransition = Types.SetTransition
-
   type t = [%import: Types.edge_t
             [@with state_id := Types.state_id]
            ]
   [@@deriving show]
-let mkEpsilonTransition = Types.mkEpsilonTransition
-let mkRangeTransition = Types.mkRangeTransition
-let mkRuleTransition = Types.mkRuleTransition
-let mkPredicateTransition = Types.mkPredicateTransition
-let mkAtomTransition = Types.mkAtomTransition
-let mkActionTransition = Types.mkActionTransition
-let mkSetTransition = Types.mkSetTransition
-let mkNotSetTransition = Types.mkNotSetTransition
-let mkWildcardTransition = Types.mkWildcardTransition
-let mkPrecedencePredicateTransition = Types.mkPrecedencePredicateTransition
-let isEpsilon = Types.isEpsilon
+
+let mkEpsilonTransition ~target ?(outermostPrecedenceReturn = -1) () =
+  EpsilonTransition { _target=target ; outermostPrecedenceReturn }
+
+let mkRangeTransition ~target ~start ~stop () =
+  RangeTransition { _target=target ; start ; stop }
+
+let mkRuleTransition ~ruleStart ~ruleIndex ~precedence ~followState () =
+  RuleTransition { ruleStart ; ruleIndex ; precedence ; followState }
+
+let mkPredicateTransition ~target ~ruleIndex ~predIndex ~isCtxDependent () =
+  PredicateTransition { _target=target ; ruleIndex ; predIndex ; isCtxDependent }
+
+let mkAtomTransition ~target ~label () =
+  AtomTransition { _target=target ; label }
+
+let mkActionTransition ~target ~ruleIndex ~actionIndex ~isCtxDependent () =
+  ActionTransition { _target=target ; ruleIndex ; actionIndex ; isCtxDependent }
+
+let mkSetTransition ~target ~set () =
+  SetTransition { _target=target ; set }
+
+let mkNotSetTransition ~target ~set () =
+  NotSetTransition { _target=target ; set }
+
+let mkWildcardTransition ~target () =
+  WildcardTransition target
+
+let mkPrecedencePredicateTransition ~target ~precedence () =
+  PrecedencePredicateTransition { _target=target ; precedence }
+
+let isEpsilon = function
+    (EpsilonTransition _
+     | RuleTransition _
+    | PredicateTransition _
+    | ActionTransition _
+    | PrecedencePredicateTransition _) -> true
+
+  | (RangeTransition _
+     | AtomTransition _
+    | SetTransition _
+    | NotSetTransition _
+    | WildcardTransition _) -> false
+
+let target = function
+  EpsilonTransition { _target } -> _target
+| RangeTransition { _target } -> _target
+| RuleTransition { ruleStart=target } -> target
+| PredicateTransition { _target } -> _target
+| AtomTransition { _target } -> _target
+| ActionTransition { _target } -> _target
+| SetTransition { _target } -> _target
+| NotSetTransition { _target } -> _target
+| WildcardTransition target -> target
+| PrecedencePredicateTransition { _target } -> _target
+
 end
 
 module State = struct
@@ -318,7 +354,7 @@ let readSets strm =
 
 let Token._EOF = -1
 
-let edgeFactory ~bp ty src trg arg1 arg2 arg3 sets =
+let edgeFactory ~bp ty src trg arg1 arg2 arg3 sets : Edge.t option =
   let target = trg in
   if ty = 0 then begin
       Fmt.(pf stderr "pos %d: edgeFactory: edge type = 0!" bp) ;
@@ -364,15 +400,15 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
          st.transitions
          |> List.iter
               (function
-                 Edge.RuleTransition rt ->
+                 (Edge.RuleTransition rt) as e ->
                   let outermostPrecedenceReturn = -1 in
                   let outermostPrecedenceReturn =
-                    if (State.get_state states ruleToStartState.((State.get_state states (Edge.RuleTransition.target rt)).ruleIndex)).isPrecedenceRule &&
+                    if (State.get_state states ruleToStartState.((State.get_state states (Edge.target e)).ruleIndex)).isPrecedenceRule &&
                          rt.precedence = 0 then
-                      (State.get_state states (Edge.RuleTransition.target rt)).ruleIndex
+                      (State.get_state states (Edge.target e)).ruleIndex
                     else outermostPrecedenceReturn in
                   let trans = Edge.mkEpsilonTransition ~target:rt.followState ~outermostPrecedenceReturn () in
-                  State.addTransition (State.get_state states ruleToStopState.((State.get_state states (Edge.RuleTransition.target rt)).ruleIndex)) trans
+                  State.addTransition (State.get_state states ruleToStopState.((State.get_state states (Edge.target e)).ruleIndex)) trans
 
                | _ -> ()
               )

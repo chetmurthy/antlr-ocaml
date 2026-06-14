@@ -16,10 +16,8 @@ interp_syntax.cmx : \
 token.cmo :
 token.cmx :
 types.cmo : \
-    token.cmo \
     intervalSet.cmo
 types.cmx : \
-    token.cmx \
     intervalSet.cmx
 atn.cmo : \
     types.cmo \
