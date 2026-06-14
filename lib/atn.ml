@@ -48,7 +48,7 @@ let rule_index_of_node = function
   | StarBlockStartState _ -> 4
   | TokensStartState -> 5
   | RuleStopState -> 6
-  | BlockEndState -> 7
+  | BlockEndState _ -> 7
   | StarLoopbackState -> 8
   | StarLoopEntryState -> 9
   | PlusLoopbackState -> 10
