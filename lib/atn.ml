@@ -645,6 +645,26 @@ let verifyATN atn =
                         State.pp st')
              )
 
+          | LoopEndState n ->
+             if None = n.loopBackState then
+               Fmt.(failwithf "state %a: LoopEndState with loopBackState = None: %a"
+                      pp_state_id state.stateNumber
+                      State.pp state)
+
+          | RuleStartState ->
+             if None = state.stopState then
+               Fmt.(failwithf "state %a: RuleStartState with stopState = None: %a"
+                      pp_state_id state.stateNumber
+                      State.pp state)
+
+          | (BasicBlockStartState {endState}
+             | PlusBlockStartState {endState}
+            | StarBlockStartState {endState}) ->
+             if None = endState then
+               Fmt.(failwithf "state %a: *BlockStartState with endState = None: %a"
+                      pp_state_id state.stateNumber
+                      State.pp state)
+
          )
        )
 
