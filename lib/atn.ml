@@ -589,6 +589,62 @@ let deser1 = parser
     ; lexerActions
     }
 
+let verifyATN atn =
+  atn.states
+  |> State.iter
+       (fun state ->
+         if not (state.epsilonOnlyTransitions || List.length state.transitions <= 1) then
+           Fmt.(failwithf "state %a: epsilonOnlyTransition check: %a"
+                  pp_state_id state.stateNumber State.pp state) ;
+         (match state.node with
+            PlusBlockStartState n ->
+             if None = n.loopBackState then
+               Fmt.(failwithf "state %a: loopBackState was None: %a"
+                      pp_state_id state.stateNumber State.pp state)
+             else ()
+
+          | StarLoopEntryState n ->
+             if None = n.loopBackState then
+               Fmt.(failwithf "state %a: loopBackState was None: %a"
+                      pp_state_id state.stateNumber State.pp state) ;
+             if 2 <> List.length state.transitions then
+               Fmt.(failwithf "state %a: len(transitions) = %d <> 2: %a"
+                      pp_state_id state.stateNumber
+                      (List.length state.transitions) 
+                      State.pp state) ;
+             let [e1; e2] = state.transitions in
+             let st1' = State.get_state atn.states (Edge.target e1) in
+             let st2' = State.get_state atn.states (Edge.target e2) in
+             (match (st1', st2') with
+                {node=StarBlockStartState _},{node=LoopEndState _} when not n.nonGreedy -> ()
+              | {node=LoopEndState _},{node=StarBlockStartState _} when n.nonGreedy -> ()
+              | _ ->
+                 Fmt.(failwithf "state %a: (two) transitions from %a do not lead to appropriate state: %a, %a"
+                        pp_state_id state.stateNumber
+                        State.pp state
+                        State.pp st1'
+                        State.pp st2'))
+
+          | StarLoopbackState ->
+             if 1 <> List.length state.transitions then
+               Fmt.(failwithf "state %a: StarLoopbackState #transitions <> 1: %a"
+                      pp_state_id state.stateNumber
+                      State.pp state) ;
+             let e = List.hd state.transitions in
+             let stid' = Edge.target e in
+             let st' = State.get_state atn.states stid' in
+             (match st'.node with
+                StarLoopEntryState _ -> ()
+              | _ ->
+                 Fmt.(failwithf "state %a: transition from StarLoopbackState should be to StarLoopEntryState: %a -> %a"
+                        pp_state_id state.stateNumber
+                        State.pp state
+                        State.pp st')
+             )
+
+         )
+       )
+
 let deser interp =
   let strm = Stream.of_list interp.Raw.atn in
   deser1 strm
