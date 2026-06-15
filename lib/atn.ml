@@ -545,6 +545,25 @@ let readLexerActions grammarType strm =
     Some (Array.of_list l)
   else None
 
+let markPrecedenceDecisions (states,ruleToStartState) =
+  states
+  |> State.iter
+       (fun state ->
+         match state.node with
+           StarLoopEntryState n ->
+            if (State.get_state states ruleToStartState.(state.ruleIndex)).isPrecedenceRule then
+              let maybeLoopEndState_id = Edge.target (last state.transitions) in
+              let maybeLoopEndState = State.get_state states maybeLoopEndState_id in
+              (match maybeLoopEndState.node with
+                 LoopEndState _ when maybeLoopEndState.epsilonOnlyTransitions ->
+                  (match (State.get_state states (Edge.target (List.hd maybeLoopEndState.transitions))).node with
+                     RuleStopState _ ->
+                      n.isPrecedenceDecision <- Some true
+                   | _ -> ())
+               | _ -> ())
+           | _ -> ()
+       )
+
 let deser1 = parser
   [< () = check_version ;
    (grammarType, maxTokenType) = readATN ;
