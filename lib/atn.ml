@@ -573,7 +573,8 @@ let deser1 = parser
    sets = readSets ;
    () = readEdges (states,ruleToStartState,ruleToStopState) sets ;
    decisionToState = readDecisions states ;
-   lexerActions = readLexerActions grammarType
+   lexerActions = readLexerActions grammarType ;
+   () = (fun _ -> markPrecedenceDecisions (states,ruleToStartState))
    >] ->
     {
       grammarType
