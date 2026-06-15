@@ -26,8 +26,16 @@ type node_t =
       mutable startState : state_id option
     }
 | StarLoopbackState
-| StarLoopEntryState
-| PlusLoopbackState
+| StarLoopEntryState of {
+    mutable decision : int
+  ; mutable nonGreedy : bool
+  ; mutable loopBackState : state_id option
+  ; mutable isPrecedenceDecision : bool option
+  }
+| PlusLoopbackState of {
+    mutable decision : int
+  ; mutable nonGreedy : bool
+  }
 | LoopEndState of state_id
 and state_t = {
       stateNumber : state_id

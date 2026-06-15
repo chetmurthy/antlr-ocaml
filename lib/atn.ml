@@ -33,8 +33,8 @@ let rule_index_of_node = function
   | RuleStopState -> 6
   | BlockEndState _ -> 7
   | StarLoopbackState -> 8
-  | StarLoopEntryState -> 9
-  | PlusLoopbackState -> 10
+  | StarLoopEntryState _ -> 9
+  | PlusLoopbackState _ -> 10
   | LoopEndState _ -> 11
 
 
@@ -154,6 +154,12 @@ module State = struct
   let mkStarBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
     Node.StarBlockStartState { decision ; nonGreedy ; endState ; extra = () }
 
+  let mkStarLoopEntryState ?(decision = -1) ?(nonGreedy = false) ?loopBackState ?isPrecedenceDecision () =
+    Node.StarLoopEntryState { decision ; nonGreedy ; loopBackState ; isPrecedenceDecision }
+
+  let mkPlusLoopbackState ?(decision = -1) ?(nonGreedy = false) () =
+    Node.PlusLoopbackState { decision ; nonGreedy }
+
   let mkBlockEndState ?startState () =
     Node.BlockEndState { startState }
 
@@ -257,12 +263,12 @@ let readNode =
             )
          | STAR_LOOP_ENTRY ->
             (parser [< 'ruleIndex >] ->
-             let st = StarLoopEntryState in
+             let st = State.mkStarLoopEntryState () in
              (st, ruleIndex)
             )
          | PLUS_LOOP_BACK ->
             (parser [< 'ruleIndex >] ->
-             let st = PlusLoopbackState in
+             let st = State.mkPlusLoopbackState () in
              (st, ruleIndex)
             )
          | LOOP_END ->
@@ -430,6 +436,30 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
                         State.pp endState)
            )
 
+         | Node.PlusLoopbackState n ->
+            state.transitions
+            |> List.iter
+                 (fun t ->
+                   let target_id = Edge.target t in
+                   let target = State.get_state states target_id in
+                   match target.node with
+                     Node.PlusBlockStartState t ->
+                     t.extra.loopBackState <- Some state.stateNumber
+                   | _ -> ()
+                 )
+
+         | Node.StarLoopbackState ->
+            state.transitions
+            |> List.iter
+                 (fun t ->
+                   let target_id = Edge.target t in
+                   let target = State.get_state states target_id in
+                   match target.node with
+                     Node.StarLoopEntryState t ->
+                     t.loopBackState <- Some state.stateNumber
+                   | _ -> ()
+                 )
+
          | _ -> ()
 
        ) ;
@@ -437,21 +467,6 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
             
 
 (*
-  states
-  |> State.iter
-       (fun state ->
-         match state.node with
-           Node.BlockStartState ->
-
-            if isinstance(state, BlockStartState):
-                # we need to know the end state to set its start state
-                if state.endState is None:
-                    raise Exception("IllegalState")
-                # block end states can only be associated to a single block start state
-                if state.endState.startState is not None:
-                    raise Exception("IllegalState")
-                state.endState.startState = state
-
             if isinstance(state, PlusLoopbackState):
                 for i in range(0, len(state.transitions)):
                     target = state.transitions[i].target
