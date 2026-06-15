@@ -17,11 +17,7 @@ type state_id = [%import: Types.state_id]
 
 
 module Node = struct
-[%%typedecls
 type t = [%import: Types.node_t]
-type 'a block_start_node_t = [%import: 'a Types.block_start_node_t]
-type plus_block_start_node_t = [%import: Types.plus_block_start_node_t]
-]
 [@@deriving show]
 
 let rule_index_of_node = function
@@ -146,13 +142,13 @@ module State = struct
     { stateNumber ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
 
   let mkBasicBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
-    Node.BasicBlockStartState { decision ; nonGreedy ; endState ; extra = () }
+    Node.BasicBlockStartState { decision ; nonGreedy ; endState }
 
   let mkPlusBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState ?loopBackState () =
-    Node.PlusBlockStartState { decision ; nonGreedy ; endState ; extra = { loopBackState } }
+    Node.PlusBlockStartState { decision ; nonGreedy ; endState ; loopBackState }
 
   let mkStarBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
-    Node.StarBlockStartState { decision ; nonGreedy ; endState ; extra = () }
+    Node.StarBlockStartState { decision ; nonGreedy ; endState }
 
   let mkStarLoopEntryState ?(decision = -1) ?(nonGreedy = false) ?loopBackState ?isPrecedenceDecision () =
     Node.StarLoopEntryState { decision ; nonGreedy ; loopBackState ; isPrecedenceDecision }
@@ -444,7 +440,7 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
                    let target = State.get_state states target_id in
                    match target.node with
                      Node.PlusBlockStartState t ->
-                     t.extra.loopBackState <- Some state.stateNumber
+                     t.loopBackState <- Some state.stateNumber
                    | _ -> ()
                  )
 
@@ -463,8 +459,18 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
          | _ -> ()
 
        )
-
-
+(*
+let readDecisions strm =
+  let ndecisions = readInt strm in
+  let l = plistn readSTID ndecisions strm in
+  let decisionToState = Array.of_list l in
+  decisionToState
+  |> Array.iteri
+       (fun i stid ->
+         st = State.get states stid in
+        
+       )
+ *)
 let deser1 = parser
   [< () = check_version ;
    (grammarType, maxTokenType) = readATN ;
