@@ -462,25 +462,7 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
 
          | _ -> ()
 
-       ) ;
-
-            
-
-(*
-            if isinstance(state, PlusLoopbackState):
-                for i in range(0, len(state.transitions)):
-                    target = state.transitions[i].target
-                    if isinstance(target, PlusBlockStartState):
-                        target.loopBackState = state
-            elif isinstance(state, StarLoopbackState):
-                for i in range(0, len(state.transitions)):
-                    target = state.transitions[i].target
-                    if isinstance(target, StarLoopEntryState):
-                        target.loopBackState = state
-
        )
- *)
-  l
 
 
 let deser1 = parser
@@ -489,7 +471,8 @@ let deser1 = parser
    states = readStates ;
    (ruleToStartState, ruleToTokenType_opt, ruleToStopState) = readRules (grammarType, states) ;
    modeToStartState = readModes ;
-   sets = readSets
+   sets = readSets ;
+   () = readEdges (states,ruleToStartState,ruleToStopState) sets
    >] ->
     {
       grammarType
