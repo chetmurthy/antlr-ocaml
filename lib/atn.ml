@@ -188,6 +188,7 @@ type t = {
   ; ruleToStopState : state_id array
   ; modeToStartState : state_id array
   ; sets : IntervalSet.t array
+  ; decisionToState : state_id array
   }
 let check_version = parser
   [< 'n >] ->
@@ -459,18 +460,34 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
          | _ -> ()
 
        )
-(*
-let readDecisions strm =
+
+let readDecisions states strm =
   let ndecisions = readInt strm in
   let l = plistn readSTID ndecisions strm in
   let decisionToState = Array.of_list l in
   decisionToState
   |> Array.iteri
        (fun i stid ->
-         st = State.get states stid in
-        
-       )
- *)
+         let st = State.get_state states stid in
+         match st.node with
+           BasicBlockStartState t -> t.decision <- i
+         | PlusBlockStartState t -> t.decision <- i
+         | StarBlockStartState t -> t.decision <- i
+         | StarLoopEntryState t -> t.decision <- i
+         | PlusLoopbackState t -> t.decision <- i
+
+         | (BasicState
+            | RuleStartState
+           | TokensStartState
+           | RuleStopState
+           | BlockEndState _
+           | StarLoopbackState
+           | LoopEndState _) ->
+            Fmt.(failwithf "decision %d names state %a, but it's %a"
+                   i pp_state_id stid State.pp st)
+       ) ;
+  decisionToState
+
 let deser1 = parser
   [< () = check_version ;
    (grammarType, maxTokenType) = readATN ;
@@ -478,7 +495,8 @@ let deser1 = parser
    (ruleToStartState, ruleToTokenType_opt, ruleToStopState) = readRules (grammarType, states) ;
    modeToStartState = readModes ;
    sets = readSets ;
-   () = readEdges (states,ruleToStartState,ruleToStopState) sets
+   () = readEdges (states,ruleToStartState,ruleToStopState) sets ;
+   decisionToState = readDecisions states
    >] ->
     {
       grammarType
@@ -489,6 +507,7 @@ let deser1 = parser
     ; ruleToStopState
     ; modeToStartState
     ; sets
+    ; decisionToState
     }
 
 let deser interp =
