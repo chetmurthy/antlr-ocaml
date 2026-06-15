@@ -175,6 +175,37 @@ module State = struct
 
 end
 
+module LexerAction = struct
+  type t = [%import: Types.lexer_action_t]
+  [@@deriving show]
+
+
+let mkLexerChannelAction ?(isPositionDependent = false) ~channel () =
+  LexerChannelAction { isPositionDependent ; channel }
+
+let mkLexerCustomAction ~ruleIndex ~actionIndex () =
+  LexerCustomAction { isPositionDependent = true ; ruleIndex ; actionIndex  }
+
+let mkLexerModeAction ?(isPositionDependent = false) ~mode () =
+  LexerModeAction { isPositionDependent ; mode  }
+
+let mkLexerMoreAction ?(isPositionDependent = false) () =
+  LexerMoreAction { isPositionDependent  }
+
+let mkLexerPopModeAction ?(isPositionDependent = false) () =
+  LexerPopModeAction { isPositionDependent  }
+
+let mkLexerPushModeAction ?(isPositionDependent = false) ~mode () =
+  LexerPushModeAction { isPositionDependent ; mode  }
+
+let mkLexerSkipAction ?(isPositionDependent = false) () =
+  LexerSkipAction { isPositionDependent  }
+
+let mkLexerTypeAction ?(isPositionDependent = false) ~type_ () =
+  LexerTypeAction { isPositionDependent ; type_  }
+
+end
+
 type atn_type_t =
     LEXER
   | PARSER
@@ -189,6 +220,7 @@ type t = {
   ; modeToStartState : state_id array
   ; sets : IntervalSet.t array
   ; decisionToState : state_id array
+  ; lexerActions : LexerAction.t array option
   }
 let check_version = parser
   [< 'n >] ->
@@ -488,6 +520,31 @@ let readDecisions states strm =
        ) ;
   decisionToState
 
+let lexerActionFactory actionType data1 data2 =
+  let open LexerAction in
+  match actionType with
+    0 -> mkLexerChannelAction ~channel:data1 ()
+   | 1 -> mkLexerCustomAction ~ruleIndex:data1 ~actionIndex:data2 ()
+   | 2 -> mkLexerModeAction ~mode:data1 ()
+   | 3 -> mkLexerMoreAction ()
+   | 4 -> mkLexerPopModeAction ()
+   | 5 -> mkLexerPushModeAction ~mode:data1 ()
+   | 6 -> mkLexerSkipAction ()
+   | 7 -> mkLexerTypeAction ~type_:data1 ()
+   | _ -> Fmt.(failwithf "The specified lexer action type %d is not valid." actionType)
+
+let readLexerActions grammarType strm =
+  if grammarType = LEXER then
+    let read1 = parser
+      [< actionType = readInt ;
+       data1 = readInt ;
+       data2 = readInt >] ->
+                lexerActionFactory actionType data1 data2 in
+    let count = readInt strm in
+    let l = plistn read1 count strm in
+    Some (Array.of_list l)
+  else None
+
 let deser1 = parser
   [< () = check_version ;
    (grammarType, maxTokenType) = readATN ;
@@ -496,7 +553,8 @@ let deser1 = parser
    modeToStartState = readModes ;
    sets = readSets ;
    () = readEdges (states,ruleToStartState,ruleToStopState) sets ;
-   decisionToState = readDecisions states
+   decisionToState = readDecisions states ;
+   lexerActions = readLexerActions grammarType
    >] ->
     {
       grammarType
@@ -508,6 +566,7 @@ let deser1 = parser
     ; modeToStartState
     ; sets
     ; decisionToState
+    ; lexerActions
     }
 
 let deser interp =

@@ -107,3 +107,43 @@ let isEpsilon = function
     | SetTransition _
     | NotSetTransition _
     | WildcardTransition _) -> false
+
+type lexer_action_t =
+  LexerChannelAction of {
+      mutable isPositionDependent : bool ;
+      mutable channel : int
+    }
+
+| LexerCustomAction of {
+      mutable isPositionDependent : bool ;
+      mutable ruleIndex : int ;
+      mutable actionIndex : int
+    }
+
+| LexerModeAction of {
+      mutable isPositionDependent : bool ;
+      mutable mode : int
+    }
+
+| LexerMoreAction of {
+      mutable isPositionDependent : bool ;
+    }
+
+| LexerPopModeAction of {
+      mutable isPositionDependent : bool ;
+    }
+
+| LexerPushModeAction of {
+      mutable isPositionDependent : bool ;
+      mutable mode : int
+    }
+
+| LexerSkipAction of {
+      mutable isPositionDependent : bool ;
+    }
+
+| LexerTypeAction of {
+    mutable isPositionDependent : bool ;
+    mutable type_ : int
+  }
+
