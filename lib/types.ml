@@ -22,7 +22,10 @@ type node_t =
   ; mutable nonGreedy : bool
   ; mutable endState : state_id option
   }
-| TokensStartState
+| TokensStartState of {
+    mutable decision : int
+  ; mutable nonGreedy : bool
+  }
 | RuleStopState
 | BlockEndState of {
       mutable startState : state_id option

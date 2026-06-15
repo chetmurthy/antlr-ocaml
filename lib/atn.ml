@@ -25,7 +25,7 @@ let rule_index_of_node = function
   | BasicBlockStartState _ -> 2
   | PlusBlockStartState _ -> 3
   | StarBlockStartState _ -> 4
-  | TokensStartState -> 5
+  | TokensStartState _ -> 5
   | RuleStopState -> 6
   | BlockEndState _ -> 7
   | StarLoopbackState -> 8
@@ -162,6 +162,9 @@ module State = struct
   let mkLoopEndState ?loopBackState () =
     Node.LoopEndState { loopBackState }
 
+  let mkTokensStartState ?(decision = -1) ?(nonGreedy = false) () =
+    Node.TokensStartState { decision ; nonGreedy }
+
   let addTransition st ?(index= -1) edge =
     st.transitions <- st.transitions @ [edge] ;
     
@@ -275,7 +278,7 @@ let readNode =
             )
          | TOKEN_START ->
             (parser [< 'ruleIndex >] ->
-             let st = TokensStartState in
+             let st = State.mkTokensStartState () in
              (st, ruleIndex)
             )
          | RULE_STOP ->
@@ -510,10 +513,10 @@ let readDecisions states strm =
          | StarBlockStartState t -> t.decision <- i
          | StarLoopEntryState t -> t.decision <- i
          | PlusLoopbackState t -> t.decision <- i
+         | TokensStartState t -> t.decision <- i
 
          | (BasicState
             | RuleStartState
-           | TokensStartState
            | RuleStopState
            | BlockEndState _
            | StarLoopbackState
@@ -665,9 +668,35 @@ let verifyATN atn =
                       pp_state_id state.stateNumber
                       State.pp state)
 
+          | BlockEndState n ->
+             if None = n.startState then
+               Fmt.(failwithf "state %a: BlockEndState with startState = None: %a"
+                      pp_state_id state.stateNumber
+                      State.pp state)
+
+          | (BasicBlockStartState {decision}
+             | PlusBlockStartState {decision}
+            | StarBlockStartState {decision}
+            | PlusLoopbackState {decision}
+            | StarLoopEntryState {decision}
+            | TokensStartState {decision}) ->
+             if not (List.length state.transitions <= 1 || decision >= 0) then
+               Fmt.(failwithf "state %a: *DecisionState with #transitions  > 1 || decision < 0: %a"
+                      pp_state_id state.stateNumber
+                      State.pp state)
+
+          | _ ->
+             if not (List.length state.transitions <= 1 ||
+                       (match state.node with RuleStopState -> true | _ -> false)) then
+               Fmt.(failwithf "state %a: catch-all failed: %a"
+                      pp_state_id state.stateNumber
+                      State.pp state)
+
          )
        )
 
 let deser interp =
   let strm = Stream.of_list interp.Raw.atn in
-  deser1 strm
+  let atn = deser1 strm in
+  verifyATN atn ;
+  atn
