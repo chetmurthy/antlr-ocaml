@@ -159,6 +159,9 @@ module State = struct
   let mkBlockEndState ?startState () =
     Node.BlockEndState { startState }
 
+  let mkLoopEndState ?loopBackState () =
+    Node.LoopEndState { loopBackState }
+
   let addTransition st ?(index= -1) edge =
     st.transitions <- st.transitions @ [edge] ;
     
@@ -302,7 +305,7 @@ let readNode =
             )
          | LOOP_END ->
             (parser [< 'ruleIndex ; loopbackStateNumber=readSTID >] ->
-             let st = LoopEndState loopbackStateNumber in
+             let st = State.mkLoopEndState ~loopBackState:loopbackStateNumber () in
              (st, ruleIndex)
             )
 

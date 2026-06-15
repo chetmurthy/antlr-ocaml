@@ -38,7 +38,9 @@ type node_t =
     mutable decision : int
   ; mutable nonGreedy : bool
   }
-| LoopEndState of state_id
+| LoopEndState of {
+    mutable loopBackState : state_id option
+  }
 and state_t = {
       stateNumber : state_id
     ; mutable node : node_t
