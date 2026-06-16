@@ -13,7 +13,7 @@ let roundtrip file =
     |> Result.get_ok
     |> Antlr.Interp_syntax.read_raw
     |> Antlr.Atn.deser in
-  Fmt.(pf stdout "%a@." Antlr.Atn.dump atn)
+  Fmt.(pf stdout "Filename: %s@.%a@." file Antlr.Atn.dump atn)
 
 open Cmdliner
 open Cmdliner.Term.Syntax

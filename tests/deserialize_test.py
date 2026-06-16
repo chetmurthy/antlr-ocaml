@@ -1,7 +1,7 @@
 import sys
 
 sys.path
-sys.path.append('/home/chet/Hack/Antlr/src/antlr4/runtime/Python3/src')
+sys.path.append('../python')
 
 from antlr4 import *
 from antlr4.atn.ATNType import ATNType
@@ -18,7 +18,7 @@ def extract_atn(txt):
 
 def main(args):
     fname = args[1]
-    print(fname)
+    print("Filename: %s" % fname)
     with open(fname) as f: s = f.read()
     ser_atn = extract_atn(s)
     des = ATNDeserializer()
