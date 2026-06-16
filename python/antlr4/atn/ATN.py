@@ -130,3 +130,6 @@ class ATN(object):
         if Token.EPSILON in following:
             expected.addOne(Token.EOF)
         return expected
+
+    def dump(self):
+        print("grammarType: %s" % repr(self.grammarType))

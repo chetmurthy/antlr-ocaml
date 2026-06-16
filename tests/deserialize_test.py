@@ -23,7 +23,7 @@ def main(args):
     ser_atn = extract_atn(s)
     des = ATNDeserializer()
     atn = des.deserialize(ser_atn)
-    print(atn)
+    atn.dump()
     
 
 if __name__ == '__main__':

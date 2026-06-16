@@ -215,7 +215,11 @@ end
 type atn_type_t =
     LEXER
   | PARSER
-[@@deriving show]
+[@@deriving show { with_path = false }]
+
+let dump_atn_type_t pps t =
+  let n = match t with LEXER -> 0 | PARSER -> 1 in
+  Fmt.(pf pps "<ATNType.%a: %d>" pp_atn_type_t t n)
 
 type t = {
     grammarType : atn_type_t
@@ -231,7 +235,7 @@ type t = {
   }
 
 let dump pps atn =
-  Fmt.(pf pps "grammarType: %a" pp_atn_type_t atn.grammarType)
+  Fmt.(pf pps "grammarType: %a" dump_atn_type_t atn.grammarType)
 
 let check_version = parser
   [< 'n >] ->

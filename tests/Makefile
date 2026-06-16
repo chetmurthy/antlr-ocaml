@@ -5,7 +5,7 @@ include $(TOP)/config/Makefile.sub
 PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner
 
 ML= \
-	lib_test.ml antlr_test.ml \
+	lib_test.ml antlr_test.ml roundtrip_atn.ml \
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
