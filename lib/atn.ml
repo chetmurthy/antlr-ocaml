@@ -119,17 +119,20 @@ let dump pps e = match e with
     ; Fmt.(pf pps {|    label_: %d@.|} label_)
     ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump label)
    
+| ActionTransition { _target ; ruleIndex ; actionIndex ; isCtxDependent } ->
+     Fmt.(pf pps {|    serializationType: ACTION@.|})
+    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+    ; Fmt.(pf pps {|    ruleIndex: %d@.|} ruleIndex)
+    ; Fmt.(pf pps {|    actionIndex: %d@.|} actionIndex)
+    ; Fmt.(pf pps {|    isCtxDependent: %b@.|} isCtxDependent)
+    ; Fmt.(pf pps {|    isEpsilon: %b@.|} (isEpsilon e))
+
+| SetTransition { _target ; set } ->
+   Fmt.(pf pps {|    serializationType: SET@.|})
+    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+    ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump set)
+
 (*
-| ActionTransition of {
-    _target : state_id
-  ; ruleIndex : int
-  ; actionIndex : int
-  ; isCtxDependent : bool
-  }
-| SetTransition of {
-    _target : state_id
-  ; set : IntervalSet.t
-  }
 | NotSetTransition of {
     _target : state_id
   ; set : IntervalSet.t

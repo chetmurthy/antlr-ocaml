@@ -189,6 +189,14 @@ class ActionTransition(Transition):
         self.isCtxDependent = isCtxDependent # e.g., $i ref in pred
         self.isEpsilon = True
 
+    def dump(self):
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    target: %s" % self.target)
+        print("    ruleIndex: %s" % self.ruleIndex)
+        print("    actionIndex: %s" % self.actionIndex)
+        print("    isCtxDependent: %s" % self.isCtxDependent)
+        print("    isEpsilon: %s" % self.isEpsilon)
+
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
 
@@ -207,6 +215,11 @@ class SetTransition(Transition):
         else:
             self.label = IntervalSet()
             self.label.addRange(range(Token.INVALID_TYPE, Token.INVALID_TYPE + 1))
+
+    def dump(self):
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    target: %s" % self.target)
+        print("    label: %s" % self.label.dump())
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol in self.label

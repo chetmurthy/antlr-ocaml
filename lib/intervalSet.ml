@@ -8,7 +8,6 @@ type t = {
 let dump pps t =
   match t.intervals with
     [] -> Fmt.(pf pps "{}")
-  | [r] -> Fmt.(pf pps "{%a}" Range.dump r)
   | l -> Fmt.(pf pps "{%a}" (list ~sep:(const string ", ") Range.dump) l)
 
 let mk () = { intervals = [] }
