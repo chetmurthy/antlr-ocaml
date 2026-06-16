@@ -136,6 +136,7 @@ class ATNState(object):
     def dump(self):
         print("  stateNumber: %d" % self.stateNumber)
         print("  stateType: %s" % ATNState.serializationNames[self.stateType])
+        print("  ruleIndex: %s" % self.ruleIndex)
 
     def addTransition(self, trans:Transition, index:int=-1):
         if len(self.transitions)==0:

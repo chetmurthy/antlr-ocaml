@@ -143,7 +143,8 @@ module State = struct
 
   let dump pps st =
     Fmt.(pf pps {|  stateNumber: %a@.|} dump_state_id st.stateNumber)
-    ; Fmt.(pf pps {|  stateType: %a@.|} Node.pp_atn_state_type_t Node.n(serialization_name st.node))
+    ; Fmt.(pf pps {|  stateType: %a@.|} Node.pp_atn_state_type_t Node.(serialization_name st.node))
+    ; Fmt.(pf pps {|  ruleIndex: %d@.|} st.ruleIndex)
 
   let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) stateNumber (node, ruleIndex) =
     let epsilonOnlyTransitions = List.for_all Edge.isEpsilon transitions in
