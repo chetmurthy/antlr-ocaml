@@ -134,3 +134,4 @@ class ATN(object):
     def dump(self):
         print("grammarType: %s" % repr(self.grammarType))
         print("maxTokenType: %s" % self.maxTokenType)
+        print("#states: %s" % len(self.states))

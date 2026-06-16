@@ -171,6 +171,7 @@ module State = struct
     st.epsilonOnlyTransitions <- List.for_all Edge.isEpsilon st.transitions
 
   type states_t = STATES of t array
+  let nstates (STATES l) = Array.length l
   let mk_states l = STATES (Array.of_list (List.mapi (fun i x -> mk (mk_id i) x) l))
   let get_state t i =
     match (t,i) with
@@ -237,7 +238,7 @@ type t = {
 let dump pps atn =
   Fmt.(pf pps {|grammarType: %a@.|} dump_atn_type_t atn.grammarType)
   ; Fmt.(pf pps {|maxTokenType: %d@.|} atn.maxTokenType)
-
+  ; Fmt.(pf pps {|#states: %d@.|} (State.nstates atn.states))
 let check_version = parser
   [< 'n >] ->
     if n <> _SERIALIZED_VERSION then
