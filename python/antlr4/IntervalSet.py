@@ -167,6 +167,20 @@ class IntervalSet(object):
                 buf.write("}")
             return buf.getvalue()
 
+    def dump(self):
+        if self.intervals is None:
+            return "{}"
+        with StringIO() as buf:
+            buf.write("{")
+            first = True
+            for i in self.intervals:
+                if not first:
+                    buf.write(", ")
+                buf.write("<%d..%d>" % (i.start, i.stop))
+                first = False
+            buf.write("}")
+            return buf.getvalue()
+
     def elementName(self, literalNames:list, symbolicNames:list, a:int):
         if a==Token.EOF:
             return "<EOF>"

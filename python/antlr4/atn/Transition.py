@@ -78,6 +78,12 @@ class AtomTransition(Transition):
         self.label = self.makeLabel()
         self.serializationType = self.ATOM
 
+    def dump(self):
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    target: %s" % self.target)
+        print("    label_: %s" % self.label_)
+        print("    label: %s" % self.label.dump())
+
     def makeLabel(self):
         s = IntervalSet()
         s.addOne(self.label_)

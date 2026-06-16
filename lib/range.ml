@@ -10,6 +10,12 @@ type t =
   }
   [@@deriving show]
 
+let dump pps t =
+  if t.step = 1 then
+    Fmt.(pf pps "<%d..%d>" t.start t.stop)
+  else
+  Fmt.(pf pps "<%d..%d/%d>" t.start t.stop t.step)
+
 let mk ?(step=1) ?start stop =
   let start = match start with
       None -> 0

@@ -78,7 +78,8 @@ and edge_t =
     }
 | AtomTransition of {
     _target : state_id
-  ; label : int
+  ; label_ : int
+  ; label : IntervalSet.t
   }
 | ActionTransition of {
     _target : state_id

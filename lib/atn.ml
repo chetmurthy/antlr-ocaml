@@ -94,8 +94,6 @@ let dump pps e = match e with
     ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
     ; Fmt.(pf pps {|    isEpsilon: %b@.|} (isEpsilon e))
     ; Fmt.(pf pps {|    outermostPrecedenceReturn: %d@.|} outermostPrecedenceReturn)
-  | _ ->
-     Fmt.(pf pps {|    <unhandled>@.|})
 (*
 | RangeTransition of {
     _target : state_id
@@ -114,10 +112,14 @@ let dump pps e = match e with
     ; predIndex : int
     ; isCtxDependent : bool
     }
-| AtomTransition of {
-    _target : state_id
-  ; label : int
-  }
+ *)
+| AtomTransition { _target ; label ; label_ } ->
+   Fmt.(pf pps {|    serializationType: ATOM@.|})
+    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+    ; Fmt.(pf pps {|    label_: %d@.|} label_)
+    ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump label)
+   
+(*
 | ActionTransition of {
     _target : state_id
   ; ruleIndex : int
@@ -177,6 +179,8 @@ type lexer_action_t =
     mutable type_ : int
   }
  *)
+  | _ ->
+     Fmt.(pf pps {|    <unhandled>@.|})
 
 
 let mkEpsilonTransition ~target ?(outermostPrecedenceReturn = -1) () =
@@ -192,7 +196,8 @@ let mkPredicateTransition ~target ~ruleIndex ~predIndex ~isCtxDependent () =
   PredicateTransition { _target=target ; ruleIndex ; predIndex ; isCtxDependent }
 
 let mkAtomTransition ~target ~label () =
-  AtomTransition { _target=target ; label }
+  let labelSet = IntervalSet.( () |> mk |> addOne label ) in
+  AtomTransition { _target=target ; label=labelSet ; label_=label }
 
 let mkActionTransition ~target ~ruleIndex ~actionIndex ~isCtxDependent () =
   ActionTransition { _target=target ; ruleIndex ; actionIndex ; isCtxDependent }
