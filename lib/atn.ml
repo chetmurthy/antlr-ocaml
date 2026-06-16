@@ -363,6 +363,11 @@ let dump pps atn =
                   State.dump state
            )
          )
+  ; Fmt.(pf pps {|#sets: %d@.|} (Array.length atn.sets))
+  ; atn.sets
+    |> Array.iteri
+         (fun i s ->
+           Fmt.(pf pps {|Set %d: %a@.|} i IntervalSet.dump atn.sets.(i)))
 
 let check_version = parser
   [< 'n >] ->

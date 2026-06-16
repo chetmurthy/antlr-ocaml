@@ -15,7 +15,8 @@ class ATN(object):
     __slots__ = (
         'grammarType', 'maxTokenType', 'states', 'decisionToState',
         'ruleToStartState', 'ruleToStopState', 'modeNameToStartState',
-        'ruleToTokenType', 'lexerActions', 'modeToStartState'
+        'ruleToTokenType', 'lexerActions', 'modeToStartState',
+        'sets'
     )
 
     INVALID_ALT_NUMBER = 0
@@ -138,3 +139,6 @@ class ATN(object):
         for state in self.states:
             print("State %d" % state.stateNumber)
             state.dump()
+        print("#sets: %s" % len(self.sets))
+        for i in range(0,len(self.sets)):
+            print("Set %s: %s" % (i, self.sets[i].dump()))

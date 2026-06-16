@@ -4,12 +4,29 @@
 
 #require "pa_ppx_regexp";;
 #require "antlr";;
+
+open Antlr ;;
 (*
-#trace Antlr.Atn.readState1 ;;
+#trace Atn.readState1 ;;
  *)
 
-"/home/chet/Hack/Antlr/src/calc/gen-java/CalcLexer.interp" |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_raw |> Antlr.Atn.deser ;;
+#trace IntervalSet.add ;;
+#trace Atn.edgeFactory ;;
+#trace Atn.readSets ;;
+#trace Atn.State.addTransition ;;
+#trace Range.compare ;;
+#trace Range.merge ;;
 
+#install_printer Range.dump ;;
+#install_printer IntervalSet.dump ;;
+
+let v = Range.mk ~start:9 11 ;;
+let t = IntervalSet.(() |> mk |> add (Range.mk ~start:13 14)) ;;
+Antlr.IntervalSet.add v t ;;
+
+(*
+"/home/chet/Hack/Antlr/src/calc/gen-java/CalcLexer.interp" |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_raw |> Antlr.Atn.deser ;;
+ *)
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***

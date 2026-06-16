@@ -32,6 +32,7 @@ class ATNDeserializer (object):
         self.readModes(atn)
         sets = []
         self.readSets(atn, sets)
+        atn.sets = sets
         self.readEdges(atn, sets)
         self.readDecisions(atn)
         self.readLexerActions(atn)

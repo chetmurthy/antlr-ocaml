@@ -12,6 +12,8 @@ let dump pps t =
 
 let mk () = { intervals = [] }
 
+let ofList l = { intervals = l }
+
 let add v t =
   let open Range in
   let rec addrec acc v = function
@@ -19,7 +21,7 @@ let add v t =
     | (i::tl) as l ->
        match Range.compare v i with
          -1 ->
-         (List.rev acc) @ (v :: tl)
+         (List.rev acc) @ (v :: i :: tl)
        | 1 ->
           addrec (i::acc) v tl
        | 0 ->
