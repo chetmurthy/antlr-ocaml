@@ -15,6 +15,7 @@ let _SERIALIZED_VERSION = 4
 type state_id = [%import: Types.state_id]
 [@@deriving show]
 
+let dump_state_id pps (STID n) = Fmt.(pf pps "%d" n)
 
 module Node = struct
 type t = [%import: Types.node_t]
@@ -239,6 +240,12 @@ let dump pps atn =
   Fmt.(pf pps {|grammarType: %a@.|} dump_atn_type_t atn.grammarType)
   ; Fmt.(pf pps {|maxTokenType: %d@.|} atn.maxTokenType)
   ; Fmt.(pf pps {|#states: %d@.|} (State.nstates atn.states))
+  ; atn.states
+    |> State.iter
+         (fun state ->
+           Fmt.(pf pps {|State %a@.|} dump_state_id state.stateNumber)
+         )
+
 let check_version = parser
   [< 'n >] ->
     if n <> _SERIALIZED_VERSION then

@@ -135,3 +135,5 @@ class ATN(object):
         print("grammarType: %s" % repr(self.grammarType))
         print("maxTokenType: %s" % self.maxTokenType)
         print("#states: %s" % len(self.states))
+        for state in self.states:
+            print("State %d" % state.stateNumber)

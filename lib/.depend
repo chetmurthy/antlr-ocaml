@@ -20,12 +20,14 @@ types.cmo : \
 types.cmx : \
     intervalSet.cmx
 atn.cmo : \
+    util.cmo \
     types.cmo \
     token.cmo \
     range.cmo \
     intervalSet.cmo \
     interp.cmo
 atn.cmx : \
+    util.cmx \
     types.cmx \
     token.cmx \
     range.cmx \
