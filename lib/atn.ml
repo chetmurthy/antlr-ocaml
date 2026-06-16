@@ -215,6 +215,7 @@ end
 type atn_type_t =
     LEXER
   | PARSER
+[@@deriving show]
 
 type t = {
     grammarType : atn_type_t
@@ -228,6 +229,10 @@ type t = {
   ; decisionToState : state_id array
   ; lexerActions : LexerAction.t array option
   }
+
+let dump pps atn =
+  Fmt.(pf pps "grammarType: %a" pp_atn_type_t atn.grammarType)
+
 let check_version = parser
   [< 'n >] ->
     if n <> _SERIALIZED_VERSION then

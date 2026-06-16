@@ -100,19 +100,6 @@ and edge_t =
   ; precedence : int
   }
 
-let isEpsilon = function
-    (EpsilonTransition _
-     | RuleTransition _
-    | PredicateTransition _
-    | ActionTransition _
-    | PrecedencePredicateTransition _) -> true
-
-  | (RangeTransition _
-     | AtomTransition _
-    | SetTransition _
-    | NotSetTransition _
-    | WildcardTransition _) -> false
-
 type lexer_action_t =
   LexerChannelAction of {
       mutable isPositionDependent : bool ;
