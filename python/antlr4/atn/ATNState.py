@@ -137,7 +137,11 @@ class ATNState(object):
         print("  stateNumber: %d" % self.stateNumber)
         print("  stateType: %s" % ATNState.serializationNames[self.stateType])
         print("  ruleIndex: %s" % self.ruleIndex)
-
+        print("  epsilonOnlyTransitions: %s" % self.epsilonOnlyTransitions)
+        print("  #transitions: %d" % len(self.transitions))
+        for i in range(0,len(self.transitions)):
+            print("  Edge %d" % i)
+            self.transitions[i].dump()
     def addTransition(self, trans:Transition, index:int=-1):
         if len(self.transitions)==0:
             self.epsilonOnlyTransitions = trans.isEpsilon

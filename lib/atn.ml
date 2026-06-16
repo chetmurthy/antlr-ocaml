@@ -75,6 +75,110 @@ module Edge = struct
   type t = [%import: Types.edge_t]
   [@@deriving show]
 
+let isEpsilon = function
+    (EpsilonTransition _
+     | RuleTransition _
+    | PredicateTransition _
+    | ActionTransition _
+    | PrecedencePredicateTransition _) -> true
+
+  | (RangeTransition _
+     | AtomTransition _
+    | SetTransition _
+    | NotSetTransition _
+    | WildcardTransition _) -> false
+
+let dump pps e = match e with
+    EpsilonTransition { _target ; outermostPrecedenceReturn } ->
+     Fmt.(pf pps {|    serializationType: EPSILON@.|})
+    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+    ; Fmt.(pf pps {|    isEpsilon: %b@.|} (isEpsilon e))
+    ; Fmt.(pf pps {|    outermostPrecedenceReturn: %d@.|} outermostPrecedenceReturn)
+  | _ ->
+     Fmt.(pf pps {|    <unhandled>@.|})
+(*
+| RangeTransition of {
+    _target : state_id
+  ; start : int
+  ; stop : int
+  }
+| RuleTransition of {
+    ruleStart : state_id
+  ; ruleIndex : int
+  ; precedence : int
+  ; followState : state_id
+  }
+| PredicateTransition of {
+      _target : state_id
+    ; ruleIndex : int
+    ; predIndex : int
+    ; isCtxDependent : bool
+    }
+| AtomTransition of {
+    _target : state_id
+  ; label : int
+  }
+| ActionTransition of {
+    _target : state_id
+  ; ruleIndex : int
+  ; actionIndex : int
+  ; isCtxDependent : bool
+  }
+| SetTransition of {
+    _target : state_id
+  ; set : IntervalSet.t
+  }
+| NotSetTransition of {
+    _target : state_id
+  ; set : IntervalSet.t
+  }
+| WildcardTransition of state_id
+| PrecedencePredicateTransition of {
+    _target : state_id
+  ; precedence : int
+  }
+
+type lexer_action_t =
+  LexerChannelAction of {
+      mutable isPositionDependent : bool ;
+      mutable channel : int
+    }
+
+| LexerCustomAction of {
+      mutable isPositionDependent : bool ;
+      mutable ruleIndex : int ;
+      mutable actionIndex : int
+    }
+
+| LexerModeAction of {
+      mutable isPositionDependent : bool ;
+      mutable mode : int
+    }
+
+| LexerMoreAction of {
+      mutable isPositionDependent : bool ;
+    }
+
+| LexerPopModeAction of {
+      mutable isPositionDependent : bool ;
+    }
+
+| LexerPushModeAction of {
+      mutable isPositionDependent : bool ;
+      mutable mode : int
+    }
+
+| LexerSkipAction of {
+      mutable isPositionDependent : bool ;
+    }
+
+| LexerTypeAction of {
+    mutable isPositionDependent : bool ;
+    mutable type_ : int
+  }
+ *)
+
+
 let mkEpsilonTransition ~target ?(outermostPrecedenceReturn = -1) () =
   EpsilonTransition { _target=target ; outermostPrecedenceReturn }
 
@@ -105,19 +209,6 @@ let mkWildcardTransition ~target () =
 let mkPrecedencePredicateTransition ~target ~precedence () =
   PrecedencePredicateTransition { _target=target ; precedence }
 
-let isEpsilon = function
-    (EpsilonTransition _
-     | RuleTransition _
-    | PredicateTransition _
-    | ActionTransition _
-    | PrecedencePredicateTransition _) -> true
-
-  | (RangeTransition _
-     | AtomTransition _
-    | SetTransition _
-    | NotSetTransition _
-    | WildcardTransition _) -> false
-
 let target = function
   EpsilonTransition { _target } -> _target
 | RangeTransition { _target } -> _target
@@ -145,7 +236,15 @@ module State = struct
     Fmt.(pf pps {|  stateNumber: %a@.|} dump_state_id st.stateNumber)
     ; Fmt.(pf pps {|  stateType: %a@.|} Node.pp_atn_state_type_t Node.(serialization_name st.node))
     ; Fmt.(pf pps {|  ruleIndex: %d@.|} st.ruleIndex)
-
+    ; Fmt.(pf pps {|  epsilonOnlyTransitions: %s@.|}
+             (if st.epsilonOnlyTransitions then "True" else "False"))
+    ; Fmt.(pf pps {|  #transitions: %d@.|} (List.length st.transitions))
+    ; st.transitions
+      |> List.iteri
+           (fun i e ->
+             Fmt.(pf pps "  Edge %d@." i)
+            ; Edge.dump pps e)
+           
   let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) stateNumber (node, ruleIndex) =
     let epsilonOnlyTransitions = List.for_all Edge.isEpsilon transitions in
     { stateNumber ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }

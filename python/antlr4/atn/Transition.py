@@ -65,6 +65,8 @@ class Transition (object):
         self.isEpsilon = False
         self.label = None
 
+    def dump(self):
+        print("    %s" % repr(self))
 
 # TODO: make all transitions sets? no, should remove set edges
 class AtomTransition(Transition):
@@ -110,6 +112,12 @@ class EpsilonTransition(Transition):
         self.serializationType = self.EPSILON
         self.isEpsilon = True
         self.outermostPrecedenceReturn = outermostPrecedenceReturn
+
+    def dump(self):
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    target: %s" % self.target)
+        print("    isEpsilon: %s" % self.isEpsilon)
+        print("    outermostPrecedenceReturn: %s" % self.outermostPrecedenceReturn)
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
