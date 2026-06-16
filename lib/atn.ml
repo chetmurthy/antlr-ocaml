@@ -235,7 +235,8 @@ type t = {
   }
 
 let dump pps atn =
-  Fmt.(pf pps "grammarType: %a" dump_atn_type_t atn.grammarType)
+  Fmt.(pf pps {|grammarType: %a@.|} dump_atn_type_t atn.grammarType)
+  ; Fmt.(pf pps {|maxTokenType: %d@.|} atn.maxTokenType)
 
 let check_version = parser
   [< 'n >] ->
