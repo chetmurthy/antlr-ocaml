@@ -246,7 +246,7 @@ module State = struct
             ; Edge.dump pps e)
            
   let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) stateNumber (node, ruleIndex) =
-    let epsilonOnlyTransitions = List.for_all Edge.isEpsilon transitions in
+    let epsilonOnlyTransitions = transitions <> [] && List.for_all Edge.isEpsilon transitions in
     { stateNumber ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
 
   let mkBasicBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
