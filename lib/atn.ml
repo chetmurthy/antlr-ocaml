@@ -21,20 +21,6 @@ module Node = struct
 type t = [%import: Types.node_t]
 [@@deriving show]
 
-let rule_index_of_node = function
-  | RuleStartState -> 1
-  | BasicBlockStartState _ -> 2
-  | PlusBlockStartState _ -> 3
-  | StarBlockStartState _ -> 4
-  | TokensStartState _ -> 5
-  | RuleStopState -> 6
-  | BlockEndState _ -> 7
-  | StarLoopbackState -> 8
-  | StarLoopEntryState _ -> 9
-  | PlusLoopbackState _ -> 10
-  | LoopEndState _ -> 11
-
-
 type atn_state_type_t =
        INVALID_TYPE
      | BASIC
@@ -49,6 +35,7 @@ type atn_state_type_t =
      | STAR_LOOP_ENTRY
      | PLUS_LOOP_BACK
      | LOOP_END
+[@@deriving show { with_path = false }]
 
 let deser_state_type bp = function
   0 -> INVALID_TYPE
@@ -66,6 +53,22 @@ let deser_state_type bp = function
 | 12 -> LOOP_END
 | n ->
    Fmt.(failwithf "pos %d: deser_state_type with invalid arg %d" bp n)
+
+
+let serialization_name =
+  function
+  BasicState -> BASIC
+| RuleStartState -> RULE_START
+| BasicBlockStartState _ -> BLOCK_START
+| PlusBlockStartState _ -> PLUS_BLOCK_START
+| StarBlockStartState _ -> STAR_BLOCK_START
+| TokensStartState _ -> TOKEN_START
+| RuleStopState -> RULE_STOP
+| BlockEndState _ -> BLOCK_END
+| StarLoopbackState -> STAR_LOOP_BACK
+| StarLoopEntryState _ -> STAR_LOOP_ENTRY
+| PlusLoopbackState _ -> PLUS_LOOP_BACK
+| LoopEndState _ -> LOOP_END
 end
 
 module Edge = struct
@@ -137,6 +140,10 @@ module State = struct
             [@with edge_t := Edge.t]
            ]
   [@@deriving show]
+
+  let dump pps st =
+    Fmt.(pf pps {|  stateNumber: %a@.|} dump_state_id st.stateNumber)
+    ; Fmt.(pf pps {|  stateType: %a@.|} Node.pp_atn_state_type_t Node.n(serialization_name st.node))
 
   let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) stateNumber (node, ruleIndex) =
     let epsilonOnlyTransitions = List.for_all Edge.isEpsilon transitions in
@@ -243,7 +250,10 @@ let dump pps atn =
   ; atn.states
     |> State.iter
          (fun state ->
-           Fmt.(pf pps {|State %a@.|} dump_state_id state.stateNumber)
+           Fmt.(pf pps {|State %a@.%a@.|}
+                  dump_state_id state.stateNumber
+                  State.dump state
+           )
          )
 
 let check_version = parser

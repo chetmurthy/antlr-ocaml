@@ -137,3 +137,4 @@ class ATN(object):
         print("#states: %s" % len(self.states))
         for state in self.states:
             print("State %d" % state.stateNumber)
+            state.dump()

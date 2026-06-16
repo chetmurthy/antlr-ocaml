@@ -133,6 +133,10 @@ class ATNState(object):
     def __str__(self):
         return str(self.stateNumber)
 
+    def dump(self):
+        print("  stateNumber: %d" % self.stateNumber)
+        print("  stateType: %s" % ATNState.serializationNames[self.stateType])
+
     def addTransition(self, trans:Transition, index:int=-1):
         if len(self.transitions)==0:
             self.epsilonOnlyTransitions = trans.isEpsilon
