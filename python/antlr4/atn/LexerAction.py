@@ -103,6 +103,10 @@ class LexerPushModeAction(LexerAction):
         super().__init__(LexerActionType.PUSH_MODE)
         self.mode = mode
 
+    def dump(self):
+        super(LexerPushModeAction, self).dump()
+        print("mode: %s" % self.mode)
+
     # <p>This action is implemented by calling {@link Lexer#pushMode} with the
     # value provided by {@link #getMode}.</p>
     def execute(self, lexer:Lexer):

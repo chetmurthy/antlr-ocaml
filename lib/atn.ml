@@ -353,11 +353,12 @@ module LexerAction = struct
   [@@deriving show]
 
 let dump pps = function
+    LexerChannelAction { isPositionDependent ; channel } ->
+   ()
+  ; Fmt.(pf pps "  actionType: <LexerActionType. CHANNEL: 0>@.")
+  ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
+     
 (*
-    LexerChannelAction of {
-      mutable isPositionDependent : bool ;
-      mutable channel : int
-    }
 
 | LexerCustomAction of {
       mutable isPositionDependent : bool ;
@@ -377,14 +378,15 @@ let dump pps = function
 | LexerPopModeAction of {
       mutable isPositionDependent : bool ;
     }
-
-| LexerPushModeAction of {
-      mutable isPositionDependent : bool ;
-      mutable mode : int
-    }
  *)
+| LexerPushModeAction { isPositionDependent ; mode } ->
+   ()
+  ; Fmt.(pf pps "  actionType: <LexerActionType.PUSH_MODE: 5>@.")
+  ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
+
 | LexerSkipAction { isPositionDependent } ->
-   Fmt.(pf pps "  actionType: <LexerActionType.SKIP: 6>@.")
+   ()
+  ; Fmt.(pf pps "  actionType: <LexerActionType.SKIP: 6>@.")
   ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
 
 (*
