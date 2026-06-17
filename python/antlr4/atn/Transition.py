@@ -249,6 +249,10 @@ class WildcardTransition(Transition):
         super().__init__(target)
         self.serializationType = self.WILDCARD
 
+    def dump(self):
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    target: %s" % self.target)
+
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol >= minVocabSymbol and symbol <= maxVocabSymbol
 

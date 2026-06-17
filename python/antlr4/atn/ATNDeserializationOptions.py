@@ -6,7 +6,7 @@
 ATNDeserializationOptions = None
 
 class ATNDeserializationOptions(object):
-    __slots__ = ('readonly', 'verifyATN', 'generateRuleBypassTransitions')
+    __slots__ = ('readonly', 'verifyATN', 'generateRuleBypassTransitions','debug')
 
     defaultOptions = None
 
@@ -14,6 +14,7 @@ class ATNDeserializationOptions(object):
         self.readonly = False
         self.verifyATN = True if copyFrom is None else copyFrom.verifyATN
         self.generateRuleBypassTransitions = False if copyFrom is None else copyFrom.generateRuleBypassTransitions
+        self.debug = False if copyFrom is None else copyFrom.debug
 
     def __setattr__(self, key, value):
         if key!="readonly" and self.readonly:
@@ -21,4 +22,5 @@ class ATNDeserializationOptions(object):
         super(type(self), self).__setattr__(key,value)
 
 ATNDeserializationOptions.defaultOptions = ATNDeserializationOptions()
+#ATNDeserializationOptions.defaultOptions.debug = True
 ATNDeserializationOptions.defaultOptions.readonly = True

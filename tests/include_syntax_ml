@@ -6,27 +6,18 @@
 #require "antlr";;
 
 open Antlr ;;
-(*
-#trace Atn.readState1 ;;
- *)
-
-#trace IntervalSet.add ;;
+#trace Atn.readStates ;;
 #trace Atn.edgeFactory ;;
 #trace Atn.readSets ;;
-#trace Atn.State.addTransition ;;
-#trace Range.compare ;;
-#trace Range.merge ;;
 
-#install_printer Range.dump ;;
-#install_printer IntervalSet.dump ;;
-
-let v = Range.mk ~start:9 11 ;;
-let t = IntervalSet.(() |> mk |> add (Range.mk ~start:13 14)) ;;
-Antlr.IntervalSet.add v t ;;
+Atn.debug := true ;;
 
 (*
 "/home/chet/Hack/Antlr/src/calc/gen-java/CalcLexer.interp" |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_raw |> Antlr.Atn.deser ;;
  *)
+
+"/home/chet/Hack/Antlr/src/antlr4/antlr4-maven-plugin/src/test/projects/importsCustom/src/main/antlr4/imports/TestBaseLexer.interp" |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_raw |> Antlr.Atn.deser ;;
+
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***

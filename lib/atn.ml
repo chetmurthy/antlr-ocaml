@@ -6,6 +6,8 @@ open Pa_ppx_utils.Std
 open Interp
 open Util
 
+let debug = ref false
+
 let readInt = parser [< 'n >] -> n
 
 let readBool = parser [< 'n >] -> n<>0
@@ -137,49 +139,15 @@ let dump pps e = match e with
     _target : state_id
   ; set : IntervalSet.t
   }
-| WildcardTransition of state_id
+ *)
+| WildcardTransition target ->
+   Fmt.(pf pps {|    serializationType: WILDCARD@.|})
+    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id target)
+
+(*
 | PrecedencePredicateTransition of {
     _target : state_id
   ; precedence : int
-  }
-
-type lexer_action_t =
-  LexerChannelAction of {
-      mutable isPositionDependent : bool ;
-      mutable channel : int
-    }
-
-| LexerCustomAction of {
-      mutable isPositionDependent : bool ;
-      mutable ruleIndex : int ;
-      mutable actionIndex : int
-    }
-
-| LexerModeAction of {
-      mutable isPositionDependent : bool ;
-      mutable mode : int
-    }
-
-| LexerMoreAction of {
-      mutable isPositionDependent : bool ;
-    }
-
-| LexerPopModeAction of {
-      mutable isPositionDependent : bool ;
-    }
-
-| LexerPushModeAction of {
-      mutable isPositionDependent : bool ;
-      mutable mode : int
-    }
-
-| LexerSkipAction of {
-      mutable isPositionDependent : bool ;
-    }
-
-| LexerTypeAction of {
-    mutable isPositionDependent : bool ;
-    mutable type_ : int
   }
  *)
   | x ->
@@ -437,9 +405,11 @@ let readATN = parser
     
 let readSTID = parser [< 'n >] -> State.mk_id n
 
-let readNode =
+let readNode strm =
+  if !debug then
+    Fmt.(pf stderr "readState: pos=%d@." (Stream.count strm)) ;
   let open Node in
-  parser
+  (parser
   bp [< 'stype ;
    node = (match deser_state_type bp stype with
            INVALID_TYPE ->
@@ -505,27 +475,35 @@ let readNode =
              (st, ruleIndex)
             )
 
-        ) >] -> node
+        ) >] -> node) strm
 
 let readStates strm =
   let loopEndStates = ref [] in
   let loopbackStateNumber = ref [] in
+  if !debug then
+    Fmt.(pf stderr "readStates: pos=%d@." (Stream.count strm)) ;
   let nstates = readInt strm in
   let nodes = plistn readNode nstates strm in
   let states = State.mk_states nodes in
   let numNonGreedyStates = readInt strm in
   for i = 0 to numNonGreedyStates-1 do
-    (State.get_state states (State.mk_id i)).nonGreedy <- true
+    let stateNumber = readSTID strm in
+    (State.get_state states stateNumber).nonGreedy <- true
   done ;
   let numPrecedenceStates = readInt strm in
   for i = 0 to numPrecedenceStates-1 do
-    (State.get_state states (State.mk_id i)).isPrecedenceRule <- true
+    let stateNumber = readSTID strm in
+    (State.get_state states stateNumber).isPrecedenceRule <- true
   done ;
   states
 
 let readRules (grammarType, (states : State.states_t)) strm =
+  if !debug then
+    Fmt.(pf stderr "readRules: pos=%d@." (Stream.count strm)) ;
   let open State in
   let nrules = readInt strm in
+  if !debug then
+    Fmt.(pf stderr "readRules: nrules=%d@." nrules) ;
   let (ruleToStartState, ruleToTokenType_opt) =
     match grammarType with
     | PARSER ->
@@ -549,13 +527,16 @@ let readRules (grammarType, (states : State.states_t)) strm =
     (ruleToStartState, ruleToTokenType_opt, ruleToStopState)
 
 let readModes strm =
+  if !debug then
+    Fmt.(pf stderr "readModes: pos=%d@." (Stream.count strm)) ;
   let nmodes = readInt strm in
   let modeToStartState = plistn readSTID nmodes strm in
   Array.of_list modeToStartState
 
-let readSets strm =
-  let m = readInt strm in
-  let l = plistn (parser
+let readSet strm =
+  if !debug then
+    Fmt.(pf stderr "readSet: pos=%d@." (Stream.count strm)) ;
+  (parser
     [< n=readInt ; containsEof=readBool ;
      ranges=plistn (pa_pair readInt readInt) n >] ->
      let ranges = List.map (fun (a,b) -> (a,b+1)) ranges in
@@ -565,7 +546,15 @@ let readSets strm =
      let ranges = List.map (fun (start,stop) -> Range.mk ~start stop) ranges in
      let iset =
        IntervalSet.(List.fold_right IntervalSet.add ranges (mk())) in
-     iset) m strm in
+     if !debug then
+       Fmt.(pf stderr "readSet -> %a@." IntervalSet.dump iset) ;
+     iset) strm
+
+let readSets strm =
+  if !debug then
+    Fmt.(pf stderr "readSets: pos=%d@." (Stream.count strm)) ;
+  let m = readInt strm in
+  let l = plistn readSet m strm in
   Array.of_list l
 
 
@@ -818,7 +807,7 @@ let verifyATN atn =
                 {node=StarBlockStartState _},{node=LoopEndState _} when not n.nonGreedy -> ()
               | {node=LoopEndState _},{node=StarBlockStartState _} when n.nonGreedy -> ()
               | _ ->
-                 Fmt.(failwithf "state %a: (two) transitions from %a do not lead to appropriate state: %a, %a"
+                 Fmt.(failwithf "state %a: @[(two) transitions from@ %a do not lead to appropriate state:@ %a,@ %a@]"
                         pp_state_id state.stateNumber
                         State.pp state
                         State.pp st1'
@@ -888,8 +877,8 @@ let verifyATN atn =
          )
        )
 
-let deser interp =
+let deser ?(verify=true) interp =
   let strm = Stream.of_list interp.Raw.atn in
   let atn = deser1 strm in
-  verifyATN atn ;
+  if verify then verifyATN atn ;
   atn

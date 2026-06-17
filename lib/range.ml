@@ -1,6 +1,8 @@
 (**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_utils
+open Pa_ppx_base
+open Ppxutil
 open Std
 
 type t =
@@ -20,7 +22,8 @@ let mk ?(step=1) ?start stop =
   let start = match start with
       None -> 0
     | Some n -> n in
-  assert (start <= stop) ;
+  if start > stop then
+    Fmt.(failwithf "Range.mk: Invalid arguments: start (%d) > stop (%d)" start stop) ;
   { start ; stop ; step }
 
 let rec compare r1 r2 =

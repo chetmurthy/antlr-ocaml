@@ -29,8 +29,23 @@ roundtrip_atn.exe: roundtrip_atn.cmo
 
 
 SHELL := /bin/bash
+#FILE := CalcLexer.interp
+FILE := /home/chet/Hack/Antlr/src/antlr4/antlr4-maven-plugin/src/test/projects/importsCustom/src/main/antlr4/imports/TestBaseLexer.interp
+#ATNDEBUG=--debug
+#ATNVERIFY=--disable-verify
 compare-one:: roundtrip_atn.exe
-	diff -bBwiu <( python3 deserialize_test.py CalcLexer.interp ) <( ./roundtrip_atn.exe CalcLexer.interp )
+	diff -bBwiu <( python3 deserialize_test.py $(FILE) ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE) )
+
+run-ocaml:: roundtrip_atn.exe
+	./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE)
+
+compare-all:: roundtrip_atn.exe
+	set -e ;\
+	for f in `find ~/Hack/Antlr/src/antlr4 -name '*.interp' -print`; \
+	do \
+	echo "================ $$f ================" ; \
+	diff -bBwiu <( python3 deserialize_test.py $$f ) <( ./roundtrip_atn.exe $$f ) ; \
+	done
 
 test-python::
 	python3 deserialize_test.py /home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/test/org/antlr/v4/test/runtime/java/api/JavaLexer.interp

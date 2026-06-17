@@ -2,6 +2,7 @@
 # Use of this file is governed by the BSD 3-clause license that
 # can be found in the LICENSE.txt file in the project root.
 #/
+import sys
 from io import StringIO
 from typing import Callable
 from antlr4.Token import Token
@@ -57,11 +58,13 @@ class ATNDeserializer (object):
         return ATN(grammarType, maxTokenType)
 
     def readStates(self, atn:ATN):
+        if self.deserializationOptions.debug: print("readStates: pos=%s" % self.pos, file=sys.stderr)
         loopBackStateNumbers = []
         endStateNumbers = []
         nstates = self.readInt()
         for i in range(0, nstates):
             position = self.pos
+            if self.deserializationOptions.debug: print("readState: pos=%s" % position, file=sys.stderr)
             stype = self.readInt()
             # ignore bad type of states
             if stype==ATNState.INVALID_TYPE:
@@ -97,7 +100,9 @@ class ATNDeserializer (object):
             atn.states[stateNumber].isPrecedenceRule = True
 
     def readRules(self, atn:ATN):
+        if self.deserializationOptions.debug: print("readRules: pos=%s" % self.pos, file=sys.stderr)
         nrules = self.readInt()
+        if self.deserializationOptions.debug: print("readRules: nrules=%s" % nrules, file=sys.stderr)
         if atn.grammarType == ATNType.LEXER:
             atn.ruleToTokenType = [0] * nrules
 
@@ -118,12 +123,14 @@ class ATNDeserializer (object):
             atn.ruleToStartState[state.ruleIndex].stopState = state
 
     def readModes(self, atn:ATN):
+        if self.deserializationOptions.debug: print("readModes: pos=%s" % self.pos, file=sys.stderr)
         nmodes = self.readInt()
         for i in range(0, nmodes):
             s = self.readInt()
             atn.modeToStartState.append(atn.states[s])
 
     def readSets(self, atn:ATN, sets:list):
+        if self.deserializationOptions.debug: print("readSets: pos=%s" % self.pos, file=sys.stderr)
         m = self.readInt()
         for i in range(0, m):
             iset = IntervalSet()
@@ -136,6 +143,7 @@ class ATNDeserializer (object):
                 i1 = self.readInt()
                 i2 = self.readInt()
                 iset.addRange(range(i1, i2 + 1)) # range upper limit is exclusive
+            if self.deserializationOptions.debug: print("readSets -> %s" % iset.dump(), file=sys.stderr)
 
     def readEdges(self, atn:ATN, sets:list):
         nedges = self.readInt()
