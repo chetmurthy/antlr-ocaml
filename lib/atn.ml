@@ -170,14 +170,17 @@ let dump pps e = match e with
     ; Fmt.(pf pps {|    precedence: %d@.|} precedence)
     ; Fmt.(pf pps {|    followState: %a@.|} dump_state_id followState)
 
-(*
-| PredicateTransition of {
-      _target : state_id
-    ; ruleIndex : int
-    ; predIndex : int
-    ; isCtxDependent : bool
-    }
- *)
+| PredicateTransition { _target ; ruleIndex ; predIndex ; isCtxDependent } ->
+     ()
+    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+    ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+    ; Fmt.(pf pps {|    label: None@.|})
+    ; Fmt.(pf pps {|    serializationType: PREDICATE@.|})
+    ; Fmt.(pf pps {|    ruleIndex: %d@.|} ruleIndex)
+    ; Fmt.(pf pps {|    predIndex: %d@.|} predIndex)
+  ; Fmt.(pf pps {|    isCtxDependent: %a@.|} dump_pybool isCtxDependent)
+
+
 | AtomTransition { _target ; label ; label_ } ->
    ()
   ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
@@ -203,12 +206,13 @@ let dump pps e = match e with
   ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump set)
   ; Fmt.(pf pps {|    serializationType: SET@.|})
 
-(*
-| NotSetTransition of {
-    _target : state_id
-  ; set : IntervalSet.t
-  }
- *)
+| NotSetTransition { _target ; set } ->
+   ()
+  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+  ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+  ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump set)
+  ; Fmt.(pf pps {|    serializationType: NOT_SET@.|})
+
 | WildcardTransition target ->
    ()
   ; Fmt.(pf pps {|    target: %a@.|} dump_state_id target)
@@ -216,13 +220,15 @@ let dump pps e = match e with
   ; Fmt.(pf pps {|    label: None@.|})
   ; Fmt.(pf pps {|    serializationType: WILDCARD@.|})
 
-(*
-| PrecedencePredicateTransition of {
-    _target : state_id
-  ; precedence : int
-  }
- *)
-  | x ->
+| PrecedencePredicateTransition { _target ; precedence } ->
+   ()
+  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+  ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+  ; Fmt.(pf pps {|    label: None@.|})
+  ; Fmt.(pf pps {|    serializationType: PRECEDENCE@.|})
+  ; Fmt.(pf pps {|    precedence: %d@.|} precedence)
+
+| x ->
      Fmt.(pf pps {|    #<unhandled< %a >>@.|} pp x)
 
 

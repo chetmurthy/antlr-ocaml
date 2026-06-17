@@ -180,6 +180,13 @@ class PredicateTransition(AbstractPredicateTransition):
         self.isCtxDependent = isCtxDependent # e.g., $i ref in pred
         self.isEpsilon = True
 
+    def dump(self):
+        super(PredicateTransition,self).dump()
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    ruleIndex: %s" % self.ruleIndex)
+        print("    predIndex: %s" % self.predIndex)
+        print("    isCtxDependent: %s" % self.isCtxDependent)
+
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
 
@@ -277,6 +284,11 @@ class PrecedencePredicateTransition(AbstractPredicateTransition):
         self.serializationType = self.PRECEDENCE
         self.precedence = precedence
         self.isEpsilon = True
+
+    def dump(self):
+        super(PrecedencePredicateTransition,self).dump()
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    precedence: %s" % self.precedence)
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
