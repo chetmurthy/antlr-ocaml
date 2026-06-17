@@ -138,10 +138,13 @@ class ATNState(object):
         print("  stateType: %s" % ATNState.serializationNames[self.stateType])
         print("  ruleIndex: %s" % self.ruleIndex)
         print("  epsilonOnlyTransitions: %s" % self.epsilonOnlyTransitions)
+
+    def dumpEdges(self):
         print("  #transitions: %d" % len(self.transitions))
         for i in range(0,len(self.transitions)):
             print("  Edge %d" % i)
             self.transitions[i].dump()
+
     def addTransition(self, trans:Transition, index:int=-1):
         if len(self.transitions)==0:
             self.epsilonOnlyTransitions = trans.isEpsilon
@@ -167,6 +170,11 @@ class DecisionState(ATNState):
         self.decision = -1
         self.nonGreedy = False
 
+    def dump(self):
+        super(DecisionState,self).dump()
+        print("  decision: %s" % self.decision)
+        print("  nonGreedy: %s" % self.nonGreedy)
+
 #  The start of a regular {@code (...)} block.
 class BlockStartState(DecisionState):
     __slots__ = 'endState'
@@ -174,6 +182,10 @@ class BlockStartState(DecisionState):
     def __init__(self):
         super().__init__()
         self.endState = None
+
+    def dump(self):
+        super(BlockStartState,self).dump()
+        print("  endState: %s" % self.endState)
 
 class BasicBlockStartState(BlockStartState):
 
@@ -189,6 +201,10 @@ class BlockEndState(ATNState):
         super().__init__()
         self.stateType = self.BLOCK_END
         self.startState = None
+
+    def dump(self):
+        super(BlockEndState,self).dump()
+        print("  startState: %s" % self.startState)
 
 # The last node in the ATN for a rule, unless that rule is the start symbol.
 #  In that case, there is one transition to EOF. Later, we might encode
@@ -209,6 +225,11 @@ class RuleStartState(ATNState):
         self.stateType = self.RULE_START
         self.stopState = None
         self.isPrecedenceRule = False
+
+    def dump(self):
+        super(RuleStartState,self).dump()
+        print("  stopState: %s" % self.stopState)
+        print("  isPrecedenceRule: %s" % self.isPrecedenceRule)
 
 # Decision state for {@code A+} and {@code (A|B)+}.  It has two transitions:
 #  one to the loop back to start of the block and one to exit.
@@ -231,6 +252,10 @@ class PlusBlockStartState(BlockStartState):
         super().__init__()
         self.stateType = self.PLUS_BLOCK_START
         self.loopBackState = None
+
+    def dump(self):
+        super(PlusBlockStartState,self).dump()
+        print("  loopBackState: %s" % self.loopBackState)
 
 # The block that begins a closure loop.
 class StarBlockStartState(BlockStartState):
@@ -256,6 +281,11 @@ class StarLoopEntryState(DecisionState):
         # Indicates whether this state can benefit from a precedence DFA during SLL decision making.
         self.isPrecedenceDecision = None
 
+    def dump(self):
+        super(StarLoopEntryState,self).dump()
+        print("  loopBackState: %s" % self.loopBackState)
+        print("  isPrecedenceDecision: %s" % self.isPrecedenceDecision)
+
 # Mark the end of a * or + loop.
 class LoopEndState(ATNState):
     __slots__ = 'loopBackState'
@@ -264,6 +294,10 @@ class LoopEndState(ATNState):
         super().__init__()
         self.stateType = self.LOOP_END
         self.loopBackState = None
+
+    def dump(self):
+        super(LoopEndState,self).dump()
+        print("  loopBackState: %s" % self.loopBackState)
 
 # The Tokens rule start state linking to each lexer rule start state */
 class TokensStartState(DecisionState):

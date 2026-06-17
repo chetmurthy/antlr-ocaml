@@ -19,9 +19,64 @@ type state_id = [%import: Types.state_id]
 
 let dump_state_id pps (STID n) = Fmt.(pf pps "%d" n)
 
+let dump_state_id_opt pps = function
+    None -> Fmt.(pf pps "None")
+  | Some stid -> Fmt.(pf pps "%a" dump_state_id stid)
+
+let dump_pybool pps b =
+  Fmt.(pf pps "%s" (if b then "True" else "False"))
+
+let dump_bool_opt pps = function
+    None -> Fmt.(pf pps "None")
+  | Some b -> Fmt.(pf pps "%a" dump_pybool b)
+
 module Node = struct
 type t = [%import: Types.node_t]
 [@@deriving show]
+
+let dump pps = function
+    BasicState -> ()
+| RuleStartState { stopState ; isPrecedenceRule } ->
+   Fmt.(pf pps {|  stopState: %a@.|} dump_state_id_opt stopState)
+  ; Fmt.(pf pps {|  isPrecedenceRule: %a@.|} dump_pybool isPrecedenceRule)
+
+| BasicBlockStartState { decision ; nonGreedy ; endState } ->
+   Fmt.(pf pps {|  decision: %d@.|} decision)
+  ; Fmt.(pf pps {|  nonGreedy: %a@.|} dump_pybool nonGreedy)
+  ; Fmt.(pf pps {|  endState: %a@.|} dump_state_id_opt endState)
+
+| PlusBlockStartState { decision ; nonGreedy ; endState ; loopBackState } ->
+   Fmt.(pf pps {|  decision: %d@.|} decision)
+  ; Fmt.(pf pps {|  nonGreedy: %a@.|} dump_pybool nonGreedy)
+  ; Fmt.(pf pps {|  endState: %a@.|} dump_state_id_opt endState)
+  ; Fmt.(pf pps {|  loopBackState: %a@.|} dump_state_id_opt loopBackState)
+   
+| StarBlockStartState { decision ; nonGreedy ; endState } ->
+   Fmt.(pf pps {|  decision: %d@.|} decision)
+  ; Fmt.(pf pps {|  nonGreedy: %a@.|} dump_pybool nonGreedy)
+  ; Fmt.(pf pps {|  endState: %a@.|} dump_state_id_opt endState)
+
+| TokensStartState { decision ; nonGreedy } ->
+   Fmt.(pf pps {|  decision: %d@.|} decision)
+  ; Fmt.(pf pps {|  nonGreedy: %a@.|} dump_pybool nonGreedy)
+
+| RuleStopState -> ()
+| BlockEndState { startState } ->
+   Fmt.(pf pps {|  startState: %a@.|} dump_state_id_opt startState)
+
+| StarLoopbackState -> ()
+| StarLoopEntryState { decision ; nonGreedy ; loopBackState ; isPrecedenceDecision } ->
+   Fmt.(pf pps {|  decision: %d@.|} decision)
+  ; Fmt.(pf pps {|  nonGreedy: %a@.|} dump_pybool nonGreedy)
+  ; Fmt.(pf pps {|  loopBackState: %a@.|} dump_state_id_opt loopBackState)
+  ; Fmt.(pf pps {|  isPrecedenceDecision: %a@.|} dump_bool_opt isPrecedenceDecision)
+
+| PlusLoopbackState { decision ; nonGreedy } ->
+   Fmt.(pf pps {|  decision: %d@.|} decision)
+  ; Fmt.(pf pps {|  nonGreedy: %a@.|} dump_pybool nonGreedy)
+
+| LoopEndState { loopBackState } ->
+   Fmt.(pf pps {|  loopBackState: %a@.|} dump_state_id_opt loopBackState)
 
 type atn_state_type_t =
        INVALID_TYPE
@@ -60,7 +115,7 @@ let deser_state_type bp = function
 let serialization_name =
   function
   BasicState -> BASIC
-| RuleStartState -> RULE_START
+| RuleStartState _ -> RULE_START
 | BasicBlockStartState _ -> BLOCK_START
 | PlusBlockStartState _ -> PLUS_BLOCK_START
 | StarBlockStartState _ -> STAR_BLOCK_START
@@ -94,7 +149,7 @@ let dump pps e = match e with
     EpsilonTransition { _target ; outermostPrecedenceReturn } ->
      Fmt.(pf pps {|    serializationType: EPSILON@.|})
     ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
-    ; Fmt.(pf pps {|    isEpsilon: %b@.|} (isEpsilon e))
+    ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
     ; Fmt.(pf pps {|    outermostPrecedenceReturn: %d@.|} outermostPrecedenceReturn)
 (*
 | RangeTransition of {
@@ -126,8 +181,8 @@ let dump pps e = match e with
     ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
     ; Fmt.(pf pps {|    ruleIndex: %d@.|} ruleIndex)
     ; Fmt.(pf pps {|    actionIndex: %d@.|} actionIndex)
-    ; Fmt.(pf pps {|    isCtxDependent: %b@.|} isCtxDependent)
-    ; Fmt.(pf pps {|    isEpsilon: %b@.|} (isEpsilon e))
+    ; Fmt.(pf pps {|    isCtxDependent: %a@.|} dump_pybool isCtxDependent)
+    ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
 
 | SetTransition { _target ; set } ->
    Fmt.(pf pps {|    serializationType: SET@.|})
@@ -212,8 +267,9 @@ module State = struct
     Fmt.(pf pps {|  stateNumber: %a@.|} dump_state_id st.stateNumber)
     ; Fmt.(pf pps {|  stateType: %a@.|} Node.pp_atn_state_type_t Node.(serialization_name st.node))
     ; Fmt.(pf pps {|  ruleIndex: %d@.|} st.ruleIndex)
-    ; Fmt.(pf pps {|  epsilonOnlyTransitions: %s@.|}
-             (if st.epsilonOnlyTransitions then "True" else "False"))
+    ; Fmt.(pf pps {|  epsilonOnlyTransitions: %a@.|}
+             dump_pybool st.epsilonOnlyTransitions)
+    ; Node.dump pps st.node
     ; Fmt.(pf pps {|  #transitions: %d@.|} (List.length st.transitions))
     ; st.transitions
       |> List.iteri
@@ -221,9 +277,12 @@ module State = struct
              Fmt.(pf pps "  Edge %d@." i)
             ; Edge.dump pps e)
            
-  let mk ?(isPrecedenceRule=false) ?(nonGreedy=false) ?stopState ?(transitions=[]) stateNumber (node, ruleIndex) =
+  let mk ?(nonGreedy=false) ?(transitions=[]) stateNumber (node, ruleIndex) =
     let epsilonOnlyTransitions = transitions <> [] && List.for_all Edge.isEpsilon transitions in
-    { stateNumber ; node ; ruleIndex ; nonGreedy ; isPrecedenceRule ; stopState ; transitions ; epsilonOnlyTransitions }
+    { stateNumber ; node ; ruleIndex ; transitions ; epsilonOnlyTransitions }
+
+  let mkRuleStartState ?stopState ?(isPrecedenceRule = false) () =
+    Node.RuleStartState { stopState ; isPrecedenceRule }
 
   let mkBasicBlockStartState ?(decision = -1) ?(nonGreedy = false) ?endState () =
     Node.BasicBlockStartState { decision ; nonGreedy ; endState }
@@ -303,7 +362,7 @@ let dump pps = function
  *)
 | LexerSkipAction { isPositionDependent } ->
    Fmt.(pf pps "  actionType: <LexerActionType.SKIP: 6>@.")
-  ; Fmt.(pf pps "  isPositionDependent: %b@." isPositionDependent)
+  ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
 
 (*
 | LexerTypeAction of {
@@ -421,7 +480,7 @@ let readNode strm =
             )
          | RULE_START ->
             (parser [< 'ruleIndex >] ->
-             let st = RuleStartState in
+             let st = State.mkRuleStartState () in
              (st, ruleIndex)
             )
          | BLOCK_START ->
@@ -477,6 +536,24 @@ let readNode strm =
 
         ) >] -> node) strm
 
+let set_nonGreedy states stid newv =
+  let st = State.get_state states stid in
+  match st.node with
+    (BasicState
+     | RuleStartState _
+    | RuleStopState
+    | BlockEndState _
+    | StarLoopbackState
+    | LoopEndState _) ->
+    Fmt.(failwithf "set_nonGreedy: state is not a DecisionState@ %a@."
+         State.pp st)
+| BasicBlockStartState ({ nonGreedy=_ } as x) -> x.nonGreedy <- newv
+| PlusBlockStartState ({ nonGreedy=_ } as x) -> x.nonGreedy <- newv
+| StarBlockStartState ({ nonGreedy=_ } as x) -> x.nonGreedy <- newv
+| TokensStartState ({ nonGreedy=_ } as x) -> x.nonGreedy <- newv
+| StarLoopEntryState ({ nonGreedy=_ } as x) -> x.nonGreedy <- newv
+| PlusLoopbackState ({ nonGreedy=_ } as x) -> x.nonGreedy <- newv
+
 let readStates strm =
   let loopEndStates = ref [] in
   let loopbackStateNumber = ref [] in
@@ -488,12 +565,16 @@ let readStates strm =
   let numNonGreedyStates = readInt strm in
   for i = 0 to numNonGreedyStates-1 do
     let stateNumber = readSTID strm in
-    (State.get_state states stateNumber).nonGreedy <- true
+    set_nonGreedy states stateNumber true
   done ;
   let numPrecedenceStates = readInt strm in
   for i = 0 to numPrecedenceStates-1 do
     let stateNumber = readSTID strm in
-    (State.get_state states stateNumber).isPrecedenceRule <- true
+    (match (State.get_state states stateNumber).node with
+       RuleStartState n ->
+       n.isPrecedenceRule <- true
+     | _ -> Fmt.(failwithf "Error in readStates: stateNumber=%a was not RuleStartState"
+                 pp_state_id stateNumber))
   done ;
   states
 
@@ -521,7 +602,12 @@ let readRules (grammarType, (states : State.states_t)) strm =
            match st.node with
              RuleStopState ->
              ruleToStopState.(st.ruleIndex) <- st.stateNumber ;
-             (State.get_state states (ruleToStartState.(st.ruleIndex))).stopState <- Some st.stateNumber
+             (match (State.get_state states (ruleToStartState.(st.ruleIndex))) with
+                {node=RuleStartState n} ->
+                 n.stopState <- Some st.stateNumber
+              | st' ->
+                 Fmt.(failwithf "readRules: state should have been RuleStartState, was@ %a@."
+                      State.pp st'))
            | _ -> ()
          ) ;
     (ruleToStartState, ruleToTokenType_opt, ruleToStopState)
@@ -609,7 +695,10 @@ let readEdges (states,ruleToStartState,ruleToStopState) sets strm =
                  (Edge.RuleTransition rt) as e ->
                   let outermostPrecedenceReturn = -1 in
                   let outermostPrecedenceReturn =
-                    if (State.get_state states ruleToStartState.((State.get_state states (Edge.target e)).ruleIndex)).isPrecedenceRule &&
+                    if (match (State.get_state states ruleToStartState.((State.get_state states (Edge.target e)).ruleIndex)) with
+                          {node=RuleStartState n} -> n.isPrecedenceRule
+                        | st' -> Fmt.(failwithf "readeEdges: state should have been RuleStartState, was@ %a@."
+                                        State.pp st')) &&
                          rt.precedence = 0 then
                       (State.get_state states (Edge.target e)).ruleIndex
                     else outermostPrecedenceReturn in
@@ -698,7 +787,7 @@ let readDecisions states strm =
          | TokensStartState t -> t.decision <- i
 
          | (BasicState
-            | RuleStartState
+            | RuleStartState _
            | RuleStopState
            | BlockEndState _
            | StarLoopbackState
@@ -739,7 +828,10 @@ let markPrecedenceDecisions (states,ruleToStartState) =
        (fun state ->
          match state.node with
            StarLoopEntryState n ->
-            if (State.get_state states ruleToStartState.(state.ruleIndex)).isPrecedenceRule then
+            if (match (State.get_state states ruleToStartState.(state.ruleIndex)) with
+                  {node=RuleStartState n} -> n.isPrecedenceRule
+                | st' -> Fmt.(failwithf "markPrecedenceDecisions: state should be RuleStartState but is@ %a@."
+                              State.pp st')) then
               let maybeLoopEndState_id = Edge.target (last state.transitions) in
               let maybeLoopEndState = State.get_state states maybeLoopEndState_id in
               (match maybeLoopEndState.node with
@@ -836,8 +928,8 @@ let verifyATN atn =
                       pp_state_id state.stateNumber
                       State.pp state)
 
-          | RuleStartState ->
-             if None = state.stopState then
+          | RuleStartState n  ->
+             if None = n.stopState then
                Fmt.(failwithf "state %a: RuleStartState with stopState = None: %a"
                       pp_state_id state.stateNumber
                       State.pp state)

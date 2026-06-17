@@ -139,6 +139,7 @@ class ATN(object):
         for state in self.states:
             print("State %d" % state.stateNumber)
             state.dump()
+            state.dumpEdges()
         print("#sets: %s" % len(self.sets))
         for i in range(0,len(self.sets)):
             print("Set %s: %s" % (i, self.sets[i].dump()))

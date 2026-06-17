@@ -22,5 +22,5 @@ class ATNDeserializationOptions(object):
         super(type(self), self).__setattr__(key,value)
 
 ATNDeserializationOptions.defaultOptions = ATNDeserializationOptions()
-#ATNDeserializationOptions.defaultOptions.debug = True
+ATNDeserializationOptions.defaultOptions.debug = True
 ATNDeserializationOptions.defaultOptions.readonly = True

@@ -31,10 +31,13 @@ roundtrip_atn.exe: roundtrip_atn.cmo
 SHELL := /bin/bash
 #FILE := CalcLexer.interp
 FILE := /home/chet/Hack/Antlr/src/antlr4/antlr4-maven-plugin/src/test/projects/importsCustom/src/main/antlr4/imports/TestBaseLexer.interp
-#ATNDEBUG=--debug
+ATNDEBUG=--debug
 #ATNVERIFY=--disable-verify
 compare-one:: roundtrip_atn.exe
-	diff -bBwiu <( python3 deserialize_test.py $(FILE) ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE) )
+	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE) )
+
+run-python::
+	python3 deserialize_test.py $(FILE)
 
 run-ocaml:: roundtrip_atn.exe
 	./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE)

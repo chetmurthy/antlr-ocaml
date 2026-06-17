@@ -5,7 +5,10 @@ type state_id = STID of int
 
 type node_t =
   BasicState
-| RuleStartState
+| RuleStartState of {
+    mutable stopState : state_id option
+  ; mutable isPrecedenceRule : bool
+  }
 | BasicBlockStartState of {
     mutable decision : int
   ; mutable nonGreedy : bool
@@ -50,9 +53,6 @@ and state_t = {
     ; mutable ruleIndex : int
     ; mutable epsilonOnlyTransitions : bool
     ; mutable transitions : edge_t list
-    ; mutable nonGreedy : bool
-    ; mutable isPrecedenceRule : bool
-    ; mutable stopState : state_id option
     }
 and edge_t =
   EpsilonTransition of {
