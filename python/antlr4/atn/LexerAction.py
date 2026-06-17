@@ -74,7 +74,7 @@ class LexerTypeAction(LexerAction):
 
     def dump(self):
         super(LexerTypeAction, self).dump()
-        print("type: %s" % self.type)
+        print("  type: %s" % self.type)
 
     def execute(self, lexer:Lexer):
         lexer.type = self.type
@@ -105,7 +105,7 @@ class LexerPushModeAction(LexerAction):
 
     def dump(self):
         super(LexerPushModeAction, self).dump()
-        print("mode: %s" % self.mode)
+        print("  mode: %s" % self.mode)
 
     # <p>This action is implemented by calling {@link Lexer#pushMode} with the
     # value provided by {@link #getMode}.</p>
@@ -176,6 +176,10 @@ class LexerModeAction(LexerAction):
         super().__init__(LexerActionType.MODE)
         self.mode = mode
 
+    def dump(self):
+        super(LexerModeAction, self).dump()
+        print("  mode: %s" % self.mode)
+
     # <p>This action is implemented by calling {@link Lexer#mode} with the
     # value provided by {@link #getMode}.</p>
     def execute(self, lexer:Lexer):
@@ -220,6 +224,11 @@ class LexerCustomAction(LexerAction):
         self.ruleIndex = ruleIndex
         self.actionIndex = actionIndex
         self.isPositionDependent = True
+
+    def dump(self):
+        super(LexerCustomAction, self).dump()
+        print("  ruleIndex: %s" % self.ruleIndex)
+        print("  actionIndex: %s" % self.actionIndex)
 
     # <p>Custom actions are implemented by calling {@link Lexer#action} with the
     # appropriate rule and action indexes.</p>

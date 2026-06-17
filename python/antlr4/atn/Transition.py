@@ -152,6 +152,12 @@ class RangeTransition(Transition):
         self.stop = stop
         self.label = self.makeLabel()
 
+    def dump(self):
+        super(RangeTransition,self).dump()
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    start: %s" % self.start)
+        print("    stop: %s" % self.stop)
+
     def makeLabel(self):
         s = IntervalSet()
         s.addRange(range(self.start, self.stop + 1))

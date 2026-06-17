@@ -29,8 +29,8 @@ roundtrip_atn.exe: roundtrip_atn.cmo
 
 
 SHELL := /bin/bash
-FILE := CalcLexer.interp
-#FILE := /home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/test/org/antlr/v4/test/runtime/java/api/perf/graphemesLexer.interp
+#FILE := CalcLexer.interp
+FILE := /home/chet/Hack/Antlr/src/grammars-v4/antlr/antlr4/examples/grammars-v4/cmake/CMakeLexer.interp
 #ATNDEBUG=--debug
 #ATNVERIFY=--disable-verify
 compare-one:: roundtrip_atn.exe
@@ -42,9 +42,10 @@ run-python::
 run-ocaml:: roundtrip_atn.exe
 	./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE)
 
+ANTLRDIRS= ~/Hack/Antlr/src/antlr4 ~/Hack/Antlr/src/grammars-v4
 compare-all:: roundtrip_atn.exe
 	set -e ;\
-	for f in `find ~/Hack/Antlr/src/antlr4 -name '*.interp' -print`; \
+	for f in `find $(ANTLRDIRS) -name '*.interp' -print`; \
 	do \
 	echo "================ $$f ================" ; \
 	diff -bBwi -u10 <( python3 deserialize_test.py $$f ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $$f ) ; \

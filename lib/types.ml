@@ -61,6 +61,7 @@ and edge_t =
   }
 | RangeTransition of {
     _target : state_id
+  ; label : IntervalSet.t
   ; start : int
   ; stop : int
   }

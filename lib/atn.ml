@@ -153,13 +153,17 @@ let dump pps e = match e with
     ; Fmt.(pf pps {|    label: None@.|})
     ; Fmt.(pf pps {|    serializationType: EPSILON@.|})
     ; Fmt.(pf pps {|    outermostPrecedenceReturn: %d@.|} outermostPrecedenceReturn)
-(*
-| RangeTransition of {
-    _target : state_id
-  ; start : int
-  ; stop : int
-  }
- *)
+
+| RangeTransition { _target ; label ; start ; stop } ->
+   ()
+  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+  ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+  ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump label)
+  ; Fmt.(pf pps {|    serializationType: RANGE@.|})
+  ; Fmt.(pf pps {|    start: %d@.|} start)
+  ; Fmt.(pf pps {|    stop: %d@.|} stop)
+
+
 | RuleTransition { ruleStart ; ruleIndex ; precedence ; followState } ->
      ()
     ; Fmt.(pf pps {|    target: %a@.|} dump_state_id ruleStart)
@@ -236,7 +240,8 @@ let mkEpsilonTransition ~target ?(outermostPrecedenceReturn = -1) () =
   EpsilonTransition { _target=target ; outermostPrecedenceReturn }
 
 let mkRangeTransition ~target ~start ~stop () =
-  RangeTransition { _target=target ; start ; stop }
+  let labelSet = IntervalSet.( () |> mk |> add (Range.mk ~start (stop+1)) ) in
+  RangeTransition { _target=target ; start ; stop ; label=labelSet }
 
 let mkRuleTransition ~ruleStart ~ruleIndex ~precedence ~followState () =
   RuleTransition { ruleStart ; ruleIndex ; precedence ; followState }
@@ -358,43 +363,47 @@ let dump pps = function
   ; Fmt.(pf pps "  actionType: <LexerActionType. CHANNEL: 0>@.")
   ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
      
-(*
+| LexerCustomAction { isPositionDependent ; ruleIndex ; actionIndex } ->
+   ()
+  ; Fmt.(pf pps "  actionType: <LexerActionType.CUSTOM: 1>@.")
+  ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
+  ; Fmt.(pf pps "  ruleIndex: %d@." ruleIndex)
+  ; Fmt.(pf pps "  actionIndex: %d@." actionIndex)
 
-| LexerCustomAction of {
-      mutable isPositionDependent : bool ;
-      mutable ruleIndex : int ;
-      mutable actionIndex : int
-    }
 
-| LexerModeAction of {
-      mutable isPositionDependent : bool ;
-      mutable mode : int
-    }
+| LexerModeAction { isPositionDependent ; mode } ->
+   ()
+  ; Fmt.(pf pps "  actionType: <LexerActionType.MODE: 2>@.")
+  ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
+  ; Fmt.(pf pps "  mode: %d@." mode)
 
-| LexerMoreAction of {
-      mutable isPositionDependent : bool ;
-    }
+| LexerMoreAction { isPositionDependent } ->
+   ()
+  ; Fmt.(pf pps "  actionType: <LexerActionType.MORE: 3>@.")
+  ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
 
-| LexerPopModeAction of {
-      mutable isPositionDependent : bool ;
-    }
- *)
+| LexerPopModeAction { isPositionDependent } ->
+   ()
+  ; Fmt.(pf pps "  actionType: <LexerActionType.POP_MODE: 4>@.")
+  ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
+
 | LexerPushModeAction { isPositionDependent ; mode } ->
    ()
   ; Fmt.(pf pps "  actionType: <LexerActionType.PUSH_MODE: 5>@.")
   ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
+  ; Fmt.(pf pps "  mode: %d@." mode)
 
 | LexerSkipAction { isPositionDependent } ->
    ()
   ; Fmt.(pf pps "  actionType: <LexerActionType.SKIP: 6>@.")
   ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
 
-(*
-| LexerTypeAction of {
-    mutable isPositionDependent : bool ;
-    mutable type_ : int
-  }
- *)
+| LexerTypeAction { isPositionDependent ; type_ } ->
+   ()
+  ; Fmt.(pf pps "  actionType: <LexerActionType.TYPE: 7>@.")
+  ; Fmt.(pf pps "  isPositionDependent: %a@." dump_pybool isPositionDependent)
+  ; Fmt.(pf pps "  type: %d@." type_)
+
 | x -> Fmt.(pf pps "#<unhandled< %a >>" pp x)
 
 
@@ -652,7 +661,7 @@ let readSet strm =
      ranges=plistn (pa_pair readInt readInt) n >] ->
      let ranges = List.map (fun (a,b) -> (a,b+1)) ranges in
      let ranges =
-       if containsEof then (-1,-1)::ranges
+       if containsEof then (-1,0)::ranges
        else ranges in
      let ranges = List.map (fun (start,stop) -> Range.mk ~start stop) ranges in
      let iset =

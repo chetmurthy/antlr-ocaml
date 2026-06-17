@@ -23,7 +23,7 @@ let conv_null f s =
   | s -> Some (f s)
 
 let conv_squote s =
-  match [%match {|^'([^']+)'$|} / pcre2 strings !1] s with
+  match [%match {|^'((?:[^']|\\')+)'$|} / pcre2 strings !1] s with
     None -> Fmt.(failwithf "unrecognized supposedly-quoted string << %s >>" s)
   | Some s -> s
 
