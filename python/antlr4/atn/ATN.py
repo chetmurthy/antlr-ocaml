@@ -142,3 +142,7 @@ class ATN(object):
         print("#sets: %s" % len(self.sets))
         for i in range(0,len(self.sets)):
             print("Set %s: %s" % (i, self.sets[i].dump()))
+        print("#lexerActions: %s" % len(self.lexerActions))
+        for i in range(0, len(self.lexerActions)):
+            print("LexerAction %s" % i)
+            self.lexerActions[i].dump()

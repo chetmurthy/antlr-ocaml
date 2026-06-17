@@ -28,6 +28,10 @@ class LexerAction(object):
         self.actionType = action
         self.isPositionDependent = False
 
+    def dump(self):
+        print("  actionType: %s" % repr(self.actionType))
+        print("  isPositionDependent: %s" % self.isPositionDependent)
+
     def __hash__(self):
         return hash(self.actionType)
 
@@ -48,6 +52,9 @@ class LexerSkipAction(LexerAction):
     def __init__(self):
         super().__init__(LexerActionType.SKIP)
 
+    def dump(self):
+        super(LexerSkipAction, self).dump()
+
     def execute(self, lexer:Lexer):
         lexer.skip()
 
@@ -64,6 +71,10 @@ class LexerTypeAction(LexerAction):
     def __init__(self, type:int):
         super().__init__(LexerActionType.TYPE)
         self.type = type
+
+    def dump(self):
+        super(LexerTypeAction, self).dump()
+        print("type: %s" % self.type)
 
     def execute(self, lexer:Lexer):
         lexer.type = self.type

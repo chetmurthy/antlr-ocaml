@@ -182,8 +182,8 @@ type lexer_action_t =
     mutable type_ : int
   }
  *)
-  | _ ->
-     Fmt.(pf pps {|    <unhandled>@.|})
+  | x ->
+     Fmt.(pf pps {|    #<unhandled< %a >>@.|} pp x)
 
 
 let mkEpsilonTransition ~target ?(outermostPrecedenceReturn = -1) () =
@@ -302,6 +302,49 @@ module LexerAction = struct
   type t = [%import: Types.lexer_action_t]
   [@@deriving show]
 
+let dump pps = function
+(*
+    LexerChannelAction of {
+      mutable isPositionDependent : bool ;
+      mutable channel : int
+    }
+
+| LexerCustomAction of {
+      mutable isPositionDependent : bool ;
+      mutable ruleIndex : int ;
+      mutable actionIndex : int
+    }
+
+| LexerModeAction of {
+      mutable isPositionDependent : bool ;
+      mutable mode : int
+    }
+
+| LexerMoreAction of {
+      mutable isPositionDependent : bool ;
+    }
+
+| LexerPopModeAction of {
+      mutable isPositionDependent : bool ;
+    }
+
+| LexerPushModeAction of {
+      mutable isPositionDependent : bool ;
+      mutable mode : int
+    }
+ *)
+| LexerSkipAction { isPositionDependent } ->
+   Fmt.(pf pps "  actionType: <LexerActionType.SKIP: 6>@.")
+  ; Fmt.(pf pps "  isPositionDependent: %b@." isPositionDependent)
+
+(*
+| LexerTypeAction of {
+    mutable isPositionDependent : bool ;
+    mutable type_ : int
+  }
+ *)
+| x -> Fmt.(pf pps "#<unhandled< %a >>" pp x)
+
 
 let mkLexerChannelAction ?(isPositionDependent = false) ~channel () =
   LexerChannelAction { isPositionDependent ; channel }
@@ -368,6 +411,15 @@ let dump pps atn =
     |> Array.iteri
          (fun i s ->
            Fmt.(pf pps {|Set %d: %a@.|} i IntervalSet.dump atn.sets.(i)))
+  ; (match atn.lexerActions with
+       None -> Fmt.(pf pps "No lexer actions")
+     | Some x ->
+        Fmt.(pf pps {|#lexerActions: %d@.|} (Array.length x))
+       ; x |> Array.iteri
+                (fun i a ->
+                  Fmt.(pf pps {|LexerAction %d@.|} i)
+                 ; LexerAction.dump pps a)
+    )
 
 let check_version = parser
   [< 'n >] ->
