@@ -5,11 +5,17 @@ open Ppxutil
 open Pa_ppx_utils.Std
 open Interp
 
-let find_stanza n l : string =
+let find_stanza n l =
   match List.assoc n l with
     exception Not_found ->
      Fmt.(failwithf "Cannot find stanza '%s'" n)
   | s -> s
+
+let find_stanza_opt n l =
+  match List.assoc n l with
+    exception Not_found ->
+     None
+  | s -> Some s
 
 let conv_null f s =
   match s with
@@ -22,7 +28,7 @@ let conv_squote s =
   | Some s -> s
 
 let read_raw txt =
-  let stanzas = [%split {|\n\n|}] txt in
+  let stanzas = [%split {|\n\n+|}] txt in
   let stanzas =
     List.map [%match {|^([^:]+):\n(.*)$|}  / pcre2 exc s strings (!1, !2)]  stanzas in
   let token_literal_names =
@@ -34,9 +40,11 @@ let read_raw txt =
   let rule_names =
     [%split {|\n|}] (find_stanza "rule names" stanzas) in
   let channel_names =
-    [%split {|\n|}] (find_stanza "channel names" stanzas) in
+    (find_stanza_opt "channel names" stanzas)
+  |> Option.map [%split {|\n|}] in
   let mode_names =
-    [%split {|\n|}] (find_stanza "mode names" stanzas) in
+    (find_stanza_opt "mode names" stanzas)
+    |> Option.map [%split {|\n|}] in
   let atn =
     let txt = find_stanza "atn" stanzas in
     match [%match {|\[(.*)\]|} / pcre2 strings !1] txt with

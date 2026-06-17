@@ -19,19 +19,19 @@ test:: all
 	mkdir -p _build && ./antlr_test.exe
 
 lib_test.exe: lib_test.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 antlr_test.exe: antlr_test.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 roundtrip_atn.exe: roundtrip_atn.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 
 SHELL := /bin/bash
-#FILE := CalcLexer.interp
-FILE := /home/chet/Hack/Antlr/src/antlr4/antlr4-maven-plugin/src/test/projects/importsCustom/src/main/antlr4/imports/TestBaseLexer.interp
-ATNDEBUG=--debug
+FILE := CalcLexer.interp
+#FILE := /home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/test/org/antlr/v4/test/runtime/java/api/perf/graphemesLexer.interp
+#ATNDEBUG=--debug
 #ATNVERIFY=--disable-verify
 compare-one:: roundtrip_atn.exe
 	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE) )
@@ -47,7 +47,7 @@ compare-all:: roundtrip_atn.exe
 	for f in `find ~/Hack/Antlr/src/antlr4 -name '*.interp' -print`; \
 	do \
 	echo "================ $$f ================" ; \
-	diff -bBwiu <( python3 deserialize_test.py $$f ) <( ./roundtrip_atn.exe $$f ) ; \
+	diff -bBwi -u10 <( python3 deserialize_test.py $$f ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $$f ) ; \
 	done
 
 test-python::

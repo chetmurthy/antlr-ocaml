@@ -147,9 +147,11 @@ let isEpsilon = function
 
 let dump pps e = match e with
     EpsilonTransition { _target ; outermostPrecedenceReturn } ->
-     Fmt.(pf pps {|    serializationType: EPSILON@.|})
+     ()
     ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
     ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+    ; Fmt.(pf pps {|    label: None@.|})
+    ; Fmt.(pf pps {|    serializationType: EPSILON@.|})
     ; Fmt.(pf pps {|    outermostPrecedenceReturn: %d@.|} outermostPrecedenceReturn)
 (*
 | RangeTransition of {
@@ -157,12 +159,18 @@ let dump pps e = match e with
   ; start : int
   ; stop : int
   }
-| RuleTransition of {
-    ruleStart : state_id
-  ; ruleIndex : int
-  ; precedence : int
-  ; followState : state_id
-  }
+ *)
+| RuleTransition { ruleStart ; ruleIndex ; precedence ; followState } ->
+     ()
+    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id ruleStart)
+    ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+    ; Fmt.(pf pps {|    label: None@.|})
+    ; Fmt.(pf pps {|    serializationType: RULE@.|})
+    ; Fmt.(pf pps {|    ruleIndex: %d@.|} ruleIndex)
+    ; Fmt.(pf pps {|    precedence: %d@.|} precedence)
+    ; Fmt.(pf pps {|    followState: %a@.|} dump_state_id followState)
+
+(*
 | PredicateTransition of {
       _target : state_id
     ; ruleIndex : int
@@ -171,23 +179,29 @@ let dump pps e = match e with
     }
  *)
 | AtomTransition { _target ; label ; label_ } ->
-   Fmt.(pf pps {|    serializationType: ATOM@.|})
-    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
-    ; Fmt.(pf pps {|    label_: %d@.|} label_)
-    ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump label)
+   ()
+  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+  ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+  ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump label)
+  ; Fmt.(pf pps {|    serializationType: ATOM@.|})
+  ; Fmt.(pf pps {|    label_: %d@.|} label_)
    
 | ActionTransition { _target ; ruleIndex ; actionIndex ; isCtxDependent } ->
-     Fmt.(pf pps {|    serializationType: ACTION@.|})
-    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
-    ; Fmt.(pf pps {|    ruleIndex: %d@.|} ruleIndex)
-    ; Fmt.(pf pps {|    actionIndex: %d@.|} actionIndex)
-    ; Fmt.(pf pps {|    isCtxDependent: %a@.|} dump_pybool isCtxDependent)
-    ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+   ()
+  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+  ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+  ; Fmt.(pf pps {|    label: None@.|})
+  ; Fmt.(pf pps {|    serializationType: ACTION@.|})
+  ; Fmt.(pf pps {|    ruleIndex: %d@.|} ruleIndex)
+  ; Fmt.(pf pps {|    actionIndex: %d@.|} actionIndex)
+  ; Fmt.(pf pps {|    isCtxDependent: %a@.|} dump_pybool isCtxDependent)
 
 | SetTransition { _target ; set } ->
-   Fmt.(pf pps {|    serializationType: SET@.|})
-    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
-    ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump set)
+   ()
+  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
+  ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+  ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump set)
+  ; Fmt.(pf pps {|    serializationType: SET@.|})
 
 (*
 | NotSetTransition of {
@@ -196,8 +210,11 @@ let dump pps e = match e with
   }
  *)
 | WildcardTransition target ->
-   Fmt.(pf pps {|    serializationType: WILDCARD@.|})
-    ; Fmt.(pf pps {|    target: %a@.|} dump_state_id target)
+   ()
+  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id target)
+  ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
+  ; Fmt.(pf pps {|    label: None@.|})
+  ; Fmt.(pf pps {|    serializationType: WILDCARD@.|})
 
 (*
 | PrecedencePredicateTransition of {

@@ -65,8 +65,14 @@ class Transition (object):
         self.isEpsilon = False
         self.label = None
 
+
     def dump(self):
-        print("    %s" % repr(self))
+        print("    target: %s" % self.target)
+        print("    isEpsilon: %s" % self.isEpsilon)
+        if isinstance(self.label, IntervalSet):
+            print("    label: %s" % self.label.dump())
+        else:
+            print("    label: %s" % self.label)
 
 # TODO: make all transitions sets? no, should remove set edges
 class AtomTransition(Transition):
@@ -79,10 +85,9 @@ class AtomTransition(Transition):
         self.serializationType = self.ATOM
 
     def dump(self):
+        super(AtomTransition,self).dump()
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
-        print("    target: %s" % self.target)
         print("    label_: %s" % self.label_)
-        print("    label: %s" % self.label.dump())
 
     def makeLabel(self):
         s = IntervalSet()
@@ -106,6 +111,13 @@ class RuleTransition(Transition):
         self.serializationType = self.RULE
         self.isEpsilon = True
 
+    def dump(self):
+        super(RuleTransition,self).dump()
+        print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
+        print("    ruleIndex: %s" % self.ruleIndex)
+        print("    precedence: %s" % self.precedence)
+        print("    followState: %s" % self.followState)
+
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
 
@@ -120,9 +132,8 @@ class EpsilonTransition(Transition):
         self.outermostPrecedenceReturn = outermostPrecedenceReturn
 
     def dump(self):
+        super(EpsilonTransition,self).dump()
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
-        print("    target: %s" % self.target)
-        print("    isEpsilon: %s" % self.isEpsilon)
         print("    outermostPrecedenceReturn: %s" % self.outermostPrecedenceReturn)
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
@@ -190,12 +201,11 @@ class ActionTransition(Transition):
         self.isEpsilon = True
 
     def dump(self):
+        super(ActionTransition,self).dump()
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
-        print("    target: %s" % self.target)
         print("    ruleIndex: %s" % self.ruleIndex)
         print("    actionIndex: %s" % self.actionIndex)
         print("    isCtxDependent: %s" % self.isCtxDependent)
-        print("    isEpsilon: %s" % self.isEpsilon)
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
@@ -217,9 +227,8 @@ class SetTransition(Transition):
             self.label.addRange(range(Token.INVALID_TYPE, Token.INVALID_TYPE + 1))
 
     def dump(self):
+        super(SetTransition,self).dump()
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
-        print("    target: %s" % self.target)
-        print("    label: %s" % self.label.dump())
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol in self.label
@@ -250,8 +259,8 @@ class WildcardTransition(Transition):
         self.serializationType = self.WILDCARD
 
     def dump(self):
+        super(WildcardTransition,self).dump()
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
-        print("    target: %s" % self.target)
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol >= minVocabSymbol and symbol <= maxVocabSymbol
