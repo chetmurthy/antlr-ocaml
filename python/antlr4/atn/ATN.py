@@ -132,6 +132,15 @@ class ATN(object):
             expected.addOne(Token.EOF)
         return expected
 
+    def asdict(self):
+        d = {
+            'grammarType' : repr(self.grammarType),
+            'maxTokenType' : self.maxTokenType,
+            '#states' : len(self.states),
+            'states'  : [state.asdict() for state in self.states]
+        }
+        return d
+
     def dump(self):
         print("grammarType: %s" % repr(self.grammarType))
         print("maxTokenType: %s" % self.maxTokenType)

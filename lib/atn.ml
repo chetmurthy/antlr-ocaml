@@ -19,9 +19,15 @@ type state_id = [%import: Types.state_id]
 
 let dump_state_id pps (STID n) = Fmt.(pf pps "%d" n)
 
+let state_id_to_yojson (STID n) = `Int n
+
 let dump_state_id_opt pps = function
     None -> Fmt.(pf pps "None")
   | Some stid -> Fmt.(pf pps "%a" dump_state_id stid)
+
+let state_id_opt_to_yojson = function
+    None -> `Null
+  | Some stid -> state_id_to_yojson stid
 
 let dump_pybool pps b =
   Fmt.(pf pps "%s" (if b then "True" else "False"))
@@ -30,9 +36,68 @@ let dump_bool_opt pps = function
     None -> Fmt.(pf pps "None")
   | Some b -> Fmt.(pf pps "%a" dump_pybool b)
 
+let bool_opt_to_yojson = function
+    None -> `Null
+  | Some b -> `Bool b
+
 module Node = struct
 type t = [%import: Types.node_t]
 [@@deriving show]
+
+
+let to_yojson = function
+    BasicState -> `Assoc []
+| RuleStartState { stopState ; isPrecedenceRule } ->
+   `Assoc[("stopState", state_id_opt_to_yojson stopState)
+         ;("isPrecedenceRule", `Bool isPrecedenceRule)
+     ]
+
+| BasicBlockStartState { decision ; nonGreedy ; endState } ->
+   `Assoc[("decision", `Int decision)
+         ;("nonGreedy", `Bool nonGreedy)
+         ;("endState", state_id_opt_to_yojson endState)
+     ]
+
+| PlusBlockStartState { decision ; nonGreedy ; endState ; loopBackState } ->
+   `Assoc[("decision", `Int decision)
+         ;("nonGreedy", `Bool nonGreedy)
+         ;("endState", state_id_opt_to_yojson endState)
+         ;("loopBackState", state_id_opt_to_yojson loopBackState)
+     ]
+
+| StarBlockStartState { decision ; nonGreedy ; endState } ->
+   `Assoc[("decision", `Int decision)
+         ;("nonGreedy", `Bool nonGreedy)
+         ;("endState", state_id_opt_to_yojson endState)
+     ]
+
+| TokensStartState { decision ; nonGreedy } ->
+   `Assoc[("decision", `Int decision)
+         ;("nonGreedy", `Bool nonGreedy)
+     ]
+
+| RuleStopState -> `Assoc []
+| BlockEndState { startState } ->
+   `Assoc[("startState", state_id_opt_to_yojson startState)
+     ]
+
+| StarLoopbackState -> `Assoc []
+| StarLoopEntryState { decision ; nonGreedy ; loopBackState ; isPrecedenceDecision } ->
+   `Assoc[("decision", `Int decision)
+         ;("nonGreedy", `Bool nonGreedy)
+         ;("loopBackState", state_id_opt_to_yojson loopBackState)
+         ;("isPrecedenceDecision", bool_opt_to_yojson isPrecedenceDecision)
+     ]
+
+| PlusLoopbackState { decision ; nonGreedy } ->
+   `Assoc[("decision", `Int decision)
+         ;("nonGreedy", `Bool nonGreedy)
+     ]
+
+| LoopEndState { loopBackState } ->
+   `Assoc[("loopBackState", state_id_opt_to_yojson loopBackState)
+     ]
+
 
 let dump pps = function
     BasicState -> ()
@@ -94,6 +159,9 @@ type atn_state_type_t =
      | LOOP_END
 [@@deriving show { with_path = false }]
 
+let atn_state_type_t_to_yojson t =
+  `String Fmt.(str "%a" pp_atn_state_type_t t)
+
 let deser_state_type bp = function
   0 -> INVALID_TYPE
 | 1 -> BASIC
@@ -144,6 +212,91 @@ let isEpsilon = function
     | SetTransition _
     | NotSetTransition _
     | WildcardTransition _) -> false
+
+let to_yojson e = match e with
+    EpsilonTransition { _target ; outermostPrecedenceReturn } ->
+     `Assoc[("target",state_id_to_yojson _target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", `Null)
+           ;("serializationType", `String "EPSILON")
+           ;("outermostPrecedenceReturn", `Int outermostPrecedenceReturn)
+       ]
+
+  | RangeTransition { _target ; label ; start ; stop } ->
+     `Assoc[("target",state_id_to_yojson _target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", IntervalSet.to_yojson label)
+           ;("serializationType", `String "RANGE")
+           ;("start", `Int start)
+           ;("stop", `Int stop)
+       ]
+
+| RuleTransition { ruleStart ; ruleIndex ; precedence ; followState } ->
+     `Assoc[("target",state_id_to_yojson ruleStart)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", `Null)
+           ;("serializationType", `String "RULE")
+           ;("ruleIndex", `Int ruleIndex)
+           ;("precedence", `Int precedence)
+           ;("followState", state_id_to_yojson followState)
+       ]
+
+| PredicateTransition { _target ; ruleIndex ; predIndex ; isCtxDependent } ->
+     `Assoc[("target",state_id_to_yojson _target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", `Null)
+           ;("serializationType", `String "PREDICATE")
+           ;("ruleIndex", `Int ruleIndex)
+           ;("predIndex", `Int predIndex)
+           ;("isCtxDependent", `Bool isCtxDependent)
+       ]
+
+| AtomTransition { _target ; label ; label_ } ->
+     `Assoc[("target",state_id_to_yojson _target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", IntervalSet.to_yojson label)
+           ;("serializationType", `String "ATOM")
+           ;("label_", `Int label_)
+       ]
+
+| ActionTransition { _target ; ruleIndex ; actionIndex ; isCtxDependent } ->
+     `Assoc[("target",state_id_to_yojson _target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", `Null)
+           ;("serializationType", `String "ACTION")
+           ;("ruleIndex", `Int ruleIndex)
+           ;("actionIndex", `Int actionIndex)
+           ;("isCtxDependent", `Bool isCtxDependent)
+       ]
+
+| SetTransition { _target ; set } ->
+     `Assoc[("target",state_id_to_yojson _target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", IntervalSet.to_yojson set)
+           ;("serializationType", `String "SET")
+       ]
+
+| NotSetTransition { _target ; set } ->
+     `Assoc[("target",state_id_to_yojson _target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", IntervalSet.to_yojson set)
+           ;("serializationType", `String "NOT_SET")
+       ]
+
+| WildcardTransition target ->
+     `Assoc[("target",state_id_to_yojson target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", `Null)
+           ;("serializationType", `String "WILDCARD")
+       ]
+
+| PrecedencePredicateTransition { _target ; precedence } ->
+     `Assoc[("target",state_id_to_yojson _target)
+           ;("isEpsilon", `Bool (isEpsilon e))
+           ;("label", `Null)
+           ;("serializationType", `String "PRECEDENCE")
+           ;("precedence",`Int precedence)
+       ]
 
 let dump pps e = match e with
     EpsilonTransition { _target ; outermostPrecedenceReturn } ->
@@ -291,6 +444,19 @@ module State = struct
            ]
   [@@deriving show]
 
+  let to_yojson st =
+    `Assoc(
+        [("stateNumber",state_id_to_yojson st.stateNumber)
+          ;("stateType",Node.atn_state_type_t_to_yojson Node.(serialization_name st.node))
+          ;("ruleIndex", `Int st.ruleIndex)
+          ;("epsilonOnlyTransitions", `Bool st.epsilonOnlyTransitions)
+          ;("#transitions",`Int(List.length st.transitions))
+          ;("transitions", `List (List.map Edge.to_yojson st.transitions))
+        ]
+        @(match Node.to_yojson st.node with
+            `Assoc l -> l)
+      )
+
   let dump pps st =
     Fmt.(pf pps {|  stateNumber: %a@.|} dump_state_id st.stateNumber)
     ; Fmt.(pf pps {|  stateType: %a@.|} Node.pp_atn_state_type_t Node.(serialization_name st.node))
@@ -348,6 +514,7 @@ module State = struct
     match (t,i) with
       (STATES t, Types.STID i) -> t.(i)
 
+  let states_to_list (STATES t) = Array.to_list t
   let iter f (STATES t) =
     Array.iter f t
 
@@ -442,6 +609,13 @@ let dump_atn_type_t pps t =
   let n = match t with LEXER -> 0 | PARSER -> 1 in
   Fmt.(pf pps "<ATNType.%a: %d>" pp_atn_type_t t n)
 
+let atn_type_t_to_yojson t =
+  `String Fmt.(str "%a" dump_atn_type_t t)
+
+let atn_type_t_to_yojson t =
+  let s = Fmt.(str "%a" dump_atn_type_t t) in
+  `String s
+
 type t = {
     grammarType : atn_type_t
   ; maxTokenType : int
@@ -454,6 +628,13 @@ type t = {
   ; decisionToState : state_id array
   ; lexerActions : LexerAction.t array option
   }
+
+let to_yojson atn =
+  `Assoc [("grammarType", atn_type_t_to_yojson atn.grammarType)
+         ;("maxTokenType", `Int atn.maxTokenType)
+         ;("#states", `Int(State.nstates atn.states))
+         ;("states", `List (atn.states |> State.states_to_list |> List.map State.to_yojson))
+    ]
 
 let dump pps atn =
   Fmt.(pf pps {|grammarType: %a@.|} dump_atn_type_t atn.grammarType)

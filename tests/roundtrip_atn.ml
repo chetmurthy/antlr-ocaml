@@ -5,7 +5,7 @@
 "/home/chet/Hack/Antlr/src/calc/gen-java/CalcLexer.interp" |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_raw |> Antlr.Atn.deser ;;
  *)
 
-let roundtrip ~debug ~disable_verify file =
+let roundtrip ~json ~debug ~disable_verify file =
   Antlr.Atn.debug := debug ;
   let atn =
     file
@@ -14,7 +14,10 @@ let roundtrip ~debug ~disable_verify file =
     |> Result.get_ok
     |> Antlr.Interp_syntax.read_raw
     |> Antlr.Atn.deser ~verify:(not disable_verify) in
-  Fmt.(pf stdout "Filename: %s@.%a@." file Antlr.Atn.dump atn)
+  if json then
+    Fmt.(pf stdout "Filename: %s@.%a@." file (Yojson.Safe.pretty_print ~std:true) (Yojson.Safe.sort (Antlr.Atn.to_yojson atn)))
+  else
+    Fmt.(pf stdout "Filename: %s@.%a@." file Antlr.Atn.dump atn)
 
 open Cmdliner
 open Cmdliner.Term.Syntax
@@ -28,6 +31,10 @@ let debug =
   let doc = "enable debugging." in
   Arg.(value & flag & info ["debug"] ~doc)
 
+let json =
+  let doc = "JSON output." in
+  Arg.(value & flag & info ["json"] ~doc)
+
 let disable_verify =
   let doc = "disable verify." in
   Arg.(value & flag & info ["disable-verify"] ~doc)
@@ -39,8 +46,8 @@ let roundtrip_cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "roundtrip_atn" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ disable_verify in
-  roundtrip ~debug ~disable_verify file
+  let+ file and+ debug and+ json and+ disable_verify in
+  roundtrip ~json ~debug ~disable_verify file
 
 let main () = Cmd.eval roundtrip_cmd
 let () = if !Sys.interactive then () else exit (main ())

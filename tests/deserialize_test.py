@@ -1,4 +1,5 @@
 import sys
+import json
 
 sys.path
 sys.path.append('../python')
@@ -23,8 +24,8 @@ def main(args):
     ser_atn = extract_atn(s)
     des = ATNDeserializer()
     atn = des.deserialize(ser_atn)
-    atn.dump()
-    
+#    atn.dump()
+    print(json.dumps(atn.asdict(), sort_keys=True, indent=4))
 
 if __name__ == '__main__':
     main(sys.argv)

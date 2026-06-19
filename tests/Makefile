@@ -2,7 +2,7 @@ WD=$(shell pwd)
 TOP=..
 include $(TOP)/config/Makefile.sub
 
-PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner
+PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson
 
 ML= \
 	lib_test.ml antlr_test.ml roundtrip_atn.ml \
@@ -29,18 +29,19 @@ roundtrip_atn.exe: roundtrip_atn.cmo
 
 
 SHELL := /bin/bash
-#FILE := CalcLexer.interp
-FILE := /home/chet/Hack/Antlr/src/grammars-v4/antlr/antlr4/examples/grammars-v4/cmake/CMakeLexer.interp
+FILE := CalcLexer.interp
+#FILE := /home/chet/Hack/Antlr/src/grammars-v4/antlr/antlr4/examples/grammars-v4/cmake/CMakeLexer.interp
 #ATNDEBUG=--debug
 #ATNVERIFY=--disable-verify
+ATNJSON=--json
 compare-one:: roundtrip_atn.exe
-	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE) )
+	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE) )
 
 run-python::
 	python3 deserialize_test.py $(FILE)
 
 run-ocaml:: roundtrip_atn.exe
-	./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(FILE)
+	./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE)
 
 ANTLRDIRS= ~/Hack/Antlr/src/antlr4 ~/Hack/Antlr/src/grammars-v4
 compare-all:: roundtrip_atn.exe
@@ -48,7 +49,7 @@ compare-all:: roundtrip_atn.exe
 	for f in `find $(ANTLRDIRS) -name '*.interp' -print`; \
 	do \
 	echo "================ $$f ================" ; \
-	diff -bBwi -u10 <( python3 deserialize_test.py $$f ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $$f ) ; \
+	diff -bBwi -u10 <( python3 deserialize_test.py $$f ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $$f ) ; \
 	done
 
 test-python::

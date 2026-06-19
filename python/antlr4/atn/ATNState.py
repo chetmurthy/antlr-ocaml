@@ -133,6 +133,17 @@ class ATNState(object):
     def __str__(self):
         return str(self.stateNumber)
 
+    def asdict(self):
+        d = {
+            'stateNumber' : self.stateNumber,
+            'stateType' : ATNState.serializationNames[self.stateType],
+            'ruleIndex' : self.ruleIndex,
+            'epsilonOnlyTransitions' : self.epsilonOnlyTransitions,
+            '#transitions' : len(self.transitions),
+            'transitions' : [e.asdict() for e in self.transitions]
+        }
+        return d
+
     def dump(self):
         print("  stateNumber: %d" % self.stateNumber)
         print("  stateType: %s" % ATNState.serializationNames[self.stateType])
@@ -170,6 +181,12 @@ class DecisionState(ATNState):
         self.decision = -1
         self.nonGreedy = False
 
+    def asdict(self):
+        d = super(DecisionState,self).asdict()
+        d['decision'] = self.decision
+        d['nonGreedy'] = self.nonGreedy
+        return d
+
     def dump(self):
         super(DecisionState,self).dump()
         print("  decision: %s" % self.decision)
@@ -182,6 +199,11 @@ class BlockStartState(DecisionState):
     def __init__(self):
         super().__init__()
         self.endState = None
+
+    def asdict(self):
+        d = super(BlockStartState,self).asdict()
+        d['endState'] = self.endState.stateNumber
+        return d
 
     def dump(self):
         super(BlockStartState,self).dump()
@@ -201,6 +223,11 @@ class BlockEndState(ATNState):
         super().__init__()
         self.stateType = self.BLOCK_END
         self.startState = None
+
+    def asdict(self):
+        d = super(BlockEndState,self).asdict()
+        d['startState'] = self.startState.stateNumber
+        return d
 
     def dump(self):
         super(BlockEndState,self).dump()
@@ -225,6 +252,12 @@ class RuleStartState(ATNState):
         self.stateType = self.RULE_START
         self.stopState = None
         self.isPrecedenceRule = False
+
+    def asdict(self):
+        d = super(RuleStartState,self).asdict()
+        d['stopState'] = self.stopState.stateNumber
+        d['isPrecedenceRule'] = self.isPrecedenceRule
+        return d
 
     def dump(self):
         super(RuleStartState,self).dump()
@@ -252,6 +285,11 @@ class PlusBlockStartState(BlockStartState):
         super().__init__()
         self.stateType = self.PLUS_BLOCK_START
         self.loopBackState = None
+
+    def asdict(self):
+        d = super(PlusBlockStartState,self).asdict()
+        d['loopBackState'] = self.loopBackState.stateNumber
+        return d
 
     def dump(self):
         super(PlusBlockStartState,self).dump()
@@ -281,6 +319,12 @@ class StarLoopEntryState(DecisionState):
         # Indicates whether this state can benefit from a precedence DFA during SLL decision making.
         self.isPrecedenceDecision = None
 
+    def asdict(self):
+        d = super(StarLoopEntryState,self).asdict()
+        d['loopBackState'] = self.loopBackState.stateNumber
+        d['isPrecedenceDecision'] = self.isPrecedenceDecision
+        return d
+
     def dump(self):
         super(StarLoopEntryState,self).dump()
         print("  loopBackState: %s" % self.loopBackState)
@@ -294,6 +338,11 @@ class LoopEndState(ATNState):
         super().__init__()
         self.stateType = self.LOOP_END
         self.loopBackState = None
+
+    def asdict(self):
+        d = super(LoopEndState,self).asdict()
+        d['loopBackState'] = self.loopBackState.stateNumber
+        return d
 
     def dump(self):
         super(LoopEndState,self).dump()

@@ -10,6 +10,8 @@ let dump pps t =
     [] -> Fmt.(pf pps "{}")
   | l -> Fmt.(pf pps "{%a}" (list ~sep:(const string ", ") Range.dump) l)
 
+let to_yojson t = `String Fmt.(str "%a" dump t)
+
 let mk () = { intervals = [] }
 
 let ofList l = { intervals = l }
