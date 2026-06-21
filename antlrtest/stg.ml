@@ -78,6 +78,54 @@ let pa txt =
 end
 
 module Group = struct
+type include_definition =
+  { name : string
+  ; formals : string list
+  ; rhs : stg_t list
+  }
+
+let pa0 (name, formals, rhs) =
+  let formals = [%split {|,|} / pcre2] formals in
+  let rhs = Template.pa rhs in
+  { name ; formals ; rhs }
+
+
+let pa_version1 txt =
+  match [%match {|^\s*([a-z][a-z0-9_]*)\(([^()]*)\)\s*::=\s*<<(.*?)>>(.*)|} / pcre2 s i strings (!1,!2, !3, !4)] txt with
+      Some (lhs, formals, rhs, txt) ->
+      let g = pa0 (lhs, formals, rhs) in
+      Some (g, txt)
+    | None -> None
+
+let pa_version2 txt =
+  match [%match {|^\s*([a-z][a-z0-9_]*)\(([^()]*)\)\s*::=\s*<%(.*?)%>(.*)|} / pcre2 s i strings (!1,!2, !3, !4)] txt with
+      Some (lhs, formals, rhs, txt) ->
+      let g = pa0 (lhs, formals, rhs) in
+      Some (g, txt)
+    | None -> None
+
+let pa_version3 txt =
+  match [%match {|^\s*([a-z][a-z0-9_]*)\(([^()]*)\)\s*::=\s*"([^"]*?)"(.*)|} / pcre2 s i strings (!1,!2, !3, !4)] txt with
+      Some (lhs, formals, rhs, txt) ->
+      let g = pa0 (lhs, formals, rhs) in
+      Some (g, txt)
+    | None -> None
+
+let pa1 txt =
+  match List.find_map (fun f -> f txt) [pa_version1; pa_version2; pa_version3] with
+    Some (g,txt) -> Some (g,txt)
+  | None ->
+     if [%match {|\S|} / pcre2 pred] txt then
+       Fmt.(failwithf "Group.pa1: unrecognized text %a" Dump.string txt)
+     else None
+
+let pa txt =
+  let rec parec acc txt =
+    match pa1 txt with
+      Some (g,txt) -> parec (g::acc) txt
+    | None -> List.rev acc
+in parec [] txt
+
 end
 
 module Env = struct
