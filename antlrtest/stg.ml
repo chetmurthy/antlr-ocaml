@@ -71,10 +71,13 @@ let unread_input = parser
     Fmt.(failwithf "pa_stg: unread input %a" Dump.string s)
 | [< >] -> ()
 
-let pa_stg txt =
+let pa txt =
   let l = tokenize txt in
   (parser [< l = parec [] ; _=unread_input >] -> l) (Stream.of_list l)
 
+end
+
+module Group = struct
 end
 
 module Env = struct
@@ -138,7 +141,7 @@ module Subst = struct
 end
 
 let transform env txt =
-  let stg = txt |> Template.pa_stg in
+  let stg = txt |> Template.pa in
   Subst.subst env stg
 
 let transform_file env f =
