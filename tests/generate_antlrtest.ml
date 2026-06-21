@@ -8,11 +8,14 @@
 
  *)
 
-let generate_antlrtest ~debug ~destdir ~templatedir file =
+let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let open Antlrtest in
   if templatedir = "" then
     failwith "must specify --template-dir|-t" ;
   let templatedir = Fpath.v templatedir in
+  if helperfile = "" then
+    failwith "must specify --helper-file|-h" ;
+  let helperfile = Fpath.v helperfile in
   if destdir = "" then
     failwith "must specify --dest-dir|-d" ;
   let destdir = Fpath.v destdir in
@@ -22,6 +25,8 @@ let generate_antlrtest ~debug ~destdir ~templatedir file =
   let module D = Descriptor in
   let d = D.load file in
   let env = D.to_env d in
+  let includes = Stg.Group.load helperfile in
+  let env = {(env) with includes = includes } in
 
   let templatefiles =
     templatedir |> (Bos.OS.Dir.contents ~rel:true) |> Result.get_ok in
@@ -56,16 +61,14 @@ let templatedir =
   let docv = "The template directory." in
   Arg.(value & opt dir "" & info ["t"; "template-dir"] ~docv)
 
+let helperfile =
+  let docv = "The helper file (for include definitions)." in
+  Arg.(value & opt file "" & info ["h"; "helper-file"] ~docv)
+
 let destdir =
   let docv = "The generated destination directory." in
   Arg.(value & opt string "" & info ["d"; "dest-dir"] ~docv)
 
-(*
-let destdir =
-  let docv = "The destination directory." in
-  let absent = "absent." in
-  Arg.(required & pos 0 (some string) None & info [] ~absent ~docv)
- *)
 let debug =
   let doc = "enable debugging." in
   Arg.(value & flag & info ["debug"] ~doc)
@@ -77,8 +80,8 @@ let generate_cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "generate_antlrtest" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ templatedir and+ destdir in
-  generate_antlrtest ~debug ~destdir ~templatedir file
+  let+ file and+ debug and+ templatedir and+ destdir and+ helperfile in
+  generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file
 
 let main () = Cmd.eval generate_cmd
 let () = if !Sys.interactive then () else exit (main ())

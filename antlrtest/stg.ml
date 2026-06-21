@@ -3,7 +3,7 @@
 type expr_t =
   VAR of string
 | NOT of expr_t
-[@@deriving show]
+[@@deriving show, yojson]
 
 type stg_t =
   TEXT of string
@@ -11,7 +11,7 @@ type stg_t =
 | ATTRIBUTE of string
 | INCLUDE of string * string list
 and stg_t_list = stg_t list
-[@@deriving show]
+[@@deriving show, yojson]
 
 open Pa_ppx_base
 open Ppxutil
@@ -81,17 +81,18 @@ let pa txt =
 end
 
 module Group = struct
-type include_definition =
-  { name : string
-  ; formals : string list
+type include_definition_rhs =
+  { formals : string list
   ; rhs : stg_t list
   }
-[@@deriving show]
+and include_definition =
+  string * include_definition_rhs
+[@@deriving show,yojson]
 
 let pa0 (name, formals, rhs) =
   let formals = [%split {|,|} / pcre2] formals in
   let rhs = Template.pa rhs in
-  { name ; formals ; rhs }
+  (name, { formals ; rhs })
 
 
 let pa_version1 txt =
@@ -130,6 +131,9 @@ let pa txt =
     | None -> List.rev acc
 in parec [] txt
 
+let load file =
+  file |> Bos.OS.File.read |> Result.get_ok |> pa
+
 end
 
 module Env = struct
@@ -151,6 +155,7 @@ module Env = struct
 
   type t = {
       attributes : string strmap
+    ; includes : Group.include_definition_rhs strmap
     } [@@deriving yojson]
 end
 
@@ -160,13 +165,16 @@ module Subst = struct
       [] -> [< >]
     | (h::t) -> [< f h ; prlist f t >]
 
+  let eval_actual txt =
+    [%subst {|"((?:\\"|[^"])+)"|} / {| Scanf.unescaped $1$ |} / pcre2 g e] txt
+
   let rec eval env = function
       VAR k ->
       List.mem_assoc k env.Env.attributes
     | NOT e ->
        not(eval env e)
 
-  let subst0 env =
+  let rec subst0 env =
     let rec srec = function
         TEXT s -> [< 's >]
       | ATTRIBUTE s ->
@@ -179,7 +187,22 @@ module Subst = struct
            prlist srec thenl
          else
            prlist srec elsel
-      | INCLUDE (n,_) -> Fmt.(failwithf "Stg.Subst.subst: INCLUDE %a unimplemented" Dump.string n)
+      | INCLUDE (n,_) when not (List.mem_assoc n env.includes) ->
+         Fmt.(failwithf "Stg.Subst.subst: INCLUDE %a unimplemented" Dump.string n)
+
+      | INCLUDE (n,actuals) ->
+         let open Group in
+         let rhs = List.assoc n env.includes in
+         if List.length rhs.formals <> List.length actuals then
+           Fmt.(failwithf "Stg.Subst.subst: formal/actual mismatch for INCLUDE %a len(%a) <> len(%a)"
+                  Dump.string n
+                  (list Dump.string) rhs.formals
+                  (list Dump.string) actuals
+           ) ;
+         let actuals = List.map eval_actual actuals in
+         let l = Std.combine rhs.formals actuals in
+         let env' = {(env) with attributes = l@env.attributes} in
+         prlist (subst0 env') rhs.rhs
     in srec
 
   let subst env stg =

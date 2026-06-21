@@ -20,9 +20,11 @@ test:: all
 	mkdir -p _build && ./lib_test.exe
 	mkdir -p _build && ./antlr_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
-#	mkdir -p _build && \
-#	./generate_antlrtest.exe -d _build/smoke \
-#	-t fixtures/antlrtest.1 fixtures/CharSet.txt
+	mkdir -p _build && rm -rf _build/smoke && \
+	./generate_antlrtest.exe -d _build/smoke \
+	-t fixtures/antlrtest.1 \
+	-h fixtures/Python3.test.stg \
+	fixtures/CharSet.txt
 
 lib_test.exe: lib_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<

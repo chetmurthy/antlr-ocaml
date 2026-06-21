@@ -75,4 +75,4 @@ let to_env d =
       ("lexerName",lexerName)::attributes
   else
     ("lexerName",lexerName)::("parserName",parserName):: attributes in
-  Stg.Env.{ attributes }
+  Stg.Env.{ attributes ; includes = [] }
