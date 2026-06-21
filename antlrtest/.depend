@@ -1,0 +1,9 @@
+stg_types.cmo stg_parse.cmo stg_types.cmi stg_parse.cmi stg_types.cmx stg_parse.cmx: 
+stg_types.cmo :
+stg_types.cmx :
+stg_parse.cmo : \
+    stg_types.cmo
+stg_parse.cmx : \
+    stg_types.cmx
+mk_meta.cmo :
+mk_meta.cmx :
