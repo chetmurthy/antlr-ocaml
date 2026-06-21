@@ -11,7 +11,7 @@ TARGET_PACKAGE=antlrtest
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
-	stg_types.ml stg_parse.ml
+	stg.ml descriptor.ml
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)

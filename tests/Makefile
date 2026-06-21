@@ -2,26 +2,34 @@ WD=$(shell pwd)
 TOP=..
 include $(TOP)/config/Makefile.sub
 
-PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson
+PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson,antlrtest
 
 ML= \
 	lib_test.ml antlr_test.ml roundtrip_atn.ml \
+	generate_antlrtest.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
-TESTS=lib_test.exe antlr_test.exe roundtrip_atn.exe
+TESTS=lib_test.exe antlr_test.exe roundtrip_atn.exe \
+	generate_antlrtest.exe
 
 all: $(TESTS)
 
 test:: all
 	mkdir -p _build && ./lib_test.exe
 	mkdir -p _build && ./antlr_test.exe
+	mkdir -p _build && \
+	./generate_antlrtest.exe -d _build/smoke \
+	-t fixtures/antlrtest.1 fixtures/CharSet.txt
 
 lib_test.exe: lib_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 antlr_test.exe: antlr_test.cmo
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
+generate_antlrtest.exe: generate_antlrtest.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 roundtrip_atn.exe: roundtrip_atn.cmo

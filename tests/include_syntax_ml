@@ -18,8 +18,8 @@ let f = "/home/chet/Hack/Antlr/src/antlr4/antlr4-maven-plugin/src/test/projects/
 f |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_raw |> Antlr.Atn.deser ;;
  *)
 
-let f = "/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/helpers/Test.py.stg" ;;
-f |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlrtest.Stg_parse.pa_stg ;;
+open Antlrtest ;;
+module D = Descriptor ;;
 
 (*
 ;;; Local Variables: ***

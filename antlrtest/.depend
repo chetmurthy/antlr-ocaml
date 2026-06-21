@@ -1,9 +1,9 @@
-stg_types.cmo stg_parse.cmo stg_types.cmi stg_parse.cmi stg_types.cmx stg_parse.cmx: 
-stg_types.cmo :
-stg_types.cmx :
-stg_parse.cmo : \
-    stg_types.cmo
-stg_parse.cmx : \
-    stg_types.cmx
+stg.cmo descriptor.cmo stg.cmi descriptor.cmi stg.cmx descriptor.cmx: 
+stg.cmo :
+stg.cmx :
+descriptor.cmo : \
+    stg.cmo
+descriptor.cmx : \
+    stg.cmx
 mk_meta.cmo :
 mk_meta.cmx :

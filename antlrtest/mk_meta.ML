@@ -19,5 +19,5 @@ description = "ANTLR test support"
   archive(byte) = "antlrtest.cma"
   archive(native) = "antlrtest.cmxa"
 
-  requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils"
+  requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils,yojson"
 |} version)
