@@ -18,6 +18,12 @@ open Ppxutil
 open Pa_ppx_utils
 open Std
 
+let is_ws = [%match {|^\s+$|} / pcre2 s pred] ;;
+
+let clean_blank_lines s =
+  let s = [%subst {|^\n|} / "" / s] s in
+  [%subst {|\n\n+|} / "\n" / g s] s
+
 module Template = struct
 
 let tokenize s = [%split {|<(?:(?:[^<>\s]|\\<)(?:[^<>]|\\<)*(?:[^<>\s]|\\<)|(?:[^<>\s]|\\<))>|} / pcre2 strings] s

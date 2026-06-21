@@ -4,10 +4,9 @@ open Pa_ppx_base
 open Ppxutil
 open Pa_ppx_utils
 open Std
+open Stg
 
-let is_ws = [%match {|^\s+$|} / pcre2 s pred] ;;
-
-let clean_body s =
+let clean_stanza s =
   let s = [%subst {|^\n|} / "" / s] s in
   [%subst {|\n\n$|} / "" / s] s
 
@@ -19,7 +18,7 @@ let parse txt =
     | (`Text s)::_ ->
        Fmt.(failwithf "Descriptor.parse: text encountered before stanza: %a" Dump.string s)
     | (`Delim name)::(`Text body)::tl ->
-       parec ((name,clean_body body)::acc) tl
+       parec ((name,clean_stanza body)::acc) tl
     | (`Delim n)::[] -> 
        Fmt.(failwithf "Descriptor.parse: trailing stanza name: %s" n)
     | [] -> List.rev acc in
@@ -69,10 +68,11 @@ let load file =
 let to_env d =
   let attributes = [("grammarName",d.grammar_name);("python3","")] in
   let attributes =
-    let lexerName = Fmt.(str "%sLexer" d.grammar_name) in
-    let parserName = Fmt.(str "%sParser" d.grammar_name) in
     if d.is_lexer then
+      let lexerName = d.grammar_name in
       ("lexerName",lexerName)::attributes
   else
+    let lexerName = Fmt.(str "%sLexer" d.grammar_name) in
+    let parserName = Fmt.(str "%sParser" d.grammar_name) in
     ("lexerName",lexerName)::("parserName",parserName):: attributes in
   Stg.Env.{ attributes ; includes = [] }

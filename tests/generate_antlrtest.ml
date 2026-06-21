@@ -1,5 +1,7 @@
 (**pp -syntax camlp5o *)
 
+open Pa_ppx_utils
+
 (** generate an antlrtest directory from a test
     descriptor and a template directory
 
@@ -33,7 +35,8 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
 
   let gen_one f =
     let full = Fpath.append templatedir f in
-    (full, Stg.transform_file env full) in
+    let dstfull = Fpath.append destdir f in
+    (dstfull, Stg.transform_file env full) in
 
   let generated_files = List.map gen_one templatefiles in
   let generated_files =
@@ -41,6 +44,13 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
      Stg.transform env (D.stanza d "grammar")
     ;Fpath.(append destdir (v Fmt.(str "%s.input" d.grammar_name))),
      D.stanza d "input"]@generated_files in
+
+  let generated_files =
+    generated_files
+    |> List.map (fun (f, txt) ->
+           if Std.ends_with ~pat:".py" (Fpath.to_string f) then
+             (f, Stg.clean_blank_lines txt)
+           else (f,txt)) in
 
   destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok ;
   generated_files

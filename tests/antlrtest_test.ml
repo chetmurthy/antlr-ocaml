@@ -16,13 +16,13 @@ let test_group ctxt =
   let module G = Stg.Group in
   let printer = [%show: G.include_definition list] in
   ()
-  ; assert_equal ~printer [G.{ name = "writeln"; formals=["s"]; rhs=T.pa "print(<s>, file=self._output)" }]
+  ; assert_equal ~printer ["writeln",G.{formals=["s"]; rhs=T.pa "print(<s>, file=self._output)" }]
       (G.pa {|writeln(s) ::= <<print(<s>, file=self._output)>>|})
-  ; assert_equal ~printer [G.{ name = "Not"; formals=["v"]; rhs=T.pa "not <v>" }]
+  ; assert_equal ~printer ["Not",G.{formals=["v"]; rhs=T.pa "not <v>" }]
       (G.pa {|Not(v) ::= "not <v>"|})
-  ; assert_equal ~printer [G.{ name = "InitIntMember"; formals=["n";"v"]; rhs=T.pa "<n> = <v>" }]
+  ; assert_equal ~printer ["InitIntMember",G.{formals=["n";"v"]; rhs=T.pa "<n> = <v>" }]
       (G.pa {|InitIntMember(n,v) ::= <%<n> = <v>%>|})
-  ; assert_equal ~printer [G.{ name = "P"; formals=[]; rhs=T.pa {| w \< l i > s |} }]
+  ; assert_equal ~printer ["P",G.{formals=[]; rhs=T.pa {| w \< l i > s |} }]
       (G.pa {|P() ::= << w \< l i > s >>|})
 
 let suite = "Test Antlrtest" >::: [
