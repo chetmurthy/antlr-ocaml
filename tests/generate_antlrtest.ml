@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_utils
 
@@ -9,6 +9,9 @@ open Pa_ppx_utils
     (b) 
 
  *)
+
+let clean_triple_quotes txt =
+  [%subst {|"""(.*?)"""|} / {|$1|} / pcre2 s] txt
 
 let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let open Antlrtest in
@@ -42,8 +45,8 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let generated_files =
     [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar_name))),
      Stg.transform env (D.stanza d "grammar")
-    ;Fpath.(append destdir (v Fmt.(str "%s.input" d.grammar_name))),
-     D.stanza d "input"]@generated_files in
+    ;Fpath.(append destdir (v "input")),
+     clean_triple_quotes (D.stanza d "input")]@generated_files in
 
   let generated_files =
     generated_files
