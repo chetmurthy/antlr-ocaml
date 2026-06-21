@@ -19,6 +19,8 @@ f |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_r
  *)
 
 open Antlrtest ;;
+module T = Stg.Template ;;
+module G = Stg.Group ;;
 module D = Descriptor ;;
 
 (*

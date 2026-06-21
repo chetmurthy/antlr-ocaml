@@ -3,12 +3,15 @@
 type expr_t =
   VAR of string
 | NOT of expr_t
+[@@deriving show]
 
 type stg_t =
   TEXT of string
-| IFTHEN of expr_t * stg_t list * stg_t list
+| IFTHEN of expr_t * stg_t_list * stg_t_list
 | ATTRIBUTE of string
 | INCLUDE of string * string list
+and stg_t_list = stg_t list
+[@@deriving show]
 
 open Pa_ppx_base
 open Ppxutil
@@ -17,7 +20,7 @@ open Std
 
 module Template = struct
 
-let tokenize s = [%split {|<[^<>]+>|} / pcre2 strings] s
+let tokenize s = [%split {|<(?:(?:[^<>\s]|\\<)(?:[^<>]|\\<)*(?:[^<>\s]|\\<)|(?:[^<>\s]|\\<))>|} / pcre2 strings] s
 
 let pa_opt pa1 = parser
   [< x=pa1 >] -> Some x
@@ -83,6 +86,7 @@ type include_definition =
   ; formals : string list
   ; rhs : stg_t list
   }
+[@@deriving show]
 
 let pa0 (name, formals, rhs) =
   let formals = [%split {|,|} / pcre2] formals in
