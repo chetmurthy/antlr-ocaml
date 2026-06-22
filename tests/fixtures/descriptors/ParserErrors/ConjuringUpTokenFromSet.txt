@@ -3,7 +3,7 @@ Parser
 
 [grammar]
 grammar T;
-a : 'a' x=('b'|'c') {<Append("\"conjured=\"","$x"):writeln()>} 'd' ;
+a : 'a' x=('b'|'c') {print("conjured=" + str($x), file=self._output)} 'd' ;
 
 [start]
 a
