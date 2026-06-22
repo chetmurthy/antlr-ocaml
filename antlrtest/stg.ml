@@ -26,6 +26,15 @@ let clean_blank_lines s =
 
 module Template = struct
 
+let include_hacks = ref ([] : (string * string) list)
+let add_include_hack (lhs, rhs) =
+  Std.push include_hacks (lhs, rhs)
+
+let try_include_hack lhs =
+  match List.assoc lhs !include_hacks with
+    rhs -> Some rhs
+  | exception Not_found -> None
+
 let tokenize s = [%split {|(?<!\\)<(?:(?:[^<>\s]|\\<)(?:[^<>]|\\<)*(?:[^<>\s]|\\<)|(?:[^<>\s]|\\<))>|} / pcre2 strings] s
 
 let pa_opt pa1 = parser
@@ -71,15 +80,18 @@ let rec parec acc = parser
    parec (e::acc) s
 
 | [< ' `Delim txt when is_include txt ; s >] ->
-   let e = match [%match {|^<([a-z][a-z0-9_]*)\((.*?)\)>$|} / pcre2 i strings (!1,!2)] txt with
-       Some (n,argtxt) ->
-        if [%match {|\):|} / pred pcre2] argtxt then
-          Fmt.(pf stderr "%s: WARNING: INCLUDE %a is probably not expanded correctly@."
-                 file Dump.string txt) ;
-        let args = [%split {|,|} / pcre2] argtxt in
-        INCLUDE(n,args)
-     | None -> Fmt.(failwithf "%s: failed to parse attribute %a" file Dump.string txt) in
-   parec (e::acc) s
+   (match try_include_hack txt with
+      Some rhs -> parec (TEXT rhs :: acc) s
+    | None ->
+       let e = match [%match {|^<([a-z][a-z0-9_]*)\((.*?)\)>$|} / pcre2 i strings (!1,!2)] txt with
+           Some (n,argtxt) ->
+            if [%match {|\):|} / pred pcre2] argtxt then
+              Fmt.(pf stderr "%s: WARNING: INCLUDE %a is probably not expanded correctly@."
+                     file Dump.string txt) ;
+            let args = [%split {|,|} / pcre2] argtxt in
+            INCLUDE(n,args)
+           | None -> Fmt.(failwithf "%s: failed to parse attribute %a" file Dump.string txt) in
+       parec (e::acc) s)
 
 | [< ' `Delim txt when is_comment txt ; s >] -> parec acc s
 

@@ -10,6 +10,10 @@ open Pa_ppx_utils
 
  *)
 
+Antlrtest.Stg.Template.add_include_hack(
+  {|<ToStringTree("$ctx"):writeln()>|},
+  {|print($ctx.toStringTree(recog=self), file=self._output)|}) ;;
+
 let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let open Antlrtest in
   if templatedir = "" then
