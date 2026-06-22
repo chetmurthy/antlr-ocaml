@@ -7,7 +7,7 @@ open Std
 open Stg
 
 let clean_triple_quotes txt =
-  [%subst {|"""(.*?)"""|} / {|$1|} / pcre2 s] txt
+  [%subst {|"""(.*?)""".*|} / {|$1|} / pcre2 s] txt
 
 let clean_stanza s =
   let s = [%subst {|^\n|} / "" / s] s in
