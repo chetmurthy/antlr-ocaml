@@ -30,6 +30,13 @@ generate-all:: antlrtest_test.exe
 	fixtures/descriptors/$$d ;\
 	done
 
+test-all:: antlrtest_test.exe
+	mkdir -p _build && set -e ; set -x ;\
+	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
+	do \
+	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} all ;\
+	done
+
 generate-all-nonstop:: antlrtest_test.exe
 	mkdir -p _build && set -e ; set -x ;\
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\

@@ -6,7 +6,7 @@ grammar T;
 
 options { contextSuperClass=MyRuleNode; }
 
-<TreeNodeWithAltNumField(X="T")>
+<TreeNodeWithAltNumField("T")>
 
 
 s

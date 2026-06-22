@@ -10,9 +10,31 @@ open Pa_ppx_utils
 
  *)
 
-Antlrtest.Stg.Template.add_include_hack(
-  {|<ToStringTree("$ctx"):writeln()>|},
-  {|print($ctx.toStringTree(recog=self), file=self._output)|}) ;;
+[
+  (
+    {|<ToStringTree("$r.ctx"):writeln()>|},
+    {|print($r.ctx.toStringTree(recog=self), file=self._output)|}
+  )
+; (
+    {|<ToStringTree("$ctx"):writeln()>|},
+    {|print($ctx.toStringTree(recog=self), file=self._output)|}
+  )
+; (
+    {|<ContextMember("$ctx", "r"):ToStringTree():writeln()>|},
+    {|print($ctx.r.toStringTree(recog=self), file=self._output)|}
+  )
+; (
+    {|<ContextMember("$ctx", "r"):WalkListener()>|},
+    {|if "." in __name__:
+    from .TListener import TListener
+else:
+    from TListener import TListener
+TParser.LeafListener.__bases__ = (TListener,)
+walker = ParseTreeWalker()
+walker.walk(TParser.LeafListener(self._output), $ctx.r)|}
+  )
+] |> List.iter
+Antlrtest.Stg.Template.add_include_hack ;;
 
 let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let open Antlrtest in
