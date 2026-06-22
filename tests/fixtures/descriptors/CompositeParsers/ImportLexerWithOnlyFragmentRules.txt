@@ -30,3 +30,5 @@ program
 [input]
 test test
 
+[output]
+""""""
