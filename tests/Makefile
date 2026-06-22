@@ -21,18 +21,18 @@ test:: all
 	mkdir -p _build && ./antlr_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
 
-antlr-runtime-test::
+antlr-runtime-test:: antlrtest_test.exe
 	mkdir -p _build && set -e ; set -x ;\
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
 	do \
-	rm -rf _build/$$d && \
+	rm -rf _build/$${d/.txt/} && \
 	./generate_antlrtest.exe -d _build/$${d/.txt/} \
 	-t fixtures/antlrtest.1 \
 	-h fixtures/Python3.test.stg \
 	fixtures/descriptors/$$d ;\
 	done
 
-generate-one::
+generate-one:: antlrtest_test.exe
 	mkdir -p _build && \
 	rm -rf _build/X && \
 	./generate_antlrtest.exe -d _build/X \

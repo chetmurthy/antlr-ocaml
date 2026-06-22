@@ -25,9 +25,17 @@ let test_group ctxt =
   ; assert_equal ~printer ["P",G.{formals=[]; rhs=T.pa {| w \< l i > s |} }]
       (G.pa {|P() ::= << w \< l i > s >>|})
 
+let test_descriptor ctxt =
+  let module D = Descriptor in
+  ()
+  ; assert_equal [] (D.split_stanzas {||})
+  ; assert_equal [`Delim "type"] (D.split_stanzas {|[type]|})
+  ; assert_equal [`Delim "notes"] (D.split_stanzas {|[notes]|})
+
 let suite = "Test Antlrtest" >::: [
       "template"   >:: test_template
     ; "group"   >:: test_group
+    ; "descriptor"   >:: test_descriptor
     ]
 
 let _ = 

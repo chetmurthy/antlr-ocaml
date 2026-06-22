@@ -10,8 +10,10 @@ let clean_stanza s =
   let s = [%subst {|^\n|} / "" / s] s in
   [%subst {|\n\n$|} / "" / s] s
 
+let split_stanzas txt = [%split {|^\[(notes|type|grammar|slaveGrammar|start|input|output|errors|flags|skip)\]$|} / pcre2 m strings !1] txt
+
 let parse txt =
-  let l = [%split {|^\[(:notes|type|grammar|slaveGrammar|start|input|output|errors|flags|skip)\]$|} / pcre2 m strings !1] txt in
+  let l = split_stanzas txt in
   let rec parec acc = function
       (`Text s)::tl when is_ws s ->
       parec acc tl
@@ -24,12 +26,33 @@ let parse txt =
     | [] -> List.rev acc in
   parec [] l
 
+type flags_t = {
+    showDFA : bool
+  ; showDiagnosticErrors : bool
+  ; traceATN : bool
+  ; predictionMode : string
+  ; buildParseTree : bool
+  }
+
+let pa_flags txt =
+  { showDFA = [%match {|showDFA|} / pcre2 pred] txt
+  ; showDiagnosticErrors = [%match {|showDiagnosticErrors|} / pcre2 pred] txt
+  ; traceATN = [%match {|traceATN|} / pcre2 pred] txt
+  ; predictionMode =
+      (match [%match {|predictionMode=(\S+)|} / pcre2 strings !1] txt with
+         None -> "LL"
+       | Some s -> s)
+  ; buildParseTree = not ([%match {|notBuildParseTree|} / pcre2 pred] txt)
+  }
+
 type t = {
     is_lexer : bool
   ; is_composite : bool
   ; grammar_name : string
   ; stanzas : (string * string) list
   ; filename : string
+  ; flags : flags_t
+  ; startRule : string option
   }
 
 let stanza_opt d name =
@@ -64,6 +87,17 @@ let _mk ~file stanzas =
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no grammar stanza" file) in
 
+  let flags_txt =
+    match List.assoc "flags" stanzas with
+      x -> x
+    | exception Not_found -> "" in
+  let flags = pa_flags flags_txt in
+
+  let startRule =
+    match List.assoc "start" stanzas with
+      x -> Some x
+    | exception Not_found -> None in
+
   let grammar_name = grammar_name ~file grammar in
   {
     is_lexer
@@ -71,6 +105,8 @@ let _mk ~file stanzas =
   ; grammar_name
   ; stanzas
   ; filename = file
+  ; flags
+  ; startRule
   }
 
 let load file =
@@ -88,4 +124,32 @@ let to_env d =
     let lexerName = Fmt.(str "%sLexer" d.grammar_name) in
     let parserName = Fmt.(str "%sParser" d.grammar_name) in
     ("lexerName",lexerName)::("parserName",parserName):: attributes in
+
+  let attributes = ("predictionMode", d.flags.predictionMode)::attributes in
+
+  let attributes =
+    if d.flags.showDFA then
+      ("showDFA","")::attributes
+    else attributes in
+
+  let attributes =
+    if d.flags.showDiagnosticErrors then
+      ("showDiagnosticErrors","")::attributes
+    else attributes in
+
+  let attributes =
+    if d.flags.traceATN then
+      ("traceATN","")::attributes
+    else attributes in
+
+  let attributes =
+    if d.flags.buildParseTree then
+      ("buildParseTree","")::attributes
+    else attributes in
+
+  let attributes =
+    match d.startRule with
+      None -> attributes
+    | Some r -> ("parserStartRuleName", r)::attributes in
+
   Stg.Env.{ attributes ; includes = [] }
