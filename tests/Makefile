@@ -53,7 +53,7 @@ test-selected:: antlrtest_test.exe
 	set -e ; set -x ;\
 	for d in $(DTEST) ;\
 	do \
-	$(MAKE) -C _build/$$d all ;\
+	[ -d _build/$$d ] && $(MAKE) -C _build/$$d all ;\
 	done
 
 #ONE=LexerExec/CharSet

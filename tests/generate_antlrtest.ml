@@ -30,6 +30,8 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let includes = Stg.Group.load helperfile in
   let env = {(env) with includes = includes } in
 
+  if [%match {|python3|} / s i pcre2 pred] (match D.stanza_opt d "skip" with None -> "" | Some s -> s) then () else
+
   let templatefiles =
     templatedir |> (Bos.OS.Dir.contents ~rel:true) |> Result.get_ok in
 
