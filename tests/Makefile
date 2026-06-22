@@ -50,7 +50,7 @@ generate-selected:: antlrtest_test.exe
 	done
 
 test-selected:: antlrtest_test.exe
-	set -e ; set -x ;\
+	set -e ;\
 	for d in $(DTEST) ;\
 	do \
 	[ -d _build/$$d ] && $(MAKE) -C _build/$$d all ;\
