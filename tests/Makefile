@@ -21,7 +21,7 @@ test:: all
 	mkdir -p _build && ./antlr_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
 
-antlr-runtime-test:: antlrtest_test.exe
+generate-all:: antlrtest_test.exe
 	mkdir -p _build && set -e ; set -x ;\
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
 	do \
@@ -48,7 +48,8 @@ test-selected:: antlrtest_test.exe
 	done
 
 #ONE=LexerExec/CharSet
-ONE=ParserExec/Basic
+#ONE=ParserExec/Basic
+ONE=CompositeParsers/ImportLexerWithOnlyFragmentRules
 generate-one:: antlrtest_test.exe
 	mkdir -p _build && \
 	rm -rf _build/X && \
