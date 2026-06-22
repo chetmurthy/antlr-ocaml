@@ -44,12 +44,12 @@ let pa_opt pa1 = parser
 let is_comment txt = starts_with ~pat:"<!" txt && ends_with ~pat:"!>" txt
 
 let is_if txt = starts_with ~pat:"<if" txt
-let is_keyword txt =
+let is_ifthenelse txt =
   is_if txt
   || txt = "<else>" || txt = "<endif>"
 
 let is_attribute txt =
-  not (is_keyword txt) &&
+  not (is_ifthenelse txt) &&
     [%match {|^<[a-z][a-z0-9_]*>$|} / pcre2 i pred] txt
 
 let is_include txt =
@@ -104,10 +104,20 @@ let unread_input ~file = parser
     Fmt.(failwithf "%s: pa_stg: unread input %a" file Dump.string s)
 | [< >] -> ()
 
+let improve_lines strm =
+  let rec imprec = parser
+    [< ' `Delim preds when is_ifthenelse preds ; ' `Text txt ; s >] ->
+     let txt = [%subst {|^\n|} / {||} / s pcre2] txt in
+     [< ' `Delim preds ; ' `Text txt ; imprec s >]
+  | [< 't ; s >] -> [< 't ; imprec s >]
+  | [< >] -> [< >]
+  in imprec strm
+
 let pa ?(file="<unnamed>") txt =
   let l = tokenize txt in
-  (parser [< l = pa_strm ~file ; _=unread_input >] -> l) (Stream.of_list l)
-
+  let strm = Stream.of_list l in
+  let strm = improve_lines strm in
+  (parser [< l = pa_strm ~file ; _=unread_input >] -> l) strm
 end
 
 module Group = struct

@@ -38,6 +38,13 @@ test-all:: antlrtest_test.exe
 	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} all ;\
 	done
 
+compare-all:: antlrtest_test.exe
+	mkdir -p _build && set -e ; set -x ;\
+	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
+	do \
+	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} compare-atns ;\
+	done
+
 clean-all:: antlrtest_test.exe
 	mkdir -p _build && set -e ; set -x ;\
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
@@ -71,6 +78,13 @@ test-selected:: antlrtest_test.exe
 	[ -d _build/$$d ] && $(MAKE) -C _build/$$d all ;\
 	done
 
+compare-selected:: antlrtest_test.exe
+	set -e ;\
+	for d in $(DTEST) ;\
+	do \
+	[ -d _build/$$d ] && $(MAKE) -C _build/$$d compare-atns ;\
+	done
+
 #ONE=LexerExec/CharSet
 #ONE=ParserExec/Basic
 #ONE=CompositeParsers/ImportLexerWithOnlyFragmentRules
@@ -83,6 +97,9 @@ generate-one:: antlrtest_test.exe
 
 test-one:: antlrtest_test.exe
 	$(MAKE) -C _build/$(ONE) all
+
+compare-one:: antlrtest_test.exe
+	$(MAKE) -C _build/$(ONE) compare-atns
 
 lib_test.exe: lib_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
@@ -106,7 +123,7 @@ FILE := CalcLexer.interp
 #ATNDEBUG=--debug
 #ATNVERIFY=--disable-verify
 ATNJSON=--json
-compare-one:: roundtrip_atn.exe
+compare-one-file:: roundtrip_atn.exe
 	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE) )
 
 run-python::
@@ -116,7 +133,7 @@ run-ocaml:: roundtrip_atn.exe
 	./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE)
 
 ANTLRDIRS= ~/Hack/Antlr/src/antlr4 ~/Hack/Antlr/src/grammars-v4
-compare-all:: roundtrip_atn.exe
+compare-full:: roundtrip_atn.exe
 	set -e ;\
 	for f in `find $(ANTLRDIRS) -name '*.interp' -print`; \
 	do \

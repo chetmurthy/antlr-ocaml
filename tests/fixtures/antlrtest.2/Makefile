@@ -1,6 +1,7 @@
 TOP=/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml
 PYTHONPATH:=$(TOP)/python:$(PYTHONPATH)
 #PYTHONPATH:=/home/chet/Hack/Antlr/src/antlr4/runtime/Python3/src:$(PYTHONPATH)
+SHELL := /bin/bash
 
 all: compare
 
@@ -19,9 +20,28 @@ output.NEW errors.NEW:: <lexerName>.py
 
 <if(parserName)>
 GENPAFILES=<grammarName>Parser.py <grammarName>Listener.py <grammarName>Visitor.py
-<endif>
 GENLEXFILES=<grammarName>Lexer.py <grammarName>Lexer.interp <grammarName>Lexer.tokens
 GENGRAMFILES=<grammarName>.interp <grammarName>.tokens
+<else>
+GENLEXFILES=<lexerName>.py <lexerName>.interp <lexerName>.tokens
+<endif>
+
+deserialize-python::
+	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp
+
+deserialize-ocaml::
+	$(TOP)/tests/roundtrip_atn.exe --json <lexerName>.interp
+
+compare-atns:: <lexerName>.py
+	diff -bBwi -u10 \
+	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp ) \
+	<( $(TOP)/tests/roundtrip_atn.exe --json <grammarName>.interp )
+<if(parserName)>
+	diff -bBwi -u10 \
+	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp ) \
+	<( $(TOP)/tests/roundtrip_atn.exe --json <lexerName>.interp )
+<endif>
+
 
 clean::
 	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES) output.NEW errors.NEW json.log
