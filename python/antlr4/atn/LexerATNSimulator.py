@@ -328,7 +328,7 @@ class LexerATNSimulator(ATNSimulator):
         if isinstance( config.state, RuleStopState ):
             if LexerATNSimulator.debug:
                 if self.recog is not None:
-                    Trace.write(json.dumps({ 'symbolicNames' : self.recog.symbolicNames, 'ruleIndex' : config.state.ruleIndex }))
+                    Trace.nowrite(json.dumps({ 'symbolicNames' : self.recog.symbolicNames, 'ruleIndex' : config.state.ruleIndex }))
                     print("closure at", self.recog.ruleNames[config.state.ruleIndex],  "rule stop", str(config))
                 else:
                     print("closure at rule stop", str(config))
@@ -514,7 +514,7 @@ class LexerATNSimulator(ATNSimulator):
             from_.edges = [ None ] * (self.MAX_DFA_EDGE - self.MIN_DFA_EDGE + 1)
 
         from_.edges[tk - self.MIN_DFA_EDGE] = to # connect
-        Trace.write(json.dumps({ 'method' : 'END LexerATNSimulator.addDFAEdge',
+        Trace.nowrite(json.dumps({ 'method' : 'END LexerATNSimulator.addDFAEdge',
                            'from' : from_.stateNumber,
                            'tk' : tk,
                            'to' : None if to is None else 'ERROR' if to == self.ERROR else to.stateNumber,
@@ -549,7 +549,7 @@ class LexerATNSimulator(ATNSimulator):
         configs.setReadonly(True)
         newState.configs = configs
         dfa.states[newState] = newState
-        Trace.write(json.dumps({ 'method' : 'LexerATNSimulator.__add_state__',
+        Trace.nowrite(json.dumps({ 'method' : 'LexerATNSimulator.__add_state__',
                            'newState' : newState.asdict()
                           },
                          sort_keys=True, indent=4))

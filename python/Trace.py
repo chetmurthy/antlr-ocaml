@@ -10,3 +10,6 @@ def start(fname):
 def write(s):
     fh.write(s)
     fh.write("\n")
+
+def nowrite(s):
+    pass
