@@ -8,8 +8,8 @@ let test_template ctxt =
   let open Stg in
   let printer = show_stg_t_list in
   ()
-  ; assert_equal ~printer [TEXT {|\<|}] (T.pa {|\<|})
-  ; assert_equal ~printer [TEXT {| w \< l i > s |}] (T.pa {| w \< l i > s |})
+  ; assert_equal ~printer [TEXT {|<|}] (T.pa {|\<|})
+  ; assert_equal ~printer [TEXT {| w < l i > s |}] (T.pa {| w \< l i > s |})
 
 let test_group ctxt =
   let module T = Stg.Template in

@@ -46,8 +46,11 @@ let is_attribute txt =
 let is_include txt =
   [%match {|^<[a-z][a-z0-9_]*\(.*?\)>$|} / pcre2 i pred] txt
 
+let unescape_text txt =
+  [%subst {|\\<|} / "<" / g s pcre2] txt
+
 let rec parec acc = parser
-  [< ' `Text txt ; s >] -> parec (TEXT txt :: acc) s
+  [< ' `Text txt ; s >] -> parec (TEXT (unescape_text txt) :: acc) s
 | [< ' `Delim preds when is_if preds ; thenl = parec [] ;
        else_opt = pa_opt (parser [< ' `Delim"<else>" ; elsel = parec [] >] -> elsel) ;
        ' `Delim"<endif>" ;

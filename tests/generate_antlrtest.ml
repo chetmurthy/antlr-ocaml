@@ -46,6 +46,8 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
      D.clean_triple_quotes (match D.stanza_opt d "input" with None -> "" | Some s -> s)
     ;Fpath.(append destdir (v "output")),
      D.clean_triple_quotes (match D.stanza_opt d "output" with None -> "" | Some s -> s)
+    ;Fpath.(append destdir (v "errors")),
+     D.clean_triple_quotes (match D.stanza_opt d "errors" with None -> "" | Some s -> s)
     ]@generated_files in
   let generated_files =
     if d.D.is_composite then

@@ -42,12 +42,13 @@ WS
    ;
 
 [input]
-tokens
+"""tokens
 tokens {
 notLabel
 label1 =
 label2 +=
 notLabel
+"""
 
 [output]
 [@0,0:5='tokens',<6>,1:0]
