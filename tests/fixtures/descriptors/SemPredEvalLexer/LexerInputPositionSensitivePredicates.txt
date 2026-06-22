@@ -3,8 +3,8 @@ Lexer
 
 [grammar]
 lexer grammar L;
-WORD1 : ID1+ { <Text():writeln()> } ;
-WORD2 : ID2+ { <Text():writeln()> } ;
+WORD1 : ID1+ { print(self.text, file=self._output) } ;
+WORD2 : ID2+ { print(self.text, file=self._output) } ;
 fragment ID1 : { <Column()> \< 2 }? [a-zA-Z];
 fragment ID2 : { <Column()> >= 2 }? [a-zA-Z];
 WS : (' '|'\n') -> skip;

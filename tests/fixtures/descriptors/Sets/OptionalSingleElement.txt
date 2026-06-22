@@ -3,7 +3,7 @@ Parser
 
 [grammar]
 grammar T;
-a : A? 'c' {<InputText():writeln()>} ;
+a : A? 'c' {print(self._input.getText(), file=self._output)} ;
 A : 'b' ;
 
 [start]

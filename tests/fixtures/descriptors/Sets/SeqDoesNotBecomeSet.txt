@@ -3,7 +3,7 @@ Parser
 
 [grammar]
 grammar T;
-a : C {<InputText():writeln()>} ;
+a : C {print(self._input.getText(), file=self._output)} ;
 fragment A : '1' | '2';
 fragment B : '3' '4';
 C : A | B;

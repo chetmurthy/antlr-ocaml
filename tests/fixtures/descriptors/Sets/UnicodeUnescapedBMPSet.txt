@@ -3,7 +3,7 @@ Parser
 
 [grammar]
 grammar T;
-a : LETTERS {<InputText():writeln()>} ;
+a : LETTERS {print(self._input.getText(), file=self._output)} ;
 // These are actually not escaped -- Java passes the
 // raw unescaped Unicode values to the grammar compiler.
 LETTERS : ('a'|'ä'|'亜'|'あ')* 'c';

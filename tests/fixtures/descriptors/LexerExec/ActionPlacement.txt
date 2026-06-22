@@ -3,11 +3,11 @@ Lexer
 
 [grammar]
 lexer grammar L;
-I : ({<PlusText("stuff fail: "):writeln()>} 'a'
-| {<PlusText("stuff0:"):writeln()>}
-       'a' {<PlusText("stuff1: "):writeln()>}
-       'b' {<PlusText("stuff2: "):writeln()>})
-       {<Text():writeln()>} ;
+I : ({print("stuff fail: " + self.text, file=self._output)} 'a'
+| {print("stuff0:" + self.text, file=self._output)}
+       'a' {print("stuff1: " + self.text, file=self._output)}
+       'b' {print("stuff2: " + self.text, file=self._output)})
+       {print(self.text, file=self._output)} ;
 WS : (' '|'\n') -> skip ;
 J : .;
 

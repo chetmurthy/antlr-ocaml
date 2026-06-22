@@ -3,7 +3,7 @@ Parser
 
 [grammar]
 grammar T;
-a : ('a'|'b')* 'c' {<InputText():writeln()>} ;
+a : ('a'|'b')* 'c' {print(self._input.getText(), file=self._output)} ;
 
 [start]
 a

@@ -3,7 +3,7 @@ Lexer
 
 [grammar]
 lexer grammar L;
-I : ('a' | 'ab') {<Text():writeln()>} ;
+I : ('a' | 'ab') {print(self.text, file=self._output)} ;
 WS : (' '|'\n') -> skip ;
 J : .;
 

@@ -10,11 +10,11 @@ s
 <BuildParseTrees()>
 }
 @after {
-<ToStringTree("$r.ctx"):writeln()>
+print($r.ctx.toStringTree(recog=self), file=self._output)
 }
   : r=a ;
 a : 'x' {
-<RuleInvocationStack():writeln()>
+print(str_list(self.getRuleInvocationStack()), file=self._output)
 } ;
 
 [start]
