@@ -9,12 +9,12 @@ Parser
 
 [grammar]
 grammar T;
-@parser::members {<InitIntMember("i","0")>}
-s : ({<AddMember("i","1")>
-<write("\"i=\"")>
-<writeln(GetMember("i"))>} a)+ ;
-a : {<ModMemberEquals("i","2","0")>}? ID {<writeln("\"alt 1\"")>}
-  | {<ModMemberNotEquals("i","2","0")>}? ID {<writeln("\"alt 2\"")>}
+@parser::members {i = 0}
+s : ({self.i += 1
+print("i=",end='',file=self._output)
+print(self.i, file=self._output)} a)+ ;
+a : {self.i % 2 == 0}? ID {print("alt 1", file=self._output)}
+  | {self.i % 2 != 0}? ID {print("alt 2", file=self._output)}
   ;
 ID : 'a'..'z'+ ;
 INT : '0'..'9'+;

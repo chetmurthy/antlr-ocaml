@@ -10,8 +10,9 @@ fragment ID2 : { <Column()> >= 2 }? [a-zA-Z];
 WS : (' '|'\n') -> skip;
 
 [input]
-a cde
+"""a cde
 abcde
+"""
 
 [output]
 a

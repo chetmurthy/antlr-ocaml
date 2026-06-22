@@ -6,7 +6,7 @@ grammar T;
 a : LETTERS* 'd' {print(self._input.getText(), file=self._output)} ;
 // Note the double-backslash to avoid Java passing
 // unescaped values as part of the grammar.
-LETTERS : ('a'|'\\u{1F600}'..'\\u{1F943}');
+LETTERS : ('a'|'\u{1F600}'..'\u{1F943}');
 
 [start]
 a

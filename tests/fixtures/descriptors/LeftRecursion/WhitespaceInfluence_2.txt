@@ -52,7 +52,7 @@ ID     : LETTER ALPHANUM*;
 NUMBER : DIGIT+ ('.' DIGIT+)? (('e'|'E')('+'|'-')? DIGIT+)?;
 DATE   : '\'' DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT (' ' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT ('.' DIGIT+)?)? '\'';
 SQ_STRING       : '\'' ('\'\'' | ~'\'')* '\'';
-DQ_STRING       : '"' ('\\\\"' | ~'"')* '"';
+DQ_STRING       : '"' ('\\"' | ~'"')* '"';
 WS     : [ \t\n\r]+ -> skip ;
 COMMENTS        : ('/*' .*? '*' '/' | '//' ~'\n'* '\n' ) -> skip;
 

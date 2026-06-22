@@ -3,10 +3,10 @@ Parser
 
 [grammar]
 grammar T;
-@parser::members {<InitBooleanMember("enumKeyword",True())>}
+@parser::members {enumKeyword = True}
 primary
-    :   ID {<AppendStr("\"ID \"", "$ID.text"):writeln()>}
-    |   {<GetMember("enumKeyword"):Not()>}? 'enum' {<writeln("\"enum\"")>}
+    :   ID {print("ID " + $ID.text, file=self._output)}
+    |   {not self.enumKeyword}? 'enum' {print("enum", file=self._output)}
     ;
 ID : [a-z]+ ;
 WS : [ \t\n\r]+ -> skip ;

@@ -4,7 +4,7 @@ Parser
 [grammar]
 grammar T;
 a : LETTERS {print(self._input.getText(), file=self._output)} ;
-LETTERS : 'a' ~('\\u{1F600}'..'\\u{1F943}')+ 'c';
+LETTERS : 'a' ~('\u{1F600}'..'\u{1F943}')+ 'c';
 
 [start]
 a
