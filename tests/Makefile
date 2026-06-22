@@ -39,7 +39,7 @@ generate-all-nonstop:: antlrtest_test.exe
 	fixtures/descriptors/$$d || true ;\
 	done
 
-DTEST=LexerExec/CharSet ParserExec/Basic
+DTEST=$(shell cd fixtures/descriptors && ls LexerExec/* | perl -p -e 's,\.txt,,')
 generate-selected:: antlrtest_test.exe
 	mkdir -p _build && set -e ; set -x ;\
 	for d in $(DTEST) ;\
@@ -62,9 +62,12 @@ test-selected:: antlrtest_test.exe
 ONE=CompositeParsers/KeywordVSIDOrder
 generate-one:: antlrtest_test.exe
 	mkdir -p _build && \
-	rm -rf _build/X && \
+	rm -rf _build/$(ONE) && \
 	./generate_antlrtest.exe -d _build/$(ONE) \
 	fixtures/descriptors/$(ONE).txt
+
+test-one:: antlrtest_test.exe
+	$(MAKE) -C _build/$(ONE) all
 
 lib_test.exe: lib_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<

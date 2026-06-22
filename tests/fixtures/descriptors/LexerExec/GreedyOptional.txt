@@ -7,8 +7,9 @@ CMT : '//' .*? '\n' CMT?;
 WS : (' '|'\t')+;
 
 [input]
+"""//blah
 //blah
-//blah
+"""
 
 [output]
 [@0,0:13='//blah\n//blah\n',<1>,1:0]
