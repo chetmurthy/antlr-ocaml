@@ -45,7 +45,7 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let generated_files = List.map gen_one templatefiles in
   let generated_files =
     [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar_name))),
-     Stg.transform env d.D.grammar
+     Stg.transform ~file:Fmt.(str "%s grammar %s" file d.grammar_name) env d.D.grammar
     ;Fpath.(append destdir (v "input")),
      D.clean_triple_quotes (match D.stanza_opt d "input" with None -> "" | Some s -> s)
     ;Fpath.(append destdir (v "output")),
@@ -60,7 +60,7 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
         |> List.map (fun slavetxt ->
                let slave_name = D.grammar_name ~file slavetxt in
                (Fpath.(append destdir (v Fmt.(str "%s.g4" slave_name))),
-                Stg.transform env slavetxt)) in
+                Stg.transform ~file:Fmt.(str "%s slaveGrammar %s" file slave_name) env slavetxt)) in
       l@generated_files
     else generated_files in
 

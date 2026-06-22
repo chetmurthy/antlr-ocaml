@@ -23,6 +23,15 @@ module T = Stg.Template ;;
 module G = Stg.Group ;;
 module D = Descriptor ;;
 
+let file = "fixtures/descriptors/FullContextParsing/ExprAmbiguity_1.txt" ;;
+let helperfile = Fpath.v "fixtures/Python3.test.stg" ;;
+  let d = D.load file ;;
+  let env = D.to_env d ;;
+  let includes = Stg.Group.load helperfile ;;
+  let env = {(env) with includes = includes } ;;
+#trace T.pa ;;
+print_string (Stg.transform env d.D.grammar) ;;
+
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***

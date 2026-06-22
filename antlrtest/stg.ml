@@ -49,6 +49,7 @@ let is_include txt =
 let unescape_text txt =
   [%subst {|\\<|} / "<" / g s pcre2] txt
 
+let pa_strm ~file =
 let rec parec acc = parser
   [< ' `Text txt ; s >] -> parec (TEXT (unescape_text txt) :: acc) s
 | [< ' `Delim preds when is_if preds ; thenl = parec [] ;
@@ -59,37 +60,41 @@ let rec parec acc = parser
                      [%match {|^<if\(!([a-z][a-z0-9_]*)\)>$|}/ pcre2 i strings !1] preds) with
        (Some v, None) -> VAR v
      | (None, Some v) -> NOT(VAR v)
-     | __ -> Fmt.(failwithf "failed to parse predicate %a" Dump.string preds) in
+     | __ -> Fmt.(failwithf "%s: failed to parse predicate %a" file Dump.string preds) in
    let e = IFTHEN (pred, thenl, match else_opt with None -> [] | Some l -> l) in
    parec (e::acc) s
 
 | [< ' `Delim txt when is_attribute txt ; s >] ->
    let e = match [%match {|^<([a-z][a-z0-9_]*)>$|} / pcre2 i strings !1] txt with
        Some v -> ATTRIBUTE v
-     | None -> Fmt.(failwithf "failed to parse attribute %a" Dump.string txt) in
+     | None -> Fmt.(failwithf "%s: failed to parse attribute %a" file Dump.string txt) in
    parec (e::acc) s
 
 | [< ' `Delim txt when is_include txt ; s >] ->
    let e = match [%match {|^<([a-z][a-z0-9_]*)\((.*?)\)>$|} / pcre2 i strings (!1,!2)] txt with
        Some (n,argtxt) ->
+        if [%match {|\):|} / pred pcre2] argtxt then
+          Fmt.(pf stderr "%s: WARNING: INCLUDE %a is probably not expanded correctly@."
+                 file Dump.string txt) ;
         let args = [%split {|,|} / pcre2] argtxt in
         INCLUDE(n,args)
-     | None -> Fmt.(failwithf "failed to parse attribute %a" Dump.string txt) in
+     | None -> Fmt.(failwithf "%s: failed to parse attribute %a" file Dump.string txt) in
    parec (e::acc) s
 
 | [< ' `Delim txt when is_comment txt ; s >] -> parec acc s
 
 | [< >] -> List.rev acc
+in parec []
 
-let unread_input = parser
+let unread_input ~file = parser
   [< 'x >] ->
     let s = match x with `Text s -> s | `Delim s -> s in
-    Fmt.(failwithf "pa_stg: unread input %a" Dump.string s)
+    Fmt.(failwithf "%s: pa_stg: unread input %a" file Dump.string s)
 | [< >] -> ()
 
-let pa txt =
+let pa ?(file="<unnamed>") txt =
   let l = tokenize txt in
-  (parser [< l = parec [] ; _=unread_input >] -> l) (Stream.of_list l)
+  (parser [< l = pa_strm ~file ; _=unread_input >] -> l) (Stream.of_list l)
 
 end
 
@@ -104,7 +109,7 @@ and include_definition =
 
 let pa0 (name, formals, rhs) =
   let formals = [%split {|\s*,\s*|} / pcre2] formals in
-  let rhs = Template.pa rhs in
+  let rhs = Template.pa ~file:Fmt.(str "INCLUDE DEFINITION %s" name) rhs in
   (name, { formals ; rhs })
 
 
@@ -228,9 +233,9 @@ module Subst = struct
 
 end
 
-let transform env txt =
-  let stg = txt |> Template.pa in
+let transform ~file env txt =
+  let stg = txt |> Template.pa ~file in
   Subst.subst env stg
 
 let transform_file env f =
-    f |> Bos.OS.File.read |> Result.get_ok |> transform env
+    f |> Bos.OS.File.read |> Result.get_ok |> transform ~file:(Fpath.to_string f) env
