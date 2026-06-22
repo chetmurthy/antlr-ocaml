@@ -1,3 +1,6 @@
+import Trace
+import json
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -123,6 +126,10 @@ class ATNConfigSet(object):
             self.configLookup[h] = l
         else:
             l.append(config)
+        Trace.write(json.dumps({ 'method' : 'AtnConfigSet.getOrAdd',
+                           'config' : config.asdict()
+                          },
+                         sort_keys=True, indent=4))
         return config
 
     def getStates(self):

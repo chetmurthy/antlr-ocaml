@@ -194,7 +194,7 @@ class ArrayPredictionContext(PredictionContext):
         self.returnStates = returnStates
 
     def asdict(self):
-        d = super(SingletonPredictionContext, self).asdict()
+        d = super(ArrayPredictionContext, self).asdict()
         d['parents'] = [c.asdict() for c in self.parents]
         d['returnStates'] = self.returnStates
         return d
