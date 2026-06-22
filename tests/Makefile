@@ -21,12 +21,13 @@ test:: all
 	mkdir -p _build && ./antlr_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
 
+GENARGS="--template-dir=fixtures/antlrtest.2"
 generate-all:: antlrtest_test.exe
 	mkdir -p _build && set -e ; set -x ;\
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
 	do \
 	rm -rf _build/$${d/.txt/} && \
-	./generate_antlrtest.exe -d _build/$${d/.txt/} \
+	./generate_antlrtest.exe $(GENARGS) -d _build/$${d/.txt/} \
 	fixtures/descriptors/$$d ;\
 	done
 
@@ -42,7 +43,7 @@ generate-all-nonstop:: antlrtest_test.exe
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
 	do \
 	rm -rf _build/$${d/.txt/} && \
-	./generate_antlrtest.exe -d _build/$${d/.txt/} \
+	./generate_antlrtest.exe $(GENARGS) -d _build/$${d/.txt/} \
 	fixtures/descriptors/$$d || true ;\
 	done
 
@@ -52,7 +53,7 @@ generate-selected:: antlrtest_test.exe
 	for d in $(DTEST) ;\
 	do \
 	rm -rf _build/$$d && \
-	./generate_antlrtest.exe -d _build/$$d \
+	./generate_antlrtest.exe $(GENARGS) -d _build/$$d \
 	fixtures/descriptors/$$d.txt ;\
 	done
 
@@ -70,7 +71,7 @@ ONE=CompositeParsers/KeywordVSIDOrder
 generate-one:: antlrtest_test.exe
 	mkdir -p _build && \
 	rm -rf _build/$(ONE) && \
-	./generate_antlrtest.exe -d _build/$(ONE) \
+	./generate_antlrtest.exe $(GENARGS) -d _build/$(ONE) \
 	fixtures/descriptors/$(ONE).txt
 
 test-one:: antlrtest_test.exe

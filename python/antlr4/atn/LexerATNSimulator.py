@@ -1,3 +1,7 @@
+import sys
+import json
+import Trace
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -83,7 +87,6 @@ class LexerATNSimulator(ATNSimulator):
         self.MAX_CHAR_VALUE = Lexer.MAX_CHAR_VALUE
         # Used during DFA/ATN exec to record the most recent accept configuration info
         self.prevAccept = SimState()
-
 
     def copyState(self, simulator:LexerATNSimulator ):
         self.column = simulator.column
@@ -325,7 +328,8 @@ class LexerATNSimulator(ATNSimulator):
         if isinstance( config.state, RuleStopState ):
             if LexerATNSimulator.debug:
                 if self.recog is not None:
-                    print("closure at", self.recog.symbolicNames[config.state.ruleIndex],  "rule stop", str(config))
+                    Trace.write(json.dumps({ 'symbolicNames' : self.recog.symbolicNames, 'ruleIndex' : config.state.ruleIndex }))
+                    print("closure at", self.recog.ruleNames[config.state.ruleIndex],  "rule stop", str(config))
                 else:
                     print("closure at rule stop", str(config))
 
@@ -510,6 +514,12 @@ class LexerATNSimulator(ATNSimulator):
             from_.edges = [ None ] * (self.MAX_DFA_EDGE - self.MIN_DFA_EDGE + 1)
 
         from_.edges[tk - self.MIN_DFA_EDGE] = to # connect
+        Trace.write(json.dumps({ 'method' : 'END LexerATNSimulator.addDFAEdge',
+                           'from' : from_.stateNumber,
+                           'tk' : tk,
+                           'to' : None if to is None else 'ERROR' if to == self.ERROR else to.stateNumber,
+                          },
+                         sort_keys=True, indent=4))
 
         return to
 
@@ -539,6 +549,10 @@ class LexerATNSimulator(ATNSimulator):
         configs.setReadonly(True)
         newState.configs = configs
         dfa.states[newState] = newState
+        Trace.write(json.dumps({ 'method' : 'LexerATNSimulator.__add_state__',
+                           'newState' : newState.asdict()
+                          },
+                         sort_keys=True, indent=4))
         return newState
 
     def getDFA(self, mode:int):

@@ -81,6 +81,18 @@ class DFAState(object):
         self.predicates = None
 
 
+    def asdict(self):
+        d = {
+            'stateNumber' : self.stateNumber,
+            'configs' : self.configs.asdict(),
+            'edges' : None if self.edges is None else [e.stateNumber for e in self.edges],
+            'isAcceptState' : self.isAcceptState,
+            'prediction' : self.prediction,
+            'lexerActionExecutor' : None if self.lexerActionExecutor is None else self.lexerActionExecutor.asdict(),
+            'requiresFullContext' : self.requiresFullContext,
+            'predicates' : None if self.predicates is None else [p.asdict() for p in self.predicates],
+        }
+        return d
 
     # Get the set of all alts mentioned by all ATN configurations in this
     #  DFA state.

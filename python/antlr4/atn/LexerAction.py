@@ -28,6 +28,13 @@ class LexerAction(object):
         self.actionType = action
         self.isPositionDependent = False
 
+    def asdict(self):
+        d = {
+            'actionType' : self.actionType,
+            'isPositionDependent' : self.isPositionDependent,
+        }
+        return d
+
     def dump(self):
         print("  actionType: %s" % repr(self.actionType))
         print("  isPositionDependent: %s" % self.isPositionDependent)

@@ -1,3 +1,7 @@
+import sys
+import json
+import Trace
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -9,12 +13,16 @@ from antlr4.atn.ATNState import DecisionState
 from antlr4.dfa.DFAState import DFAState
 from antlr4.error.Errors import IllegalStateException
 
+dfaCounter = 0
 
 class DFA(object):
-    __slots__ = ('atnStartState', 'decision', '_states', 's0', 'precedenceDfa')
+    __slots__ = ('id', 'atnStartState', 'decision', '_states', 's0', 'precedenceDfa')
 
     def __init__(self, atnStartState:DecisionState, decision:int=0):
+        global dfaCounter
         # From which ATN state did we create this DFA?
+        self.id = dfaCounter
+        dfaCounter += 1
         self.atnStartState = atnStartState
         self.decision = decision
         # A set of all DFA states. Use {@link Map} so we can get old state back
@@ -34,7 +42,21 @@ class DFA(object):
                 precedenceState.isAcceptState = False
                 precedenceState.requiresFullContext = False
                 self.s0 = precedenceState
+        Trace.write(json.dumps({ 'method' : 'DFA.__init__', 'self' : self.asdict() },
+                         sort_keys=True, indent=4))
 
+    def asdict(self):
+        states = {}
+        for k,v in self._states:
+            states[k] = v.asdict()
+        d = {
+            'id' : self.id,
+            'atnStartState' : self.atnStartState.stateNumber,
+            'decision' : self.decision,
+            '_states': states,
+            's0' : None if self.s0 is None else self.s0.stateNumber,
+        }
+        return d
 
     # Get the start state for a specific precedence value.
     #

@@ -28,6 +28,12 @@ class LexerActionExecutor(object):
         # of the performance-critical {@link LexerATNConfig#hashCode} operation.
         self.hashCode = hash("".join([str(la) for la in lexerActions]))
 
+    def asdict(self):
+        d = {
+            'lexerActions' : [x.asdict() for x in self.lexerActions],
+            'hashCode' : self.hashCode,
+        }
+        return d
 
     # Creates a {@link LexerActionExecutor} which executes the actions for
     # the input {@code lexerActionExecutor} followed by a specified

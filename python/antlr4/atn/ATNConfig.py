@@ -59,6 +59,17 @@ class ATNConfig(object):
         self.reachesIntoOuterContext = 0 if config is None else config.reachesIntoOuterContext
         self.precedenceFilterSuppressed = False if config is None else config.precedenceFilterSuppressed
 
+    def asdict(self):
+        d = {
+            'state' : self.state.stateNumber,
+            'alt' : self.alt,
+            'context' : self.context.asdict(),
+            'semanticContext' : self.semanticContext.asdict(),
+            'reachesIntoOuterContext' : self.reachesIntoOuterContext,
+            'precedenceFilterSuppressed' : self.precedenceFilterSuppressed,
+        }
+        return d
+
     # An ATN configuration is equal to another if both have
     #  the same state, they predict the same alternative, and
     #  syntactic/semantic contexts are the same.
@@ -125,6 +136,12 @@ class LexerATNConfig(ATNConfig):
         # This is the backing field for {@link #getLexerActionExecutor}.
         self.lexerActionExecutor = lexerActionExecutor
         self.passedThroughNonGreedyDecision = False if config is None else self.checkNonGreedyDecision(config, state)
+
+    def asdict(self):
+        d = super(LexerATNConfig, self).asdict()
+        d['lexerActionExecutor'] = None if self.lexerActionExecutor is None else self.lexerActionExecutor.asdict()
+        d['passedThroughNonGreedyDecision'] = self.passedThroughNonGreedyDecision
+        return d
 
     def __hash__(self):
         return hash((self.state.stateNumber, self.alt, self.context,

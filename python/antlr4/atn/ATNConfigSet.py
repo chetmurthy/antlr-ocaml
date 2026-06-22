@@ -62,6 +62,18 @@ class ATNConfigSet(object):
 
         self.cachedHashCode = -1
 
+    def asdict(self):
+        d = {
+            'fullCtx' : self.fullCtx,
+            'configs' : [c.asdict() for c in self.configs],
+            'uniqueAlt' : self.uniqueAlt,
+            'conflictingAlts' : self.conflictingAlts,
+            'hasSemanticContext' : self.hasSemanticContext,
+            'dipsIntoOuterContext' : self.dipsIntoOuterContext,
+            'cachedHashCode' : self.cachedHashCode,
+        }
+        return d
+
     def __iter__(self):
         return self.configs.__iter__()
 
