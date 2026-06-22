@@ -5,7 +5,7 @@ Parser
 grammar T;
 
 r
-   : (a b | a) EOF {<ToStringTree("$ctx"):writeln()>}
+   : (a b | a) EOF {print($ctx.toStringTree(recog=self), file=self._output)}
    ;
 a
    : X Y?

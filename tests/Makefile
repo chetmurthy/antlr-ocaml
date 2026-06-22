@@ -39,7 +39,7 @@ generate-all-nonstop:: antlrtest_test.exe
 	fixtures/descriptors/$$d || true ;\
 	done
 
-DTEST=$(shell cd fixtures/descriptors && ls LexerExec/* | perl -p -e 's,\.txt,,')
+DTEST=$(shell cd fixtures/descriptors && ls LexerExec/* ParserExec/* | perl -p -e 's,\.txt,,')
 generate-selected:: antlrtest_test.exe
 	mkdir -p _build && set -e ; set -x ;\
 	for d in $(DTEST) ;\

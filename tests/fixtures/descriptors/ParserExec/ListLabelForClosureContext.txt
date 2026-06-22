@@ -9,7 +9,7 @@ Parser
 grammar T;
 ifStatement
 @after {
-<AssertIsList({<ContextListFunction("$ctx","elseIfStatement")>})>
+assert isinstance($ctx.elseIfStatement_list(), (list, tuple))
 }
     : 'if' expression
       ( ( 'then'
