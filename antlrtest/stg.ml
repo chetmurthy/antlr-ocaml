@@ -26,7 +26,7 @@ let clean_blank_lines s =
 
 module Template = struct
 
-let tokenize s = [%split {|<(?:(?:[^<>\s]|\\<)(?:[^<>]|\\<)*(?:[^<>\s]|\\<)|(?:[^<>\s]|\\<))>|} / pcre2 strings] s
+let tokenize s = [%split {|(?<!\\)<(?:(?:[^<>\s]|\\<)(?:[^<>]|\\<)*(?:[^<>\s]|\\<)|(?:[^<>\s]|\\<))>|} / pcre2 strings] s
 
 let pa_opt pa1 = parser
   [< x=pa1 >] -> Some x
@@ -100,7 +100,7 @@ and include_definition =
 [@@deriving show,yojson]
 
 let pa0 (name, formals, rhs) =
-  let formals = [%split {|,|} / pcre2] formals in
+  let formals = [%split {|\s*,\s*|} / pcre2] formals in
   let rhs = Template.pa rhs in
   (name, { formals ; rhs })
 

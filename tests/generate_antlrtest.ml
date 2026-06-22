@@ -43,9 +43,9 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
     [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar_name))),
      Stg.transform env d.D.grammar
     ;Fpath.(append destdir (v "input")),
-     D.clean_triple_quotes (D.stanza d "input")
+     D.clean_triple_quotes (match D.stanza_opt d "input" with None -> "" | Some s -> s)
     ;Fpath.(append destdir (v "output")),
-     D.clean_triple_quotes (D.stanza d "output")
+     D.clean_triple_quotes (match D.stanza_opt d "output" with None -> "" | Some s -> s)
     ]@generated_files in
   let generated_files =
     if d.D.is_composite then

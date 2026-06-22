@@ -30,6 +30,15 @@ generate-all:: antlrtest_test.exe
 	fixtures/descriptors/$$d ;\
 	done
 
+generate-all-nonstop:: antlrtest_test.exe
+	mkdir -p _build && set -e ; set -x ;\
+	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
+	do \
+	rm -rf _build/$${d/.txt/} && \
+	./generate_antlrtest.exe -d _build/$${d/.txt/} \
+	fixtures/descriptors/$$d || true ;\
+	done
+
 DTEST=LexerExec/CharSet ParserExec/Basic
 generate-selected:: antlrtest_test.exe
 	mkdir -p _build && set -e ; set -x ;\
