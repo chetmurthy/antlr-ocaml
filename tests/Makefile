@@ -32,13 +32,14 @@ antlr-runtime-test:: antlrtest_test.exe
 	fixtures/descriptors/$$d ;\
 	done
 
+ONE=X
 generate-one:: antlrtest_test.exe
 	mkdir -p _build && \
 	rm -rf _build/X && \
-	./generate_antlrtest.exe -d _build/X \
+	./generate_antlrtest.exe -d _build/$(ONE) \
 	-t fixtures/antlrtest.1 \
 	-h fixtures/Python3.test.stg \
-	fixtures/X.txt
+	fixtures/$(ONE).txt
 
 lib_test.exe: lib_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<

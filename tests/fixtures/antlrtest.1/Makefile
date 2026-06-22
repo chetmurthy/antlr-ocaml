@@ -7,8 +7,8 @@ all: compare
 compare:: output.NEW
 	diff -Bwiu output output.NEW
 
-<lexerName>.py: <lexerName>.g4
-	antlr4 -Dlanguage=Python3 <lexerName>.g4
+<lexerName>.py: <grammarName>.g4
+	antlr4 -Dlanguage=Python3 <grammarName>.g4
 
 output.NEW:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 Test.py input > output.NEW

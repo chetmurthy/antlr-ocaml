@@ -65,7 +65,7 @@ let stanza d name =
   match List.assoc name d.stanzas with
     x -> x
   | exception Not_found ->
-       Fmt.(failwithf "%s: Descriptor.stanza: no descriptor-type stanza" d.filename)
+       Fmt.(failwithf "%s: Descriptor.stanza: no descriptor-%s stanza" d.filename name)
 
 let grammar_name ~file txt =
   match [%match {|.*grammar\s+([a-z][a-z0-9_]*)\s*;|} / pcre2 i s strings !1] txt with
