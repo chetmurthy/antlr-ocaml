@@ -27,19 +27,33 @@ antlr-runtime-test:: antlrtest_test.exe
 	do \
 	rm -rf _build/$${d/.txt/} && \
 	./generate_antlrtest.exe -d _build/$${d/.txt/} \
-	-t fixtures/antlrtest.1 \
-	-h fixtures/Python3.test.stg \
 	fixtures/descriptors/$$d ;\
 	done
 
-ONE=X
+DTEST=LexerExec/CharSet ParserExec/Basic
+generate-selected:: antlrtest_test.exe
+	mkdir -p _build && set -e ; set -x ;\
+	for d in $(DTEST) ;\
+	do \
+	rm -rf _build/$$d && \
+	./generate_antlrtest.exe -d _build/$$d \
+	fixtures/descriptors/$$d.txt ;\
+	done
+
+test-selected:: antlrtest_test.exe
+	set -e ; set -x ;\
+	for d in $(DTEST) ;\
+	do \
+	$(MAKE) -C _build/$$d all ;\
+	done
+
+#ONE=LexerExec/CharSet
+ONE=ParserExec/Basic
 generate-one:: antlrtest_test.exe
 	mkdir -p _build && \
 	rm -rf _build/X && \
 	./generate_antlrtest.exe -d _build/$(ONE) \
-	-t fixtures/antlrtest.1 \
-	-h fixtures/Python3.test.stg \
-	fixtures/$(ONE).txt
+	fixtures/descriptors/$(ONE).txt
 
 lib_test.exe: lib_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<

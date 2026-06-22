@@ -10,9 +10,6 @@ open Pa_ppx_utils
 
  *)
 
-let clean_triple_quotes txt =
-  [%subst {|"""(.*?)"""|} / {|$1|} / pcre2 s] txt
-
 let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let open Antlrtest in
   if templatedir = "" then
@@ -44,18 +41,21 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   let generated_files = List.map gen_one templatefiles in
   let generated_files =
     [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar_name))),
-     Stg.transform env (D.stanza d "grammar")
+     Stg.transform env d.D.grammar
     ;Fpath.(append destdir (v "input")),
-     clean_triple_quotes (D.stanza d "input")
+     D.clean_triple_quotes (D.stanza d "input")
     ;Fpath.(append destdir (v "output")),
-     clean_triple_quotes (D.stanza d "output")
+     D.clean_triple_quotes (D.stanza d "output")
     ]@generated_files in
   let generated_files =
     if d.D.is_composite then
-      let slavetxt = D.stanza d "slaveGrammar" in
-      let slave_name = D.grammar_name ~file slavetxt in
-      (Fpath.(append destdir (v Fmt.(str "%s.g4" slave_name))),
-       Stg.transform env slavetxt)::generated_files
+      let l =
+        d.D.slaveGrammars
+        |> List.map (fun slavetxt ->
+               let slave_name = D.grammar_name ~file slavetxt in
+               (Fpath.(append destdir (v Fmt.(str "%s.g4" slave_name))),
+                Stg.transform env slavetxt)) in
+      l@generated_files
     else generated_files in
 
   let generated_files =
@@ -82,11 +82,11 @@ let file =
 
 let templatedir =
   let docv = "The template directory." in
-  Arg.(value & opt dir "" & info ["t"; "template-dir"] ~docv)
+  Arg.(value & opt dir "fixtures/antlrtest.1" & info ["t"; "template-dir"] ~docv)
 
 let helperfile =
   let docv = "The helper file (for include definitions)." in
-  Arg.(value & opt file "" & info ["h"; "helper-file"] ~docv)
+  Arg.(value & opt file "fixtures/Python3.test.stg" & info ["h"; "helper-file"] ~docv)
 
 let destdir =
   let docv = "The generated destination directory." in

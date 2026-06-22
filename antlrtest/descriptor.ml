@@ -6,6 +6,9 @@ open Pa_ppx_utils
 open Std
 open Stg
 
+let clean_triple_quotes txt =
+  [%subst {|"""(.*?)"""|} / {|$1|} / pcre2 s] txt
+
 let clean_stanza s =
   let s = [%subst {|^\n|} / "" / s] s in
   [%subst {|\n\n$|} / "" / s] s
@@ -49,6 +52,8 @@ type t = {
     is_lexer : bool
   ; is_composite : bool
   ; grammar_name : string
+  ; grammar : string
+  ; slaveGrammars : string list
   ; stanzas : (string * string) list
   ; filename : string
   ; flags : flags_t
@@ -83,9 +88,15 @@ let _mk ~file stanzas =
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no descriptor-type stanza" file) in
   let grammar = match List.assoc "grammar" stanzas with
-      x -> x
+      x -> clean_triple_quotes x
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no grammar stanza" file) in
+
+  let slaveGrammars =
+    stanzas
+    |> List.filter_map (function
+             ("slaveGrammar",txt) -> Some(clean_triple_quotes txt)
+           | _ -> None) in
 
   let flags_txt =
     match List.assoc "flags" stanzas with
@@ -103,6 +114,8 @@ let _mk ~file stanzas =
     is_lexer
   ; is_composite
   ; grammar_name
+  ; grammar
+  ; slaveGrammars
   ; stanzas
   ; filename = file
   ; flags
