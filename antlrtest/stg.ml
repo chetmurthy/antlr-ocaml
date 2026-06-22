@@ -44,7 +44,7 @@ let is_attribute txt =
     [%match {|^<[a-z][a-z0-9_]*>$|} / pcre2 i pred] txt
 
 let is_include txt =
-  [%match {|^<[a-z][a-z0-9_]*\([^()]*\)>$|} / pcre2 i pred] txt
+  [%match {|^<[a-z][a-z0-9_]*\(.*?\)>$|} / pcre2 i pred] txt
 
 let rec parec acc = parser
   [< ' `Text txt ; s >] -> parec (TEXT txt :: acc) s
@@ -67,7 +67,7 @@ let rec parec acc = parser
    parec (e::acc) s
 
 | [< ' `Delim txt when is_include txt ; s >] ->
-   let e = match [%match {|^<([a-z][a-z0-9_]*)\(([^()]*)\)>$|} / pcre2 i strings (!1,!2)] txt with
+   let e = match [%match {|^<([a-z][a-z0-9_]*)\((.*?)\)>$|} / pcre2 i strings (!1,!2)] txt with
        Some (n,argtxt) ->
         let args = [%split {|,|} / pcre2] argtxt in
         INCLUDE(n,args)
