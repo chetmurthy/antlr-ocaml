@@ -17,8 +17,10 @@ output.NEW:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 Test.py input > output.NEW
 
 <if(parserName)>
-GENPAFILES=<grammarName>Parser.py <grammarName>Listener.py
+GENPAFILES=<grammarName>Parser.py <grammarName>Listener.py <grammarName>Visitor.py
 <endif>
+GENLEXFILES=<grammarName>Lexer.py <grammarName>Lexer.interp <grammarName>Lexer.tokens
+GENGRAMFILES=<grammarName>.interp <grammarName>.tokens
 
 clean::
-	rm -rf __pycache__ <lexerName>.py $(GENPAFILES) <grammarName>.interp <grammarName>.tokens output.NEW
+	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES) output.NEW
