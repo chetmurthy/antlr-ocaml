@@ -20,11 +20,25 @@ test:: all
 	mkdir -p _build && ./lib_test.exe
 	mkdir -p _build && ./antlr_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
-	mkdir -p _build && rm -rf _build/smoke && \
-	./generate_antlrtest.exe -d _build/smoke \
+
+antlr-runtime-test::
+	mkdir -p _build && set -e ; set -x ;\
+	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
+	do \
+	rm -rf _build/$$d && \
+	./generate_antlrtest.exe -d _build/$${d/.txt/} \
 	-t fixtures/antlrtest.1 \
 	-h fixtures/Python3.test.stg \
-	fixtures/CharSet.txt
+	fixtures/descriptors/$$d ;\
+	done
+
+generate-one::
+	mkdir -p _build && \
+	rm -rf _build/X && \
+	./generate_antlrtest.exe -d _build/X \
+	-t fixtures/antlrtest.1 \
+	-h fixtures/Python3.test.stg \
+	fixtures/X.txt
 
 lib_test.exe: lib_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<

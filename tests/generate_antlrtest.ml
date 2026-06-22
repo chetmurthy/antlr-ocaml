@@ -50,6 +50,13 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
     ;Fpath.(append destdir (v "output")),
      clean_triple_quotes (D.stanza d "output")
     ]@generated_files in
+  let generated_files =
+    if d.D.is_composite then
+      let slavetxt = D.stanza d "slaveGrammar" in
+      let slave_name = D.grammar_name ~file slavetxt in
+      (Fpath.(append destdir (v Fmt.(str "%s.g4" slave_name))),
+       Stg.transform env slavetxt)::generated_files
+    else generated_files in
 
   let generated_files =
     generated_files

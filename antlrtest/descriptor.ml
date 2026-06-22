@@ -26,10 +26,17 @@ let parse txt =
 
 type t = {
     is_lexer : bool
+  ; is_composite : bool
   ; grammar_name : string
   ; stanzas : (string * string) list
   ; filename : string
   }
+
+let stanza_opt d name =
+  match List.assoc name d.stanzas with
+    x -> Some x
+  | exception Not_found ->
+     None
 
 let stanza d name =
   match List.assoc name d.stanzas with
@@ -37,11 +44,18 @@ let stanza d name =
   | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.stanza: no descriptor-type stanza" d.filename)
 
+let grammar_name ~file txt =
+  match [%match {|.*grammar\s+([a-z][a-z0-9_]*)\s*;|} / pcre2 i s strings !1] txt with
+    Some n -> n
+  | None -> Fmt.(failwithf "%s: no grammar-name found in grammar" file)
+
 let _mk ~file stanzas =
-  let is_lexer = match List.assoc "type" stanzas with
-      "Lexer" -> true
-    | "Parser" -> false
-    | t -> Fmt.(failwithf "%s: Descriptor.mk: descriptor-type was %a (not Lexer or Parser)"
+  let (is_lexer, is_composite) = match List.assoc "type" stanzas with
+      "Lexer" -> (true, false)
+    | "CompositeLexer" -> (true, true)
+    | "Parser" -> (false, false)
+    | "CompositeParser" -> (false, true)
+    | t -> Fmt.(failwithf "%s: Descriptor.mk: descriptor-type was %a (not {,Composite}{Lexer,Parser})"
                   file Dump.string t)
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no descriptor-type stanza" file) in
@@ -50,11 +64,10 @@ let _mk ~file stanzas =
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no grammar stanza" file) in
 
-  let grammar_name = match [%match {|.*grammar\s+([a-z][a-z0-9_]*)\s*;|} / pcre2 i s strings !1] grammar with
-      Some n -> n
-    | None -> Fmt.(failwithf "%s: no grammar-name found in grammar" file) in
+  let grammar_name = grammar_name ~file grammar in
   {
     is_lexer
+  ; is_composite
   ; grammar_name
   ; stanzas
   ; filename = file
