@@ -49,7 +49,8 @@ test-selected:: antlrtest_test.exe
 
 #ONE=LexerExec/CharSet
 #ONE=ParserExec/Basic
-ONE=CompositeParsers/ImportLexerWithOnlyFragmentRules
+#ONE=CompositeParsers/ImportLexerWithOnlyFragmentRules
+ONE=CompositeParsers/KeywordVSIDOrder
 generate-one:: antlrtest_test.exe
 	mkdir -p _build && \
 	rm -rf _build/X && \

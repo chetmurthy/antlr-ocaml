@@ -4,7 +4,7 @@ CompositeParser
 [grammar]
 grammar M;
 import S;
-a : A {<Append("\"M.a: \"","$A"):writeln()>};
+a : A {<writeln("\"M.a: \" + str($A)")>};
 A : 'abc' {<writeln("\"M.A\"")>};
 WS : (' '|'\n') -> skip ;
 
