@@ -14,7 +14,7 @@ WS : (' '|'\n') -> skip;
 parser grammar S;
 type_ : 'int' ;
 decl : type_ ID ';'
-    | type_ ID init_ ';' {<AppendStr("\"JavaDecl: \"","$text"):writeln()>};
+    | type_ ID init_ ';' {<writeln("\"JavaDecl: \" + $text")>};
 init_ : '=' INT;
 
 [start]

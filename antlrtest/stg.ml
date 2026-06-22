@@ -32,6 +32,8 @@ let pa_opt pa1 = parser
   [< x=pa1 >] -> Some x
 | [< >] -> None
 
+let is_comment txt = starts_with ~pat:"<!" txt && ends_with ~pat:"!>" txt
+
 let is_if txt = starts_with ~pat:"<if" txt
 let is_keyword txt =
   is_if txt
@@ -71,6 +73,8 @@ let rec parec acc = parser
         INCLUDE(n,args)
      | None -> Fmt.(failwithf "failed to parse attribute %a" Dump.string txt) in
    parec (e::acc) s
+
+| [< ' `Delim txt when is_comment txt ; s >] -> parec acc s
 
 | [< >] -> List.rev acc
 
