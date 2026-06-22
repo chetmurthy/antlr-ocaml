@@ -46,7 +46,10 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
     [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar_name))),
      Stg.transform env (D.stanza d "grammar")
     ;Fpath.(append destdir (v "input")),
-     clean_triple_quotes (D.stanza d "input")]@generated_files in
+     clean_triple_quotes (D.stanza d "input")
+    ;Fpath.(append destdir (v "output")),
+     clean_triple_quotes (D.stanza d "output")
+    ]@generated_files in
 
   let generated_files =
     generated_files
