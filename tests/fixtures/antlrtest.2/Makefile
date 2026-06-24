@@ -43,5 +43,8 @@ compare-atns:: <lexerName>.py
 <endif>
 
 
+realclean:: clean
+	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES)
+
 clean::
-	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES) output.NEW errors.NEW json.log
+	rm -rf output.NEW errors.NEW json.log

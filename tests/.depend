@@ -1,4 +1,4 @@
-lib_test.cmo antlr_test.cmo roundtrip_atn.cmo antlrtest_test.cmo generate_antlrtest.cmo lib_test.cmi antlr_test.cmi roundtrip_atn.cmi antlrtest_test.cmi generate_antlrtest.cmi lib_test.cmx antlr_test.cmx roundtrip_atn.cmx antlrtest_test.cmx generate_antlrtest.cmx: ../local-install/lib/antlr/META ../local-install/lib/antlrtest/META
+lib_test.cmo antlr_test.cmo roundtrip_atn.cmo antlrtest_test.cmo generate_antlrtest.cmo deserialize_jsonlog.cmo lib_test.cmi antlr_test.cmi roundtrip_atn.cmi antlrtest_test.cmi generate_antlrtest.cmi deserialize_jsonlog.cmi lib_test.cmx antlr_test.cmx roundtrip_atn.cmx antlrtest_test.cmx generate_antlrtest.cmx deserialize_jsonlog.cmx: ../local-install/lib/antlr/META ../local-install/lib/antlrtest/META
 lib_test.cmo :
 lib_test.cmx :
 antlr_test.cmo :
@@ -9,3 +9,5 @@ antlrtest_test.cmo :
 antlrtest_test.cmx :
 generate_antlrtest.cmo :
 generate_antlrtest.cmx :
+deserialize_jsonlog.cmo :
+deserialize_jsonlog.cmx :

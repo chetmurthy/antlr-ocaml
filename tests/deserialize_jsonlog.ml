@@ -6,7 +6,7 @@ open Pa_ppx_utils
  *)
 
 let deser1 file =
-  let l = Pa_ppx_located_yojson.Json.JsonListEOI.load file in
+  let l = Pa_ppx_located_yojson.Json.JsonListEOI.load ~file in
   let l = List.map Antlr.Mimick.json_log_t_of_located_yojson l in
   l |> List.iter
          (function
@@ -14,9 +14,22 @@ let deser1 file =
           | Error (loc, msg) ->
              Fmt.(pf stdout "%s: error %s@." (Ploc.string_of_location loc) msg))
 
-let deserialize_jsonlog ~debug files =
+let deser1_yojson file =
+  let seq = Yojson.Safe.seq_from_file file in
+  let l = List.of_seq seq in
+  let l = List.map Antlr.Mimick.json_log_t_of_yojson l in
+  l |> List.iter
+         (function
+            Result.Ok _ -> ()
+          | Error msg ->
+             Fmt.(pf stdout "error %s@." msg))
+
+let deserialize_jsonlog ~debug ~yojson files =
   let open Antlrtest in
-  List.iter deser1 files
+  if yojson then
+    List.iter deser1_yojson files
+  else
+    List.iter deser1 files
 
 open Cmdliner
 open Cmdliner.Term.Syntax
@@ -27,6 +40,10 @@ let debug =
   let doc = "enable debugging." in
   Arg.(value & flag & info ["debug"] ~doc)
 
+let yojson =
+  let doc = "use YOJSON instead." in
+  Arg.(value & flag & info ["yojson"] ~doc)
+
 let deserialize_cmd =
   let doc = "deserialize json.log files into json_log_t objects" in
   let man = [
@@ -34,8 +51,8 @@ let deserialize_cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "deserialize_jsonlog" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ files and+ debug in
-  deserialize_jsonlog ~debug files
+  let+ files and+ debug and+ yojson in
+  deserialize_jsonlog ~yojson ~debug files
 
 let main () = Cmd.eval deserialize_cmd
 let () = if !Sys.interactive then () else exit (main ())

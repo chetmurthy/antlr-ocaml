@@ -195,7 +195,7 @@ class ArrayPredictionContext(PredictionContext):
 
     def asdict(self):
         d = super(ArrayPredictionContext, self).asdict()[1]
-        d['parents'] = [c.asdict() for c in self.parents]
+        d['parents'] = None if self.parents is None else [(None if c is None else c.asdict()) for c in self.parents]
         d['returnStates'] = self.returnStates
         return ["ArrayPredictionContext", d]
 

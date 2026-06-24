@@ -1,5 +1,6 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
+open Util
 open Atn
 
 open Rresult.R
@@ -10,13 +11,16 @@ let state_id_to_located_yojson (STID n) = [%to_located_yojson: int] n
 let state_id_of_located_yojson j =
   ([%of_located_yojson: int] j) >>= (fun n -> Result.Ok (STID n))
 
-type config_t = {
-    state : state_id[@yojson.to_yojson state_id_to_yojson]
+type deser_state_id = state_id[@yojson.to_yojson state_id_to_yojson]
               [@yojson.of_yojson state_id_of_yojson]
               [@located_yojson.to_located_yojson state_id_to_located_yojson]
               [@located_yojson.of_located_yojson state_id_of_located_yojson]
+[@@deriving yojson,located_yojson, show]
+
+type config_t = {
+    state : deser_state_id
   ; alt : int
-  ; context : prediction_context_t
+  ; context : prediction_context_t option
   ; semanticContext : semantic_context_t
   ; reachesIntoOuterContext : int
   ; precedenceFilterSuppressed : bool
@@ -39,7 +43,7 @@ and prediction_context_t =
 | PC_EMPTY of { cachedHashCode : int64
               }
 | PC_ARRAY of { cachedHashCode : int64
-              ; parents : prediction_context_t list
+              ; parents : prediction_context_t option array
               ; returnStates : int list
               }
                 [@yojson.name "ArrayPredictionContext"]
@@ -65,6 +69,30 @@ and semantic_context_t =
              [@yojson.name "OR"]
              [@located_yojson.name "OR"]
 
+and dfa_t = {
+    id : int
+  ; atnStartState : deser_state_id
+  ; decision : int
+  ; _states : string strmap
+  ; s0 : dfa_state_t option
+  }
+
+and dfa_state_t = {
+    stateNumber : int
+  ; configs : config_set_t
+  ; edges: int option array
+  ; isAcceptState : bool
+  ; prediction : int
+  ; lexerActionExecutor : lexer_action_executor_t option
+  ; requiresFullContext : bool
+  ; predicates : string list option
+  }
+
+and lexer_action_executor_t = {
+    lexerActions : string list
+  ; hashCode : int64
+  }
+
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
@@ -76,4 +104,13 @@ type json_log_t =
 | AtnConfigSet_init of int * config_set_t
                                     [@yojson.name "AtnConfigSet.__init__"]
                                     [@located_yojson.name "AtnConfigSet.__init__"]
+| AtnConfig_eq of config_t * config_t * bool
+                                    [@yojson.name "AtnConfig.__eq__"]
+                                    [@located_yojson.name "AtnConfig.__eq__"]
+| AtnConfig_equalsForConfigSet of config_t * config_t * bool
+                                    [@yojson.name "AtnConfig.equalsForConfigSet"]
+                                    [@located_yojson.name "AtnConfig.equalsForConfigSet"]
+| DFA_init of int * dfa_t
+                      [@yojson.name "DFA.__init__"]
+                      [@located_yojson.name "DFA.__init__"]
 [@@deriving yojson,located_yojson, show]

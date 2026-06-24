@@ -34,8 +34,10 @@ atn.cmx : \
     intervalSet.cmx \
     interp.cmx
 mimick.cmo : \
+    util.cmo \
     atn.cmo
 mimick.cmx : \
+    util.cmx \
     atn.cmx
 mk_meta.cmo :
 mk_meta.cmx :

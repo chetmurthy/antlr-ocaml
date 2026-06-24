@@ -1,3 +1,6 @@
+import Trace
+import json
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -63,7 +66,7 @@ class ATNConfig(object):
         d = {
             'state' : self.state.stateNumber,
             'alt' : self.alt,
-            'context' : self.context.asdict(),
+            'context' : None if self.context is None else self.context.asdict(),
             'semanticContext' : self.semanticContext.asdict(),
             'reachesIntoOuterContext' : self.reachesIntoOuterContext,
             'precedenceFilterSuppressed' : self.precedenceFilterSuppressed,
@@ -74,7 +77,7 @@ class ATNConfig(object):
     #  the same state, they predict the same alternative, and
     #  syntactic/semantic contexts are the same.
     #/
-    def __eq__(self, other):
+    def real__eq__(self, other):
         if self is other:
             return True
         elif not isinstance(other, ATNConfig):
@@ -86,13 +89,20 @@ class ATNConfig(object):
                 and self.semanticContext==other.semanticContext \
                 and self.precedenceFilterSuppressed==other.precedenceFilterSuppressed
 
+    def __eq__(self, other):
+        rv = self.real__eq__(other)
+        Trace.write(json.dumps([ 'AtnConfig.__eq__',
+                                 self.asdict(), other.asdict(), rv ],
+                               sort_keys=True, indent=4))
+        return rv
+
     def __hash__(self):
         return hash((self.state.stateNumber, self.alt, self.context, self.semanticContext))
 
     def hashCodeForConfigSet(self):
         return hash((self.state.stateNumber, self.alt, hash(self.semanticContext)))
 
-    def equalsForConfigSet(self, other):
+    def _equalsForConfigSet(self, other):
         if self is other:
             return True
         elif not isinstance(other, ATNConfig):
@@ -101,6 +111,13 @@ class ATNConfig(object):
             return self.state.stateNumber==other.state.stateNumber \
                 and self.alt==other.alt \
                 and self.semanticContext==other.semanticContext
+
+    def equalsForConfigSet(self, other):
+        rv = self._equalsForConfigSet(other)
+        Trace.write(json.dumps([ 'AtnConfig.equalsForConfigSet',
+                                 self.asdict(), other.asdict(), rv ],
+                               sort_keys=True, indent=4))
+        return rv
 
     def __str__(self):
         with StringIO() as buf:

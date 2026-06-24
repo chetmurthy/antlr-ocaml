@@ -42,8 +42,8 @@ class DFA(object):
                 precedenceState.isAcceptState = False
                 precedenceState.requiresFullContext = False
                 self.s0 = precedenceState
-        Trace.nowrite(json.dumps({ 'method' : 'DFA.__init__', 'self' : self.asdict() },
-                         sort_keys=True, indent=4))
+        Trace.write(json.dumps([ 'DFA.__init__', self.id, self.asdict() ],
+                               sort_keys=True, indent=4))
 
     def asdict(self):
         states = {}
@@ -54,7 +54,7 @@ class DFA(object):
             'atnStartState' : self.atnStartState.stateNumber,
             'decision' : self.decision,
             '_states': states,
-            's0' : None if self.s0 is None else self.s0.stateNumber,
+            's0' : None if self.s0 is None else self.s0.asdict(),
         }
         return d
 
