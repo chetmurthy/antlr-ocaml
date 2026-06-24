@@ -7,7 +7,7 @@ open Pa_ppx_utils
 
 let deser1 file =
   let l = Pa_ppx_located_yojson.Json.JsonListEOI.load file in
-  let l = List.map Antlr.Atn.json_log_t_of_located_yojson l in
+  let l = List.map Antlr.Mimick.json_log_t_of_located_yojson l in
   l |> List.iter
          (function
             Result.Ok _ -> ()
