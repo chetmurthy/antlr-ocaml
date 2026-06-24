@@ -96,7 +96,7 @@ def filterPrecedencePredicates(collection:set):
 
 class EmptySemanticContext(SemanticContext):
     def asdict(self):
-        return ["EmptySemanticContext", {}]
+        return ["EmptySemanticContext"]
 
 class Predicate(SemanticContext):
     __slots__ = ('ruleIndex', 'predIndex', 'isCtxDependent')

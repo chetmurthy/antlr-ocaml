@@ -2,17 +2,18 @@ WD=$(shell pwd)
 TOP=..
 include $(TOP)/config/Makefile.sub
 
-PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson,antlrtest
+PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 
 ML= \
 	lib_test.ml antlr_test.ml roundtrip_atn.ml \
-	antlrtest_test.ml generate_antlrtest.ml
+	antlrtest_test.ml generate_antlrtest.ml deserialize_jsonlog.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
 TESTS=lib_test.exe antlr_test.exe roundtrip_atn.exe \
-	antlrtest_test.exe generate_antlrtest.exe
+	antlrtest_test.exe generate_antlrtest.exe \
+	deserialize_jsonlog.exe
 
 all: $(TESTS)
 
@@ -111,6 +112,9 @@ antlrtest_test.exe: antlrtest_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 generate_antlrtest.exe: generate_antlrtest.cmo
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
+deserialize_jsonlog.exe: deserialize_jsonlog.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 roundtrip_atn.exe: roundtrip_atn.cmo

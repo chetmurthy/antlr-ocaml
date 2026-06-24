@@ -1210,28 +1210,38 @@ type config_t = {
   ; precedenceFilterSuppressed : bool
   }
 and prediction_context_t =
-  PC_SINGLETON of { cachedHashCode : int
+  PC_SINGLETON of { cachedHashCode : int64
                   ; parentCtx : prediction_context_t option
                   ; returnState : int
                   }[@yojson.name "SingletonPredictionContext"]
                     [@located_yojson.name "SingletonPredictionContext"]
-| PC_EMPTY of { cachedHashCode : int
+| PC_EMPTY of { cachedHashCode : int64
               }
-| PC_ARRAY of { cachedHashCode : int
+| PC_ARRAY of { cachedHashCode : int64
               ; parents : prediction_context_t list
               ; returnStates : int list
               }
 
 and semantic_context_t =
   SC_EMPTY
+    [@yojson.name "EmptySemanticContext"]
+    [@located_yojson.name "EmptySemanticContext"]
 | SC_PREDICATE of { ruleIndex : int
                   ; predIndex : int
                   ; isCtxDependent : bool
                   }
+                    [@yojson.name "Predicate"]
+                    [@located_yojson.name "Predicate"]
 | SC_PRECEDENCE of { precedence : int
                    }
+                     [@yojson.name "PrecedencePredicate"]
+                     [@located_yojson.name "PrecedencePredicate"]
 | SC_AND of { opnds : semantic_context_t list }
+              [@yojson.name "AND"]
+              [@located_yojson.name "AND"]
 | SC_OR of { opnds : semantic_context_t list }
+             [@yojson.name "OR"]
+             [@located_yojson.name "OR"]
 
 [@@deriving yojson,located_yojson, show]
 

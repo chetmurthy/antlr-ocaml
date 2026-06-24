@@ -6,31 +6,21 @@
 #require "antlr";;
 #require "antlrtest" ;;
 open Antlr ;;
-#trace Atn.readStates ;;
-#trace Atn.edgeFactory ;;
-#trace Atn.readSets ;;
-
+#require "pa_ppx.located_yojson";;
+#require "pa_ppx.deriving_plugins.located_yojson";;
+#require "pa_ppx.runtime";;
+#require "pa_ppx.runtime_fat";;
 Atn.debug := true ;;
 
-(*
-let f = "/home/chet/Hack/Antlr/src/antlr4/antlr4-maven-plugin/src/test/projects/importsCustom/src/main/antlr4/Hello.interp" ;;
+open Pa_ppx_located_yojson ;;
 
-f |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok |> Antlr.Interp_syntax.read_raw |> Antlr.Atn.deser ;;
- *)
+let l = Json.JsonListEOI.load "_build/ParserExec/Basic/json.log" ;;
 
-open Antlrtest ;;
-module T = Stg.Template ;;
-module G = Stg.Group ;;
-module D = Descriptor ;;
+Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
+Pa_ppx_runtime_fat.Exceptions.Ploc.pp_loc_verbose := true ;;
+#install_printer Pa_ppx_runtime.Exceptions.Ploc.pp ;;
 
-let file = "fixtures/descriptors/FullContextParsing/ExprAmbiguity_1.txt" ;;
-let helperfile = Fpath.v "fixtures/Python3.test.stg" ;;
-  let d = D.load file ;;
-  let env = D.to_env d ;;
-  let includes = Stg.Group.load helperfile ;;
-  let env = {(env) with includes = includes } ;;
-#trace T.pa ;;
-print_string (Stg.transform env d.D.grammar) ;;
+Pa_ppx_runtime.Runtime.map_bind Atn.json_log_t_of_located_yojson [] l ;;
 
 (*
 ;;; Local Variables: ***
@@ -38,4 +28,3 @@ print_string (Stg.transform env d.D.grammar) ;;
 ;;; End: ***
 
 *)
-
