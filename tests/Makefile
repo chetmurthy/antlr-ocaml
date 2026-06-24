@@ -86,9 +86,9 @@ compare-selected:: antlrtest_test.exe
 	done
 
 #ONE=LexerExec/CharSet
-#ONE=ParserExec/Basic
+ONE=ParserExec/Basic
 #ONE=CompositeParsers/ImportLexerWithOnlyFragmentRules
-ONE=CompositeParsers/KeywordVSIDOrder
+#ONE=CompositeParsers/KeywordVSIDOrder
 generate-one:: antlrtest_test.exe
 	mkdir -p _build && \
 	rm -rf _build/$(ONE) && \

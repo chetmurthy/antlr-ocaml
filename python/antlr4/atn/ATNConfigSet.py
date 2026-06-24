@@ -22,11 +22,13 @@ from io import StringIO
 
 ATNSimulator = None
 
+configSetCounter = 0
+
 class ATNConfigSet(object):
     __slots__ = (
         'configLookup', 'fullCtx', 'readonly', 'configs', 'uniqueAlt',
         'conflictingAlts', 'hasSemanticContext', 'dipsIntoOuterContext',
-        'cachedHashCode'
+        'cachedHashCode', 'id'
     )
 
     #
@@ -37,6 +39,9 @@ class ATNConfigSet(object):
     # use a hash table that lets us specify the equals/hashcode operation.
 
     def __init__(self, fullCtx:bool=True):
+        global configSetCounter
+        self.id = configSetCounter
+        configSetCounter += 1
         # All configs but hashed by (s, i, _, pi) not including context. Wiped out
         # when we go readonly as this set becomes a DFA state.
         self.configLookup = dict()
@@ -70,10 +75,12 @@ class ATNConfigSet(object):
             'fullCtx' : self.fullCtx,
             'configs' : [c.asdict() for c in self.configs],
             'uniqueAlt' : self.uniqueAlt,
-            'conflictingAlts' : self.conflictingAlts,
+            'readonly' : self.readonly,
+            'conflictingAlts' : None if self.conflictingAlts is None else [c for c in self.conflictingAlts],
             'hasSemanticContext' : self.hasSemanticContext,
             'dipsIntoOuterContext' : self.dipsIntoOuterContext,
             'cachedHashCode' : self.cachedHashCode,
+            'id' : self.id
         }
         return d
 
@@ -126,10 +133,8 @@ class ATNConfigSet(object):
             self.configLookup[h] = l
         else:
             l.append(config)
-        Trace.write(json.dumps({ 'method' : 'AtnConfigSet.getOrAdd',
-                           'config' : config.asdict()
-                          },
-                         sort_keys=True, indent=4))
+        Trace.write(json.dumps([ 'AtnConfigSet.getOrAdd', self.id, config.asdict() ],
+                               sort_keys=True, indent=4))
         return config
 
     def getStates(self):
@@ -148,6 +153,10 @@ class ATNConfigSet(object):
             return
         for config in self.configs:
             config.context = interpreter.getCachedContext(config.context)
+        Trace.write(json.dumps({ 'method' : 'AtnConfigSet.optimizeConfigs',
+                                 'self' : self.asdict()
+                                },
+                               sort_keys=True, indent=4))
 
     def addAll(self, coll:list):
         for c in coll:

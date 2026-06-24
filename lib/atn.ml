@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.import *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -1189,3 +1189,53 @@ let deser ?(verify=true) interp =
   let atn = deser1 strm in
   if verify then verifyATN atn ;
   atn
+
+open Rresult.R
+let state_id_to_yojson (STID n) = [%to_yojson: int] n
+let state_id_of_yojson j =
+  ([%of_yojson: int] j) >>= (fun n -> Result.Ok (STID n))
+let state_id_to_located_yojson (STID n) = [%to_located_yojson: int] n
+let state_id_of_located_yojson j =
+  ([%of_located_yojson: int] j) >>= (fun n -> Result.Ok (STID n))
+
+type config_t = {
+    state : state_id[@yojson.to_yojson state_id_to_yojson]
+              [@yojson.of_yojson state_id_of_yojson]
+              [@located_yojson.to_located_yojson state_id_to_located_yojson]
+              [@located_yojson.of_located_yojson state_id_of_located_yojson]
+  ; alt : int
+  ; context : prediction_context_t
+  ; semanticContext : semantic_context_t
+  ; reachesIntoOuterContext : int
+  ; precedenceFilterSuppressed : bool
+  }
+and prediction_context_t =
+  PC_SINGLETON of { cachedHashCode : int
+                  ; parentCtx : prediction_context_t option
+                  ; returnState : int
+                  }[@yojson.name "SingletonPredictionContext"]
+                    [@located_yojson.name "SingletonPredictionContext"]
+| PC_EMPTY of { cachedHashCode : int
+              }
+| PC_ARRAY of { cachedHashCode : int
+              ; parents : prediction_context_t list
+              ; returnStates : int list
+              }
+
+and semantic_context_t =
+  SC_EMPTY
+| SC_PREDICATE of { ruleIndex : int
+                  ; predIndex : int
+                  ; isCtxDependent : bool
+                  }
+| SC_PRECEDENCE of { precedence : int
+                   }
+| SC_AND of { opnds : semantic_context_t list }
+| SC_OR of { opnds : semantic_context_t list }
+
+[@@deriving yojson,located_yojson, show]
+
+type json_log_t =
+  AtnConfigSet_getOrAdd of int * config_t[@yojson.name "AtnConfigSet.getOrAdd"]
+                    [@located_yojson.name "AtnConfigSet.getOrAdd"]
+[@@deriving yojson,located_yojson, show]

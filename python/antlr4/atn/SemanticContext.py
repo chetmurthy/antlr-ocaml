@@ -96,7 +96,7 @@ def filterPrecedencePredicates(collection:set):
 
 class EmptySemanticContext(SemanticContext):
     def asdict(self):
-        return {}
+        return ["EmptySemanticContext", {}]
 
 class Predicate(SemanticContext):
     __slots__ = ('ruleIndex', 'predIndex', 'isCtxDependent')
@@ -108,12 +108,11 @@ class Predicate(SemanticContext):
 
     def asdict(self):
         d = {
-            'kind': 'PREDICATE',
             'ruleIndex' : self.ruleIndex,
             'predIndex' : self.predIndex,
             'isCtxDependent' : self.isCtxDependent,
         }
-        return d
+        return ["Predicate", d]
 
     def eval(self, parser:Recognizer , outerContext:RuleContext ):
         localctx = outerContext if self.isCtxDependent else None
@@ -142,10 +141,9 @@ class PrecedencePredicate(SemanticContext):
 
     def asdict(self):
         d = {
-            'kind' : 'PRECEDENCE',
             'precedence' : self.precedence,
         }
-        return d
+        return ["PrecedencePredicate", d]
 
     def eval(self, parser:Recognizer , outerContext:RuleContext ):
         return parser.precpred(outerContext, self.precedence)
@@ -201,10 +199,9 @@ class AND(SemanticContext):
 
     def asdict(self):
         d = {
-            'kind' : 'AND',
             'opnds' : [ c.asdict() for c in self.opnds],
         }
-        return d
+        return ["AND", d]
 
     def __eq__(self, other):
         if self is other:
@@ -295,10 +292,9 @@ class OR (SemanticContext):
 
     def asdict(self):
         d = {
-            'kind' : 'OR',
             'opnds' : [ c.asdict() for c in self.opnds],
         }
-        return d
+        return ["OR", d]
 
     def __eq__(self, other):
         if self is other:

@@ -52,7 +52,7 @@ class PredictionContext(object):
         self.cachedHashCode = cachedHashCode
 
     def asdict(self):
-        return { 'cachedHashCode' : self.cachedHashCode }
+        return ['PredictionContext', { 'cachedHashCode' : self.cachedHashCode }]
 
     def __len__(self):
         return 0
@@ -125,10 +125,10 @@ class SingletonPredictionContext(PredictionContext):
         self.returnState = returnState
 
     def asdict(self):
-        d = super(SingletonPredictionContext, self).asdict()
+        d = super(SingletonPredictionContext, self).asdict()[1]
         d['parentCtx'] = None if self.parentCtx is None else self.parentCtx.asdict()
         d['returnState'] = self.returnState
-        return d
+        return ["SingletonPredictionContext", d]
 
     def __len__(self):
         return 1
@@ -194,10 +194,10 @@ class ArrayPredictionContext(PredictionContext):
         self.returnStates = returnStates
 
     def asdict(self):
-        d = super(ArrayPredictionContext, self).asdict()
+        d = super(ArrayPredictionContext, self).asdict()[1]
         d['parents'] = [c.asdict() for c in self.parents]
         d['returnStates'] = self.returnStates
-        return d
+        return ["ArrayPredictionContext", d]
 
     def isEmpty(self):
         # since EMPTY_RETURN_STATE can only appear in the last position, we

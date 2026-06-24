@@ -19,5 +19,5 @@ description = "OCaml ANTLR support"
   archive(byte) = "antlr.cma"
   archive(native) = "antlr.cmxa"
 
-  requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils"
+  requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils,yojson,pa_ppx.located_yojson"
 |} version)
