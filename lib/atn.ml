@@ -1209,6 +1209,15 @@ type config_t = {
   ; reachesIntoOuterContext : int
   ; precedenceFilterSuppressed : bool
   }
+and config_set_t = {
+    fullCtx : bool
+  ; configs : config_t list
+  ; readonly : bool
+  ; conflictingAlts : int list option
+  ; hasSemanticContext : bool
+  ; dipsIntoOuterContext : bool
+  ; id : int
+  }
 and prediction_context_t =
   PC_SINGLETON of { cachedHashCode : int64
                   ; parentCtx : prediction_context_t option
@@ -1221,7 +1230,8 @@ and prediction_context_t =
               ; parents : prediction_context_t list
               ; returnStates : int list
               }
-
+                [@yojson.name "ArrayPredictionContext"]
+                [@located_yojson.name "ArrayPredictionContext"]
 and semantic_context_t =
   SC_EMPTY
     [@yojson.name "EmptySemanticContext"]
@@ -1248,4 +1258,7 @@ and semantic_context_t =
 type json_log_t =
   AtnConfigSet_getOrAdd of int * config_t[@yojson.name "AtnConfigSet.getOrAdd"]
                     [@located_yojson.name "AtnConfigSet.getOrAdd"]
+| AtnConfigSet_optimizeConfigs of config_set_t
+                                    [@yojson.name "AtnConfigSet.optimizeConfigs"]
+                                    [@located_yojson.name "AtnConfigSet.optimizeConfigs"]
 [@@deriving yojson,located_yojson, show]

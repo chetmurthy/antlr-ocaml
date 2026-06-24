@@ -153,9 +153,7 @@ class ATNConfigSet(object):
             return
         for config in self.configs:
             config.context = interpreter.getCachedContext(config.context)
-        Trace.write(json.dumps({ 'method' : 'AtnConfigSet.optimizeConfigs',
-                                 'self' : self.asdict()
-                                },
+        Trace.write(json.dumps([ 'AtnConfigSet.optimizeConfigs', self.asdict() ],
                                sort_keys=True, indent=4))
 
     def addAll(self, coll:list):
