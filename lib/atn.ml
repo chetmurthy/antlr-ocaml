@@ -1261,4 +1261,7 @@ type json_log_t =
 | AtnConfigSet_optimizeConfigs of config_set_t
                                     [@yojson.name "AtnConfigSet.optimizeConfigs"]
                                     [@located_yojson.name "AtnConfigSet.optimizeConfigs"]
+| AtnConfigSet_init of int * config_set_t
+                                    [@yojson.name "AtnConfigSet.__init__"]
+                                    [@located_yojson.name "AtnConfigSet.__init__"]
 [@@deriving yojson,located_yojson, show]

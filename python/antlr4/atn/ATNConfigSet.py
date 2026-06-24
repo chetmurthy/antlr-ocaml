@@ -69,6 +69,8 @@ class ATNConfigSet(object):
         self.dipsIntoOuterContext = False
 
         self.cachedHashCode = -1
+        Trace.write(json.dumps([ 'AtnConfigSet.__init__', self.id, self.asdict() ],
+                               sort_keys=True, indent=4))
 
     def asdict(self):
         d = {
