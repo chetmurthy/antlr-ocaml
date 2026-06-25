@@ -26,20 +26,38 @@ GENGRAMFILES=<grammarName>.interp <grammarName>.tokens
 GENLEXFILES=<lexerName>.py <lexerName>.interp <lexerName>.tokens
 <endif>
 
+deserialize-python-json::
+	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp
+<if(parserName)>
+	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp
+<endif>
+
 deserialize-python::
 	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp
+<if(parserName)>
+	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp
+<endif>
+
+deserialize-ocaml-json::
+	$(TOP)/tests/atn_util.opt dump --json <lexerName>.interp
+<if(parserName)>
+	$(TOP)/tests/atn_util.opt dump --json <grammarName>.interp
+<endif>
 
 deserialize-ocaml::
-	$(TOP)/tests/roundtrip_atn.opt --json <lexerName>.interp
+	$(TOP)/tests/atn_util.opt dump <lexerName>.interp
+<if(parserName)>
+	$(TOP)/tests/atn_util.opt dump <grammarName>.interp
+<endif>
 
 compare-atns:: <lexerName>.py
 	diff -bBwi -u10 \
 	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp ) \
-	<( $(TOP)/tests/roundtrip_atn.opt --json <grammarName>.interp )
+	<( $(TOP)/tests/atn_util.opt dump --json <grammarName>.interp )
 <if(parserName)>
 	diff -bBwi -u10 \
 	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp ) \
-	<( $(TOP)/tests/roundtrip_atn.opt --json <lexerName>.interp )
+	<( $(TOP)/tests/atn_util.opt dump --json <lexerName>.interp )
 <endif>
 
 

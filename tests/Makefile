@@ -64,26 +64,28 @@ generate-all-nonstop:: antlrtest_test.exe
 	fixtures/descriptors/$$d || true ;\
 	done
 
-DTEST=$(shell cd fixtures/descriptors && ls LexerExec/* ParserExec/* LexerErrors/* ParserErrors/* FullContextParsing/* Sets/* SemPredEvalLexer/* SemPredEvalParser/* LeftRecursion/* | perl -p -e 's,\.txt,,')
+#DTEST=$(shell cd fixtures/descriptors && ls LexerExec/* ParserExec/* LexerErrors/* ParserErrors/* FullContextParsing/* Sets/* SemPredEvalLexer/* SemPredEvalParser/* LeftRecursion/* | perl -p -e 's,\.txt,,')
+CTEST=$(shell cd fixtures/custom-descriptors && ls */* | perl -p -e 's,\.txt,,')
+SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _build && set -e ;\
-	for d in $(DTEST) ;\
+	for d in $(SELECTED) ;\
 	do \
 	rm -rf _build/$$d && \
 	./generate_antlrtest.exe $(GENARGS) -d _build/$$d \
-	fixtures/descriptors/$$d.txt ;\
+	fixtures/*descriptors/$$d.txt ;\
 	done
 
 test-selected:: antlrtest_test.exe
 	set -e ;\
-	for d in $(DTEST) ;\
+	for d in $(SELECTED) ;\
 	do \
 	[ -d _build/$$d ] && $(MAKE) -C _build/$$d all ;\
 	done
 
 compare-selected:: antlrtest_test.exe
 	set -e ;\
-	for d in $(DTEST) ;\
+	for d in $(SELECTED) ;\
 	do \
 	[ -d _build/$$d ] && $(MAKE) -C _build/$$d compare-atns ;\
 	done
@@ -117,8 +119,8 @@ FILE := Calc.interp
 #ATNDEBUG=--debug
 #ATNVERIFY=--disable-verify
 ATNJSON=--json
-compare-one-file:: atn_util.exe
-	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./atn_util.exe dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE) )
+compare-one-file:: atn_util.opt
+	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./atn_util.opt dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE) )
 
 run-python::
 	python3 deserialize_test.py $(FILE)

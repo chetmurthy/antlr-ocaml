@@ -213,12 +213,24 @@ let isEpsilon = function
     | NotSetTransition _
     | WildcardTransition _) -> false
 
+let serialization_type e = match e with
+    EpsilonTransition _ -> "EPSILON"
+  | RangeTransition _ -> "RANGE"
+  | RuleTransition _ -> "RULE"
+  | PredicateTransition _ -> "PREDICATE"
+  | AtomTransition _ -> "ATOM"
+  | ActionTransition _ -> "ACTION"
+  | SetTransition _ -> "SET"
+  | NotSetTransition _ -> "NOT_SET"
+  | WildcardTransition _ -> "WILDCARD"
+  | PrecedencePredicateTransition _ -> "PRECEDENCE"
+
 let to_yojson e = match e with
     EpsilonTransition { _target ; outermostPrecedenceReturn } ->
      `Assoc[("target",state_id_to_yojson _target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", `Null)
-           ;("serializationType", `String "EPSILON")
+           ;("serializationType", `String (serialization_type e))
            ;("outermostPrecedenceReturn", `Int outermostPrecedenceReturn)
        ]
 
@@ -226,7 +238,7 @@ let to_yojson e = match e with
      `Assoc[("target",state_id_to_yojson _target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", IntervalSet.to_yojson label)
-           ;("serializationType", `String "RANGE")
+           ;("serializationType", `String (serialization_type e))
            ;("start", `Int start)
            ;("stop", `Int stop)
        ]
@@ -235,7 +247,7 @@ let to_yojson e = match e with
      `Assoc[("target",state_id_to_yojson ruleStart)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", `Null)
-           ;("serializationType", `String "RULE")
+           ;("serializationType", `String (serialization_type e))
            ;("ruleIndex", `Int ruleIndex)
            ;("precedence", `Int precedence)
            ;("followState", state_id_to_yojson followState)
@@ -245,7 +257,7 @@ let to_yojson e = match e with
      `Assoc[("target",state_id_to_yojson _target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", `Null)
-           ;("serializationType", `String "PREDICATE")
+           ;("serializationType", `String (serialization_type e))
            ;("ruleIndex", `Int ruleIndex)
            ;("predIndex", `Int predIndex)
            ;("isCtxDependent", `Bool isCtxDependent)
@@ -255,7 +267,7 @@ let to_yojson e = match e with
      `Assoc[("target",state_id_to_yojson _target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", IntervalSet.to_yojson label)
-           ;("serializationType", `String "ATOM")
+           ;("serializationType", `String (serialization_type e))
            ;("label_", `Int label_)
        ]
 
@@ -263,7 +275,7 @@ let to_yojson e = match e with
      `Assoc[("target",state_id_to_yojson _target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", `Null)
-           ;("serializationType", `String "ACTION")
+           ;("serializationType", `String (serialization_type e))
            ;("ruleIndex", `Int ruleIndex)
            ;("actionIndex", `Int actionIndex)
            ;("isCtxDependent", `Bool isCtxDependent)
@@ -273,28 +285,28 @@ let to_yojson e = match e with
      `Assoc[("target",state_id_to_yojson _target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", IntervalSet.to_yojson set)
-           ;("serializationType", `String "SET")
+           ;("serializationType", `String (serialization_type e))
        ]
 
 | NotSetTransition { _target ; set } ->
      `Assoc[("target",state_id_to_yojson _target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", IntervalSet.to_yojson set)
-           ;("serializationType", `String "NOT_SET")
+           ;("serializationType", `String (serialization_type e))
        ]
 
 | WildcardTransition target ->
      `Assoc[("target",state_id_to_yojson target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", `Null)
-           ;("serializationType", `String "WILDCARD")
+           ;("serializationType", `String (serialization_type e))
        ]
 
 | PrecedencePredicateTransition { _target ; precedence } ->
      `Assoc[("target",state_id_to_yojson _target)
            ;("isEpsilon", `Bool (isEpsilon e))
            ;("label", `Null)
-           ;("serializationType", `String "PRECEDENCE")
+           ;("serializationType", `String (serialization_type e))
            ;("precedence",`Int precedence)
        ]
 
