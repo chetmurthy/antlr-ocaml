@@ -15,7 +15,9 @@ TESTS=lib_test.exe antlr_test.exe roundtrip_atn.exe \
 	antlrtest_test.exe generate_antlrtest.exe \
 	deserialize_jsonlog.exe
 
-all: $(TESTS)
+TESTSOPT=$(TESTS:.exe=.opt)
+
+all: $(TESTS) $(TESTSOPT)
 
 test:: all
 	mkdir -p _build && ./lib_test.exe
@@ -28,7 +30,7 @@ generate-all:: antlrtest_test.exe
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
 	do \
 	rm -rf _build/$${d/.txt/} && \
-	./generate_antlrtest.exe $(GENARGS) -d _build/$${d/.txt/} \
+	./generate_antlrtest.opt $(GENARGS) -d _build/$${d/.txt/} \
 	fixtures/descriptors/$$d ;\
 	done
 
@@ -105,20 +107,38 @@ compare-one:: antlrtest_test.exe
 lib_test.exe: lib_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
+lib_test.opt: lib_test.cmx
+	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
 antlr_test.exe: antlr_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
+antlr_test.opt: antlr_test.cmx
+	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 antlrtest_test.exe: antlrtest_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
+antlrtest_test.opt: antlrtest_test.cmx
+	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
 generate_antlrtest.exe: generate_antlrtest.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
+generate_antlrtest.opt: generate_antlrtest.cmx
+	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 deserialize_jsonlog.exe: deserialize_jsonlog.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
+deserialize_jsonlog.opt: deserialize_jsonlog.cmx
+	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
 roundtrip_atn.exe: roundtrip_atn.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
+roundtrip_atn.opt: roundtrip_atn.cmx
+	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 
 SHELL := /bin/bash

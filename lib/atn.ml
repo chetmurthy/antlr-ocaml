@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -521,8 +521,10 @@ module State = struct
 end
 
 module LexerAction = struct
-  type t = [%import: Types.lexer_action_t]
-  [@@deriving show]
+  type t = [%import: Types.lexer_action_t
+            [@with lexer_action_t := t]
+           ]
+  [@@deriving yojson,located_yojson, show]
 
 let dump pps = function
     LexerChannelAction { isPositionDependent ; channel } ->
@@ -573,30 +575,40 @@ let dump pps = function
 
 | x -> Fmt.(pf pps "#<unhandled< %a >>" pp x)
 
+module LexerActionType = struct
+  let _CHANNEL = 0    (* #The type of a {@link LexerChannelAction} action.*)
+  let _CUSTOM = 1     (* #The type of a {@link LexerCustomAction} action. *)
+  let _MODE = 2       (* #The type of a {@link LexerModeAction} action. *)
+  let _MORE = 3       (* #The type of a {@link LexerMoreAction} action. *)
+  let _POP_MODE = 4   (* #The type of a {@link LexerPopModeAction} action. *)
+  let _PUSH_MODE = 5  (* #The type of a {@link LexerPushModeAction} action. *)
+  let _SKIP = 6       (* #The type of a {@link LexerSkipAction} action. *)
+  let _TYPE = 7       (* #The type of a {@link LexerTypeAction} action. *)
+end
 
-let mkLexerChannelAction ?(isPositionDependent = false) ~channel () =
-  LexerChannelAction { isPositionDependent ; channel }
+let mkLexerChannelAction ?(actionType = LexerActionType._CHANNEL) ?(isPositionDependent = false) ~channel () =
+  LexerChannelAction { actionType ; isPositionDependent ; channel }
 
-let mkLexerCustomAction ~ruleIndex ~actionIndex () =
-  LexerCustomAction { isPositionDependent = true ; ruleIndex ; actionIndex  }
+let mkLexerCustomAction ?(actionType = LexerActionType._CUSTOM) ~ruleIndex ~actionIndex () =
+  LexerCustomAction { actionType ; isPositionDependent = true ; ruleIndex ; actionIndex  }
 
-let mkLexerModeAction ?(isPositionDependent = false) ~mode () =
-  LexerModeAction { isPositionDependent ; mode  }
+let mkLexerModeAction ?(actionType = LexerActionType._MODE) ?(isPositionDependent = false) ~mode () =
+  LexerModeAction { actionType ; isPositionDependent ; mode  }
 
-let mkLexerMoreAction ?(isPositionDependent = false) () =
-  LexerMoreAction { isPositionDependent  }
+let mkLexerMoreAction ?(actionType = LexerActionType._MORE) ?(isPositionDependent = false) () =
+  LexerMoreAction { actionType ; isPositionDependent  }
 
-let mkLexerPopModeAction ?(isPositionDependent = false) () =
-  LexerPopModeAction { isPositionDependent  }
+let mkLexerPopModeAction ?(actionType = LexerActionType._POP_MODE) ?(isPositionDependent = false) () =
+  LexerPopModeAction { actionType ; isPositionDependent  }
 
-let mkLexerPushModeAction ?(isPositionDependent = false) ~mode () =
-  LexerPushModeAction { isPositionDependent ; mode  }
+let mkLexerPushModeAction ?(actionType = LexerActionType._PUSH_MODE) ?(isPositionDependent = false) ~mode () =
+  LexerPushModeAction { actionType ; isPositionDependent ; mode  }
 
-let mkLexerSkipAction ?(isPositionDependent = false) () =
-  LexerSkipAction { isPositionDependent  }
+let mkLexerSkipAction ?(actionType = LexerActionType._SKIP) ?(isPositionDependent = false) () =
+  LexerSkipAction { actionType ; isPositionDependent  }
 
-let mkLexerTypeAction ?(isPositionDependent = false) ~type_ () =
-  LexerTypeAction { isPositionDependent ; type_  }
+let mkLexerTypeAction ?(actionType = LexerActionType._TYPE) ?(isPositionDependent = false) ~type_ () =
+  LexerTypeAction { actionType ; isPositionDependent ; type_  }
 
 end
 

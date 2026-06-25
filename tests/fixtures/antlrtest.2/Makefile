@@ -30,16 +30,16 @@ deserialize-python::
 	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp
 
 deserialize-ocaml::
-	$(TOP)/tests/roundtrip_atn.exe --json <lexerName>.interp
+	$(TOP)/tests/roundtrip_atn.opt --json <lexerName>.interp
 
 compare-atns:: <lexerName>.py
 	diff -bBwi -u10 \
 	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp ) \
-	<( $(TOP)/tests/roundtrip_atn.exe --json <grammarName>.interp )
+	<( $(TOP)/tests/roundtrip_atn.opt --json <grammarName>.interp )
 <if(parserName)>
 	diff -bBwi -u10 \
 	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp ) \
-	<( $(TOP)/tests/roundtrip_atn.exe --json <lexerName>.interp )
+	<( $(TOP)/tests/roundtrip_atn.opt --json <lexerName>.interp )
 <endif>
 
 

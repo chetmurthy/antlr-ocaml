@@ -33,7 +33,7 @@ class LexerAction(object):
             'actionType' : self.actionType,
             'isPositionDependent' : self.isPositionDependent,
         }
-        return d
+        return ["LexerAction", d]
 
     def dump(self):
         print("  actionType: %s" % repr(self.actionType))
@@ -62,6 +62,10 @@ class LexerSkipAction(LexerAction):
     def dump(self):
         super(LexerSkipAction, self).dump()
 
+    def asdict(self):
+        d = super(LexerSkipAction, self).asdict()[1]
+        return ["LexerSkipAction", d]
+
     def execute(self, lexer:Lexer):
         lexer.skip()
 
@@ -82,6 +86,11 @@ class LexerTypeAction(LexerAction):
     def dump(self):
         super(LexerTypeAction, self).dump()
         print("  type: %s" % self.type)
+
+    def asdict(self):
+        d = super(LexerTypeAction, self).asdict()[1]
+        d['type_'] = self.type
+        return ["LexerTypeAction", d]
 
     def execute(self, lexer:Lexer):
         lexer.type = self.type
@@ -114,6 +123,11 @@ class LexerPushModeAction(LexerAction):
         super(LexerPushModeAction, self).dump()
         print("  mode: %s" % self.mode)
 
+    def asdict(self):
+        d = super(LexerPushModeAction, self).asdict()[1]
+        d['mode'] = self.mode
+        return ["LexerPushModeAction", d]
+
     # <p>This action is implemented by calling {@link Lexer#pushMode} with the
     # value provided by {@link #getMode}.</p>
     def execute(self, lexer:Lexer):
@@ -145,6 +159,10 @@ class LexerPopModeAction(LexerAction):
     def __init__(self):
         super().__init__(LexerActionType.POP_MODE)
 
+    def asdict(self):
+        d = super(LexerPopModeAction, self).asdict()[1]
+        return ["LexerPopModeAction", d]
+
     # <p>This action is implemented by calling {@link Lexer#popMode}.</p>
     def execute(self, lexer:Lexer):
         lexer.popMode()
@@ -165,6 +183,10 @@ class LexerMoreAction(LexerAction):
     def __init__(self):
         super().__init__(LexerActionType.MORE)
 
+    def asdict(self):
+        d = super(LexerMoreAction, self).asdict()[1]
+        return ["LexerMoreAction", d]
+
     # <p>This action is implemented by calling {@link Lexer#popMode}.</p>
     def execute(self, lexer:Lexer):
         lexer.more()
@@ -182,6 +204,11 @@ class LexerModeAction(LexerAction):
     def __init__(self, mode:int):
         super().__init__(LexerActionType.MODE)
         self.mode = mode
+
+    def asdict(self):
+        d = super(LexerModeAction, self).asdict()[1]
+        d['mode'] = self.mode
+        return ["LexerModeAction", d]
 
     def dump(self):
         super(LexerModeAction, self).dump()
@@ -232,6 +259,12 @@ class LexerCustomAction(LexerAction):
         self.actionIndex = actionIndex
         self.isPositionDependent = True
 
+    def asdict(self):
+        d = super(LexerCustomAction, self).asdict()[1]
+        d['ruleIndex'] = self.ruleIndex
+        d['actionIndex'] = self.actionIndex
+        return ["LexerCustomAction", d]
+
     def dump(self):
         super(LexerCustomAction, self).dump()
         print("  ruleIndex: %s" % self.ruleIndex)
@@ -263,6 +296,11 @@ class LexerChannelAction(LexerAction):
     def __init__(self, channel:int):
         super().__init__(LexerActionType.CHANNEL)
         self.channel = channel
+
+    def asdict(self):
+        d = super(LexerChannelAction, self).asdict()[1]
+        d['channel'] = self.channel
+        return ["LexerChannelAction", d]
 
     # <p>This action is implemented by calling {@link Lexer#setChannel} with the
     # value provided by {@link #getChannel}.</p>
@@ -310,6 +348,12 @@ class LexerIndexedCustomAction(LexerAction):
         self.offset = offset
         self.action = action
         self.isPositionDependent = True
+
+    def asdict(self):
+        d = super(LexerIndexedCustomAction, self).asdict()[1]
+        d['offset'] = self.offset
+        d['action'] = self.action.asdict()
+        return ["LexerIndexedCustomAction", d]
 
     # <p>This method calls {@link #execute} on the result of {@link #getAction}
     # using the provided {@code lexer}.</p>

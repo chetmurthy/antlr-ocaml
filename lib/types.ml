@@ -104,40 +104,55 @@ and edge_t =
 
 type lexer_action_t =
   LexerChannelAction of {
-      mutable isPositionDependent : bool ;
+      actionType : int ;
+      isPositionDependent : bool ;
       mutable channel : int
     }
 
 | LexerCustomAction of {
-      mutable isPositionDependent : bool ;
+      actionType : int ;
+      isPositionDependent : bool ;
       mutable ruleIndex : int ;
       mutable actionIndex : int
     }
 
+| LexerIndexedCustomAction of {
+    actionType : int ;
+    isPositionDependent : bool ;
+    action : lexer_action_t ;
+    offset : int
+  }
+
 | LexerModeAction of {
-      mutable isPositionDependent : bool ;
+      actionType : int ;
+      isPositionDependent : bool ;
       mutable mode : int
     }
 
 | LexerMoreAction of {
-      mutable isPositionDependent : bool ;
+      actionType : int ;
+      isPositionDependent : bool ;
     }
 
 | LexerPopModeAction of {
-      mutable isPositionDependent : bool ;
+      actionType : int ;
+      isPositionDependent : bool ;
     }
 
 | LexerPushModeAction of {
-      mutable isPositionDependent : bool ;
+      actionType : int ;
+      isPositionDependent : bool ;
       mutable mode : int
     }
 
 | LexerSkipAction of {
-      mutable isPositionDependent : bool ;
+      actionType : int ;
+      isPositionDependent : bool ;
     }
 
 | LexerTypeAction of {
-    mutable isPositionDependent : bool ;
-    mutable type_ : int
+    actionType : int ;
+    isPositionDependent : bool ;
+    mutable type_ : int [@yojson.key "type"] [@located_yojson.key "type"]
   }
 

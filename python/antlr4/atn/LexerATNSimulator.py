@@ -514,12 +514,11 @@ class LexerATNSimulator(ATNSimulator):
             from_.edges = [ None ] * (self.MAX_DFA_EDGE - self.MIN_DFA_EDGE + 1)
 
         from_.edges[tk - self.MIN_DFA_EDGE] = to # connect
-        Trace.nowrite(json.dumps({ 'method' : 'END LexerATNSimulator.addDFAEdge',
-                           'from' : from_.stateNumber,
-                           'tk' : tk,
-                           'to' : None if to is None else 'ERROR' if to == self.ERROR else to.stateNumber,
-                          },
-                         sort_keys=True, indent=4))
+        Trace.write(json.dumps([ 'END LexerATNSimulator.addDFAEdge',
+                                 from_.stateNumber,
+                                 tk,
+                                 (None if to is None else -1 if to == self.ERROR else to.stateNumber) ],
+                               sort_keys=True, indent=4))
 
         return to
 
@@ -549,10 +548,8 @@ class LexerATNSimulator(ATNSimulator):
         configs.setReadonly(True)
         newState.configs = configs
         dfa.states[newState] = newState
-        Trace.nowrite(json.dumps({ 'method' : 'LexerATNSimulator.__add_state__',
-                           'newState' : newState.asdict()
-                          },
-                         sort_keys=True, indent=4))
+        Trace.write(json.dumps([ 'LexerATNSimulator.__add_state__', dfa.id, newState.asdict() ],
+                               sort_keys=True, indent=4))
         return newState
 
     def getDFA(self, mode:int):

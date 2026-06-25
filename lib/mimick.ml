@@ -80,7 +80,7 @@ and dfa_t = {
 and dfa_state_t = {
     stateNumber : int
   ; configs : config_set_t
-  ; edges: int option array
+  ; edges: int option array option
   ; isAcceptState : bool
   ; prediction : int
   ; lexerActionExecutor : lexer_action_executor_t option
@@ -89,7 +89,7 @@ and dfa_state_t = {
   }
 
 and lexer_action_executor_t = {
-    lexerActions : string list
+    lexerActions : Atn.LexerAction.t list
   ; hashCode : int64
   }
 
@@ -113,4 +113,11 @@ type json_log_t =
 | DFA_init of int * dfa_t
                       [@yojson.name "DFA.__init__"]
                       [@located_yojson.name "DFA.__init__"]
+| LexerATNSimulator_add_state of int * dfa_state_t
+                      [@yojson.name "LexerATNSimulator.__add_state__"]
+                      [@located_yojson.name "LexerATNSimulator.__add_state__"]
+| LexerATNSimulator_addDFAEdge of int * int * int option
+                      [@yojson.name "END LexerATNSimulator.addDFAEdge"]
+                      [@located_yojson.name "END LexerATNSimulator.addDFAEdge"]
+
 [@@deriving yojson,located_yojson, show]

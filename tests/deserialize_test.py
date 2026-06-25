@@ -4,6 +4,9 @@ import json
 sys.path
 sys.path.append('../python')
 
+import Trace
+Trace.start("json.log")
+
 from antlr4 import *
 from antlr4.atn.ATNType import ATNType
 from antlr4.atn.ATNState import *
