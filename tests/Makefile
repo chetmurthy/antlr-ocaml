@@ -11,7 +11,7 @@ ML= \
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
-TESTS=lib_test.exe antlr_test.exe roundtrip_atn.exe \
+TESTS=lib_test.exe antlr_test.exe roundtrip_atn.exe atn_util.exe \
 	antlrtest_test.exe generate_antlrtest.exe \
 	deserialize_jsonlog.exe
 
@@ -117,22 +117,22 @@ FILE := Calc.interp
 #ATNDEBUG=--debug
 #ATNVERIFY=--disable-verify
 ATNJSON=--json
-compare-one-file:: roundtrip_atn.exe
-	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE) )
+compare-one-file:: atn_util.exe
+	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./atn_util.exe dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE) )
 
 run-python::
 	python3 deserialize_test.py $(FILE)
 
-run-ocaml:: roundtrip_atn.exe
-	./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE)
+run-ocaml:: atn_util.opt
+	./atn_util.opt dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE)
 
 ANTLRDIRS= ~/Hack/Antlr/src/antlr4 ~/Hack/Antlr/src/grammars-v4
-compare-full:: roundtrip_atn.exe
+compare-full:: atn_util.opt
 	set -e ;\
 	for f in `find $(ANTLRDIRS) -name '*.interp' -print`; \
 	do \
 	echo "================ $$f ================" ; \
-	diff -bBwi -u10 <( python3 deserialize_test.py $$f ) <( ./roundtrip_atn.exe $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $$f ) ; \
+	diff -bBwi -u10 <( python3 deserialize_test.py $$f ) <( ./atn_util.opt dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $$f ) ; \
 	done
 
 test-python::
