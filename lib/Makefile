@@ -7,12 +7,14 @@ include $(TOP)/config/Makefile.sub
 
 DESTDIR=
 
+PACKAGES := $(PACKAGES),ocamlgraph
+
 TARGET_PACKAGE=antlr
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
 	util.ml range.ml intervalSet.ml interp.ml interp_syntax.ml token.ml \
-	types.ml atn.ml mimick.ml \
+	types.ml atn.ml mimick.ml visualization.ml \
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)

@@ -5,7 +5,7 @@ include $(TOP)/config/Makefile.sub
 PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 
 ML= \
-	lib_test.ml antlr_test.ml roundtrip_atn.ml \
+	lib_test.ml antlr_test.ml roundtrip_atn.ml atn_util.ml \
 	antlrtest_test.ml generate_antlrtest.ml deserialize_jsonlog.ml
 
 ALLSRC=$(ML)
@@ -104,45 +104,15 @@ test-one:: antlrtest_test.exe
 compare-one:: antlrtest_test.exe
 	$(MAKE) -C _build/$(ONE) compare-atns
 
-lib_test.exe: lib_test.cmo
+%.exe: %.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
-lib_test.opt: lib_test.cmx
+%.opt: %.cmx
 	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-antlr_test.exe: antlr_test.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-antlr_test.opt: antlr_test.cmx
-	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-antlrtest_test.exe: antlrtest_test.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-antlrtest_test.opt: antlrtest_test.cmx
-	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-generate_antlrtest.exe: generate_antlrtest.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-generate_antlrtest.opt: generate_antlrtest.cmx
-	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-deserialize_jsonlog.exe: deserialize_jsonlog.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-deserialize_jsonlog.opt: deserialize_jsonlog.cmx
-	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-roundtrip_atn.exe: roundtrip_atn.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-roundtrip_atn.opt: roundtrip_atn.cmx
-	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
 
 SHELL := /bin/bash
-FILE := CalcLexer.interp
+#FILE := CalcLexer.interp
+FILE := Calc.interp
 #FILE := /home/chet/Hack/Antlr/src/grammars-v4/antlr/antlr4/examples/grammars-v4/cmake/CMakeLexer.interp
 #ATNDEBUG=--debug
 #ATNVERIFY=--disable-verify
