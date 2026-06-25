@@ -12,8 +12,14 @@ module StringVertex = struct
   let label x = x
 end
 
+module StringEdge = struct
+  type t = string
+  let compare = Stdlib.compare
+  let default = ""
+end
+
 module V = StringVertex
-module G = Imperative.Digraph.ConcreteBidirectional(V)
+module G = Imperative.Digraph.ConcreteBidirectionalLabeled(V)(StringEdge)
 
 module DotIn = struct
   type t = G.t
@@ -41,8 +47,7 @@ module DomG = Dominator.Make_graph(struct
 
 let to_dot ?dominator_from oc edges =
   let g = G.create () in
-  List.iter (fun (s, dl) ->
-    List.iter (fun d -> G.add_edge g s d) dl) edges ;
+    List.iter (G.add_edge_e g) edges ;
   let g = match dominator_from with
     Some v -> DomG.(compute_dom_graph g (compute_all g v).dom_tree)
   | None -> g in
