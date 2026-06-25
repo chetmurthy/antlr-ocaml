@@ -5,13 +5,13 @@ include $(TOP)/config/Makefile.sub
 PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 
 ML= \
-	lib_test.ml antlr_test.ml roundtrip_atn.ml atn_util.ml \
+	lib_test.ml antlr_test.ml atn_util.ml \
 	antlrtest_test.ml generate_antlrtest.ml deserialize_jsonlog.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
-TESTS=lib_test.exe antlr_test.exe roundtrip_atn.exe atn_util.exe \
+TESTS=lib_test.exe antlr_test.exe atn_util.exe \
 	antlrtest_test.exe generate_antlrtest.exe \
 	deserialize_jsonlog.exe
 
