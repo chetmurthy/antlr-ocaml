@@ -60,6 +60,13 @@ compare-atns:: <lexerName>.py
 	<( $(TOP)/tests/atn_util.opt dump --json <lexerName>.interp )
 <endif>
 
+visualize-lexer: <lexerName>.interp
+	xdot <( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot <lexerName>.interp )
+
+<if(parserName)>
+visualize-parser: <grammarName>.interp
+	xdot <( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot <grammarName>.interp )
+<endif>
 
 realclean:: clean
 	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES)
