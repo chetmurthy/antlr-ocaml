@@ -83,7 +83,7 @@ let disable_verify =
   dump ~check_rule_separation ~json ~debug ~disable_verify file ;
   Cmdliner.Cmd.Exit.ok
 
-let graph ~xdot ~ruleIndex file =
+let graph ~xdot ~with_rule_index ~ruleIndex file =
   let ruleIndex = if ruleIndex = -1 then None else Some ruleIndex in
   let atn =
     file
@@ -108,10 +108,6 @@ let graph ~xdot ~ruleIndex file =
     | RangeTransition {label} -> Fmt.(str "<range %a>" IntervalSet.dump label)
     | AtomTransition {label} -> Fmt.(str "<atom %a>" IntervalSet.dump label)
     | t -> Edge.serialization_type t in
-  let fmt_st states snum =
-    let st = State.get_state states snum in
- Fmt.(str "%a(%a)" dump_state_id snum
-        Node.pp_atn_state_type_t (Node.serialization_name st.State.node) ) in
   let edges =
   states
   |> List.concat_map
@@ -124,7 +120,7 @@ let graph ~xdot ~ruleIndex file =
        ) in
 
   if xdot then
-    Visualization.to_dot stdout atn edges
+    Visualization.to_dot ~with_rule_index stdout atn edges
   else
     List.iter (fun (s,e,t) ->
         Fmt.(pf stdout "%a -[%s]-> %a\n"
@@ -142,6 +138,10 @@ let xdot =
   let doc = "output graphviz (xdot) format." in
   Arg.(value & flag & info ["x"; "xdot"] ~doc) in
 
+let with_rule_index =
+  let doc = "include ruleIndex in state-label." in
+  Arg.(value & flag & info ["with-rule-index"] ~doc) in
+
   let ruleIndex =
     let docv = "rule-index" in
     Arg.(value & opt int (-1) & info ["r"; "rule-index"] ~docv) in
@@ -152,8 +152,8 @@ let xdot =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "graph" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ ruleIndex and+ xdot in
-  graph ~xdot ~ruleIndex file ;
+  let+ file and+ ruleIndex and+ xdot and+ with_rule_index in
+  graph ~with_rule_index ~xdot ~ruleIndex file ;
   Cmdliner.Cmd.Exit.ok
 
 let flag = Arg.(value & flag & info ["flag"] ~doc:"The flag")

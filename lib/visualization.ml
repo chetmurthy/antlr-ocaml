@@ -30,7 +30,7 @@ end
 module V = StateIDVertex
 module G = Imperative.Digraph.ConcreteBidirectionalLabeled(V)(StringEdge)
 
-let to_dot oc atn edges =
+let to_dot ~with_rule_index oc atn edges =
   let open Atn in
 
   let vertex_name snum =
@@ -41,9 +41,18 @@ let to_dot oc atn edges =
   let vertex_attributes snum =
     let open State in
     let st = State.get_state atn.states snum in
-    let label = Fmt.(str "%a/%a"
-                       dump_state_id snum
-                       Node.pp_atn_state_type_t (Node.serialization_name st.State.node)) in
+    let label =
+      if with_rule_index then
+        Fmt.(str "%a/%a/%d"
+               dump_state_id snum
+               Node.pp_atn_state_type_t (Node.serialization_name st.State.node)
+               st.State.ruleIndex)
+      else
+        Fmt.(str "%a/%a"
+               dump_state_id snum
+               Node.pp_atn_state_type_t (Node.serialization_name st.State.node))
+
+ in
     [`Label label] in
 
 let module DotIn = struct
