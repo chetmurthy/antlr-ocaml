@@ -530,6 +530,8 @@ module State = struct
   let iter f (STATES t) =
     Array.iter f t
 
+  let for_all f (STATES t) =
+    Array.for_all f t
 end
 
 module LexerAction = struct
