@@ -17,6 +17,13 @@ class PredPrediction(object):
         self.alt = alt
         self.pred = pred
 
+    def asdict(self):
+        d = {
+            'alt' : self.alt,
+            'pred' : self.pred.asdict()
+        }
+        return ['PredPrediction', d]
+
     def __str__(self):
         return "(" + str(self.pred) + ", " + str(self.alt) +  ")"
 
@@ -85,7 +92,7 @@ class DFAState(object):
         d = {
             'stateNumber' : self.stateNumber,
             'configs' : self.configs.asdict(),
-            'edges' : None if self.edges is None else [e.stateNumber for e in self.edges],
+            'edges' : None if self.edges is None else [(None if e is None else e.stateNumber) for e in self.edges],
             'isAcceptState' : self.isAcceptState,
             'prediction' : self.prediction,
             'lexerActionExecutor' : None if self.lexerActionExecutor is None else self.lexerActionExecutor.asdict(),

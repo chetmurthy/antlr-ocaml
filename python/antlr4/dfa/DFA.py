@@ -47,8 +47,8 @@ class DFA(object):
 
     def asdict(self):
         states = {}
-        for k,v in self._states:
-            states[k] = v.asdict()
+        for v in self._states.values():
+            states[v.stateNumber] = v.asdict()
         d = {
             'id' : self.id,
             'atnStartState' : self.atnStartState.stateNumber,
@@ -130,8 +130,33 @@ class DFA(object):
             self.precedenceDfa = precedenceDfa
 
     @property
-    def states(self):
+    def prop_states(self):
         return self._states
+
+    def states_get(self, x, y):
+        Trace.write(json.dumps([ 'ENTER DFA.states_get', self.id, x.asdict(),
+                                 (None if y is None else y.asdict()) ],
+                               sort_keys=True, indent=4))
+        rv = self._states.get(x,y)
+        Trace.write(json.dumps([ 'EXIT DFA.states_get', self.id,
+                                 (None if rv is None else rv.asdict()) ],
+                               sort_keys=True, indent=4))
+        return rv
+
+    def states_add(self, x):
+        Trace.write(json.dumps([ 'ENTER DFA.states_add', self.id, x.asdict() ],
+                               sort_keys=True, indent=4))
+#        sys.stderr.write("BEFORE states_add: _states: %s\n" % self._states)
+        self._states[x] = x
+#        sys.stderr.write("AFTER states_add: _states: %s\n" % self._states)
+        Trace.write(json.dumps([ 'EXIT DFA.states_add', self.id, self.asdict() ],
+                               sort_keys=True, indent=4))
+
+    def states_len(self):
+        rv = len(self._states)
+        Trace.write(json.dumps([ 'EXIT DFA.states_len', self.id, rv ],
+                               sort_keys=True, indent=4))
+        return rv
 
     # Return a list of all states in this DFA, ordered by state number.
     def sortedStates(self):

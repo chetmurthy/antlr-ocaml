@@ -555,7 +555,7 @@ class Parser (Recognizer):
         seenOne = False
         for i in range(0, len(self._interp.decisionToDFA)):
             dfa = self._interp.decisionToDFA[i]
-            if len(dfa.states)>0:
+            if dfa.states_len()>0:
                 if seenOne:
                     print(file=self._output)
                 print("Decision " + str(dfa.decision) + ":", file=self._output)

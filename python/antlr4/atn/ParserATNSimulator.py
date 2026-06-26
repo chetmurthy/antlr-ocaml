@@ -1606,19 +1606,19 @@ class ParserATNSimulator(ATNSimulator):
             return D
 
 
-        existing = dfa.states.get(D, None)
+        existing = dfa.states_get(D, None)
         if existing is not None:
             if ParserATNSimulator.trace_atn_sim: print("addDFAState", str(D), "exists")
             return existing
 
-        D.stateNumber = len(dfa.states)
+        D.stateNumber = dfa.states_len()
         if not D.configs.readonly:
             D.configs.optimizeConfigs(self)
             D.configs.setReadonly(True)
 
         if ParserATNSimulator.trace_atn_sim: print("addDFAState new", str(D))
 
-        dfa.states[D] = D
+        dfa.states_add(D)
         return D
 
     def reportAttemptingFullContext(self, dfa:DFA, conflictingAlts:set, configs:ATNConfigSet, startIndex:int, stopIndex:int):

@@ -538,16 +538,16 @@ class LexerATNSimulator(ATNSimulator):
             proposed.prediction = self.atn.ruleToTokenType[firstConfigWithRuleStopState.state.ruleIndex]
 
         dfa = self.decisionToDFA[self.mode]
-        existing = dfa.states.get(proposed, None)
+        existing = dfa.states_get(proposed, None)
         if existing is not None:
             return existing
 
         newState = proposed
 
-        newState.stateNumber = len(dfa.states)
+        newState.stateNumber = dfa.states_len()
         configs.setReadonly(True)
         newState.configs = configs
-        dfa.states[newState] = newState
+        dfa.states_add(newState)
         Trace.write(json.dumps([ 'LexerATNSimulator.__add_state__', dfa.id, newState.asdict() ],
                                sort_keys=True, indent=4))
         return newState

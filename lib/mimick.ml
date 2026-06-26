@@ -73,7 +73,7 @@ and dfa_t = {
     id : int
   ; atnStartState : deser_state_id
   ; decision : int
-  ; _states : string strmap
+  ; _states : dfa_state_t strmap
   ; s0 : dfa_state_t option
   }
 
@@ -85,9 +85,14 @@ and dfa_state_t = {
   ; prediction : int
   ; lexerActionExecutor : lexer_action_executor_t option
   ; requiresFullContext : bool
-  ; predicates : string list option
+  ; predicates : pred_prediction_t list option
   }
 
+and pred_prediction_t =
+  PredPrediction of {
+      alt : int
+    ; pred : semantic_context_t
+    }
 and lexer_action_executor_t = {
     lexerActions : Atn.LexerAction.t list
   ; hashCode : int64
@@ -113,6 +118,21 @@ type json_log_t =
 | DFA_init of int * dfa_t
                       [@yojson.name "DFA.__init__"]
                       [@located_yojson.name "DFA.__init__"]
+| ENTER_DFA_states_get of int * dfa_state_t * string option
+                      [@yojson.name "ENTER DFA.states_get"]
+                      [@located_yojson.name "ENTER DFA.states_get"]
+| EXIT_DFA_states_get of int * dfa_state_t option
+                      [@yojson.name "EXIT DFA.states_get"]
+                      [@located_yojson.name "EXIT DFA.states_get"]
+| EXIT_DFA_states_len of int * int
+                      [@yojson.name "EXIT DFA.states_len"]
+                      [@located_yojson.name "EXIT DFA.states_len"]
+| ENTER_DFA_states_add of int * dfa_state_t
+                      [@yojson.name "ENTER DFA.states_add"]
+                      [@located_yojson.name "ENTER DFA.states_add"]
+| EXIT_DFA_states_add of int * dfa_t
+                      [@yojson.name "EXIT DFA.states_add"]
+                      [@located_yojson.name "EXIT DFA.states_add"]
 | LexerATNSimulator_add_state of int * dfa_state_t
                       [@yojson.name "LexerATNSimulator.__add_state__"]
                       [@located_yojson.name "LexerATNSimulator.__add_state__"]
