@@ -88,6 +88,15 @@ class PredictionContextCache(object):
     def __init__(self):
         self.cache = dict()
 
+    def asdict(self):
+        cachedict = {}
+        for k,v in self.cache:
+            cachedict[k] = v.asdict()
+        d = {
+            'cache' : cachedict
+        }
+        return ['PredictionContextCache', d]
+
     #  Add a context to the cache and return it. If the context already exists,
     #  return that one instead and do not add a new context to the cache.
     #  Protect shared cache from unsafe thread access.

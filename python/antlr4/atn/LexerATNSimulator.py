@@ -43,6 +43,15 @@ class SimState(object):
     def __init__(self):
         self.reset()
 
+    def asdict(self):
+        d = {
+            'index' : self.index,
+            'line' : self.line,
+            'column' : self.column,
+            'dfaState' : None if self.dfaState is None else self.dfaState.asdict()
+        }
+        return ["SimState", d]
+
     def reset(self):
         self.index = -1
         self.line = 0
@@ -87,6 +96,18 @@ class LexerATNSimulator(ATNSimulator):
         self.MAX_CHAR_VALUE = Lexer.MAX_CHAR_VALUE
         # Used during DFA/ATN exec to record the most recent accept configuration info
         self.prevAccept = SimState()
+        Trace.write(json.dumps([ 'LexerATNSimulator.__init__', self.asdict() ],
+                               sort_keys=True, indent=4))
+
+    def asdict(self):
+        d = super(LexerATNSimulator,self).asdict()[1]
+        d['decisionToDFA'] = [d.asdict() for d in self.decisionToDFA]
+        d['startIndex'] = self.startIndex
+        d['line'] = self.line
+        d['column'] = self.column
+        d['mode'] = self.mode
+        d['prevAccept'] = self.prevAccept.asdict()
+        return ["LexerATNSimulator", d]
 
     def copyState(self, simulator:LexerATNSimulator ):
         self.column = simulator.column

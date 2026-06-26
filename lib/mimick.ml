@@ -98,6 +98,23 @@ and lexer_action_executor_t = {
   ; hashCode : int64
   }
 
+and lexer_atn_simulator_t = {
+    decisionToDFA : dfa_t array
+  ; startIndex : int
+  ; line : int
+  ; column : int
+  ; mode : int
+  ; prevAccept : sim_state_t
+  }
+
+and sim_state_t =
+  SimState of {
+      index : int
+    ; line : int
+    ; column : int
+    ; dfaState : dfa_state_t option
+  }
+
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =

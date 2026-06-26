@@ -40,6 +40,13 @@ class ATNSimulator(object):
         self.atn = atn
         self.sharedContextCache = sharedContextCache
 
+    def asdict(self):
+        d = {
+            'atn' : self.atn.asdict(),
+            'sharedContextCache' : self.sharedContextCache.asdict()
+        }
+        return ["ATNSimulator", d]
+
     def getCachedContext(self, context:PredictionContext):
         if self.sharedContextCache is None:
             return context
