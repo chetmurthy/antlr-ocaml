@@ -1,4 +1,4 @@
-util.cmo range.cmo intervalSet.cmo interp.cmo interp_syntax.cmo token.cmo types.cmo atn.cmo mimick.cmo util.cmi range.cmi intervalSet.cmi interp.cmi interp_syntax.cmi token.cmi types.cmi atn.cmi mimick.cmi util.cmx range.cmx intervalSet.cmx interp.cmx interp_syntax.cmx token.cmx types.cmx atn.cmx mimick.cmx: 
+util.cmo range.cmo intervalSet.cmo interp.cmo interp_syntax.cmo token.cmo types.cmo atn.cmo mimick.cmo visualization.cmo util.cmi range.cmi intervalSet.cmi interp.cmi interp_syntax.cmi token.cmi types.cmi atn.cmi mimick.cmi visualization.cmi util.cmx range.cmx intervalSet.cmx interp.cmx interp_syntax.cmx token.cmx types.cmx atn.cmx mimick.cmx visualization.cmx: 
 util.cmo :
 util.cmx :
 range.cmo :
@@ -38,6 +38,10 @@ mimick.cmo : \
     atn.cmo
 mimick.cmx : \
     util.cmx \
+    atn.cmx
+visualization.cmo : \
+    atn.cmo
+visualization.cmx : \
     atn.cmx
 mk_meta.cmo :
 mk_meta.cmx :

@@ -136,10 +136,9 @@ class ATNState(object):
     def asdict(self):
         d = {
             'stateNumber' : self.stateNumber,
-            'stateType' : ATNState.serializationNames[self.stateType],
+            'stateType' : [ ATNState.serializationNames[self.stateType] ],
             'ruleIndex' : self.ruleIndex,
             'epsilonOnlyTransitions' : self.epsilonOnlyTransitions,
-            '#transitions' : len(self.transitions),
             'transitions' : [e.asdict() for e in self.transitions]
         }
         return d
@@ -173,6 +172,10 @@ class BasicState(ATNState):
         super().__init__()
         self.stateType = self.BASIC
 
+    def asdict(self):
+        d = super(BasicState,self).asdict()
+        d['node'] = ["BasicState"]
+        return d
 
 class DecisionState(ATNState):
     __slots__ = ('decision', 'nonGreedy')
@@ -183,8 +186,10 @@ class DecisionState(ATNState):
 
     def asdict(self):
         d = super(DecisionState,self).asdict()
-        d['decision'] = self.decision
-        d['nonGreedy'] = self.nonGreedy
+        nd = {}
+        nd['decision'] = self.decision
+        nd['nonGreedy'] = self.nonGreedy
+        d['node'] = ["DecisionState", nd]
         return d
 
     def dump(self):
@@ -202,7 +207,9 @@ class BlockStartState(DecisionState):
 
     def asdict(self):
         d = super(BlockStartState,self).asdict()
-        d['endState'] = self.endState.stateNumber
+        nd = d['node'][1] if 'node' in d else {}
+        nd['endState'] = self.endState.stateNumber
+        d['node'] = ["BlockStartState", nd]
         return d
 
     def dump(self):
@@ -215,6 +222,12 @@ class BasicBlockStartState(BlockStartState):
         super().__init__()
         self.stateType = self.BLOCK_START
 
+    def asdict(self):
+        d = super(BasicBlockStartState,self).asdict()
+        nd = d['node'][1] if 'node' in d else {}
+        d['node'] = ["BasicBlockStartState", nd]
+        return d
+
 # Terminal node of a simple {@code (a|b|c)} block.
 class BlockEndState(ATNState):
     __slots__ = 'startState'
@@ -226,7 +239,9 @@ class BlockEndState(ATNState):
 
     def asdict(self):
         d = super(BlockEndState,self).asdict()
-        d['startState'] = self.startState.stateNumber
+        nd = {}
+        nd['startState'] = self.startState.stateNumber
+        d['node'] = ["BlockEndState", nd]
         return d
 
     def dump(self):
@@ -244,6 +259,11 @@ class RuleStopState(ATNState):
         super().__init__()
         self.stateType = self.RULE_STOP
 
+    def asdict(self):
+        d = super(RuleStopState,self).asdict()
+        d['node'] = ["RuleStopState"]
+        return d
+
 class RuleStartState(ATNState):
     __slots__ = ('stopState', 'isPrecedenceRule')
 
@@ -255,8 +275,10 @@ class RuleStartState(ATNState):
 
     def asdict(self):
         d = super(RuleStartState,self).asdict()
-        d['stopState'] = self.stopState.stateNumber
-        d['isPrecedenceRule'] = self.isPrecedenceRule
+        nd = {}
+        nd['stopState'] = self.stopState.stateNumber
+        nd['isPrecedenceRule'] = self.isPrecedenceRule
+        d['node'] = ["RuleStartState", nd]
         return d
 
     def dump(self):
@@ -273,6 +295,12 @@ class PlusLoopbackState(DecisionState):
         super().__init__()
         self.stateType = self.PLUS_LOOP_BACK
 
+    def asdict(self):
+        d = super(PlusLoopbackState,self).asdict()
+        nd = d['node'][1] if 'node' in d else {}
+        d['node'] = ["PlusLoopbackState", nd]
+        return d
+
 # Start of {@code (A|B|...)+} loop. Technically a decision state, but
 #  we don't use for code generation; somebody might need it, so I'm defining
 #  it for completeness. In reality, the {@link PlusLoopbackState} node is the
@@ -288,7 +316,9 @@ class PlusBlockStartState(BlockStartState):
 
     def asdict(self):
         d = super(PlusBlockStartState,self).asdict()
-        d['loopBackState'] = self.loopBackState.stateNumber
+        nd = d['node'][1] if 'node' in d else {}
+        nd['loopBackState'] = self.loopBackState.stateNumber
+        d['node'] = ["PlusBlockStartState", nd]
         return d
 
     def dump(self):
@@ -302,12 +332,23 @@ class StarBlockStartState(BlockStartState):
         super().__init__()
         self.stateType = self.STAR_BLOCK_START
 
+    def asdict(self):
+        d = super(StarBlockStartState,self).asdict()
+        nd = d['node'][1] if 'node' in d else {}
+        d['node'] = ["StarBlockStartState", nd]
+        return d
+
 class StarLoopbackState(ATNState):
 
     def __init__(self):
         super().__init__()
         self.stateType = self.STAR_LOOP_BACK
 
+    def asdict(self):
+        d = super(StarLoopbackState,self).asdict()
+        nd = {}
+        d['node'] = ["StarLoopbackState"]
+        return d
 
 class StarLoopEntryState(DecisionState):
     __slots__ = ('loopBackState', 'isPrecedenceDecision')
@@ -321,8 +362,10 @@ class StarLoopEntryState(DecisionState):
 
     def asdict(self):
         d = super(StarLoopEntryState,self).asdict()
-        d['loopBackState'] = self.loopBackState.stateNumber
-        d['isPrecedenceDecision'] = self.isPrecedenceDecision
+        nd = d['node'][1] if 'node' in d else {}
+        nd['loopBackState'] = self.loopBackState.stateNumber
+        nd['isPrecedenceDecision'] = self.isPrecedenceDecision
+        d['node'] = ["StarLoopEntryState", nd]
         return d
 
     def dump(self):
@@ -341,7 +384,9 @@ class LoopEndState(ATNState):
 
     def asdict(self):
         d = super(LoopEndState,self).asdict()
-        d['loopBackState'] = self.loopBackState.stateNumber
+        nd = {}
+        nd['loopBackState'] = self.loopBackState.stateNumber
+        d['node'] = ["LoopEndState", nd]
         return d
 
     def dump(self):
@@ -354,3 +399,9 @@ class TokensStartState(DecisionState):
     def __init__(self):
         super().__init__()
         self.stateType = self.TOKEN_START
+
+    def asdict(self):
+        d = super(TokensStartState,self).asdict()
+        nd = d['node'][1] if 'node' in d else {}
+        d['node'] = ["TokensStartState", nd]
+        return d

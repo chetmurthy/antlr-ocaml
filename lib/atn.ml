@@ -15,19 +15,23 @@ let readBool = parser [< 'n >] -> n<>0
 let _SERIALIZED_VERSION = 4
 
 type state_id = [%import: Types.state_id]
-[@@deriving show]
-
-let dump_state_id pps (STID n) = Fmt.(pf pps "%d" n)
+[@@deriving yojson,located_yojson, show]
 
 let state_id_to_yojson (STID n) = `Int n
+let state_id_of_yojson = function
+    `Int n -> Result.Ok (STID n)
+  | _ -> Result.Error "state_id"
+
+let state_id_to_located_yojson (STID n) = (Ploc.dummy, `Int n)
+let state_id_of_located_yojson = function
+    (_, `Int n) -> Result.Ok (STID n)
+  | (loc, _) -> Result.Error (loc, "state_id")
+
+let dump_state_id pps (STID n) = Fmt.(pf pps "%d" n)
 
 let dump_state_id_opt pps = function
     None -> Fmt.(pf pps "None")
   | Some stid -> Fmt.(pf pps "%a" dump_state_id stid)
-
-let state_id_opt_to_yojson = function
-    None -> `Null
-  | Some stid -> state_id_to_yojson stid
 
 let dump_pybool pps b =
   Fmt.(pf pps "%s" (if b then "True" else "False"))
@@ -36,67 +40,9 @@ let dump_bool_opt pps = function
     None -> Fmt.(pf pps "None")
   | Some b -> Fmt.(pf pps "%a" dump_pybool b)
 
-let bool_opt_to_yojson = function
-    None -> `Null
-  | Some b -> `Bool b
-
 module Node = struct
 type t = [%import: Types.node_t]
-[@@deriving show]
-
-
-let to_yojson = function
-    BasicState -> `Assoc []
-| RuleStartState { stopState ; isPrecedenceRule } ->
-   `Assoc[("stopState", state_id_opt_to_yojson stopState)
-         ;("isPrecedenceRule", `Bool isPrecedenceRule)
-     ]
-
-| BasicBlockStartState { decision ; nonGreedy ; endState } ->
-   `Assoc[("decision", `Int decision)
-         ;("nonGreedy", `Bool nonGreedy)
-         ;("endState", state_id_opt_to_yojson endState)
-     ]
-
-| PlusBlockStartState { decision ; nonGreedy ; endState ; loopBackState } ->
-   `Assoc[("decision", `Int decision)
-         ;("nonGreedy", `Bool nonGreedy)
-         ;("endState", state_id_opt_to_yojson endState)
-         ;("loopBackState", state_id_opt_to_yojson loopBackState)
-     ]
-
-| StarBlockStartState { decision ; nonGreedy ; endState } ->
-   `Assoc[("decision", `Int decision)
-         ;("nonGreedy", `Bool nonGreedy)
-         ;("endState", state_id_opt_to_yojson endState)
-     ]
-
-| TokensStartState { decision ; nonGreedy } ->
-   `Assoc[("decision", `Int decision)
-         ;("nonGreedy", `Bool nonGreedy)
-     ]
-
-| RuleStopState -> `Assoc []
-| BlockEndState { startState } ->
-   `Assoc[("startState", state_id_opt_to_yojson startState)
-     ]
-
-| StarLoopbackState -> `Assoc []
-| StarLoopEntryState { decision ; nonGreedy ; loopBackState ; isPrecedenceDecision } ->
-   `Assoc[("decision", `Int decision)
-         ;("nonGreedy", `Bool nonGreedy)
-         ;("loopBackState", state_id_opt_to_yojson loopBackState)
-         ;("isPrecedenceDecision", bool_opt_to_yojson isPrecedenceDecision)
-     ]
-
-| PlusLoopbackState { decision ; nonGreedy } ->
-   `Assoc[("decision", `Int decision)
-         ;("nonGreedy", `Bool nonGreedy)
-     ]
-
-| LoopEndState { loopBackState } ->
-   `Assoc[("loopBackState", state_id_opt_to_yojson loopBackState)
-     ]
+[@@deriving yojson,located_yojson, show]
 
 
 let dump pps = function
@@ -143,27 +89,8 @@ let dump pps = function
 | LoopEndState { loopBackState } ->
    Fmt.(pf pps {|  loopBackState: %a@.|} dump_state_id_opt loopBackState)
 
-type atn_state_type_t =
-       INVALID_TYPE
-     | BASIC
-     | RULE_START
-     | BLOCK_START
-     | PLUS_BLOCK_START
-     | STAR_BLOCK_START
-     | TOKEN_START
-     | RULE_STOP
-     | BLOCK_END
-     | STAR_LOOP_BACK
-     | STAR_LOOP_ENTRY
-     | PLUS_LOOP_BACK
-     | LOOP_END
-[@@deriving show { with_path = false }]
-
-let atn_state_type_t_to_yojson t =
-  `String Fmt.(str "%a" pp_atn_state_type_t t)
-
 let deser_state_type bp = function
-  0 -> INVALID_TYPE
+  0 -> Types.INVALID_TYPE
 | 1 -> BASIC
 | 2 -> RULE_START
 | 3 -> BLOCK_START
@@ -182,7 +109,7 @@ let deser_state_type bp = function
 
 let serialization_name =
   function
-  BasicState -> BASIC
+  BasicState -> Types.BASIC
 | RuleStartState _ -> RULE_START
 | BasicBlockStartState _ -> BLOCK_START
 | PlusBlockStartState _ -> PLUS_BLOCK_START
@@ -198,7 +125,8 @@ end
 
 module Edge = struct
   type t = [%import: Types.edge_t]
-  [@@deriving show]
+  and edge_serialization_type_t = [%import: Types.edge_serialization_type_t]
+[@@deriving yojson,located_yojson, show]
 
 let isEpsilon = function
     (EpsilonTransition _
@@ -224,91 +152,6 @@ let serialization_type e = match e with
   | NotSetTransition _ -> "NOT_SET"
   | WildcardTransition _ -> "WILDCARD"
   | PrecedencePredicateTransition _ -> "PRECEDENCE"
-
-let to_yojson e = match e with
-    EpsilonTransition { _target ; outermostPrecedenceReturn } ->
-     `Assoc[("target",state_id_to_yojson _target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", `Null)
-           ;("serializationType", `String (serialization_type e))
-           ;("outermostPrecedenceReturn", `Int outermostPrecedenceReturn)
-       ]
-
-  | RangeTransition { _target ; label ; start ; stop } ->
-     `Assoc[("target",state_id_to_yojson _target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", IntervalSet.to_yojson label)
-           ;("serializationType", `String (serialization_type e))
-           ;("start", `Int start)
-           ;("stop", `Int stop)
-       ]
-
-| RuleTransition { ruleStart ; ruleIndex ; precedence ; followState } ->
-     `Assoc[("target",state_id_to_yojson ruleStart)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", `Null)
-           ;("serializationType", `String (serialization_type e))
-           ;("ruleIndex", `Int ruleIndex)
-           ;("precedence", `Int precedence)
-           ;("followState", state_id_to_yojson followState)
-       ]
-
-| PredicateTransition { _target ; ruleIndex ; predIndex ; isCtxDependent } ->
-     `Assoc[("target",state_id_to_yojson _target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", `Null)
-           ;("serializationType", `String (serialization_type e))
-           ;("ruleIndex", `Int ruleIndex)
-           ;("predIndex", `Int predIndex)
-           ;("isCtxDependent", `Bool isCtxDependent)
-       ]
-
-| AtomTransition { _target ; label ; label_ } ->
-     `Assoc[("target",state_id_to_yojson _target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", IntervalSet.to_yojson label)
-           ;("serializationType", `String (serialization_type e))
-           ;("label_", `Int label_)
-       ]
-
-| ActionTransition { _target ; ruleIndex ; actionIndex ; isCtxDependent } ->
-     `Assoc[("target",state_id_to_yojson _target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", `Null)
-           ;("serializationType", `String (serialization_type e))
-           ;("ruleIndex", `Int ruleIndex)
-           ;("actionIndex", `Int actionIndex)
-           ;("isCtxDependent", `Bool isCtxDependent)
-       ]
-
-| SetTransition { _target ; set } ->
-     `Assoc[("target",state_id_to_yojson _target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", IntervalSet.to_yojson set)
-           ;("serializationType", `String (serialization_type e))
-       ]
-
-| NotSetTransition { _target ; set } ->
-     `Assoc[("target",state_id_to_yojson _target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", IntervalSet.to_yojson set)
-           ;("serializationType", `String (serialization_type e))
-       ]
-
-| WildcardTransition target ->
-     `Assoc[("target",state_id_to_yojson target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", `Null)
-           ;("serializationType", `String (serialization_type e))
-       ]
-
-| PrecedencePredicateTransition { _target ; precedence } ->
-     `Assoc[("target",state_id_to_yojson _target)
-           ;("isEpsilon", `Bool (isEpsilon e))
-           ;("label", `Null)
-           ;("serializationType", `String (serialization_type e))
-           ;("precedence",`Int precedence)
-       ]
 
 let dump pps e = match e with
     EpsilonTransition { _target ; outermostPrecedenceReturn } ->
@@ -382,9 +225,9 @@ let dump pps e = match e with
   ; Fmt.(pf pps {|    label: %a@.|} IntervalSet.dump set)
   ; Fmt.(pf pps {|    serializationType: NOT_SET@.|})
 
-| WildcardTransition target ->
+| WildcardTransition { _target ; label } ->
    ()
-  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id target)
+  ; Fmt.(pf pps {|    target: %a@.|} dump_state_id _target)
   ; Fmt.(pf pps {|    isEpsilon: %a@.|} dump_pybool (isEpsilon e))
   ; Fmt.(pf pps {|    label: None@.|})
   ; Fmt.(pf pps {|    serializationType: WILDCARD@.|})
@@ -401,37 +244,47 @@ let dump pps e = match e with
      Fmt.(pf pps {|    #<unhandled< %a >>@.|} pp x)
 
 
-let mkEpsilonTransition ~target ?(outermostPrecedenceReturn = -1) () =
-  EpsilonTransition { _target=target ; outermostPrecedenceReturn }
+let mkEpsilonTransition ~target ?label ?(outermostPrecedenceReturn = -1) () =
+  let serializationType = EPSILON in
+  EpsilonTransition { _target=target ; outermostPrecedenceReturn ; label ; serializationType }
 
 let mkRangeTransition ~target ~start ~stop () =
+  let serializationType = RANGE in
   let labelSet = IntervalSet.( () |> mk |> add (Range.mk ~start (stop+1)) ) in
-  RangeTransition { _target=target ; start ; stop ; label=labelSet }
+  RangeTransition { _target=target ; start ; stop ; label=labelSet ; serializationType }
 
-let mkRuleTransition ~ruleStart ~ruleIndex ~precedence ~followState () =
-  RuleTransition { ruleStart ; ruleIndex ; precedence ; followState }
+let mkRuleTransition ~ruleStart ~ruleIndex ~precedence ~followState ?label () =
+  let serializationType = RULE in
+  RuleTransition { ruleStart ; ruleIndex ; precedence ; followState ; label ; serializationType }
 
-let mkPredicateTransition ~target ~ruleIndex ~predIndex ~isCtxDependent () =
-  PredicateTransition { _target=target ; ruleIndex ; predIndex ; isCtxDependent }
+let mkPredicateTransition ~target ~ruleIndex ~predIndex ~isCtxDependent ?label () =
+  let serializationType = PREDICATE in
+  PredicateTransition { _target=target ; ruleIndex ; predIndex ; isCtxDependent ; serializationType ; label }
 
 let mkAtomTransition ~target ~label () =
   let labelSet = IntervalSet.( () |> mk |> addOne label ) in
-  AtomTransition { _target=target ; label=labelSet ; label_=label }
+  let serializationType = ATOM in
+  AtomTransition { _target=target ; label=labelSet ; label_=label ; serializationType }
 
-let mkActionTransition ~target ~ruleIndex ~actionIndex ~isCtxDependent () =
-  ActionTransition { _target=target ; ruleIndex ; actionIndex ; isCtxDependent }
+let mkActionTransition ~target ~ruleIndex ~actionIndex ~isCtxDependent ?label () =
+  let serializationType = ACTION in
+  ActionTransition { _target=target ; ruleIndex ; actionIndex ; isCtxDependent ; label ; serializationType }
 
 let mkSetTransition ~target ~set () =
-  SetTransition { _target=target ; set }
+  let serializationType = SET in
+  SetTransition { _target=target ; set ; serializationType }
 
 let mkNotSetTransition ~target ~set () =
-  NotSetTransition { _target=target ; set }
+  let serializationType = NOT_SET in
+  NotSetTransition { _target=target ; set ; serializationType }
 
-let mkWildcardTransition ~target () =
-  WildcardTransition target
+let mkWildcardTransition ~target ?label () =
+  let serializationType = WILDCARD in
+  WildcardTransition { _target=target ; label ; serializationType }
 
-let mkPrecedencePredicateTransition ~target ~precedence () =
-  PrecedencePredicateTransition { _target=target ; precedence }
+let mkPrecedencePredicateTransition ~target ~precedence ?label () =
+  let serializationType = PRECEDENCE in
+  PrecedencePredicateTransition { _target=target ; precedence ; label ; serializationType }
 
 let target = function
   EpsilonTransition { _target } -> _target
@@ -442,7 +295,7 @@ let target = function
 | ActionTransition { _target } -> _target
 | SetTransition { _target } -> _target
 | NotSetTransition { _target } -> _target
-| WildcardTransition target -> target
+| WildcardTransition {_target} -> _target
 | PrecedencePredicateTransition { _target } -> _target
 
 end
@@ -454,24 +307,12 @@ module State = struct
             [@with node_t := Node.t]
             [@with edge_t := Edge.t]
            ]
-  [@@deriving show]
-
-  let to_yojson st =
-    `Assoc(
-        [("stateNumber",state_id_to_yojson st.stateNumber)
-          ;("stateType",Node.atn_state_type_t_to_yojson Node.(serialization_name st.node))
-          ;("ruleIndex", `Int st.ruleIndex)
-          ;("epsilonOnlyTransitions", `Bool st.epsilonOnlyTransitions)
-          ;("#transitions",`Int(List.length st.transitions))
-          ;("transitions", `List (List.map Edge.to_yojson st.transitions))
-        ]
-        @(match Node.to_yojson st.node with
-            `Assoc l -> l)
-      )
+and atn_state_type_t = [%import: Types.atn_state_type_t]
+[@@deriving yojson,located_yojson, show]
 
   let dump pps st =
     Fmt.(pf pps {|  stateNumber: %a@.|} dump_state_id st.stateNumber)
-    ; Fmt.(pf pps {|  stateType: %a@.|} Node.pp_atn_state_type_t Node.(serialization_name st.node))
+    ; Fmt.(pf pps {|  stateType: %a@.|} pp_atn_state_type_t Node.(serialization_name st.node))
     ; Fmt.(pf pps {|  ruleIndex: %d@.|} st.ruleIndex)
     ; Fmt.(pf pps {|  epsilonOnlyTransitions: %a@.|}
              dump_pybool st.epsilonOnlyTransitions)
@@ -484,8 +325,9 @@ module State = struct
             ; Edge.dump pps e)
            
   let mk ?(nonGreedy=false) ?(transitions=[]) stateNumber (node, ruleIndex) =
+    let stateType = Node.serialization_name node in
     let epsilonOnlyTransitions = transitions <> [] && List.for_all Edge.isEpsilon transitions in
-    { stateNumber ; node ; ruleIndex ; transitions ; epsilonOnlyTransitions }
+    { stateNumber ; stateType ; node ; ruleIndex ; transitions ; epsilonOnlyTransitions }
 
   let mkRuleStartState ?stopState ?(isPrecedenceRule = false) () =
     Node.RuleStartState { stopState ; isPrecedenceRule }
@@ -520,6 +362,7 @@ module State = struct
     st.epsilonOnlyTransitions <- List.for_all Edge.isEpsilon st.transitions
 
   type states_t = STATES of t array
+[@@deriving yojson,located_yojson, show]
   let nstates (STATES l) = Array.length l
   let mk_states l = STATES (Array.of_list (List.mapi (fun i x -> mk (mk_id i) x) l))
   let get_state t i =
@@ -538,7 +381,7 @@ module LexerAction = struct
   type t = [%import: Types.lexer_action_t
             [@with lexer_action_t := t]
            ]
-  [@@deriving yojson,located_yojson, show]
+[@@deriving yojson,located_yojson, show]
 
 let dump pps = function
     LexerChannelAction { isPositionDependent ; channel } ->
@@ -629,38 +472,25 @@ end
 type atn_type_t =
     LEXER
   | PARSER
-[@@deriving show { with_path = false }]
+[@@deriving yojson,located_yojson, show { with_path = false }]
 
 let dump_atn_type_t pps t =
   let n = match t with LEXER -> 0 | PARSER -> 1 in
   Fmt.(pf pps "<ATNType.%a: %d>" pp_atn_type_t t n)
-
-let atn_type_t_to_yojson t =
-  `String Fmt.(str "%a" dump_atn_type_t t)
-
-let atn_type_t_to_yojson t =
-  let s = Fmt.(str "%a" dump_atn_type_t t) in
-  `String s
 
 type t = {
     grammarType : atn_type_t
   ; maxTokenType : int
   ; states : State.states_t
   ; ruleToStartState : state_id array
-  ; ruleToTokenType_opt : int array option
+  ; ruleToTokenType : int array option
   ; ruleToStopState : state_id array
   ; modeToStartState : state_id array
   ; sets : IntervalSet.t array
   ; decisionToState : state_id array
   ; lexerActions : LexerAction.t array option
   }
-
-let to_yojson atn =
-  `Assoc [("grammarType", atn_type_t_to_yojson atn.grammarType)
-         ;("maxTokenType", `Int atn.maxTokenType)
-         ;("#states", `Int(State.nstates atn.states))
-         ;("states", `List (atn.states |> State.states_to_list |> List.map State.to_yojson))
-    ]
+[@@deriving yojson,located_yojson, show]
 
 let dump pps atn =
   Fmt.(pf pps {|grammarType: %a@.|} dump_atn_type_t atn.grammarType)
@@ -1089,7 +919,7 @@ let deser1 = parser
   [< () = check_version ;
    (grammarType, maxTokenType) = readATN ;
    states = readStates ;
-   (ruleToStartState, ruleToTokenType_opt, ruleToStopState) = readRules (grammarType, states) ;
+   (ruleToStartState, ruleToTokenType, ruleToStopState) = readRules (grammarType, states) ;
    modeToStartState = readModes ;
    sets = readSets ;
    () = readEdges (states,ruleToStartState,ruleToStopState) sets ;
@@ -1102,7 +932,7 @@ let deser1 = parser
     ; maxTokenType
     ; states
     ; ruleToStartState
-    ; ruleToTokenType_opt
+    ; ruleToTokenType
     ; ruleToStopState
     ; modeToStartState
     ; sets

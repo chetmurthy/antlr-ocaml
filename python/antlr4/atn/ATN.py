@@ -134,10 +134,16 @@ class ATN(object):
 
     def asdict(self):
         d = {
-            'grammarType' : repr(self.grammarType),
+            'grammarType' : [ self.grammarType.asdict() ],
             'maxTokenType' : self.maxTokenType,
-            '#states' : len(self.states),
-            'states'  : [state.asdict() for state in self.states]
+            'states'  : ["STATES", [state.asdict() for state in self.states]],
+            'decisionToState' : [d.stateNumber for d in self.decisionToState],
+            'lexerActions' : None if self.lexerActions is None else [x.asdict() for x in self.lexerActions],
+            'modeToStartState': [x.stateNumber for x in self.modeToStartState],
+            'ruleToStartState' :[x.stateNumber for x in self.ruleToStartState],
+            'ruleToStopState' :[x.stateNumber for x in self.ruleToStopState],
+            'ruleToTokenType': self.ruleToTokenType,
+            'sets': [x.asdict() for x in self.sets],
         }
         return d
 

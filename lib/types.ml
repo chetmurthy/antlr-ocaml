@@ -1,7 +1,23 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
 type state_id = STID of int
   [@@deriving show]
+
+type atn_state_type_t =
+       INVALID_TYPE
+     | BASIC
+     | RULE_START
+     | BLOCK_START
+     | PLUS_BLOCK_START
+     | STAR_BLOCK_START
+     | TOKEN_START
+     | RULE_STOP
+     | BLOCK_END
+     | STAR_LOOP_BACK
+     | STAR_LOOP_ENTRY
+     | PLUS_LOOP_BACK
+     | LOOP_END
+[@@deriving yojson,located_yojson, show { with_path = false }]
 
 type node_t =
   BasicState
@@ -49,57 +65,87 @@ type node_t =
   }
 and state_t = {
       stateNumber : state_id
+    ; stateType : atn_state_type_t
     ; mutable node : node_t
     ; mutable ruleIndex : int
     ; mutable epsilonOnlyTransitions : bool
     ; mutable transitions : edge_t list
     }
+and edge_serialization_type_t =
+  EPSILON
+  | RANGE
+  | RULE
+  | PREDICATE
+  | ATOM
+  | ACTION
+  | SET
+  | NOT_SET
+  | WILDCARD
+  | PRECEDENCE
 and edge_t =
   EpsilonTransition of {
     _target : state_id
-  ; outermostPrecedenceReturn : int
+    ; label : IntervalSet.t option 
+    ; outermostPrecedenceReturn : int
+    ; serializationType : edge_serialization_type_t
   }
 | RangeTransition of {
     _target : state_id
   ; label : IntervalSet.t
   ; start : int
   ; stop : int
+  ; serializationType : edge_serialization_type_t
   }
 | RuleTransition of {
-    ruleStart : state_id
+    label : IntervalSet.t option 
+  ; ruleStart : state_id
   ; ruleIndex : int
   ; precedence : int
   ; followState : state_id
+  ; serializationType : edge_serialization_type_t
   }
 | PredicateTransition of {
-      _target : state_id
-    ; ruleIndex : int
-    ; predIndex : int
-    ; isCtxDependent : bool
-    }
+    _target : state_id
+  ; ruleIndex : int
+  ; predIndex : int
+  ; isCtxDependent : bool
+  ; label : IntervalSet.t option
+  ; serializationType : edge_serialization_type_t
+  }
 | AtomTransition of {
     _target : state_id
   ; label_ : int
   ; label : IntervalSet.t
+  ; serializationType : edge_serialization_type_t
   }
 | ActionTransition of {
     _target : state_id
   ; ruleIndex : int
   ; actionIndex : int
   ; isCtxDependent : bool
+  ; label : IntervalSet.t option
+  ; serializationType : edge_serialization_type_t
   }
 | SetTransition of {
     _target : state_id
   ; set : IntervalSet.t
+  ; serializationType : edge_serialization_type_t
   }
 | NotSetTransition of {
     _target : state_id
   ; set : IntervalSet.t
+  ; serializationType : edge_serialization_type_t
   }
-| WildcardTransition of state_id
+| WildcardTransition of {
+    _target : state_id
+  ; serializationType : edge_serialization_type_t
+  ; label : IntervalSet.t option
+  }
 | PrecedencePredicateTransition of {
     _target : state_id
   ; precedence : int
+  ; label : IntervalSet.t option
+  ; serializationType : edge_serialization_type_t
   }
 
 type lexer_action_t =

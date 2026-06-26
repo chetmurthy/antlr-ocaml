@@ -64,8 +64,8 @@ generate-all-nonstop:: antlrtest_test.exe
 	fixtures/descriptors/$$d || true ;\
 	done
 
-#DTEST=$(shell cd fixtures/descriptors && ls LexerExec/* ParserExec/* LexerErrors/* ParserErrors/* FullContextParsing/* Sets/* SemPredEvalLexer/* SemPredEvalParser/* LeftRecursion/* | perl -p -e 's,\.txt,,')
-CTEST=$(shell cd fixtures/custom-descriptors && ls */* | perl -p -e 's,\.txt,,')
+DTEST=$(shell cd fixtures/descriptors && ls LexerExec/* | perl -p -e 's,\.txt,,')
+#CTEST=$(shell cd fixtures/custom-descriptors && ls */* | perl -p -e 's,\.txt,,')
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _build && set -e ;\
@@ -81,6 +81,13 @@ test-selected:: antlrtest_test.exe
 	for d in $(SELECTED) ;\
 	do \
 	[ -d _build/$$d ] && $(MAKE) -C _build/$$d all ;\
+	done
+
+clean-selected:: antlrtest_test.exe
+	set -e ;\
+	for d in $(SELECTED) ;\
+	do \
+	[ -d _build/$$d ] && $(MAKE) -C _build/$$d clean ;\
 	done
 
 compare-selected:: antlrtest_test.exe
@@ -120,7 +127,7 @@ FILE := Calc.interp
 #ATNVERIFY=--disable-verify
 ATNJSON=--json
 compare-one-file:: atn_util.opt
-	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) ) <( ./atn_util.opt dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE) )
+	diff -bBwi -u10 <( python3 deserialize_test.py $(FILE) | jq '.' ) <( ./atn_util.opt dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $(FILE) | jq '.' )
 
 run-python::
 	python3 deserialize_test.py $(FILE)
@@ -134,7 +141,7 @@ compare-full:: atn_util.opt
 	for f in `find $(ANTLRDIRS) -name '*.interp' -print`; \
 	do \
 	echo "================ $$f ================" ; \
-	diff -bBwi -u10 <( python3 deserialize_test.py $$f ) <( ./atn_util.opt dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $$f ) ; \
+	diff -bBwi -u10 <( python3 deserialize_test.py $$f | jq '.' ) <( ./atn_util.opt dump $(ATNVERIFY) $(ATNDEBUG) $(ATNJSON) $$f | jq '.' ) ; \
 	done
 
 test-python::

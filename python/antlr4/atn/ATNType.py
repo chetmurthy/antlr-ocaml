@@ -15,3 +15,8 @@ class ATNType(IntEnum):
     @classmethod
     def fromOrdinal(cls, i:int):
         return cls._value2member_map_[i]
+
+    def asdict(self):
+        if self is self.LEXER: return "LEXER"
+        if self is self.PARSER: return "PARSER"
+        raise Exception('unrecognized ATNType', self)

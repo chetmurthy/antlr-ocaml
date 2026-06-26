@@ -1,16 +1,14 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
 type t = {
     intervals : Range.t list
   }
-  [@@deriving show]
+[@@deriving yojson,located_yojson, show]
 
 let dump pps t =
   match t.intervals with
     [] -> Fmt.(pf pps "{}")
   | l -> Fmt.(pf pps "{%a}" (list ~sep:(const string ", ") Range.dump) l)
-
-let to_yojson t = `String Fmt.(str "%a" dump t)
 
 let mk () = { intervals = [] }
 

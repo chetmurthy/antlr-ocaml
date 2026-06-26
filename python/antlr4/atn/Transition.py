@@ -68,9 +68,8 @@ class Transition (object):
 
     def asdict(self):
         d = {
-            'target' : self.target.stateNumber,
-            'isEpsilon' : self.isEpsilon,
-            'label': self.label.dump() if isinstance(self.label, IntervalSet) else self.label
+            '_target' : self.target.stateNumber,
+            'label': None if self.label is None else self.label.asdict(),
         }
         return d
 
@@ -94,9 +93,9 @@ class AtomTransition(Transition):
 
     def asdict(self):
         d = super(AtomTransition,self).asdict()
-        d['serializationType'] =Transition.serializationNames[self.serializationType]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         d['label_'] =self.label_
-        return d
+        return ["AtomTransition", d]
 
     def dump(self):
         super(AtomTransition,self).dump()
@@ -127,11 +126,13 @@ class RuleTransition(Transition):
 
     def asdict(self):
         d = super(RuleTransition,self).asdict()
-        d['serializationType'] = Transition.serializationNames[self.serializationType]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         d['ruleIndex'] = self.ruleIndex
         d['precedence'] = self.precedence
         d['followState'] = self.followState.stateNumber
-        return d
+        d['ruleStart'] = d['_target']
+        del d['_target']
+        return ["RuleTransition", d]
 
     def dump(self):
         super(RuleTransition,self).dump()
@@ -155,9 +156,9 @@ class EpsilonTransition(Transition):
 
     def asdict(self):
         d = super(EpsilonTransition,self).asdict()
-        d['serializationType'] = Transition.serializationNames[self.serializationType]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         d['outermostPrecedenceReturn'] = self.outermostPrecedenceReturn
-        return d
+        return ["EpsilonTransition", d]
 
     def dump(self):
         super(EpsilonTransition,self).dump()
@@ -182,7 +183,7 @@ class RangeTransition(Transition):
 
     def asdict(self):
         d = super(RangeTransition,self).asdict()
-        d['serializationType'] = Transition.serializationNames[self.serializationType]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         d['start'] = self.start
         d['stop'] = self.stop
         return d
@@ -195,10 +196,10 @@ class RangeTransition(Transition):
 
     def asdict(self):
         d = super(RangeTransition,self).asdict()
-        d['serializationType'] = Transition.serializationNames[self.serializationType]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         d['start'] = self.start
         d['stop'] = self.stop
-        return d
+        return ["RangeTransition", d]
 
     def makeLabel(self):
         s = IntervalSet()
@@ -230,11 +231,11 @@ class PredicateTransition(AbstractPredicateTransition):
 
     def asdict(self):
         d = super(PredicateTransition,self).asdict()
-        d['serializationType'] = Transition.serializationNames[self.serializationType]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         d['ruleIndex'] = self.ruleIndex
         d['predIndex'] = self.predIndex
         d['isCtxDependent'] = self.isCtxDependent
-        return d
+        return ["PredicateTransition", d]
 
     def dump(self):
         super(PredicateTransition,self).dump()
@@ -265,11 +266,11 @@ class ActionTransition(Transition):
 
     def asdict(self):
         d = super(ActionTransition,self).asdict()
-        d['serializationType'] = Transition.serializationNames[self.serializationType]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         d['ruleIndex'] = self.ruleIndex
         d['actionIndex'] = self.actionIndex
         d['isCtxDependent'] = self.isCtxDependent
-        return d
+        return ["ActionTransition", d]
 
     def dump(self):
         super(ActionTransition,self).dump()
@@ -299,8 +300,10 @@ class SetTransition(Transition):
 
     def asdict(self):
         d = super(SetTransition,self).asdict()
-        d['serializationType'] =Transition.serializationNames[self.serializationType]
-        return d
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
+        d['set'] = d['label']
+        del d['label']
+        return ["SetTransition", d]
 
     def dump(self):
         super(SetTransition,self).dump()
@@ -317,6 +320,11 @@ class NotSetTransition(SetTransition):
     def __init__(self, target:ATNState, set:IntervalSet):
         super().__init__(target, set)
         self.serializationType = self.NOT_SET
+
+    def asdict(self):
+        d = super(NotSetTransition,self).asdict()[1]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
+        return ["NotSetTransition", d]
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol >= minVocabSymbol \
@@ -336,8 +344,8 @@ class WildcardTransition(Transition):
 
     def asdict(self):
         d = super(WildcardTransition,self).asdict()
-        d['serializationType'] = Transition.serializationNames[self.serializationType]
-        return d
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
+        return ["WildcardTransition", d]
 
     def dump(self):
         super(WildcardTransition,self).dump()
@@ -361,9 +369,9 @@ class PrecedencePredicateTransition(AbstractPredicateTransition):
 
     def asdict(self):
         d = super(PrecedencePredicateTransition,self).asdict()
-        d['serializationType'] = Transition.serializationNames[self.serializationType]
+        d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         d['precedence'] =self.precedence
-        return d
+        return ["PrecedencePredicateTransition", d]
 
     def dump(self):
         super(PrecedencePredicateTransition,self).dump()

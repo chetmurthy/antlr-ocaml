@@ -45,12 +45,12 @@ let to_dot ~with_rule_index oc atn edges =
       if with_rule_index then
         Fmt.(str "%a/%a/%d"
                dump_state_id snum
-               Node.pp_atn_state_type_t (Node.serialization_name st.State.node)
+               pp_atn_state_type_t (Node.serialization_name st.State.node)
                st.State.ruleIndex)
       else
         Fmt.(str "%a/%a"
                dump_state_id snum
-               Node.pp_atn_state_type_t (Node.serialization_name st.State.node))
+               pp_atn_state_type_t (Node.serialization_name st.State.node))
 
  in
     [`Label label] in

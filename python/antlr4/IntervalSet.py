@@ -10,12 +10,21 @@ from antlr4.Token import Token
 # need forward declarations
 IntervalSet = None
 
+def range_asdict(x):
+    return { 'start' : x.start, 'stop' : x.stop, 'step' : x.step }
+
 class IntervalSet(object):
     __slots__ = ('intervals', 'readonly')
 
     def __init__(self):
         self.intervals = None
         self.readonly = False
+
+    def asdict(self):
+        d = {
+            'intervals' : None if self.intervals is None else [range_asdict(x) for x in self.intervals]
+        }
+        return d
 
     def __iter__(self):
         if self.intervals is not None:

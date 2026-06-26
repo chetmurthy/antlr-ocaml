@@ -98,15 +98,6 @@ and lexer_action_executor_t = {
   ; hashCode : int64
   }
 
-and lexer_atn_simulator_t = {
-    decisionToDFA : dfa_t array
-  ; startIndex : int
-  ; line : int
-  ; column : int
-  ; mode : int
-  ; prevAccept : sim_state_t
-  }
-
 and sim_state_t =
   SimState of {
       index : int
@@ -115,6 +106,22 @@ and sim_state_t =
     ; dfaState : dfa_state_t option
   }
 
+and lexer_atn_simulator_t =
+  LexerATNSimulator of {
+      atn : Atn.t
+    ; column : int
+    ; decisionToDFA : dfa_t array
+    ; line : int
+    ; mode : int
+    ; prevAccept : sim_state_t
+    ; sharedContextCache : prediction_context_cache_t
+    ; startIndex : int
+    }
+
+and prediction_context_cache_t =
+  PredictionContextCache of {
+      cache : string strmap
+    }
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
@@ -156,5 +163,8 @@ type json_log_t =
 | LexerATNSimulator_addDFAEdge of int * int * int option
                       [@yojson.name "END LexerATNSimulator.addDFAEdge"]
                       [@located_yojson.name "END LexerATNSimulator.addDFAEdge"]
+| LexerATNSimulator_init of lexer_atn_simulator_t
+                      [@yojson.name "LexerATNSimulator.__init__"]
+                      [@located_yojson.name "LexerATNSimulator.__init__"]
 
 [@@deriving yojson,located_yojson, show]

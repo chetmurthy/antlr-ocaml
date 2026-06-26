@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
 open Pa_ppx_utils
 open Pa_ppx_base
@@ -10,7 +10,7 @@ type t =
   ; stop : int
   ; step : int
   }
-  [@@deriving show]
+[@@deriving yojson,located_yojson, show]
 
 let dump pps t =
   if t.step = 1 then
