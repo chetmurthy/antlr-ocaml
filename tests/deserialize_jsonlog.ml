@@ -1,32 +1,46 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_utils
+open Pa_ppx_located_yojson
 
 (** deserialize the "json.log" files into Atn.json_log_t objects
  *)
 
+let pa_json_list strm =
+  let rec parec = parser
+    [< j = Json.JsonOrEOI.parse ; strm >] ->
+       (match j with
+          None -> [< >]
+        | Some j -> [< 'j ; parec strm >])
+
+  | [< >] -> [< >]
+  in parec strm
+
+let deser_json_stream strm =
+  strm
+  |> pa_json_list
+  |> Stream.iter (fun j ->
+         match Antlr.Mimick.json_log_t_of_located_yojson j with
+           Result.Ok _ -> ()
+         | Error (loc, msg) ->
+            Fmt.(pf stdout "%s: error %s@." (Ploc.string_of_location loc) msg))
+
 let deser1 ~verbose file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
-  let l = Pa_ppx_located_yojson.Json.JsonListEOI.load ~file in
-  let l = List.map Antlr.Mimick.json_log_t_of_located_yojson l in
-  l |> List.iter
-         (function
-            Result.Ok _ -> ()
-          | Error (loc, msg) ->
-             Fmt.(pf stdout "%s: error %s@." (Ploc.string_of_location loc) msg))
+  let ic = open_in file in
+  Pa_json.with_input_file deser_json_stream ~file
 
 let deser1_yojson ~verbose file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
   let seq = Yojson.Safe.seq_from_file file in
-  let l = List.of_seq seq in
-  let l = List.map Antlr.Mimick.json_log_t_of_yojson l in
-  l |> List.iter
-         (function
-            Result.Ok _ -> ()
-          | Error msg ->
-             Fmt.(pf stdout "error %s@." msg))
+  seq
+  |> Seq.iter
+       (fun j -> match Antlr.Mimick.json_log_t_of_yojson j with
+                   Result.Ok _ -> ()
+                 | Error msg ->
+                    Fmt.(pf stdout "error %s@." msg))
 
 let deserialize_jsonlog ~verbose ~debug ~yojson files =
   let open Antlrtest in
