@@ -116,6 +116,16 @@ class LexerATNSimulator(ATNSimulator):
         self.startIndex = simulator.startIndex
 
     def match(self, input:InputStream , mode:int):
+        Trace.write(json.dumps([ 'ENTER LexerATNSimulator.match',
+                                 self.asdict(), mode ],
+                               sort_keys=True, indent=4))
+        rv = self._match(input, mode)
+        Trace.write(json.dumps([ 'EXIT LexerATNSimulator.match',
+                                 self.asdict(), rv ],
+                               sort_keys=True, indent=4))
+        return rv
+
+    def _match(self, input:InputStream , mode:int):
         self.mode = mode
         mark = input.mark()
         try:

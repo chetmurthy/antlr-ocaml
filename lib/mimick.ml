@@ -166,5 +166,11 @@ type json_log_t =
 | LexerATNSimulator_init of lexer_atn_simulator_t
                       [@yojson.name "LexerATNSimulator.__init__"]
                       [@located_yojson.name "LexerATNSimulator.__init__"]
+| LexerATNSimulator_ENTER_match of lexer_atn_simulator_t * int
+                      [@yojson.name "ENTER LexerATNSimulator.match"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.match"]
+| LexerATNSimulator_EXIT_match of lexer_atn_simulator_t * int
+                      [@yojson.name "EXIT LexerATNSimulator.match"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.match"]
 
 [@@deriving yojson,located_yojson, show]
