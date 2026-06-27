@@ -25,9 +25,11 @@ test:: all
 	mkdir -p _build && ./antlrtest_test.exe
 
 GENARGS="--template-dir=fixtures/antlrtest.2"
+#ALLTESTS=$(shell (cd fixtures/descriptors && ls */*.txt))
+ALLTESTS=$(shell (cd fixtures/descriptors && ls */*.txt | grep -v Performance ))
 generate-all:: antlrtest_test.exe
-	mkdir -p _build && set -e ; set -x ;\
-	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
+	mkdir -p _build && set -e ;\
+	for d in $(ALLTESTS) ;\
 	do \
 	rm -rf _build/$${d/.txt/} && \
 	./generate_antlrtest.opt $(GENARGS) -d _build/$${d/.txt/} \
@@ -35,28 +37,28 @@ generate-all:: antlrtest_test.exe
 	done
 
 test-all:: antlrtest_test.exe
-	mkdir -p _build && set -e ; set -x ;\
-	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
+	mkdir -p _build && set -e ;\
+	for d in $(ALLTESTS) ;\
 	do \
 	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} all ;\
 	done
 
 compare-all:: antlrtest_test.exe
-	mkdir -p _build && set -e ; set -x ;\
-	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
+	mkdir -p _build && set -e ;\
+	for d in $(ALLTESTS) ;\
 	do \
 	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} compare-atns ;\
 	done
 
 clean-all:: antlrtest_test.exe
-	mkdir -p _build && set -e ; set -x ;\
+	mkdir -p _build && set -e ;\
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
 	do \
 	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} clean ;\
 	done
 
 generate-all-nonstop:: antlrtest_test.exe
-	mkdir -p _build && set -e ; set -x ;\
+	mkdir -p _build && set -e ;\
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
 	do \
 	rm -rf _build/$${d/.txt/} && \
