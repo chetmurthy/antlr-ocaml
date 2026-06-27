@@ -43,6 +43,11 @@ class CommonTokenFactory(TokenFactory):
         #
         self.copyText = copyText
 
+    def asdict(self):
+        d = {
+        }
+        return ["CommonTokenFactory", d]
+
     def create(self, source, type:int, text:str, channel:int, start:int, stop:int, line:int, column:int):
         t = CommonToken(source, type, channel, start, stop)
         t.line = line

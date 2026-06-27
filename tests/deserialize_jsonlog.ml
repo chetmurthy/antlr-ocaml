@@ -6,19 +6,8 @@ open Pa_ppx_located_yojson
 (** deserialize the "json.log" files into Atn.json_log_t objects
  *)
 
-let pa_json_list strm =
-  let rec parec = parser
-    [< j = Json.JsonOrEOI.parse ; strm >] ->
-       (match j with
-          None -> [< >]
-        | Some j -> [< 'j ; parec strm >])
-
-  | [< >] -> [< >]
-  in parec strm
-
 let deser_json_stream strm =
   strm
-  |> pa_json_list
   |> Stream.iter (fun j ->
          match Antlr.Mimick.json_log_t_of_located_yojson j with
            Result.Ok _ -> ()
@@ -29,7 +18,7 @@ let deser1 ~verbose file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
   let ic = open_in file in
-  Pa_json.with_input_file deser_json_stream ~file
+  Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable deser_json_stream ~file
 
 let deser1_yojson ~verbose file =
   if verbose then

@@ -77,6 +77,11 @@ class LexerATNSimulator(ATNSimulator):
     ERROR = None
 
     def __init__(self, recog:Lexer, atn:ATN, decisionToDFA:list, sharedContextCache:PredictionContextCache):
+        Trace.write(json.dumps([ 'ENTER LexerATNSimulator.__init__', atn.asdict(),
+                                 [d.asdict() for d in decisionToDFA],
+                                 sharedContextCache.asdict(),
+                                ],
+                               sort_keys=True, indent=4))
         super().__init__(atn, sharedContextCache)
         self.decisionToDFA = decisionToDFA
         self.recog = recog
@@ -96,7 +101,7 @@ class LexerATNSimulator(ATNSimulator):
         self.MAX_CHAR_VALUE = Lexer.MAX_CHAR_VALUE
         # Used during DFA/ATN exec to record the most recent accept configuration info
         self.prevAccept = SimState()
-        Trace.write(json.dumps([ 'LexerATNSimulator.__init__', self.asdict() ],
+        Trace.write(json.dumps([ 'EXIT LexerATNSimulator.__init__', self.asdict() ],
                                sort_keys=True, indent=4))
 
     def asdict(self):

@@ -44,6 +44,20 @@ class Token (object):
         self.column = None # beginning of the line at which it occurs, 0..n-1
         self._text = None # text of the token.
 
+    def asdict(self):
+        d = {
+            'source' : self.source,
+            '_type' : self.type,
+            'channel' : self.channel,
+            'start' : self.start,
+            'stop' : self.stop,
+            'tokenIndex' : self.tokenIndex,
+            'line' : self.line,
+            'column' : self.column,
+            '_text' : self._text
+        }
+        return ["Token", d]
+
     @property
     def text(self):
         return self._text

@@ -1,3 +1,7 @@
+import sys
+import json
+import Trace
+
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
 # can be found in the LICENSE.txt file in the project root.
@@ -89,7 +93,25 @@ class Lexer(Recognizer, TokenSource):
         #  the input char buffer.  Use setText() or can set self instance var.
         #/
         self._text = None
+#        Trace.write(json.dumps([ 'Lexer.__init__', self.asdict() ],
+#                               sort_keys=True, indent=4))
 
+    def asdict(self):
+        d = {
+            '_factory' : self._factory.asdict(),
+            '_interp' : self._interp.asdict(),
+            '_token': self._token.asdict(),
+            '_tokenStartCharIndex' : self._tokenStartCharIndex,
+            '_tokenStartLine' : self._tokenStartLine,
+            '_tokenStartColumn' : self._tokenStartColumn,
+            '_hitEOF' : self._hitEOF,
+            '_channel' : self._channel,
+            '_type' : self._type,
+            '_modeStack' : self._modeStack,
+            '_mode' : self._mode,
+            '_text' : self._text
+        }
+        return ["Lexer", d]
 
     def reset(self):
         # wack Lexer state variables

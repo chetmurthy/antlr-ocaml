@@ -108,8 +108,10 @@ and sim_state_t =
 
 and lexer_atn_simulator_t =
   LexerATNSimulator of {
-      atn : Atn.t
-    ; column : int
+      column : int
+(* don't demarshal this, b/c it's big and never changes
+    ; atn : Atn.t
+ *)
     ; decisionToDFA : dfa_t array
     ; line : int
     ; mode : int
@@ -163,9 +165,12 @@ type json_log_t =
 | LexerATNSimulator_addDFAEdge of int * int * int option
                       [@yojson.name "END LexerATNSimulator.addDFAEdge"]
                       [@located_yojson.name "END LexerATNSimulator.addDFAEdge"]
-| LexerATNSimulator_init of lexer_atn_simulator_t
-                      [@yojson.name "LexerATNSimulator.__init__"]
-                      [@located_yojson.name "LexerATNSimulator.__init__"]
+| LexerATNSimulator_ENTER_init of Atn.t * dfa_t array * prediction_context_cache_t
+                      [@yojson.name "ENTER LexerATNSimulator.__init__"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.__init__"]
+| LexerATNSimulator_EXIT_init of lexer_atn_simulator_t
+                      [@yojson.name "EXIT LexerATNSimulator.__init__"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.__init__"]
 | LexerATNSimulator_ENTER_match of lexer_atn_simulator_t * int
                       [@yojson.name "ENTER LexerATNSimulator.match"]
                       [@located_yojson.name "ENTER LexerATNSimulator.match"]

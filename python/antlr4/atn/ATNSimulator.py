@@ -42,7 +42,7 @@ class ATNSimulator(object):
 
     def asdict(self):
         d = {
-            'atn' : self.atn.asdict(),
+#            'atn' : self.atn.asdict(),
             'sharedContextCache' : self.sharedContextCache.asdict()
         }
         return ["ATNSimulator", d]
