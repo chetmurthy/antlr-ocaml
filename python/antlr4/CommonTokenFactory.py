@@ -45,6 +45,7 @@ class CommonTokenFactory(TokenFactory):
 
     def asdict(self):
         d = {
+            'copyText' : self.copyText
         }
         return ["CommonTokenFactory", d]
 

@@ -46,7 +46,7 @@ class Token (object):
 
     def asdict(self):
         d = {
-            'source' : self.source,
+            'source' : None if self.source is None else [type(x).__name__ for x in self.source],
             '_type' : self.type,
             'channel' : self.channel,
             'start' : self.start,

@@ -124,6 +124,37 @@ and prediction_context_cache_t =
   PredictionContextCache of {
       cache : string strmap
     }
+
+and common_token_factory_t =
+  CommonTokenFactory of {
+      copyText : bool
+    }
+and token_t =
+  Token of {
+      _text : string option
+    ; _type : int
+    ; channel : int
+    ; column : int
+    ; line : int
+    ; source : string * string
+    ; start : int
+    ; stop : int
+    ; tokenIndex : int
+    }
+and lexer_t = 
+  Lexer of {
+      _channel : int
+    ; _factory : common_token_factory_t
+    ; _hitEOF : bool
+    ; _mode : int
+    ; _modeStack : int list
+    ; _text : string option
+    ; _token : token_t option
+    ; _tokenStartCharIndex : int
+    ; _tokenStartColumn : int
+    ; _tokenStartLine : int
+    ; _type: int
+  }
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
@@ -177,5 +208,32 @@ type json_log_t =
 | LexerATNSimulator_EXIT_match of lexer_atn_simulator_t * int
                       [@yojson.name "EXIT LexerATNSimulator.match"]
                       [@located_yojson.name "EXIT LexerATNSimulator.match"]
+| Lexer_init of lexer_t
+                      [@yojson.name "Lexer.__init__"]
+                      [@located_yojson.name "Lexer.__init__"]
+| Lexer_ENTER_nextToken of lexer_t
+                      [@yojson.name "ENTER Lexer.nextToken"]
+                      [@located_yojson.name "ENTER Lexer.nextToken"]
+| Lexer_EXIT_nextToken of lexer_t * token_t
+                      [@yojson.name "EXIT Lexer.nextToken"]
+                      [@located_yojson.name "EXIT Lexer.nextToken"]
+| Lexer_emit of lexer_t * token_t
+                      [@yojson.name "Lexer.emit"]
+                      [@located_yojson.name "Lexer.emit"]
+| Lexer_emitEOF of lexer_t * token_t
+                      [@yojson.name "Lexer.emitEOF"]
+                      [@located_yojson.name "Lexer.emitEOF"]
+| Lexer_skip of lexer_t
+                      [@yojson.name "Lexer.skip"]
+                      [@located_yojson.name "Lexer.skip"]
+| Lexer_mode of lexer_t * int
+                      [@yojson.name "Lexer.mode"]
+                      [@located_yojson.name "Lexer.mode"]
+| Lexer_pushMode of lexer_t * int
+                      [@yojson.name "Lexer.pushMode"]
+                      [@located_yojson.name "Lexer.pushMode"]
+| Lexer_more of lexer_t
+                      [@yojson.name "Lexer.more"]
+                      [@located_yojson.name "Lexer.more"]
 
 [@@deriving yojson,located_yojson, show]

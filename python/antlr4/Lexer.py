@@ -93,14 +93,15 @@ class Lexer(Recognizer, TokenSource):
         #  the input char buffer.  Use setText() or can set self instance var.
         #/
         self._text = None
-#        Trace.write(json.dumps([ 'Lexer.__init__', self.asdict() ],
-#                               sort_keys=True, indent=4))
+        Trace.write(json.dumps([ 'Lexer.__init__',
+                                 self.asdict() ],
+                               sort_keys=True, indent=4))
 
     def asdict(self):
         d = {
             '_factory' : self._factory.asdict(),
-            '_interp' : self._interp.asdict(),
-            '_token': self._token.asdict(),
+            '_interp' : None if self._interp is None else self._interp.asdict(),
+            '_token': None if self._token is None else self._token.asdict(),
             '_tokenStartCharIndex' : self._tokenStartCharIndex,
             '_tokenStartLine' : self._tokenStartLine,
             '_tokenStartColumn' : self._tokenStartColumn,
@@ -130,10 +131,23 @@ class Lexer(Recognizer, TokenSource):
         self._modeStack = []
 
         self._interp.reset()
+        Trace.write(json.dumps([ 'Lexer.reset',
+                                 self.asdict() ],
+                               sort_keys=True, indent=4))
+
+    def nextToken(self):
+        Trace.write(json.dumps([ 'ENTER Lexer.nextToken',
+                                 self.asdict() ],
+                               sort_keys=True, indent=4))
+        rv = self._nextToken()
+        Trace.write(json.dumps([ 'EXIT Lexer.nextToken',
+                                 self.asdict(), rv.asdict() ],
+                               sort_keys=True, indent=4))
+        return rv
 
     # Return a token from self source; i.e., match a token on the char
     #  stream.
-    def nextToken(self):
+    def _nextToken(self):
         if self._input is None:
             raise IllegalStateException("nextToken requires a non-null input stream.")
 
@@ -187,18 +201,31 @@ class Lexer(Recognizer, TokenSource):
     #/
     def skip(self):
         self._type = self.SKIP
+        Trace.write(json.dumps([ 'Lexer.skip',
+                                 self.asdict() ],
+                               sort_keys=True, indent=4))
+
 
     def more(self):
         self._type = self.MORE
+        Trace.write(json.dumps([ 'Lexer.more',
+                                 self.asdict() ],
+                               sort_keys=True, indent=4))
 
     def mode(self, m:int):
         self._mode = m
+        Trace.write(json.dumps([ 'Lexer.mode',
+                                 self.asdict(), m ],
+                               sort_keys=True, indent=4))
 
     def pushMode(self, m:int):
         if self._interp.debug:
             print("pushMode " + str(m), file=self._output)
         self._modeStack.append(self._mode)
         self.mode(m)
+        Trace.write(json.dumps([ 'Lexer.pushMode',
+                                 self.asdict(), m ],
+                               sort_keys=True, indent=4))
 
     def popMode(self):
         if len(self._modeStack)==0:
@@ -206,6 +233,9 @@ class Lexer(Recognizer, TokenSource):
         if self._interp.debug:
             print("popMode back to "+ self._modeStack[:-1], file=self._output)
         self.mode( self._modeStack.pop() )
+        Trace.write(json.dumps([ 'Lexer.popode',
+                                 self.asdict(), self._mode ],
+                               sort_keys=True, indent=4))
         return self._mode
 
     # Set the char stream and reset the lexer#/
@@ -232,6 +262,10 @@ class Lexer(Recognizer, TokenSource):
     #/
     def emitToken(self, token:Token):
         self._token = token
+        return
+        Trace.write(json.dumps([ 'Lexer.emitToken',
+                                 self.asdict(), token.asdict() ],
+                               sort_keys=True, indent=4))
 
     # The standard method called to automatically emit a token at the
     #  outermost lexical rule.  The token object should point into the
@@ -243,6 +277,11 @@ class Lexer(Recognizer, TokenSource):
         t = self._factory.create(self._tokenFactorySourcePair, self._type, self._text, self._channel, self._tokenStartCharIndex,
                                  self.getCharIndex()-1, self._tokenStartLine, self._tokenStartColumn)
         self.emitToken(t)
+        Trace.write(json.dumps([ 'Lexer.emit',
+                                 self.asdict(),
+                                 t.asdict()
+                                ],
+                               sort_keys=True, indent=4))
         return t
 
     def emitEOF(self):
@@ -251,6 +290,9 @@ class Lexer(Recognizer, TokenSource):
         eof = self._factory.create(self._tokenFactorySourcePair, Token.EOF, None, Token.DEFAULT_CHANNEL, self._input.index,
                                    self._input.index-1, lpos, cpos)
         self.emitToken(eof)
+        Trace.write(json.dumps([ 'Lexer.emitEOF',
+                                 self.asdict(), eof.asdict() ],
+                               sort_keys=True, indent=4))
         return eof
 
     @property
