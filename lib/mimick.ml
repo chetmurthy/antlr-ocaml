@@ -35,15 +35,12 @@ and config_set_t = {
   ; id : int
   }
 and prediction_context_t =
-  PC_SINGLETON of { cachedHashCode : int64
-                  ; parentCtx : prediction_context_t option
+  PC_SINGLETON of { parentCtx : prediction_context_t option
                   ; returnState : int
                   }[@yojson.name "SingletonPredictionContext"]
                     [@located_yojson.name "SingletonPredictionContext"]
-| PC_EMPTY of { cachedHashCode : int64
-              }
-| PC_ARRAY of { cachedHashCode : int64
-              ; parents : prediction_context_t option array
+| PC_EMPTY
+| PC_ARRAY of { parents : prediction_context_t option array
               ; returnStates : int list
               }
                 [@yojson.name "ArrayPredictionContext"]
@@ -95,7 +92,6 @@ and pred_prediction_t =
     }
 and lexer_action_executor_t = {
     lexerActions : Atn.LexerAction.t list
-  ; hashCode : int64
   }
 
 and sim_state_t =

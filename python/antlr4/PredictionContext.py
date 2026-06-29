@@ -52,7 +52,7 @@ class PredictionContext(object):
         self.cachedHashCode = cachedHashCode
 
     def asdict(self):
-        return ['PredictionContext', { 'cachedHashCode' : self.cachedHashCode }]
+        return ['PredictionContext', {}]
 
     def __len__(self):
         return 0

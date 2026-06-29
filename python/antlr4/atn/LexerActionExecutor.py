@@ -35,7 +35,6 @@ class LexerActionExecutor(object):
     def asdict(self):
         d = {
             'lexerActions' : [x.asdict() for x in self.lexerActions],
-            'hashCode' : self.hashCode,
         }
         return d
 
