@@ -232,6 +232,9 @@ type json_log_t =
 | Lexer_pushMode of lexer_t * int
                       [@yojson.name "Lexer.pushMode"]
                       [@located_yojson.name "Lexer.pushMode"]
+| Lexer_popMode of lexer_t * int
+                      [@yojson.name "Lexer.popMode"]
+                      [@located_yojson.name "Lexer.popMode"]
 | Lexer_more of lexer_t
                       [@yojson.name "Lexer.more"]
                       [@located_yojson.name "Lexer.more"]

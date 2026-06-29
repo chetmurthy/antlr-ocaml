@@ -233,7 +233,7 @@ class Lexer(Recognizer, TokenSource):
         if self._interp.debug:
             print("popMode back to "+ self._modeStack[:-1], file=self._output)
         self.mode( self._modeStack.pop() )
-        Trace.write(json.dumps([ 'Lexer.popode',
+        Trace.write(json.dumps([ 'Lexer.popMode',
                                  self.asdict(), self._mode ],
                                sort_keys=True, indent=4))
         return self._mode
