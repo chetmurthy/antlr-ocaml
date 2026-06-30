@@ -180,7 +180,7 @@ and merge_cache_entry_t = {
   }
 
 and merge_cache_t =
-  merge_cache_entry_t list
+  MergeCache of merge_cache_entry_t list
 
 [@@deriving yojson,located_yojson, show]
 

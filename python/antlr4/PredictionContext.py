@@ -280,7 +280,7 @@ def PredictionContextFromRuleContext(atn:ATN, outerContext:RuleContext=None):
 
 
 def mergeCache_asdict(mergeCache):
-    return [{'k': k.asdict(), 'v': v.asdict()} for k,v in mergeCache]
+    return ["MergeCache", [{'k': k.asdict(), 'v': v.asdict()} for k,v in mergeCache]]
 
 def mergeCache_add(mergeCache, a,b,merged):
     Trace.write(json.dumps([ 'mergeCache_add',
