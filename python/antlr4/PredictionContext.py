@@ -1,3 +1,6 @@
+import Trace
+import json
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -276,7 +279,34 @@ def PredictionContextFromRuleContext(atn:ATN, outerContext:RuleContext=None):
     return SingletonPredictionContext.create(parent, transition.followState.stateNumber)
 
 
+def mergeCache_asdict(mergeCache):
+    return [{'k': k.asdict(), 'v': v.asdict()} for k,v in mergeCache]
+
+def mergeCache_add(mergeCache, a,b,merged):
+    Trace.write(json.dumps([ 'mergeCache_add',
+                             a.asdict(),
+                             b.asdict(),
+                             merged.asdict(),
+                            ],
+                           sort_keys=True, indent=4))
+    mergeCache[(a,b)] = merged
+
 def merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCache:dict):
+    Trace.write(json.dumps([ 'ENTER PredictionContext.merge',
+                             a.asdict(),
+                             b.asdict(),
+                             rootIsWildcard,
+                             (None if mergeCache is None else mergeCache_asdict(mergeCache))
+                            ],
+                           sort_keys=True, indent=4))
+    rv = _merge(a, b, rootIsWildcard, mergeCache)
+    Trace.write(json.dumps([ 'EXIT PredictionContext.merge',
+                             rv.asdict()
+                            ],
+                           sort_keys=True, indent=4))
+    return rv
+
+def _merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCache:dict):
 
     # share same graph if both same
     if a==b:
@@ -340,7 +370,8 @@ def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, 
     merged = mergeRoot(a, b, rootIsWildcard)
     if merged is not None:
         if mergeCache is not None:
-            mergeCache[(a, b)] = merged
+            #mergeCache[(a, b)] = merged
+            mergeCache_add(mergeCache, a, b, merged)
         return merged
 
     if a.returnState==b.returnState:
@@ -356,7 +387,8 @@ def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, 
         # new joined parent so create new singleton pointing to it, a'
         merged = SingletonPredictionContext.create(parent, a.returnState)
         if mergeCache is not None:
-            mergeCache[(a, b)] = merged
+            #mergeCache[(a, b)] = merged
+            mergeCache_add(mergeCache, a, b, merged)
         return merged
     else: # a != b payloads differ
         # see if we can collapse parents due to $+x parents if local ctx
@@ -371,7 +403,8 @@ def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, 
             parents = [singleParent, singleParent]
             merged = ArrayPredictionContext(parents, payloads)
             if mergeCache is not None:
-                mergeCache[(a, b)] = merged
+                #mergeCache[(a, b)] = merged
+                mergeCache_add(mergeCache, a, b, merged)
             return merged
         # parents differ and can't merge them. Just pack together
         # into array; can't merge.
@@ -383,7 +416,8 @@ def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, 
             parents = [ b.parentCtx, a.parentCtx ]
         merged = ArrayPredictionContext(parents, payloads)
         if mergeCache is not None:
-            mergeCache[(a, b)] = merged
+            #mergeCache[(a, b)] = merged
+            mergeCache_add(mergeCache, a, b, merged)
         return merged
 
 
@@ -529,7 +563,8 @@ def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildca
         if k == 1: # for just one merged element, return singleton top
             merged = SingletonPredictionContext.create(mergedParents[0], mergedReturnStates[0])
             if mergeCache is not None:
-                mergeCache[(a,b)] = merged
+                #mergeCache[(a,b)] = merged
+                mergeCache_add(mergeCache, a, b, merged)
             return merged
         mergedParents = mergedParents[0:k]
         mergedReturnStates = mergedReturnStates[0:k]
@@ -540,18 +575,21 @@ def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildca
     # TODO: track whether this is possible above during merge sort for speed
     if merged==a:
         if mergeCache is not None:
-            mergeCache[(a,b)] = a
+            #mergeCache[(a,b)] = a
+            mergeCache_add(mergeCache, a, b, merged)
         if _trace_atn_sim: print("mergeArrays a="+str(a)+",b="+str(b)+" -> a")
         return a
     if merged==b:
         if mergeCache is not None:
-            mergeCache[(a,b)] = b
+            #mergeCache[(a,b)] = b
+            mergeCache_add(mergeCache, a, b, merged)
         if _trace_atn_sim: print("mergeArrays a="+str(a)+",b="+str(b)+" -> b")
         return b
     combineCommonParents(mergedParents)
 
     if mergeCache is not None:
-        mergeCache[(a,b)] = merged
+        #mergeCache[(a,b)] = merged
+        mergeCache_add(mergeCache, a, b, merged)
 
     if _trace_atn_sim: print("mergeArrays a="+str(a)+",b="+str(b)+" -> "+str(M))
 

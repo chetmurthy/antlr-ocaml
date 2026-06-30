@@ -174,6 +174,14 @@ and parser_atn_simulator_t =
     ; mergeCache : int option
     }
 
+and merge_cache_entry_t = {
+    k : prediction_context_t
+  ; v : prediction_context_t
+  }
+
+and merge_cache_t =
+  merge_cache_entry_t list
+
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
@@ -260,5 +268,14 @@ type json_log_t =
 | ParserATNSimulator_EXIT_init of Atn.t * parser_atn_simulator_t
                       [@yojson.name "EXIT ParserATNSimulator.__init__"]
                       [@located_yojson.name "EXIT ParserATNSimulator.__init__"]
+| PredictionContext_ENTER_merge of prediction_context_t * prediction_context_t * bool * merge_cache_t option
+                      [@yojson.name "ENTER PredictionContext.merge"]
+                      [@located_yojson.name "ENTER PredictionContext.merge"]
+| PredictionContext_EXIT_merge of prediction_context_t
+                      [@yojson.name "EXIT PredictionContext.merge"]
+                      [@located_yojson.name "EXIT PredictionContext.merge"]
+| MergeCache_add of prediction_context_t * prediction_context_t * prediction_context_t
+                      [@yojson.name "mergeCache_add"]
+                      [@located_yojson.name "mergeCache_add"]
 
 [@@deriving yojson,located_yojson, show]
