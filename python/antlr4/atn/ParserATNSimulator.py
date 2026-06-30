@@ -1,3 +1,7 @@
+import sys
+import json
+import Trace
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -286,7 +290,21 @@ class ParserATNSimulator(ATNSimulator):
         #  also be examined during cache lookup.
         #
         self.mergeCache = None
+        Trace.write(json.dumps([ 'EXIT ParserATNSimulator.__init__',
+                                 atn.asdict(),
+                                 self.asdict() ],
+                               sort_keys=True, indent=4))
 
+
+    def asdict(self):
+        d = super(ParserATNSimulator,self).asdict()[1]
+        d['decisionToDFA'] = [d.asdict() for d in self.decisionToDFA]
+        d['predictionMode'] = [ str(self.predictionMode) ]
+        d['_startIndex'] = self._startIndex
+        d['_outerContext'] = self._outerContext
+        d['_dfa'] = None if self._dfa is None else self._dfa.asdict()
+        d['mergeCache'] = None if self.mergeCache is None else self.mergeCache.asdict()
+        return ["ParserATNSimulator", d]
 
     def reset(self):
         pass

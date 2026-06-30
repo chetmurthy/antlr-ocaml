@@ -27,6 +27,7 @@ class ATNConfig(object):
     __slots__ = (
         'state', 'alt', 'context', 'semanticContext', 'reachesIntoOuterContext',
         'precedenceFilterSuppressed'
+
     )
 
     def __init__(self, state:ATNState=None, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=None, config:ATNConfig=None):

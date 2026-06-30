@@ -104,15 +104,15 @@ and sim_state_t =
 
 and lexer_atn_simulator_t =
   LexerATNSimulator of {
-      column : int
+      sharedContextCache : prediction_context_cache_t
 (* don't demarshal this, b/c it's big and never changes
     ; atn : Atn.t
  *)
+    ; column : int
     ; decisionToDFA : dfa_t array
     ; line : int
     ; mode : int
     ; prevAccept : sim_state_t
-    ; sharedContextCache : prediction_context_cache_t
     ; startIndex : int
     }
 
@@ -151,6 +151,29 @@ and lexer_t =
     ; _tokenStartLine : int
     ; _type: int
   }
+
+and prediction_mode_t =
+  SLL[@yojson.name "PredictionMode.LL"]
+                    [@located_yojson.name "PredictionMode.SLL"]
+ | LL[@yojson.name "PredictionMode.SLL"]
+                    [@located_yojson.name "PredictionMode.LL"]
+ | LL_EXACT_AMBIG_DETECTION[@yojson.name "PredictionMode.LL_EXACT_AMBIG_DETECTION"]
+                    [@located_yojson.name "PredictionMode.LL_EXACT_AMBIG_DETECTION"]
+
+and parser_atn_simulator_t =
+  ParserATNSimulator of {
+      sharedContextCache : prediction_context_cache_t
+(* don't demarshal this, b/c it's big and never changes
+    ; atn : Atn.t
+ *)
+    ; decisionToDFA : dfa_t array
+    ; predictionMode : prediction_mode_t
+    ; _startIndex : int
+    ; _outerContext : int option
+    ; _dfa : dfa_t option
+    ; mergeCache : int option
+    }
+
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
@@ -234,5 +257,8 @@ type json_log_t =
 | Lexer_more of lexer_t
                       [@yojson.name "Lexer.more"]
                       [@located_yojson.name "Lexer.more"]
+| ParserATNSimulator_EXIT_init of Atn.t * parser_atn_simulator_t
+                      [@yojson.name "EXIT ParserATNSimulator.__init__"]
+                      [@located_yojson.name "EXIT ParserATNSimulator.__init__"]
 
 [@@deriving yojson,located_yojson, show]
