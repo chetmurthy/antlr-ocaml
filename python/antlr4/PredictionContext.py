@@ -1,5 +1,6 @@
 import Trace
 import json
+import traceback
 
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
@@ -180,6 +181,9 @@ class EmptyPredictionContext(SingletonPredictionContext):
     def __init__(self):
         super().__init__(None, PredictionContext.EMPTY_RETURN_STATE)
 
+    def asdict(self):
+        return ["EmptyPredictionContext"]
+
     def isEmpty(self):
         return True
 
@@ -280,7 +284,15 @@ def PredictionContextFromRuleContext(atn:ATN, outerContext:RuleContext=None):
 
 
 def mergeCache_asdict(mergeCache):
-    return ["MergeCache", [{'k': k.asdict(), 'v': v.asdict()} for k,v in mergeCache]]
+    l = []
+    for k in mergeCache.keys():
+        d = {
+            'k' : [x.asdict() for x in k],
+            'v' : mergeCache[k].asdict()
+            }
+        l.append(d)
+
+    return ["MergeCache", l]
 
 def mergeCache_add(mergeCache, a,b,merged):
     Trace.write(json.dumps([ 'mergeCache_add',
@@ -290,6 +302,10 @@ def mergeCache_add(mergeCache, a,b,merged):
                             ],
                            sort_keys=True, indent=4))
     mergeCache[(a,b)] = merged
+    Trace.write(json.dumps([ 'EXIT mergeCache_add',
+                             mergeCache_asdict(mergeCache),
+                            ],
+                           sort_keys=True, indent=4))
 
 def merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCache:dict):
     Trace.write(json.dumps([ 'ENTER PredictionContext.merge',
@@ -307,7 +323,10 @@ def merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCa
     return rv
 
 def _merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCache:dict):
-
+    if a is None:
+        traceback.print_stack()
+    if b is None:
+        traceback.print_stack()
     # share same graph if both same
     if a==b:
         return a
@@ -576,13 +595,13 @@ def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildca
     if merged==a:
         if mergeCache is not None:
             #mergeCache[(a,b)] = a
-            mergeCache_add(mergeCache, a, b, merged)
+            mergeCache_add(mergeCache, a, b, a)
         if _trace_atn_sim: print("mergeArrays a="+str(a)+",b="+str(b)+" -> a")
         return a
     if merged==b:
         if mergeCache is not None:
             #mergeCache[(a,b)] = b
-            mergeCache_add(mergeCache, a, b, merged)
+            mergeCache_add(mergeCache, a, b, b)
         if _trace_atn_sim: print("mergeArrays a="+str(a)+",b="+str(b)+" -> b")
         return b
     combineCommonParents(mergedParents)

@@ -39,7 +39,8 @@ and prediction_context_t =
                   ; returnState : int
                   }[@yojson.name "SingletonPredictionContext"]
                     [@located_yojson.name "SingletonPredictionContext"]
-| PC_EMPTY
+| PC_EMPTY[@yojson.name "EmptyPredictionContext"]
+                    [@located_yojson.name "EmptyPredictionContext"]
 | PC_ARRAY of { parents : prediction_context_t option array
               ; returnStates : int list
               }
@@ -175,7 +176,7 @@ and parser_atn_simulator_t =
     }
 
 and merge_cache_entry_t = {
-    k : prediction_context_t
+    k : prediction_context_t * prediction_context_t
   ; v : prediction_context_t
   }
 
@@ -277,5 +278,8 @@ type json_log_t =
 | MergeCache_add of prediction_context_t * prediction_context_t * prediction_context_t
                       [@yojson.name "mergeCache_add"]
                       [@located_yojson.name "mergeCache_add"]
+| MergeCache_EXIT_add of merge_cache_t
+                      [@yojson.name "EXIT mergeCache_add"]
+                      [@located_yojson.name "EXIT mergeCache_add"]
 
 [@@deriving yojson,located_yojson, show]
