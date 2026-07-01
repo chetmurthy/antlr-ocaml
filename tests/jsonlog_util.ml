@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson *)
 
 open Pa_ppx_utils
 open Pa_ppx_located_yojson
@@ -115,10 +115,40 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
+module Simulate = struct
+open Antlr
+
+let simulate1 ~verbose matchers file =
+  if verbose then
+    Fmt.(pf stderr "[READ %s]@." file) ;
+  let doit stream =
+    stream
+    |> Filter.filter_json_stream matchers
+    |> Std.stream_concat_map Simulate.sim1
+    |> Filter.pp_json_stream stdout in
+  Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
+
+let simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive files =
+  let flags = if case_insensitive then [`CASELESS] else [] in
+  let matchers = List.map (Pcre2.regexp ~flags) pattern in
+  List.iter (simulate1 ~verbose matchers) files
+
+let cmd =
+  let doc = "simulate json.log files for only selected JSON log objects." in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "simulate" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ files and+ debug and+ verbose and+ pattern and+ case_insensitive in
+  simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive files ;
+  Cmdliner.Cmd.Exit.ok
+end
+
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [Deserialize.cmd; Filter.cmd]
+  [Deserialize.cmd; Filter.cmd; Simulate.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())
