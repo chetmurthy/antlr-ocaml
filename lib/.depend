@@ -1,4 +1,4 @@
-util.cmo range.cmo intervalSet.cmo interp.cmo interp_syntax.cmo token.cmo types.cmo atn.cmo mimick.cmo visualization.cmo exec.cmo util.cmi range.cmi intervalSet.cmi interp.cmi interp_syntax.cmi token.cmi types.cmi atn.cmi mimick.cmi visualization.cmi exec.cmi util.cmx range.cmx intervalSet.cmx interp.cmx interp_syntax.cmx token.cmx types.cmx atn.cmx mimick.cmx visualization.cmx exec.cmx: 
+util.cmo range.cmo intervalSet.cmo interp.cmo interp_syntax.cmo token.cmo types.cmo atn.cmo mimick.cmo visualization.cmo exec.cmo simulate.cmo util.cmi range.cmi intervalSet.cmi interp.cmi interp_syntax.cmi token.cmi types.cmi atn.cmi mimick.cmi visualization.cmi exec.cmi simulate.cmi util.cmx range.cmx intervalSet.cmx interp.cmx interp_syntax.cmx token.cmx types.cmx atn.cmx mimick.cmx visualization.cmx exec.cmx simulate.cmx: 
 util.cmo :
 util.cmx :
 range.cmo :
@@ -51,5 +51,11 @@ exec.cmx : \
     util.cmx \
     mimick.cmx \
     atn.cmx
+simulate.cmo : \
+    mimick.cmo \
+    exec.cmo
+simulate.cmx : \
+    mimick.cmx \
+    exec.cmx
 mk_meta.cmo :
 mk_meta.cmx :

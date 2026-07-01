@@ -45,6 +45,7 @@ module MC = struct
   let add t (a,b) v =
     MHM.add t ((a,b), v)
   let toList t = MHM.toList t
+  let ofList l = MHM.ofList 23 l
 
   let maybe_cache mc_opt a b merged =
     match mc_opt with
@@ -61,6 +62,19 @@ module MC = struct
           match get_opt mc (b,a) with
             Some v -> Some v
           | None -> None
+
+  let to_mimick mc =
+    let l = toList mc in
+    let l = l |> List.map (fun ((a,b),c) ->
+                     { M.k = (to_mimick a, to_mimick b) ; v = to_mimick c }) in
+    M.MergeCache l
+
+  let of_mimick mc : t =
+    match mc with
+      M.MergeCache l ->
+      let l = List.map (fun {M.k=(a,b); v=c} ->
+                  ((of_mimick a, of_mimick b), of_mimick c)) l in
+      ofList l
 
 end
 module MergeCache = MC
