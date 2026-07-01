@@ -16,6 +16,23 @@ type pc_t =
 
 type t = pc_t
 
+let rec to_mimick = function
+    EMPTY -> M.PC_EMPTY
+  | SINGLETON (pcopt, rs) ->
+     M.PC_SINGLETON { parentCtx = Option.map to_mimick pcopt ; returnState = rs }
+  | ARRAY l ->
+     let (parents, returnStates) = Std.split l in
+     let parents = List.map (Option.map to_mimick) parents in
+     M.PC_ARRAY { parents ; returnStates }
+
+let rec of_mimick = function
+    M.PC_EMPTY -> EMPTY
+  | PC_SINGLETON { parentCtx ; returnState } ->
+     SINGLETON (Option.map of_mimick parentCtx, returnState)
+  | PC_ARRAY { parents ; returnStates } ->
+     assert (List.length parents = List.length returnStates) ;
+     ARRAY (Std.combine (List.map (Option.map of_mimick) parents) returnStates)
+
 module MC = struct
   open Coll
   type t = ((pc_t * pc_t), pc_t) MHM.t

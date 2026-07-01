@@ -41,7 +41,7 @@ and prediction_context_t =
                     [@located_yojson.name "SingletonPredictionContext"]
 | PC_EMPTY[@yojson.name "EmptyPredictionContext"]
                     [@located_yojson.name "EmptyPredictionContext"]
-| PC_ARRAY of { parents : prediction_context_t option array
+| PC_ARRAY of { parents : prediction_context_t option list
               ; returnStates : int list
               }
                 [@yojson.name "ArrayPredictionContext"]
