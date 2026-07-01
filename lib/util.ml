@@ -57,3 +57,9 @@ let strmap_of_located_yojson vconv j =
     (loc, `Assoc l) ->
      _strmap_of_located_yojson vconv ((loc, `List (List.map (fun (k,v) -> (loc, `List [(loc, `String k); v])) l)))
   | (loc, _) -> Result.Error (loc, "Stg.Env.strmap_of_yojson")
+
+let stream_iter f strm =
+  let rec itrec = parser
+    [< 't ; s >] -> f t ; itrec s
+  | [< >] -> ()
+  in itrec strm
