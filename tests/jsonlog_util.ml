@@ -121,11 +121,13 @@ open Antlr
 let simulate1 ~verbose matchers file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
+  Tracelog._enabled := true ;
   let doit stream =
     stream
     |> Filter.filter_json_stream matchers
-    |> Std.stream_concat_map Simulate.sim1
-    |> Filter.pp_json_stream stdout in
+    |> Std.stream_map [%of_located_yojson: Mimick.json_log_t]
+    |> Std.stream_map Json.raise_failwith_error_msg
+    |> Util.stream_iter Simulate.sim1 in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
 let simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive files =

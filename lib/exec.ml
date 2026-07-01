@@ -225,6 +225,18 @@ and merge_opt a_opt b_opt rootIsWildcard mergeCache =
   Some (merge a b rootIsWildcard mergeCache)
 
 and merge a b rootIsWildcard mergeCache =
+  Tracelog.write
+    (PredictionContext_ENTER_merge
+       (to_mimick a,
+        to_mimick b,
+        rootIsWildcard,
+        Option.map MC.to_mimick mergeCache)) ;
+  let rv = _merge a b rootIsWildcard mergeCache in
+  Tracelog.write
+    (PredictionContext_EXIT_merge (to_mimick rv)) ;
+  rv
+
+and _merge a b rootIsWildcard mergeCache =
   if a = b then
     a
   else match (a,b) with
