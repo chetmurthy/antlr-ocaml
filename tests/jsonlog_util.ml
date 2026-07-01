@@ -24,6 +24,10 @@ let yojson =
   let doc = "use YOJSON instead." in
   Arg.(value & flag & info ["yojson"] ~doc)
 
+let case_insensitive =
+  let doc = "case-insensitive patterns." in
+  Arg.(value & flag & info ["i"] ~doc)
+
 let pattern =
   let doc = "pattern: if JSON's car matches this, it is passed by the filter ." in
   Arg.(value & opt_all string [] & info ["t";"tag-pattern"] ~doc)
@@ -85,7 +89,7 @@ let filter_json_stream matchers strm =
   Std.stream_concat_map filter1 strm
 
 let pp_json_stream oc strm =
-  Util.stream_iter (Json.pp_hum_to_channel oc) strm
+  Util.stream_iter (Json.pp_hum_to_channel ~std:true oc) strm
 
 let filter1 ~verbose matchers file =
   if verbose then
@@ -94,8 +98,9 @@ let filter1 ~verbose matchers file =
     stream |> filter_json_stream matchers |> pp_json_stream stdout in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let filter ~verbose ~yojson ~debug ~pattern files =
-  let matchers = List.map Pcre2.regexp pattern in
+let filter ~verbose ~yojson ~debug ~pattern ~case_insensitive files =
+  let flags = if case_insensitive then [`CASELESS] else [] in
+  let matchers = List.map (Pcre2.regexp ~flags) pattern in
   List.iter (filter1 ~verbose matchers) files
 
 let cmd =
@@ -105,8 +110,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "filter" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ files and+ debug and+ verbose and+ pattern in
-  filter ~verbose ~yojson ~debug ~pattern files ;
+  let+ files and+ debug and+ verbose and+ pattern and+ case_insensitive in
+  filter ~verbose ~yojson ~debug ~pattern ~case_insensitive files ;
   Cmdliner.Cmd.Exit.ok
 end
 
