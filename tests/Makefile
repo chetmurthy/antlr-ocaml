@@ -6,14 +6,14 @@ PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 
 ML= \
 	lib_test.ml antlr_test.ml atn_util.ml \
-	antlrtest_test.ml generate_antlrtest.ml deserialize_jsonlog.ml \
+	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
 	jsonlog_util.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
 TESTS=lib_test.exe antlr_test.exe atn_util.exe \
-	antlrtest_test.exe generate_antlrtest.exe \
+	antlrtest_test.exe antlrtest_util.exe \
 	deserialize_jsonlog.exe jsonlog_util.exe
 
 TESTSOPT=$(TESTS:.exe=.opt)
@@ -33,7 +33,7 @@ generate-all:: antlrtest_test.exe
 	for d in $(ALLTESTS) ;\
 	do \
 	rm -rf _build/$${d/.txt/} && \
-	./generate_antlrtest.opt $(GENARGS) -d _build/$${d/.txt/} \
+	./antlrtest_util.opt generate $(GENARGS) -d _build/$${d/.txt/} \
 	fixtures/descriptors/$$d ;\
 	done
 
@@ -63,7 +63,7 @@ generate-all-nonstop:: antlrtest_test.exe
 	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
 	do \
 	rm -rf _build/$${d/.txt/} && \
-	./generate_antlrtest.exe $(GENARGS) -d _build/$${d/.txt/} \
+	./antlrtest_util.exe generate $(GENARGS) -d _build/$${d/.txt/} \
 	fixtures/descriptors/$$d || true ;\
 	done
 
@@ -75,7 +75,7 @@ generate-selected:: antlrtest_test.exe
 	for d in $(SELECTED) ;\
 	do \
 	rm -rf _build/$$d && \
-	./generate_antlrtest.exe $(GENARGS) -d _build/$$d \
+	./antlrtest_util.exe generate $(GENARGS) -d _build/$$d \
 	fixtures/*descriptors/$$d.txt ;\
 	done
 
@@ -104,10 +104,10 @@ compare-selected:: antlrtest_test.exe
 ONE=ParserExec/Basic
 #ONE=CompositeParsers/ImportLexerWithOnlyFragmentRules
 #ONE=CompositeParsers/KeywordVSIDOrder
-generate-one:: antlrtest_test.exe
+generate-one:: antlrtest_util.opt
 	mkdir -p _build && \
 	rm -rf _build/$(ONE) && \
-	./generate_antlrtest.exe $(GENARGS) -d _build/$(ONE) \
+	./antlrtest_util.opt generate $(GENARGS) -d _build/$(ONE) \
 	fixtures/descriptors/$(ONE).txt
 
 test-one:: antlrtest_test.exe

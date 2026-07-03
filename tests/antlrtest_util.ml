@@ -1,6 +1,8 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_utils
+open Pa_ppx_base
+open Ppxutil
 
 (** generate an antlrtest directory from a test
     descriptor and a template directory
@@ -48,7 +50,7 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
     failwith "must specify --dest-dir|-d" ;
   let destdir = Fpath.v destdir in
   if destdir |> Bos.OS.Dir.exists |> Result.get_ok then
-    failwith "destdir must not already exist!" ;
+    Fmt.(failwithf "destdir %s must not already exist!" (Fpath.to_string destdir));
 
   let module D = Descriptor in
   let d = D.load file in
@@ -103,6 +105,7 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
        (fun (full, txt) ->
          Bos.OS.File.write ~mode:0o644 full txt |> Result.get_ok) ;
   ()
+  
 
 open Cmdliner
 open Cmdliner.Term.Syntax
@@ -134,9 +137,15 @@ let generate_cmd =
     `S Manpage.s_bugs;
     `P "Email bug reports to <bugs@example.org>." ]
   in
-  Cmd.make (Cmd.info "generate_antlrtest" ~version:"%%VERSION%%" ~doc ~man) @@
+  Cmd.make (Cmd.info "generate" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ debug and+ templatedir and+ destdir and+ helperfile in
-  generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file
+  generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file ;
+  Cmdliner.Cmd.Exit.ok
 
-let main () = Cmd.eval generate_cmd
+let cmd =
+  let doc = "The tool synopsis is TODO" in
+  Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
+  [generate_cmd]
+
+let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())
