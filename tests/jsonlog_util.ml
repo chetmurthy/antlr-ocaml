@@ -9,7 +9,6 @@ open Pa_ppx_located_yojson
 open Cmdliner
 open Cmdliner.Term.Syntax
 
-
 let files = Arg.(non_empty & pos_all file [] & info [] ~docv:"JSON-FILE")
 
 let debug =
@@ -31,6 +30,10 @@ let case_insensitive =
 let pattern =
   let doc = "pattern: if JSON's car matches this, it is passed by the filter ." in
   Arg.(value & opt_all string [] & info ["t";"tag-pattern"] ~doc)
+
+let entry_exit_name =
+  let doc = "entry-exit-name: extract events with tag '{ENTER,EXIT} name'." in
+  Arg.(value & opt_all string [] & info ["e";"entry-exist-name"] ~doc)
 
 module Deserialize = struct
 let deser_json_stream strm =
@@ -115,6 +118,38 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
+module EntryExit = struct
+open Antlr
+
+let only_outermost_enter =
+  let doc = "pass thru only the outermost ENTER of a tree of events." in
+  Arg.(value & flag & info ["only-outermost-enter"] ~doc)
+
+let pp_json_stream oc strm =
+  Util.stream_iter (Json.pp_hum_to_channel ~std:true oc) strm
+
+let filter1 ~only_outermost_enter ~verbose names file =
+  if verbose then
+    Fmt.(pf stderr "[READ %s]@." file) ;
+  let doit stream =
+    stream |> Util.entry_exit_yojson ~only_outermost_enter names |> pp_json_stream stdout in
+  Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
+
+let filter ~verbose ~yojson ~debug ~entry_exit_name ~only_outermost_enter files =
+  List.iter (filter1 ~only_outermost_enter ~verbose entry_exit_name) files
+
+let cmd =
+  let doc = "filter json.log files for only selected JSON log objects." in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "entry-exit" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ files and+ debug and+ verbose and+ entry_exit_name and+ only_outermost_enter in
+  filter ~only_outermost_enter ~verbose ~yojson ~debug ~entry_exit_name files ;
+  Cmdliner.Cmd.Exit.ok
+end
+
 module Simulate = struct
 open Antlr
 
@@ -155,7 +190,7 @@ end
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [Deserialize.cmd; Filter.cmd; Simulate.cmd]
+  [Deserialize.cmd; Filter.cmd; EntryExit.cmd; Simulate.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())

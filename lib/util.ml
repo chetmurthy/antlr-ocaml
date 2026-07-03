@@ -1,5 +1,7 @@
 (**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson *)
 
+open Pa_ppx_utils
+
 let plisti elem i = 
   let rec plist_rec accum i = parser
      [< e = elem i; strm >] -> plist_rec (e::accum) (i+1) strm
@@ -63,3 +65,55 @@ let stream_iter f strm =
     [< 't ; s >] -> f t ; itrec s
   | [< >] -> ()
   in itrec strm
+
+let extract_tag = function
+    (_,`List ((_, `String tag):: _)) -> Some tag
+  | _ -> None
+
+(** entry_exit pulls out runs of events bracketed by
+    "ENTER x" and "EXIT x" (inclusive), for specified
+    "x".  Events outside those brackets are dropped.
+
+ *)
+
+let ee1 ~only_outermost_enter eemap extractor acc j = match (extractor j, acc) with
+      (Some tag,_) when List.mem_assoc tag eemap ->
+       let exit_tag = List.assoc tag eemap in
+      ([], ((exit_tag,[j]) :: acc))
+
+    | (Some tag, ((exittag, rev_j)::(exittag', rev_j')::acc)) when tag = exittag ->
+       let rev_j' = List.append rev_j rev_j' in
+       ([], (exittag', j::rev_j')::acc)
+
+    | (Some tag, ((exittag, rev_j)::[])) when tag = exittag ->
+       if  only_outermost_enter then
+         ([Std.last rev_j], [])
+       else
+         (List.rev (j::rev_j), [])
+
+    | (_, ((tag, rev_j) :: acc)) ->
+       ([], ((tag, j::rev_j) :: acc))
+
+    | (_, []) -> ([], acc)
+
+let entry_exit ~only_outermost_enter names extractor strm =
+  let entry_names = List.map (fun s -> "ENTER "^s) names in
+  let exit_names = List.map (fun s -> "EXIT "^s) names in
+  let eemap = Std.combine entry_names exit_names in
+  let drain_acc acc =
+    if only_outermost_enter then
+      List.fold_right (fun (_, rev_j) acc -> (Std.last rev_j)::acc) acc []
+    else
+      List.fold_right (fun (_, rev_j) acc -> List.rev_append rev_j acc) acc [] in
+
+  let rec eerec acc = parser
+    [< 'j ; strm >] ->
+      let (emitl, acc) = ee1 ~only_outermost_enter eemap extractor acc j in
+      [< Stream.of_list emitl ; eerec acc strm >]
+  | [< >] -> Stream.of_list (drain_acc acc) in
+
+  eerec [] strm
+
+let entry_exit_yojson ~only_outermost_enter names strm =
+  entry_exit ~only_outermost_enter names extract_tag strm
+
