@@ -275,6 +275,19 @@ type json_log_t =
 | PredictionContext_EXIT_merge of prediction_context_t
                       [@yojson.name "EXIT PredictionContext.merge"]
                       [@located_yojson.name "EXIT PredictionContext.merge"]
+| PredictionContext_ENTER_mergeRoot of prediction_context_t * prediction_context_t * bool
+                      [@yojson.name "ENTER PredictionContext.mergeRoot"]
+                      [@located_yojson.name "ENTER PredictionContext.mergeRoot"]
+| PredictionContext_EXIT_mergeRoot of prediction_context_t option
+                      [@yojson.name "EXIT PredictionContext.mergeRoot"]
+                      [@located_yojson.name "EXIT PredictionContext.mergeRoot"]
+| PredictionContext_ENTER_mergeArrays of prediction_context_t * prediction_context_t * bool * merge_cache_t option
+                      [@yojson.name "ENTER PredictionContext.mergeArrays"]
+                      [@located_yojson.name "ENTER PredictionContext.mergeArrays"]
+| PredictionContext_EXIT_mergeArrays of prediction_context_t
+                      [@yojson.name "EXIT PredictionContext.mergeArrays"]
+                      [@located_yojson.name "EXIT PredictionContext.mergeArrays"]
+
 | MergeCache_add of prediction_context_t * prediction_context_t * prediction_context_t
                       [@yojson.name "mergeCache_add"]
                       [@located_yojson.name "mergeCache_add"]

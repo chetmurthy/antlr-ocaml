@@ -26,8 +26,16 @@ test:: all
 	mkdir -p _build && ./antlrtest_test.exe
 
 MANAGETRIP=./trip-tests/manage-trip-tests
+deserialize-all:: jsonlog_util.opt
+	./jsonlog_util.opt deserialize _build/*/*/json.log
+
+filter-all:: jsonlog_util.opt
+	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log
+
 simulate-all:: jsonlog_util.opt
 	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log
+#	./jsonlog_util.opt simulate -it "ENTER PredictionContext.mergeArrays" _build/*/*/json.log
+#	./jsonlog_util.opt simulate -it "ENTER PredictionContext.mergeRoot" _build/*/*/json.log
 
 generate-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) generate -v

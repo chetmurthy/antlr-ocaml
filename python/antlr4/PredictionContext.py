@@ -478,7 +478,7 @@ def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, 
 # @param rootIsWildcard {@code true} if this is a local-context merge,
 # otherwise false to indicate a full-context merge
 #/
-def mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool):
+def _mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool):
     if rootIsWildcard:
         if a == PredictionContext.EMPTY:
             return PredictionContext.EMPTY  ## + b =#
@@ -497,6 +497,20 @@ def mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIs
             return ArrayPredictionContext(parents, payloads)
     return None
 
+
+def mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool):
+    Trace.write(json.dumps([ 'ENTER PredictionContext.mergeRoot',
+                             a.asdict(),
+                             b.asdict(),
+                             rootIsWildcard
+                            ],
+                           sort_keys=True, indent=4))
+    rv = _mergeRoot(a, b, rootIsWildcard)
+    Trace.write(json.dumps([ 'EXIT PredictionContext.mergeRoot',
+                             (None if rv is None else rv.asdict())
+                            ],
+                           sort_keys=True, indent=4))
+    return rv
 
 #
 # Merge two {@link ArrayPredictionContext} instances.
@@ -517,7 +531,7 @@ def mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIs
 # {@link SingletonPredictionContext}.<br>
 # <embed src="images/ArrayMerge_EqualTop.svg" type="image/svg+xml"/></p>
 #/
-def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildcard:bool, mergeCache:dict):
+def _mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildcard:bool, mergeCache:dict):
     if mergeCache is not None:
         previous = mergeCache.get((a,b), None)
         if previous is not None:
@@ -614,6 +628,20 @@ def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildca
 
     return merged
 
+def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildcard:bool, mergeCache:dict):
+    Trace.write(json.dumps([ 'ENTER PredictionContext.mergeArrays',
+                             a.asdict(),
+                             b.asdict(),
+                             rootIsWildcard,
+                             (None if mergeCache is None else mergeCache_asdict(mergeCache))
+                            ],
+                           sort_keys=True, indent=4))
+    rv = _mergeArrays(a, b, rootIsWildcard, mergeCache)
+    Trace.write(json.dumps([ 'EXIT PredictionContext.mergeArrays',
+                             rv.asdict()
+                            ],
+                           sort_keys=True, indent=4))
+    return rv
 
 #
 # Make pass over all <em>M</em> {@code parents}; merge any {@code equals()}

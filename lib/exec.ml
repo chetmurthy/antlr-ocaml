@@ -85,7 +85,7 @@ type interim_t =
 | Computed of pc_t
 | Nothing
 
-let mergeRoot a b rootIsWildcard =
+let _mergeRoot a b rootIsWildcard =
   if rootIsWildcard then
     match (a,b) with
       ((EMPTY, _)|(_, EMPTY)) -> Some EMPTY
@@ -98,10 +98,27 @@ let mergeRoot a b rootIsWildcard =
     | (SINGLETON(pc_opt, rs),EMPTY) ->
        Some (ARRAY [(pc_opt,rs); (None, _EMPTY_RETURN_STATE)])
     | ((ARRAY _,_)|(_,ARRAY _)) -> assert false       
+    | _ -> None
+
+let mergeRoot a b rootIsWildcard =
+  Tracelog.write
+    (PredictionContext_ENTER_mergeRoot
+       (to_mimick a,
+        to_mimick b,
+        rootIsWildcard)) ;
+  let rv = _mergeRoot a b rootIsWildcard in
+  Tracelog.write
+    (PredictionContext_EXIT_mergeRoot (Option.map to_mimick rv)) ;
+  rv
+
+let unpack_SINGLETON = function
+    SINGLETON(a,b) -> Some (a,b)
+  | EMPTY -> Some(None, _EMPTY_RETURN_STATE)
+  | _ -> None
 
 let rec mergeSingletons a b rootIsWildcard mergeCache =
-  match (a,b) with
-    SINGLETON (a_pc, a_returnState), SINGLETON (b_pc, b_returnState) -> begin
+  match (unpack_SINGLETON a,unpack_SINGLETON b) with
+    Some (a_pc, a_returnState), Some (b_pc, b_returnState) -> begin
       let rv = match MC.maybe_get mergeCache a b with
           Some v -> CacheHit v
         | None ->
@@ -198,7 +215,7 @@ and combineCommonParents p_rs =
                  MHM.add ht (p,p) ; p in
             (Some p, rs))
 
-and mergeArrays a b rootIsWildcard mergeCache =
+and _mergeArrays a b rootIsWildcard mergeCache =
   match (a,b) with
     ARRAY al, ARRAY bl -> begin
       let rv = MC.maybe_get mergeCache a b in
@@ -214,6 +231,18 @@ and mergeArrays a b rootIsWildcard mergeCache =
          merged
     end
   | _ -> assert false
+
+and mergeArrays a b rootIsWildcard mergeCache =
+  Tracelog.write
+    (PredictionContext_ENTER_mergeArrays
+       (to_mimick a,
+        to_mimick b,
+        rootIsWildcard,
+        Option.map MC.to_mimick mergeCache)) ;
+  let rv = _mergeArrays a b rootIsWildcard mergeCache in
+  Tracelog.write
+    (PredictionContext_EXIT_mergeArrays (to_mimick rv)) ;
+  rv
 
 and merge_opt a_opt b_opt rootIsWildcard mergeCache =
   let a = match a_opt with
@@ -240,17 +269,17 @@ and _merge a b rootIsWildcard mergeCache =
   if a = b then
     a
   else match (a,b) with
-         (SINGLETON _, SINGLETON _) ->
+         ((SINGLETON _|EMPTY), (SINGLETON _|EMPTY)) ->
          mergeSingletons a b rootIsWildcard mergeCache
        | (EMPTY, _) when rootIsWildcard -> a
        | (_, EMPTY) when rootIsWildcard -> b
        | _ ->
-          let a = match a with
-              SINGLETON (parentCtx, returnState) ->
+          let a = match unpack_SINGLETON a with
+              Some (parentCtx, returnState) ->
               ARRAY ([parentCtx, returnState])
             | _ -> a in
-          let b = match a with
-              SINGLETON (parentCtx, returnState) ->
+          let b = match unpack_SINGLETON b with
+              Some (parentCtx, returnState) ->
               ARRAY ([parentCtx, returnState])
             | _ -> b in
           mergeArrays a b rootIsWildcard mergeCache
