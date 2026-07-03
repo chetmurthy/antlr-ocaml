@@ -32,10 +32,16 @@ $ENV{'TOP'} = ".." ;
       shift @ARGV ; 
       push(@exclude, shift @ARGV) ;
     }
-    elsif ($ARGV[0] eq 'clean') {
+    elsif ($ARGV[0] eq 'realclean') {
       $subcommand = shift @ARGV ;
     }
     elsif ($ARGV[0] eq 'generate') {
+      $subcommand = shift @ARGV ;
+    }
+    elsif ($ARGV[0] eq 'test') {
+      $subcommand = shift @ARGV ;
+    }
+    elsif ($ARGV[0] eq 'clean') {
       $subcommand = shift @ARGV ;
     }
     else { last ; }
@@ -50,7 +56,7 @@ $ENV{'TOP'} = ".." ;
     @testfiles = exclude_tests($pat, @testfiles) ;
   }
 
-  if ($subcommand eq 'clean') {
+  if ($subcommand eq 'realclean') {
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
       my $dir = "_build/$p" ;
@@ -71,7 +77,22 @@ $ENV{'TOP'} = ".." ;
 		      $tf]) ;
     }
   }
-
+  elsif ($subcommand eq 'clean') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_build/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], ["make", "-C", $dir, "clean"]) ;
+    }
+  }
+  elsif ($subcommand eq 'test') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_build/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], ["make", "-C", $dir, "all"]) ;
+    }
+  }
 }
 
 # "$ENV{'TOP'}/tests/fixtures/descriptors/*/*.txt"

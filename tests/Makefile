@@ -25,24 +25,12 @@ test:: all
 	mkdir -p _build && ./antlr_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
 
-GENARGS="--template-dir=fixtures/antlrtest.2"
-#ALLTESTS=$(shell (cd fixtures/descriptors && ls */*.txt))
-ALLTESTS=$(shell (cd fixtures/descriptors && ls */*.txt | grep -v Performance ))
-generate-all:: antlrtest_test.exe
-	mkdir -p _build && set -e ;\
-	for d in $(ALLTESTS) ;\
-	do \
-	rm -rf _build/$${d/.txt/} && \
-	./antlrtest_util.opt generate $(GENARGS) -d _build/$${d/.txt/} \
-	fixtures/descriptors/$$d ;\
-	done
+MANAGETRIP=./trip-tests/0.manage
+generate-all:: antlrtest_util.opt
+	mkdir -p _build && $(MANAGETRIP) generate -v
 
 test-all:: antlrtest_test.exe
-	mkdir -p _build && set -e ;\
-	for d in $(ALLTESTS) ;\
-	do \
-	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} all ;\
-	done
+	mkdir -p _build && $(MANAGETRIP) test -v
 
 compare-all:: antlrtest_test.exe
 	mkdir -p _build && set -e ;\
@@ -52,11 +40,7 @@ compare-all:: antlrtest_test.exe
 	done
 
 clean-all:: antlrtest_test.exe
-	mkdir -p _build && set -e ;\
-	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
-	do \
-	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} clean ;\
-	done
+	mkdir -p _build && $(MANAGETRIP) clean -v
 
 generate-all-nonstop:: antlrtest_test.exe
 	mkdir -p _build && set -e ;\
