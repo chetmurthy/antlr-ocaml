@@ -33,11 +33,7 @@ test-all:: antlrtest_test.exe
 	mkdir -p _build && $(MANAGETRIP) test -v
 
 compare-all:: antlrtest_test.exe
-	mkdir -p _build && set -e ;\
-	for d in $(ALLTESTS) ;\
-	do \
-	[ -d _build/$${d/.txt/} ] && $(MAKE) -C _build/$${d/.txt/} compare-atns ;\
-	done
+	mkdir -p _build && $(MANAGETRIP) compare-atns -v
 
 clean-all:: antlrtest_test.exe
 	mkdir -p _build && $(MANAGETRIP) clean -v

@@ -52,12 +52,12 @@ deserialize-ocaml::
 
 compare-atns:: <lexerName>.py
 	diff -bBwi -u10 \
-	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp ) \
-	<( $(TOP)/tests/atn_util.opt dump --json <grammarName>.interp )
+	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp | jq '.' ) \
+	<( $(TOP)/tests/atn_util.opt dump --json <grammarName>.interp | jq '.' )
 <if(parserName)>
 	diff -bBwi -u10 \
-	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp ) \
-	<( $(TOP)/tests/atn_util.opt dump --json <lexerName>.interp )
+	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp | jq '.' ) \
+	<( $(TOP)/tests/atn_util.opt dump --json <lexerName>.interp | jq '.' )
 <endif>
 
 visualize-lexer: <lexerName>.interp

@@ -44,14 +44,21 @@ $ENV{'TOP'} = ".." ;
     elsif ($ARGV[0] eq 'clean') {
       $subcommand = shift @ARGV ;
     }
+    elsif ($ARGV[0] eq 'compare-atns') {
+      $subcommand = shift @ARGV ;
+    }
     else { last ; }
   }
 
-  unless (int(@patterns)) {
+  my @testfiles = @ARGV ;
+
+  unless (int(@testfiles) || int(@patterns)) {
     @patterns = ("$ENV{'TOP'}/tests/fixtures/descriptors/*/*.txt") ;
     @exclude = ("Performance") unless (int(@exclude)) ;
   }
-  my @testfiles = glob_tests(@patterns) ;
+  if (int(@patterns)) {
+    push(@testfiles, glob_tests(@patterns)) ;
+  }
   foreach my $pat (@exclude) {
     @testfiles = exclude_tests($pat, @testfiles) ;
   }
@@ -91,6 +98,14 @@ $ENV{'TOP'} = ".." ;
       my $dir = "_build/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["make", "-C", $dir, "all"]) ;
+    }
+  }
+  elsif ($subcommand eq 'compare-atns') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_build/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], ["make", "-C", $dir, "compare-atns"]) ;
     }
   }
 }
