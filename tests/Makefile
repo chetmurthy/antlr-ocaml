@@ -29,56 +29,35 @@ MANAGETRIP=./trip-tests/0.manage
 generate-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) generate -v
 
-test-all:: antlrtest_test.exe
+test-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) test -v
 
-compare-all:: antlrtest_test.exe
+compare-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) compare-atns -v
 
-clean-all:: antlrtest_test.exe
+clean-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) clean -v
 
-generate-all-nonstop:: antlrtest_test.exe
-	mkdir -p _build && set -e ;\
-	for d in `cd fixtures/descriptors ; find . -name '*.txt' -print` ;\
-	do \
-	rm -rf _build/$${d/.txt/} && \
-	./antlrtest_util.exe generate $(GENARGS) -d _build/$${d/.txt/} \
-	fixtures/descriptors/$$d || true ;\
-	done
+realclean-all:: antlrtest_util.opt
+	mkdir -p _build && $(MANAGETRIP) realclean -v
 
-DTEST=$(shell cd fixtures/descriptors && ls LexerExec/* | perl -p -e 's,\.txt,,')
-#CTEST=$(shell cd fixtures/custom-descriptors && ls */* | perl -p -e 's,\.txt,,')
+DTEST=$(shell ls fixtures/descriptors/LexerExec/*)
+#CTEST=$(shell ls fixtures/custom-descriptors/*/*)
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
-	mkdir -p _build && set -e ;\
-	for d in $(SELECTED) ;\
-	do \
-	rm -rf _build/$$d && \
-	./antlrtest_util.exe generate $(GENARGS) -d _build/$$d \
-	fixtures/*descriptors/$$d.txt ;\
-	done
+	mkdir -p _build && $(MANAGETRIP) generate -v $(SELECTED)
 
 test-selected:: antlrtest_test.exe
-	set -e ;\
-	for d in $(SELECTED) ;\
-	do \
-	[ -d _build/$$d ] && $(MAKE) -C _build/$$d all ;\
-	done
+	mkdir -p _build && $(MANAGETRIP) test -v $(SELECTED)
 
 clean-selected:: antlrtest_test.exe
-	set -e ;\
-	for d in $(SELECTED) ;\
-	do \
-	[ -d _build/$$d ] && $(MAKE) -C _build/$$d clean ;\
-	done
+	mkdir -p _build && $(MANAGETRIP) clean -v $(SELECTED)
+
+realclean-selected:: antlrtest_test.exe
+	mkdir -p _build && $(MANAGETRIP) realclean -v $(SELECTED)
 
 compare-selected:: antlrtest_test.exe
-	set -e ;\
-	for d in $(SELECTED) ;\
-	do \
-	[ -d _build/$$d ] && $(MAKE) -C _build/$$d compare-atns ;\
-	done
+	mkdir -p _build && $(MANAGETRIP) compare-atns -v $(SELECTED)
 
 #ONE=LexerExec/CharSet
 ONE=ParserExec/Basic
