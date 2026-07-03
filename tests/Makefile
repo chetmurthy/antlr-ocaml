@@ -25,7 +25,10 @@ test:: all
 	mkdir -p _build && ./antlr_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
 
-MANAGETRIP=./trip-tests/0.manage
+MANAGETRIP=./trip-tests/manage-trip-tests
+simulate-all:: jsonlog_util.opt
+	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log
+
 generate-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) generate -v
 
