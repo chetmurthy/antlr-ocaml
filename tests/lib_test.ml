@@ -27,17 +27,88 @@ let test_interval_set ctxt =
   ; ()
 
 let test_entry_exit ctxt =
-  let entry_exit_string ~ooe names = Util.entry_exit ~only_outermost_enter:ooe names (fun x -> Some x) in
-  let eelist  ?(ooe=false) names l = l |> Stream.of_list |> entry_exit_string ~ooe names |> Std.list_of_stream in
+  let entry_exit_string ?nth ~ooe names = Util.entry_exit ?nth ~only_outermost_enter:ooe names (fun x -> Some x) in
+  let eelist ?nth ?(ooe=false) names l = l |> Stream.of_list |> entry_exit_string ?nth ~ooe names |> Std.list_of_stream in
   let printer l = Fmt.(str "[%a]" (list ~sep:(const string "; ") Dump.string) l) in
   ()
   ; assert_equal ~printer [] (eelist ["x"] ["y"])
   ; assert_equal ~printer ["ENTER x"; "y"; "EXIT x"] (eelist ["x"] ["x"; "ENTER x"; "y"; "EXIT x"])
   ; assert_equal ~printer ["ENTER x"; "y"; "EXIT x"] (eelist ["x"] ["x"; "ENTER x"; "y"; "EXIT x"; "z"])
   ; assert_equal ~printer ["ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"]
-      (eelist ["x"; "y"] ["x"; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"; "z"])
+      (eelist ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"])
+  ; assert_equal ~printer
+      ["ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+       ; "ENTER x"; "a"; "EXIT x"]
+      (eelist ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a"; "EXIT x"])
   ; assert_equal ~printer ["ENTER x"; "ENTER x"]
-      (eelist ~ooe:true ["x"; "y"] ["x"; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"; "z"; "ENTER x"; "a"; "EXIT x"])
+      (eelist ~ooe:true ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a"; "EXIT x"])
+  ; assert_equal ~printer ["ENTER x"; "ENTER x"]
+      (eelist ~ooe:true ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a"])
+  ; assert_equal ~printer
+      ["ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+       ; "ENTER x"; "a"]
+      (eelist ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a"])
+  ; assert_equal ~printer
+      ["ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"]
+      (eelist ~nth:0 ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a"; "EXIT x"])
+  ; assert_equal ~printer
+      ["ENTER x"; "a"; "EXIT x"]
+      (eelist ~nth:1 ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a"; "EXIT x"])
+  ; assert_equal ~printer
+      ["ENTER y"; "a"; "EXIT y"]
+      (eelist ~nth:1 ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER z"; "b"; "EXIT z"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER y"; "a"; "EXIT y"])
+  ; assert_equal ~printer
+      ["ENTER y"]
+      (eelist ~ooe:true ~nth:1 ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER z"; "b"; "EXIT z"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER y"; "a"; "EXIT y"])
+  ; assert_equal ~printer
+      []
+      (eelist ~nth:2 ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a"; "EXIT x"])
+  ; assert_equal ~printer
+      []
+      (eelist ~nth:(-1) ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a"; "EXIT x"])
 
 let suite = "Test library" >::: [
       "range"   >:: test_range

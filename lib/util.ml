@@ -74,46 +74,76 @@ let extract_tag = function
     "ENTER x" and "EXIT x" (inclusive), for specified
     "x".  Events outside those brackets are dropped.
 
+    [~only_outermost_enter] : when it detects a full entry/exit tree, it emits only the
+    first ENTER event
+
+    [names] : the list of names [n] that are used for "ENTER [n]" and "EXIT [n]"
+    event names
+
+    [~nth : int option] :
+
+    * when set to [None], emit all matching events from above;
+
+    * when set to [Some (-1)], emit no events.
+
+    * when set to [Some 0], emit the next event-tree as above
+
+    * when set to [Some n], skip the next event-tree, and set to [Some (n-1)]
+
+    The effect is to emit ONLY the nth event-tree.
+
  *)
 
-let ee1 ~only_outermost_enter eemap extractor acc j = match (extractor j, acc) with
+let ee1 ~only_outermost_enter eemap extractor nth acc j = match (extractor j, acc) with
       (Some tag,_) when List.mem_assoc tag eemap ->
        let exit_tag = List.assoc tag eemap in
-      ([], ((exit_tag,[j]) :: acc))
+      (nth, [], ((exit_tag,[j]) :: acc))
 
     | (Some tag, ((exittag, rev_j)::(exittag', rev_j')::acc)) when tag = exittag ->
        let rev_j' = List.append rev_j rev_j' in
-       ([], (exittag', j::rev_j')::acc)
+       (nth, [], (exittag', j::rev_j')::acc)
 
-    | (Some tag, ((exittag, rev_j)::[])) when tag = exittag ->
-       if  only_outermost_enter then
-         ([Std.last rev_j], [])
-       else
-         (List.rev (j::rev_j), [])
-
+    | (Some tag, ((exittag, rev_j)::[])) when tag = exittag -> begin
+        match nth with
+          None ->
+          if only_outermost_enter then
+            (None, [Std.last rev_j], [])
+          else
+            (None, List.rev (j::rev_j), [])
+        | Some 0 ->
+          if only_outermost_enter then
+            (Some (-1), [Std.last rev_j], [])
+          else
+            (Some (-1), List.rev (j::rev_j), [])
+        | Some (-1) ->
+           (Some (-1), [], [])
+        | Some n ->
+           (Some (n-1), [], [])
+        | _ -> assert false
+      end
     | (_, ((tag, rev_j) :: acc)) ->
-       ([], ((tag, j::rev_j) :: acc))
+       (nth, [], ((tag, j::rev_j) :: acc))
 
-    | (_, []) -> ([], acc)
+    | (_, []) -> (nth, [], acc)
 
-let entry_exit ~only_outermost_enter names extractor strm =
+let entry_exit ?nth ~only_outermost_enter names extractor strm =
   let entry_names = List.map (fun s -> "ENTER "^s) names in
   let exit_names = List.map (fun s -> "EXIT "^s) names in
   let eemap = Std.combine entry_names exit_names in
-  let drain_acc acc =
+  let drain_acc nth acc =
     if only_outermost_enter then
       List.fold_right (fun (_, rev_j) acc -> (Std.last rev_j)::acc) acc []
     else
       List.fold_right (fun (_, rev_j) acc -> List.rev_append rev_j acc) acc [] in
 
-  let rec eerec acc = parser
+  let rec eerec nth acc = parser
     [< 'j ; strm >] ->
-      let (emitl, acc) = ee1 ~only_outermost_enter eemap extractor acc j in
-      [< Stream.of_list emitl ; eerec acc strm >]
-  | [< >] -> Stream.of_list (drain_acc acc) in
+      let (nth, emitl, acc) = ee1 ~only_outermost_enter eemap extractor nth acc j in
+      [< Stream.of_list emitl ; eerec nth acc strm >]
+  | [< >] -> Stream.of_list (drain_acc nth acc) in
 
-  eerec [] strm
+  eerec nth [] strm
 
-let entry_exit_yojson ~only_outermost_enter names strm =
-  entry_exit ~only_outermost_enter names extract_tag strm
+let entry_exit_yojson ?nth ~only_outermost_enter names strm : 'a Stream.t =
+  entry_exit ?nth ~only_outermost_enter names extract_tag strm
 

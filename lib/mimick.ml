@@ -290,7 +290,7 @@ type json_log_t =
 
 | MergeCache_ENTER_add of prediction_context_t * prediction_context_t * prediction_context_t
                       [@yojson.name "ENTER mergeCache_add"]
-                      [@located_yojson.name "EXIT mergeCache_add"]
+                      [@located_yojson.name "ENTER mergeCache_add"]
 | MergeCache_EXIT_add of merge_cache_t
                       [@yojson.name "EXIT mergeCache_add"]
                       [@located_yojson.name "EXIT mergeCache_add"]
