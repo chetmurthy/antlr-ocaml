@@ -49,3 +49,34 @@ let sim1 (loc,j) = match j with
                exn e) ;
         Printexc.raise_with_backtrace e bt
     end
+
+  | M.MergeCache_ENTER_add (mc, a, b, merged) ->  begin
+      try
+        let mc = PC.MC.of_mimick mc in
+        let a = PC.of_mimick a in
+        let b = PC.of_mimick b in
+        let merged = PC.of_mimick merged in
+        PC.MC.add mc (a,b) merged ;
+        ()
+      with e ->
+        let bt = Printexc.get_raw_backtrace () in
+        Fmt.(pf stderr "sim1: %s: exception %a@."
+               (Ploc.string_of_location loc)
+               exn e) ;
+        Printexc.raise_with_backtrace e bt
+    end
+     
+  | M.PredictionContext_ENTER_mergeSingletons (pc1, pc2, rootIsWildcard, mc_opt) -> begin
+      try
+        let pc1 = PC.of_mimick pc1 in
+        let pc2 = PC.of_mimick pc2 in
+        let mc_opt = Option.map PC.MC.of_mimick mc_opt in
+        let pc3 = PC.mergeSingletons pc1 pc2 rootIsWildcard mc_opt in
+        ()
+      with e ->
+        let bt = Printexc.get_raw_backtrace () in
+        Fmt.(pf stderr "sim1: %s: exception %a@."
+               (Ploc.string_of_location loc)
+               exn e) ;
+        Printexc.raise_with_backtrace e bt
+    end

@@ -1,6 +1,7 @@
 import Trace
 import json
 import traceback
+import copy
 
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
@@ -295,7 +296,11 @@ def mergeCache_asdict(mergeCache):
     return ["MergeCache", l]
 
 def mergeCache_add(mergeCache, a,b,merged):
+#    a = copy.deepcopy(a)
+#    b = copy.deepcopy(b)
+#    merged = copy.deepcopy(merged)
     Trace.write(json.dumps([ 'ENTER mergeCache_add',
+                             mergeCache_asdict(mergeCache),
                              a.asdict(),
                              b.asdict(),
                              merged.asdict(),
@@ -377,7 +382,7 @@ def _merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeC
 # otherwise false to indicate a full-context merge
 # @param mergeCache
 #/
-def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool, mergeCache:dict):
+def _mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool, mergeCache:dict):
     if mergeCache is not None:
         previous = mergeCache.get((a,b), None)
         if previous is not None:
@@ -439,6 +444,21 @@ def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, 
             mergeCache_add(mergeCache, a, b, merged)
         return merged
 
+def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool, mergeCache:dict):
+    Trace.write(json.dumps([ 'ENTER PredictionContext.mergeSingletons',
+                             a.asdict(),
+                             b.asdict(),
+                             rootIsWildcard,
+                             (None if mergeCache is None else mergeCache_asdict(mergeCache))
+                            ],
+                           sort_keys=True, indent=4))
+    rv = _mergeSingletons(a, b, rootIsWildcard, mergeCache)
+    Trace.write(json.dumps([ 'EXIT PredictionContext.mergeSingletons',
+                             rv.asdict(),
+                             (None if mergeCache is None else mergeCache_asdict(mergeCache))
+                            ],
+                           sort_keys=True, indent=4))
+    return rv
 
 #
 # Handle case where at least one of {@code a} or {@code b} is

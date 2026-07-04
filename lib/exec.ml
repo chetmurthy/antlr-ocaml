@@ -62,7 +62,7 @@ module MC = struct
       ofList l
 
   let add t (a,b) v =
-    Tracelog.write (MergeCache_ENTER_add (to_mimick a, to_mimick b, to_mimick v)) ;
+    Tracelog.write (MergeCache_ENTER_add (mc_to_mimick t, to_mimick a, to_mimick b, to_mimick v)) ;
     _add t (a,b) v ;
     Tracelog.write (MergeCache_EXIT_add (mc_to_mimick t))
 
@@ -125,7 +125,7 @@ let unpack_SINGLETON = function
   | EMPTY -> Some(None, _EMPTY_RETURN_STATE)
   | _ -> None
 
-let rec mergeSingletons a b rootIsWildcard mergeCache =
+let rec _mergeSingletons a b rootIsWildcard mergeCache =
   match (unpack_SINGLETON a,unpack_SINGLETON b) with
     Some (a_pc, a_returnState), Some (b_pc, b_returnState) -> begin
       let rv = match MC.maybe_get mergeCache a b with
@@ -179,6 +179,18 @@ let rec mergeSingletons a b rootIsWildcard mergeCache =
               merged
     end
   | _ -> assert false
+
+and mergeSingletons a b rootIsWildcard mergeCache =
+  Tracelog.write
+    (PredictionContext_ENTER_mergeSingletons
+       (to_mimick a,
+        to_mimick b,
+        rootIsWildcard,
+        Option.map MC.to_mimick mergeCache)) ;
+  let rv = _mergeSingletons a b rootIsWildcard mergeCache in
+  Tracelog.write
+    (PredictionContext_EXIT_mergeSingletons (to_mimick rv, Option.map MC.to_mimick mergeCache)) ;
+  rv
 
 and do_mergeArrays al bl rootIsWildcard mergeCache =
   let merged_p_rs =
