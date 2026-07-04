@@ -295,7 +295,7 @@ def mergeCache_asdict(mergeCache):
     return ["MergeCache", l]
 
 def mergeCache_add(mergeCache, a,b,merged):
-    Trace.write(json.dumps([ 'mergeCache_add',
+    Trace.write(json.dumps([ 'EENTER mergeCache_add',
                              a.asdict(),
                              b.asdict(),
                              merged.asdict(),

@@ -2,6 +2,7 @@
 
 open Pa_ppx_utils
 open Pa_ppx_located_yojson
+open Antlr
 
 (** deserialize the "json.log" files into Atn.json_log_t objects
  *)
@@ -34,6 +35,13 @@ let pattern =
 let entry_exit_name =
   let doc = "entry-exit-name: extract events with tag '{ENTER,EXIT} name'." in
   Arg.(value & opt_all string [] & info ["e";"entry-exist-name"] ~doc)
+
+let only_outermost_enter =
+  let doc = "pass thru only the outermost ENTER of a tree of events." in
+  Arg.(value & flag & info ["ooe"; "only-outermost-enter"] ~doc)
+
+let pp_json_stream oc strm =
+  Util.stream_iter (Json.pp_hum_to_channel ~std:true oc) strm
 
 module Deserialize = struct
 let deser_json_stream strm =
@@ -80,7 +88,6 @@ let cmd =
 end
 
 module Filter = struct
-open Antlr
 let filter_json_stream matchers strm =
   let filter1 j = match j with
       (_,`List ((_,`String tag)::l)) ->
@@ -90,9 +97,6 @@ let filter_json_stream matchers strm =
     | _ -> [< 'j >] in
       
   Std.stream_concat_map filter1 strm
-
-let pp_json_stream oc strm =
-  Util.stream_iter (Json.pp_hum_to_channel ~std:true oc) strm
 
 let filter1 ~verbose matchers file =
   if verbose then
@@ -119,14 +123,6 @@ let cmd =
 end
 
 module EntryExit = struct
-open Antlr
-
-let only_outermost_enter =
-  let doc = "pass thru only the outermost ENTER of a tree of events." in
-  Arg.(value & flag & info ["only-outermost-enter"] ~doc)
-
-let pp_json_stream oc strm =
-  Util.stream_iter (Json.pp_hum_to_channel ~std:true oc) strm
 
 let filter1 ~only_outermost_enter ~verbose names file =
   if verbose then
@@ -139,7 +135,7 @@ let filter ~verbose ~yojson ~debug ~entry_exit_name ~only_outermost_enter files 
   List.iter (filter1 ~only_outermost_enter ~verbose entry_exit_name) files
 
 let cmd =
-  let doc = "filter json.log files for only selected JSON log objects." in
+  let doc = "filter json.log files for selected ENTER events." in
   let man = [
     `S Manpage.s_bugs;
     `P "Email bug reports to <bugs@example.org>." ]
@@ -151,9 +147,10 @@ let cmd =
 end
 
 module Simulate = struct
-open Antlr
 
-let simulate1 ~verbose matchers file =
+let simulate1_filter ~verbose ~pattern ~case_insensitive file =
+  let flags = if case_insensitive then [`CASELESS] else [] in
+  let matchers = List.map (Pcre2.regexp ~flags) pattern in
   let open Rresult.R in
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
@@ -170,10 +167,32 @@ let simulate1 ~verbose matchers file =
     |> Util.stream_iter Simulate.sim1 in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive files =
-  let flags = if case_insensitive then [`CASELESS] else [] in
-  let matchers = List.map (Pcre2.regexp ~flags) pattern in
-  List.iter (simulate1 ~verbose matchers) files
+let simulate1_entry_exit ~verbose ~entry_exit_name ~only_outermost_enter file =
+  let open Rresult.R in
+  if verbose then
+    Fmt.(pf stderr "[READ %s]@." file) ;
+  Tracelog._enabled := true ;
+  let demarsh j =
+    let loc = Json.loc_of_json j in
+    ([%of_located_yojson: Mimick.json_log_t] j)
+    >>= (fun j ->  Result.Ok(loc,j)) in
+  let doit stream =
+    stream
+    |> Util.entry_exit_yojson ~only_outermost_enter entry_exit_name
+    |> Std.stream_map demarsh
+    |> Std.stream_map Json.raise_failwith_error_msg
+    |> Util.stream_iter Simulate.sim1 in
+  Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
+
+let simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~only_outermost_enter files =
+  match (pattern, entry_exit_name) with
+    (_::_,[]) ->
+    List.iter (simulate1_filter ~verbose ~pattern ~case_insensitive) files
+  | ([],_::_) ->
+    List.iter (simulate1_entry_exit ~verbose ~entry_exit_name ~only_outermost_enter) files
+  | ([],[]) -> Fmt.(failwith "simulate: must provide either pattern or entry-exit-name")
+  | (_::_, _::_) ->
+     Fmt.(failwith "simulate: must NOT provide BOTH pattern AND entry-exit-name")
 
 let cmd =
   let doc = "simulate json.log files for only selected JSON log objects." in
@@ -182,8 +201,9 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "simulate" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ files and+ debug and+ verbose and+ pattern and+ case_insensitive in
-  simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive files ;
+  let+ files and+ debug and+ verbose and+ pattern and+ case_insensitive
+     and+ entry_exit_name and+ only_outermost_enter in
+  simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~only_outermost_enter files ;
   Cmdliner.Cmd.Exit.ok
 end
 

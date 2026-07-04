@@ -288,9 +288,9 @@ type json_log_t =
                       [@yojson.name "EXIT PredictionContext.mergeArrays"]
                       [@located_yojson.name "EXIT PredictionContext.mergeArrays"]
 
-| MergeCache_add of prediction_context_t * prediction_context_t * prediction_context_t
-                      [@yojson.name "mergeCache_add"]
-                      [@located_yojson.name "mergeCache_add"]
+| MergeCache_ENTER_add of prediction_context_t * prediction_context_t * prediction_context_t
+                      [@yojson.name "ENTER mergeCache_add"]
+                      [@located_yojson.name "EXIT mergeCache_add"]
 | MergeCache_EXIT_add of merge_cache_t
                       [@yojson.name "EXIT mergeCache_add"]
                       [@located_yojson.name "EXIT mergeCache_add"]

@@ -42,10 +42,29 @@ module MC = struct
     match MHM.map t (a,b) with
       v -> Some v
     | exception Not_found -> None
-  let add t (a,b) v =
+  let _add t (a,b) v =
     MHM.add t ((a,b), v)
+
   let toList t = MHM.toList t
   let ofList l = MHM.ofList 23 l
+
+  let mc_to_mimick mc =
+    let l = toList mc in
+    let l = l |> List.map (fun ((a,b),c) ->
+                     { M.k = (to_mimick a, to_mimick b) ; v = to_mimick c }) in
+    M.MergeCache l
+
+  let mc_of_mimick mc : t =
+    match mc with
+      M.MergeCache l ->
+      let l = List.map (fun {M.k=(a,b); v=c} ->
+                  ((of_mimick a, of_mimick b), of_mimick c)) l in
+      ofList l
+
+  let add t (a,b) v =
+    Tracelog.write (MergeCache_ENTER_add (to_mimick a, to_mimick b, to_mimick v)) ;
+    _add t (a,b) v ;
+    Tracelog.write (MergeCache_EXIT_add (mc_to_mimick t))
 
   let maybe_cache mc_opt a b merged =
     match mc_opt with
@@ -63,18 +82,8 @@ module MC = struct
             Some v -> Some v
           | None -> None
 
-  let to_mimick mc =
-    let l = toList mc in
-    let l = l |> List.map (fun ((a,b),c) ->
-                     { M.k = (to_mimick a, to_mimick b) ; v = to_mimick c }) in
-    M.MergeCache l
-
-  let of_mimick mc : t =
-    match mc with
-      M.MergeCache l ->
-      let l = List.map (fun {M.k=(a,b); v=c} ->
-                  ((of_mimick a, of_mimick b), of_mimick c)) l in
-      ofList l
+let to_mimick = mc_to_mimick
+let of_mimick = mc_of_mimick
 
 end
 module MergeCache = MC

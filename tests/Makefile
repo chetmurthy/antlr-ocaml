@@ -33,7 +33,8 @@ filter-all:: jsonlog_util.opt
 	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log
 
 simulate-all:: jsonlog_util.opt
-	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log
+	./jsonlog_util.opt simulate --ooe -e "PredictionContext.merge" _build/*/*/json.log
+#	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log
 #	./jsonlog_util.opt simulate -it "ENTER PredictionContext.mergeArrays" _build/*/*/json.log
 #	./jsonlog_util.opt simulate -it "ENTER PredictionContext.mergeRoot" _build/*/*/json.log
 
