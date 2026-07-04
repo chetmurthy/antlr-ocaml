@@ -51,13 +51,13 @@ module MC = struct
   let mc_to_mimick mc =
     let l = toList mc in
     let l = l |> List.map (fun ((a,b),c) ->
-                     { M.k = (to_mimick a, to_mimick b) ; v = to_mimick c }) in
+                     ("", { M.k = (to_mimick a, to_mimick b) ; v = to_mimick c })) in
     M.MergeCache l
 
   let mc_of_mimick mc : t =
     match mc with
       M.MergeCache l ->
-      let l = List.map (fun {M.k=(a,b); v=c} ->
+      let l = List.map (fun (_, {M.k=(a,b); v=c}) ->
                   ((of_mimick a, of_mimick b), of_mimick c)) l in
       ofList l
 

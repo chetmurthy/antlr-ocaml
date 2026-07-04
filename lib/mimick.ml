@@ -181,7 +181,7 @@ and merge_cache_entry_t = {
   }
 
 and merge_cache_t =
-  MergeCache of merge_cache_entry_t list
+  MergeCache of (string * merge_cache_entry_t) list
 
 [@@deriving yojson,located_yojson, show]
 

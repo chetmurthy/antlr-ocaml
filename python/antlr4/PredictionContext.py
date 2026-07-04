@@ -287,11 +287,13 @@ def PredictionContextFromRuleContext(atn:ATN, outerContext:RuleContext=None):
 def mergeCache_asdict(mergeCache):
     l = []
     for k in mergeCache.keys():
+        v = mergeCache[k]
+        txt = "->".join(("(" + ")+(".join([str(x) for x in k]) + ")", str(v)))
         d = {
             'k' : [x.asdict() for x in k],
             'v' : mergeCache[k].asdict()
             }
-        l.append(d)
+        l.append([txt, d])
 
     return ["MergeCache", l]
 

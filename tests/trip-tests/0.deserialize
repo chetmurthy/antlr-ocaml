@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+for f in _build/*/*/json.log
+do
+    echo $f
+    ./jsonlog_util.opt deserialize $f
+done
+
+
+
+
