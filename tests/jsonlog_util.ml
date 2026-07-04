@@ -34,7 +34,11 @@ let pattern =
 
 let entry_exit_name =
   let doc = "entry-exit-name: extract events with tag '{ENTER,EXIT} name'." in
-  Arg.(value & opt_all string [] & info ["e";"entry-exist-name"] ~doc)
+  Arg.(value & opt_all string [] & info ["e";"entry-exit-name"] ~doc)
+
+let entry_exit_nth =
+  let doc = "entry-exit-nth: extract NTH event-tree with tag '{ENTER,EXIT} name'." in
+  Arg.(value & opt (some int) None & info ["n";"entry-exit-nth"] ~doc)
 
 let only_outermost_enter =
   let doc = "pass thru only the outermost ENTER of a tree of events." in
@@ -124,15 +128,15 @@ end
 
 module EntryExit = struct
 
-let filter1 ~only_outermost_enter ~verbose names file =
+let filter1 ?nth ~only_outermost_enter ~verbose names file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
   let doit stream =
-    stream |> Util.entry_exit_yojson ~only_outermost_enter names |> pp_json_stream stdout in
+    stream |> Util.entry_exit_yojson ?nth ~only_outermost_enter names |> pp_json_stream stdout in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let filter ~verbose ~yojson ~debug ~entry_exit_name ~only_outermost_enter files =
-  List.iter (filter1 ~only_outermost_enter ~verbose entry_exit_name) files
+let filter ?nth ~verbose ~yojson ~debug ~entry_exit_name ~only_outermost_enter files =
+  List.iter (filter1 ?nth ~only_outermost_enter ~verbose entry_exit_name) files
 
 let cmd =
   let doc = "filter json.log files for selected ENTER events." in
@@ -141,8 +145,13 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "entry-exit" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ files and+ debug and+ verbose and+ entry_exit_name and+ only_outermost_enter in
-  filter ~only_outermost_enter ~verbose ~yojson ~debug ~entry_exit_name files ;
+  let+ files and+ debug and+ verbose and+ entry_exit_name and+ entry_exit_nth and+ only_outermost_enter in
+  begin match entry_exit_nth with
+    None ->
+     filter ~only_outermost_enter ~verbose ~yojson ~debug ~entry_exit_name files
+  | Some nth ->
+     filter ~nth ~only_outermost_enter ~verbose ~yojson ~debug ~entry_exit_name files
+  end ;
   Cmdliner.Cmd.Exit.ok
 end
 
@@ -167,7 +176,7 @@ let simulate1_filter ~verbose ~pattern ~case_insensitive file =
     |> Util.stream_iter Simulate.sim1 in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let simulate1_entry_exit ~verbose ~entry_exit_name ~only_outermost_enter file =
+let simulate1_entry_exit ?nth ~verbose ~entry_exit_name ~only_outermost_enter file =
   let open Rresult.R in
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
@@ -178,18 +187,23 @@ let simulate1_entry_exit ~verbose ~entry_exit_name ~only_outermost_enter file =
     >>= (fun j ->  Result.Ok(loc,j)) in
   let doit stream =
     stream
-    |> Util.entry_exit_yojson ~only_outermost_enter entry_exit_name
+    |> Util.entry_exit_yojson ?nth ~only_outermost_enter entry_exit_name
     |> Std.stream_map demarsh
     |> Std.stream_map Json.raise_failwith_error_msg
     |> Util.stream_iter Simulate.sim1 in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~only_outermost_enter files =
+let simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter files =
   match (pattern, entry_exit_name) with
     (_::_,[]) ->
     List.iter (simulate1_filter ~verbose ~pattern ~case_insensitive) files
-  | ([],_::_) ->
-    List.iter (simulate1_entry_exit ~verbose ~entry_exit_name ~only_outermost_enter) files
+  | ([],_::_) -> begin
+      match entry_exit_nth with
+        None ->
+        List.iter (simulate1_entry_exit ~verbose ~entry_exit_name ~only_outermost_enter) files
+      | Some nth ->
+         List.iter (simulate1_entry_exit ~nth ~verbose ~entry_exit_name ~only_outermost_enter) files
+    end
   | ([],[]) -> Fmt.(failwith "simulate: must provide either pattern or entry-exit-name")
   | (_::_, _::_) ->
      Fmt.(failwith "simulate: must NOT provide BOTH pattern AND entry-exit-name")
@@ -202,8 +216,8 @@ let cmd =
   in
   Cmd.make (Cmd.info "simulate" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ files and+ debug and+ verbose and+ pattern and+ case_insensitive
-     and+ entry_exit_name and+ only_outermost_enter in
-  simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~only_outermost_enter files ;
+     and+ entry_exit_name and+ entry_exit_nth and+ only_outermost_enter in
+  simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter files ;
   Cmdliner.Cmd.Exit.ok
 end
 
