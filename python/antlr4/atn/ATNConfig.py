@@ -31,6 +31,14 @@ class ATNConfig(object):
     )
 
     def __init__(self, state:ATNState=None, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=None, config:ATNConfig=None):
+        Trace.write(json.dumps([ 'ENTER AtnConfig.__init__',
+                                 (None if state is None else state.stateNumber),
+                                 (None if alt is None else alt),
+                                 (None if context is None else context.asdict()),
+                                 (None if semantic is None else semantic.asdict()),
+                                 (None if config is None else config.asdict())
+                                ],
+                               sort_keys=True, indent=4))
         if config is not None:
             if state is None:
                 state = config.state
@@ -62,7 +70,10 @@ class ATNConfig(object):
         # accurate depth since I don't ever decrement. TODO: make it a boolean then
         self.reachesIntoOuterContext = 0 if config is None else config.reachesIntoOuterContext
         self.precedenceFilterSuppressed = False if config is None else config.precedenceFilterSuppressed
-
+        Trace.write(json.dumps([ 'EXIT AtnConfig.__init__',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
     def asdict(self):
         d = {
             'state' : self.state.stateNumber,
@@ -157,8 +168,10 @@ class LexerATNConfig(ATNConfig):
 
     def asdict(self):
         d = super(LexerATNConfig, self).asdict()
-        d['lexerActionExecutor'] = None if self.lexerActionExecutor is None else self.lexerActionExecutor.asdict()
-        d['passedThroughNonGreedyDecision'] = self.passedThroughNonGreedyDecision
+        if hasattr(self,'lexerActionExecutor'):
+            d['lexerActionExecutor'] = None if self.lexerActionExecutor is None else self.lexerActionExecutor.asdict()
+        if hasattr(self,'passedThroughNonGreedyDecision'):
+            d['passedThroughNonGreedyDecision'] = self.passedThroughNonGreedyDecision
         return d
 
     def __hash__(self):

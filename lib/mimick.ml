@@ -301,4 +301,11 @@ type json_log_t =
                       [@yojson.name "EXIT PredictionContext.mergeSingletons"]
                       [@located_yojson.name "EXIT PredictionContext.mergeSingletons"]
 
+| AtnConfig_ENTER_init of deser_state_id option * int option * prediction_context_t option * semantic_context_t option * config_t option
+                                    [@yojson.name "ENTER AtnConfig.__init__"]
+                                    [@located_yojson.name "ENTER AtnConfig.__init__"]
+| AtnConfig_EXIT_init of config_t
+                                    [@yojson.name "EXIT AtnConfig.__init__"]
+                                    [@located_yojson.name "EXIT AtnConfig.__init__"]
+
 [@@deriving yojson,located_yojson, show]
