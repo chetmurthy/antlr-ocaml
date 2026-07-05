@@ -7,14 +7,32 @@ open Atn
 module M = Mimick
 
 module PC = struct
+let _EMPTY_RETURN_STATE = 0x7FFFFFFF
+
 open Coll
 
 type pc_t =
   EMPTY
 | SINGLETON of (pc_t option * int)
 | ARRAY of (pc_t option * int) list
-
 type t = pc_t
+
+let rec toString = function
+    EMPTY -> "$"
+  | ARRAY[(_,rs)] when rs = _EMPTY_RETURN_STATE -> "[]"
+  | SINGLETON(p, rs) -> 
+     let up = match p with None -> "" | Some x -> toString x in
+     if up = "" then
+       if rs = _EMPTY_RETURN_STATE then "$"
+       else string_of_int rs
+     else Fmt.(str "%d %s" rs up)
+  | ARRAY [] -> "[]"
+  | ARRAY l ->
+     Fmt.(str "[%a]" (list ~sep:(const string ", ") pair_as_singleton) l)
+
+and pair_as_singleton pps (popt,n) =
+  let s = toString (SINGLETON (popt, n)) in
+  Fmt.(pf pps "%s" s)
 
 let rec to_mimick = function
     EMPTY -> M.PC_EMPTY
@@ -51,7 +69,9 @@ module MC = struct
   let mc_to_mimick mc =
     let l = toList mc in
     let l = l |> List.map (fun ((a,b),c) ->
-                     ("", { M.k = (to_mimick a, to_mimick b) ; v = to_mimick c })) in
+                     let txt = Fmt.(str "(%s)+(%s)->%s" (toString a) (toString b) (toString c)) in
+                     (txt, { M.k = (to_mimick a, to_mimick b) ; v = to_mimick c })) in
+    let l = List.stable_sort Stdlib.compare l in
     M.MergeCache l
 
   let mc_of_mimick mc : t =
@@ -88,7 +108,6 @@ let of_mimick = mc_of_mimick
 end
 module MergeCache = MC
 
-let _EMPTY_RETURN_STATE = 0x7FFFFFFF
 type interim_t =
   CacheHit of pc_t
 | Computed of pc_t

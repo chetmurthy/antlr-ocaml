@@ -294,6 +294,7 @@ def mergeCache_asdict(mergeCache):
             'v' : mergeCache[k].asdict()
             }
         l.append([txt, d])
+    l.sort(key=(lambda x: x[0]))
 
     return ["MergeCache", l]
 

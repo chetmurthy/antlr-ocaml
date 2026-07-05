@@ -4,7 +4,7 @@
 F=_build/FullContextParsing/ExprAmbiguity_2/json.log
 echo $F
 
-ARGS=" -e PredictionContext.merge -n 2"
+ARGS=" -e PredictionContext.merge"
 
 ./jsonlog_util.opt entry-exit $ARGS $F | jq -s 'length | "\(.) lines (full entry/exit)"'
 ./jsonlog_util.opt entry-exit --ooe $ARGS $F | jq -s 'length | "\(.) lines (only entry)"'
