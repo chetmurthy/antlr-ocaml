@@ -80,3 +80,22 @@ let sim1 (loc,j) = match j with
                exn e) ;
         Printexc.raise_with_backtrace e bt
     end
+
+  | M.ATNConfigSet_ENTER_add (cs, c, mc_opt) -> begin
+      try
+      let cs = ACS.of_mimick cs in
+      let c = AC.of_mimick c in
+      let mc_opt = Option.map PC.MC.of_mimick mc_opt in
+      let rv = match mc_opt with
+          None -> ACS.add cs c
+        | Some mergeCache -> ACS.add ~mergeCache cs c
+      in
+      let cs2 = ACS.to_mimick cs in
+      ()
+      with e ->
+        let bt = Printexc.get_raw_backtrace () in
+        Fmt.(pf stderr "sim1: %s: exception %a@."
+               (Ploc.string_of_location loc)
+               exn e) ;
+        Printexc.raise_with_backtrace e bt
+    end

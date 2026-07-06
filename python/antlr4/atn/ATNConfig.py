@@ -31,7 +31,7 @@ class ATNConfig(object):
     )
 
     def __init__(self, state:ATNState=None, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=None, config:ATNConfig=None):
-        Trace.write(json.dumps([ 'ENTER AtnConfig.__init__',
+        Trace.write(json.dumps([ 'ENTER ATNConfig.__init__',
                                  (None if state is None else state.stateNumber),
                                  (None if alt is None else alt),
                                  (None if context is None else context.asdict()),
@@ -50,6 +50,10 @@ class ATNConfig(object):
                 semantic = config.semanticContext
         if semantic is None:
             semantic = SemanticContext.NONE
+        assert (state is not None)
+        assert (alt is not None)
+#        assert (context is not None)
+        assert (semantic is not None)
         # The ATN state associated with this configuration#/
         self.state = state
         # What alt (or lexer rule) is predicted by this configuration#/
@@ -70,8 +74,8 @@ class ATNConfig(object):
         # accurate depth since I don't ever decrement. TODO: make it a boolean then
         self.reachesIntoOuterContext = 0 if config is None else config.reachesIntoOuterContext
         self.precedenceFilterSuppressed = False if config is None else config.precedenceFilterSuppressed
-        Trace.write(json.dumps([ 'EXIT AtnConfig.__init__',
-                                 self.asdict()
+        Trace.write(json.dumps([ 'EXIT ATNConfig.__init__',
+                                 ATNConfig.asdict(self)
                                 ],
                                sort_keys=True, indent=4))
     def asdict(self):
@@ -83,7 +87,7 @@ class ATNConfig(object):
             'reachesIntoOuterContext' : self.reachesIntoOuterContext,
             'precedenceFilterSuppressed' : self.precedenceFilterSuppressed,
         }
-        return d
+        return ["ATNConfig", d]
 
     # An ATN configuration is equal to another if both have
     #  the same state, they predict the same alternative, and
@@ -103,7 +107,7 @@ class ATNConfig(object):
 
     def __eq__(self, other):
         rv = self.real__eq__(other)
-        Trace.write(json.dumps([ 'AtnConfig.__eq__',
+        Trace.write(json.dumps([ 'ATNConfig.__eq__',
                                  self.asdict(), other.asdict(), rv ],
                                sort_keys=True, indent=4))
         return rv
@@ -126,7 +130,7 @@ class ATNConfig(object):
 
     def equalsForConfigSet(self, other):
         rv = self._equalsForConfigSet(other)
-        Trace.write(json.dumps([ 'AtnConfig.equalsForConfigSet',
+        Trace.write(json.dumps([ 'ATNConfig.equalsForConfigSet',
                                  self.asdict(), other.asdict(), rv ],
                                sort_keys=True, indent=4))
         return rv
@@ -158,6 +162,15 @@ class LexerATNConfig(ATNConfig):
 
     def __init__(self, state:ATNState, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=SemanticContext.NONE,
                  lexerActionExecutor:LexerActionExecutor=None, config:LexerATNConfig=None):
+        Trace.write(json.dumps([ 'ENTER LexerATNConfig.__init__',
+                                 (None if state is None else state.stateNumber),
+                                 (None if alt is None else alt),
+                                 (None if context is None else context.asdict()),
+                                 (None if semantic is None else semantic.asdict()),
+                                 (None if lexerActionExecutor is None else lexerActionExecutor.asdict()),
+                                 (None if config is None else config.asdict())
+                                ],
+                               sort_keys=True, indent=4))
         super().__init__(state=state, alt=alt, context=context, semantic=semantic, config=config)
         if config is not None:
             if lexerActionExecutor is None:
@@ -165,14 +178,18 @@ class LexerATNConfig(ATNConfig):
         # This is the backing field for {@link #getLexerActionExecutor}.
         self.lexerActionExecutor = lexerActionExecutor
         self.passedThroughNonGreedyDecision = False if config is None else self.checkNonGreedyDecision(config, state)
+        Trace.write(json.dumps([ 'EXIT LexerATNConfig.__init__',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
 
     def asdict(self):
-        d = super(LexerATNConfig, self).asdict()
+        d = super(LexerATNConfig, self).asdict()[1]
         if hasattr(self,'lexerActionExecutor'):
             d['lexerActionExecutor'] = None if self.lexerActionExecutor is None else self.lexerActionExecutor.asdict()
         if hasattr(self,'passedThroughNonGreedyDecision'):
             d['passedThroughNonGreedyDecision'] = self.passedThroughNonGreedyDecision
-        return d
+        return ["LexerATNConfig", d]
 
     def __hash__(self):
         return hash((self.state.stateNumber, self.alt, self.context,

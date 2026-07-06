@@ -1,0 +1,14 @@
+#!/bin/bash
+
+F=_build/CompositeLexers/LexerDelegatorInvokesDelegateRule/json.log
+echo $F
+
+ARGS=" -e ATNConfigSet.add"
+
+./jsonlog_util.opt entry-exit $ARGS $F | jq -s 'length | "\(.) lines (full entry/exit)"'
+./jsonlog_util.opt entry-exit --ooe $ARGS $F | jq -s 'length | "\(.) lines (only entry)"'
+
+./jsonlog_util.opt entry-exit $ARGS $F | jq -S . > _build/1.log
+./jsonlog_util.opt simulate --ooe $ARGS $F | jq -S . > _build/2.log
+
+diff -Bwiu _build/1.log _build/2.log

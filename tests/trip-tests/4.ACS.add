@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+
+ARGS=" -e ATNConfigSet.add"
+
+for f in _build/*/*/json.log
+do
+    echo $f
+    ./jsonlog_util.opt entry-exit $ARGS $f | jq -s 'length | "\(.) lines"'
+    diff -Bwiu <( ./jsonlog_util.opt entry-exit $ARGS $f | jq . ) <( ./jsonlog_util.opt simulate --ooe $ARGS $f | jq . )
+done
+
+
+
+

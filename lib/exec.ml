@@ -328,7 +328,80 @@ end
 module PredictionContext = PC
 
 module SC = struct
-type t = unit
+type t =
+  EMPTY
+| PREDICATE of {
+    ruleIndex : int
+  ; predIndex : int
+  ; isCtxDependent : bool
+  }
+| PRECEDENCE of int
+| AND of t list
+| OR of t list
+
+let mkPredicate ?(ruleIndex= -1) ?(predIndex= -1) ?(isCtxDependent = false) () =
+  PREDICATE { ruleIndex ; predIndex ; isCtxDependent }
+
+let mkPrecedence ?(precedence = 0) () = PRECEDENCE precedence
+
+let rec or_operands = function
+    OR l -> List.concat_map or_operands l
+  | x -> [x]
+
+let mkOR a b =
+  match (a,b) with
+    (None, None) -> failwith "SC.mkOR: both are None"
+  | (None, Some b) -> b
+  | (Some a, None) -> a
+  | (Some a, Some b) ->
+     match (a,b) with
+       (EMPTY, _)|(_, EMPTY) -> EMPTY
+       | _ ->
+          let operands = (or_operands a)@(or_operands b) in
+          let precedencePredicates = List.filter_map (function (PRECEDENCE _) as x -> Some x | _ -> None) operands in
+          let operands =
+            if [] <> precedencePredicates then
+              operands @ [Std.last (List.stable_sort Stdlib.compare precedencePredicates)]
+            else operands in
+          OR operands
+
+let rec and_operands = function
+    AND l -> List.concat_map and_operands l
+  | x -> [x]
+
+let mkAND a b =
+  match (a,b) with
+    (None, None) -> failwith "SC.mkAND: both are None"
+  | (None, Some b) -> b
+  | (Some a, None) -> a
+  | (Some a, Some b) ->
+     match (a,b) with
+       (EMPTY, _)|(_, EMPTY) -> EMPTY
+       | _ ->
+          let operands = (and_operands a)@(and_operands b) in
+          let precedencePredicates = List.filter_map (function (PRECEDENCE _) as x -> Some x | _ -> None) operands in
+          let operands =
+            if [] <> precedencePredicates then
+              operands @ [List.hd (List.stable_sort Stdlib.compare precedencePredicates)]
+            else operands in
+          AND operands
+
+let rec to_mimick = function
+    EMPTY -> M.SC_EMPTY
+  | PREDICATE { ruleIndex ; predIndex ; isCtxDependent } ->
+     SC_PREDICATE { ruleIndex ; predIndex ; isCtxDependent }
+  | PRECEDENCE precedence -> SC_PRECEDENCE { precedence }
+  | AND l -> SC_AND { opnds = List.map to_mimick l }
+  | OR l -> SC_OR { opnds = List.map to_mimick l }
+
+let rec of_mimick = function
+    M.SC_EMPTY -> EMPTY
+  | SC_PREDICATE { ruleIndex ; predIndex ; isCtxDependent } ->
+     PREDICATE { ruleIndex ; predIndex ; isCtxDependent }
+  | SC_PRECEDENCE { precedence } -> PRECEDENCE precedence
+  | SC_AND { opnds } -> AND (List.map of_mimick opnds)
+  | SC_OR { opnds } -> OR (List.map of_mimick opnds)
+
 end
 module SemanticContext = SC
 
@@ -336,10 +409,10 @@ module AC = struct
 type t = {
     state : M.deser_state_id
   ; alt : int
-  ; context : PC.t option
-  ; semanticContext : SC.t option
-  ; reachesIntoOuterContext : int
-  ; precedenceFilterSuppressed : bool
+  ; mutable context : PC.t option
+  ; semanticContext : SC.t
+  ; mutable reachesIntoOuterContext : int
+  ; mutable precedenceFilterSuppressed : bool
   }
 
 let hash t =
@@ -362,8 +435,62 @@ let eq_for_config_set t1 t2 =
      && t1.alt = t2.alt
      && t1.semanticContext = t2.semanticContext)
 
+let _init state_opt alt_opt context_opt semantic_opt config_opt =
+  let state = match (state_opt, config_opt) with
+      (Some st, _) -> st
+    | (None, Some c) -> c.state
+    | _ -> failwith "AC.init: no state specified" in
+  let alt = match (alt_opt, config_opt) with
+      (Some alt,  _) -> alt
+    | (None, Some c) -> c.alt
+    | _ -> failwith "AC.init: no alt specified" in
+  let context = match (context_opt, config_opt) with
+      (Some _, _) -> context_opt
+    | (None, Some c) -> c.context
+    | _ -> None in
+  let semantic = match (semantic_opt, config_opt) with
+      (Some sc, _) -> sc
+    | (None, Some c) -> c.semanticContext
+    | _ -> SC.EMPTY in
+  {
+    state
+  ; alt
+  ; context
+  ; semanticContext = semantic
+  ; reachesIntoOuterContext = (match config_opt with None -> 0 | Some c -> c.reachesIntoOuterContext)
+  ; precedenceFilterSuppressed = (match config_opt with None -> false | Some c -> c.precedenceFilterSuppressed)
+  }
+
+let to_mimick t =
+  M.ATNConfig {
+      state = t.state
+    ; alt = t.alt
+    ; context = Option.map PC.to_mimick t.context
+    ; semanticContext = SC.to_mimick t.semanticContext
+    ; reachesIntoOuterContext = t.reachesIntoOuterContext
+    ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+  }
+
+let of_mimick t = match t with
+    M.ATNConfig t ->
+  {
+    state = t.state
+  ; alt = t.alt
+  ; context = Option.map PC.of_mimick t.context
+  ; semanticContext = SC.of_mimick t.semanticContext
+  ; reachesIntoOuterContext = t.reachesIntoOuterContext
+  ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+  }
+
+let init state_opt alt_opt context_opt semantic_opt config_opt =
+  Tracelog.write
+    (ATNConfig_ENTER_init (state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
+  let rv = _init state_opt alt_opt context_opt semantic_opt config_opt in
+  Tracelog.write (ATNConfig_EXIT_init (to_mimick rv)) ;
+  rv
+
 end
-module AtnConfig = AC
+module ATNConfig = AC
 
 
 module ACS = struct
@@ -378,13 +505,48 @@ module HT = Hashtbl.Make(H)
 
 type t = {
     fullCtx : bool
-  ;  configHT : AC.t HT.t
+  ; configHT : AC.t HT.t
   ; configs : AC.t list ref
   ; mutable readonly : bool
+  ; uniqueAlt : int
   ; conflictingAlts : int list option
   ; mutable hasSemanticContext : bool
   ; mutable dipsIntoOuterContext : bool
   ; id : int
+  }
+
+let ht_toList t =
+  HT.fold (fun k v acc -> (k,v)::acc) t []
+
+let ht_ofList l =
+  let ht = HT.create 23 in
+  l |> List.iter (fun (k,v) -> HT.add ht k v) ;
+  ht
+
+let of_mimick t =
+  let configs = List.map (fun (_, c) -> AC.of_mimick c) t.M.configs in
+  {
+    fullCtx = t.M.fullCtx
+  ; configHT = ht_ofList (List.map (fun c -> (c,c)) configs)
+  ; configs = ref configs
+  ; readonly = t.readonly
+  ; uniqueAlt = t.uniqueAlt
+  ; conflictingAlts = t.conflictingAlts
+  ; hasSemanticContext = t.hasSemanticContext
+  ; dipsIntoOuterContext = t.dipsIntoOuterContext
+  ; id = t.id
+  }
+
+let to_mimick t =
+  {
+    M.fullCtx = t.fullCtx
+  ; configs = List.map (fun c -> ("", AC.to_mimick c)) !(t.configs)
+  ; readonly = t.readonly
+  ; uniqueAlt = 0
+  ; conflictingAlts = t.conflictingAlts
+  ; hasSemanticContext = t.hasSemanticContext
+  ; dipsIntoOuterContext = t.dipsIntoOuterContext
+  ; id = t.id
   }
 
 let get_or_add t c =
@@ -394,19 +556,38 @@ let get_or_add t c =
      HT.add t.configHT c c ;
      c
 
-let add ?mergeCache t c =
+let _add ?mergeCache t c =
   if t.readonly then
-    failwith "AtnConfigSet.add: This set is readonly" ;
-  if c.AC.semanticContext <> None then
+    failwith "ATNConfigSet.add: This set is readonly" ;
+  if c.AC.semanticContext <> SC.EMPTY then
     t.hasSemanticContext <- true ;
   if c.AC.reachesIntoOuterContext > 0 then
     t.dipsIntoOuterContext <- true ;
   let existing = get_or_add t c in
-  if existing == c then
-    Std.push t.configs c ;
-  
+  if existing == c then begin
+      Std.push t.configs c ;
+      true
+    end
+  else begin
+      let rootIsWildcard = not t.fullCtx in
+      assert (existing.context <> None) ;
+      assert (c.context <> None) ;
+      let merged = PC.merge (Std.outSome existing.context) (Std.outSome c.context) rootIsWildcard mergeCache in
+      existing.reachesIntoOuterContext <- max existing.reachesIntoOuterContext c.reachesIntoOuterContext ;
+      if c.precedenceFilterSuppressed then
+        existing.precedenceFilterSuppressed <- true ;
+      existing.context <- Some merged ;
+      true
+    end
 
+let add ?mergeCache t c =
+  Tracelog.write
+    (ATNConfigSet_ENTER_add (to_mimick t, AC.to_mimick c, Option.map PC.MC.to_mimick mergeCache)) ;
+  let rv = _add ?mergeCache t c in
+  Tracelog.write
+    (ATNConfigSet_EXIT_add (to_mimick t, rv)) ;
+  rv
 
 end
-module AtnConfigSet = ACS
+module ATNConfigSet = ACS
 

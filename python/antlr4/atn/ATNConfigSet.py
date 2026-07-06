@@ -6,7 +6,7 @@ import json
 # Use of this file is governed by the BSD 3-clause license that
 # can be found in the LICENSE.txt file in the project root.
 
-from antlr4.PredictionContext import merge
+from antlr4.PredictionContext import merge, mergeCache_asdict
 from antlr4.Utils import str_list
 from antlr4.atn.ATN import ATN
 from antlr4.atn.ATNConfig import ATNConfig
@@ -41,6 +41,8 @@ class ATNConfigSet(object):
     def __init__(self, fullCtx:bool=True):
         global configSetCounter
         self.id = configSetCounter
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.__init__', self.id ],
+                               sort_keys=True, indent=4))
         configSetCounter += 1
         # All configs but hashed by (s, i, _, pi) not including context. Wiped out
         # when we go readonly as this set becomes a DFA state.
@@ -69,19 +71,22 @@ class ATNConfigSet(object):
         self.dipsIntoOuterContext = False
 
         self.cachedHashCode = -1
-        Trace.write(json.dumps([ 'AtnConfigSet.__init__', self.id, self.asdict() ],
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.__init__', self.asdict() ],
                                sort_keys=True, indent=4))
 
     def asdict(self):
+        configs = []
+        for c in self.configs:
+            txt = "%d/%d/%s/%s" % (c.state.stateNumber, c.alt, str(c.context), str(c.semanticContext))
+            configs.append([txt, c.asdict()])
         d = {
             'fullCtx' : self.fullCtx,
-            'configs' : [c.asdict() for c in self.configs],
+            'configs' : configs,
             'uniqueAlt' : self.uniqueAlt,
             'readonly' : self.readonly,
             'conflictingAlts' : None if self.conflictingAlts is None else [c for c in self.conflictingAlts],
             'hasSemanticContext' : self.hasSemanticContext,
             'dipsIntoOuterContext' : self.dipsIntoOuterContext,
-            'cachedHashCode' : self.cachedHashCode,
             'id' : self.id
         }
         return d
@@ -98,7 +103,7 @@ class ATNConfigSet(object):
     # <p>This method updates {@link #dipsIntoOuterContext} and
     # {@link #hasSemanticContext} when necessary.</p>
     #/
-    def add(self, config:ATNConfig, mergeCache=None):
+    def _add(self, config:ATNConfig, mergeCache=None):
         if self.readonly:
             raise Exception("This set is readonly")
         if config.semanticContext is not SemanticContext.NONE:
@@ -112,6 +117,8 @@ class ATNConfigSet(object):
             return True
         # a previous (s,i,pi,_), merge with it and save result
         rootIsWildcard = not self.fullCtx
+        assert (existing.context is not None)
+        assert (config.context is not None)
         merged = merge(existing.context, config.context, rootIsWildcard, mergeCache)
         # no need to check for existing.context, config.context in cache
         # since only way to create new graphs is "call rule" and here.
@@ -122,6 +129,22 @@ class ATNConfigSet(object):
             existing.precedenceFilterSuppressed = True
         existing.context = merged # replace context; no need to alt mapping
         return True
+
+    def add(self, config:ATNConfig, mergeCache=None):
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.add',
+                                 self.asdict(),
+                                 config.asdict(),
+                                 (None if mergeCache is None else mergeCache_asdict(mergeCache))
+                                ],
+                               sort_keys=True, indent=4))
+        rv = self._add(config, mergeCache)
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.add',
+                                 self.asdict(),
+                                 rv
+                                ],
+                               sort_keys=True, indent=4))
+
+        return rv
 
     def getOrAdd(self, config:ATNConfig):
         h = config.hashCodeForConfigSet()
@@ -135,7 +158,7 @@ class ATNConfigSet(object):
             self.configLookup[h] = l
         else:
             l.append(config)
-        Trace.write(json.dumps([ 'AtnConfigSet.getOrAdd', self.id, config.asdict() ],
+        Trace.write(json.dumps([ 'ATNConfigSet.getOrAdd', self.id, config.asdict() ],
                                sort_keys=True, indent=4))
         return config
 
@@ -155,7 +178,7 @@ class ATNConfigSet(object):
             return
         for config in self.configs:
             config.context = interpreter.getCachedContext(config.context)
-        Trace.write(json.dumps([ 'AtnConfigSet.optimizeConfigs', self.asdict() ],
+        Trace.write(json.dumps([ 'ATNConfigSet.optimizeConfigs', self.asdict() ],
                                sort_keys=True, indent=4))
 
     def addAll(self, coll:list):

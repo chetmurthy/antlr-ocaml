@@ -64,6 +64,7 @@ class SemanticContext(object):
 AND = None
 
 def andContext(a:SemanticContext, b:SemanticContext):
+    assert (not(a is None and b is None))
     if a is None or a is SemanticContext.NONE:
         return b
     if b is None or b is SemanticContext.NONE:
@@ -78,6 +79,7 @@ def andContext(a:SemanticContext, b:SemanticContext):
 OR = None
 
 def orContext(a:SemanticContext, b:SemanticContext):
+    assert (not(a is None and b is None))
     if a is None:
         return b
     if b is None:
@@ -97,6 +99,9 @@ def filterPrecedencePredicates(collection:set):
 class EmptySemanticContext(SemanticContext):
     def asdict(self):
         return ["EmptySemanticContext"]
+
+    def __str__(self):
+        return "{empty}"
 
 class Predicate(SemanticContext):
     __slots__ = ('ruleIndex', 'predIndex', 'isCtxDependent')

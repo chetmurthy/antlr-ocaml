@@ -17,7 +17,8 @@ type deser_state_id = state_id[@yojson.to_yojson state_id_to_yojson]
               [@located_yojson.of_located_yojson state_id_of_located_yojson]
 [@@deriving yojson,located_yojson, show]
 
-type config_t = {
+type config_t =
+  ATNConfig of {
     state : deser_state_id
   ; alt : int
   ; context : prediction_context_t option
@@ -25,13 +26,25 @@ type config_t = {
   ; reachesIntoOuterContext : int
   ; precedenceFilterSuppressed : bool
   }
+| LexerATNConfig of {
+    state : deser_state_id
+  ; alt : int
+  ; context : prediction_context_t option
+  ; semanticContext : semantic_context_t
+  ; reachesIntoOuterContext : int
+  ; precedenceFilterSuppressed : bool
+  ; lexerActionExecutor : lexer_action_executor_t option
+  ; passedThroughNonGreedyDecision : bool
+  }
+
 and config_set_t = {
     fullCtx : bool
-  ; configs : config_t list
+  ; configs : (string * config_t) list
   ; readonly : bool
   ; conflictingAlts : int list option
   ; hasSemanticContext : bool
   ; dipsIntoOuterContext : bool
+  ; uniqueAlt : int
   ; id : int
   }
 and prediction_context_t =
@@ -77,7 +90,7 @@ and dfa_t = {
 
 and dfa_state_t = {
     stateNumber : int
-  ; configs : config_set_t
+  ; configset : config_set_t
   ; edges: int option array option
   ; isAcceptState : bool
   ; prediction : int
@@ -186,20 +199,12 @@ and merge_cache_t =
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
-  AtnConfigSet_getOrAdd of int * config_t[@yojson.name "AtnConfigSet.getOrAdd"]
-                    [@located_yojson.name "AtnConfigSet.getOrAdd"]
-| AtnConfigSet_optimizeConfigs of config_set_t
-                                    [@yojson.name "AtnConfigSet.optimizeConfigs"]
-                                    [@located_yojson.name "AtnConfigSet.optimizeConfigs"]
-| AtnConfigSet_init of int * config_set_t
-                                    [@yojson.name "AtnConfigSet.__init__"]
-                                    [@located_yojson.name "AtnConfigSet.__init__"]
-| AtnConfig_eq of config_t * config_t * bool
-                                    [@yojson.name "AtnConfig.__eq__"]
-                                    [@located_yojson.name "AtnConfig.__eq__"]
-| AtnConfig_equalsForConfigSet of config_t * config_t * bool
-                                    [@yojson.name "AtnConfig.equalsForConfigSet"]
-                                    [@located_yojson.name "AtnConfig.equalsForConfigSet"]
+  ATNConfig_eq of config_t * config_t * bool
+                                    [@yojson.name "ATNConfig.__eq__"]
+                                    [@located_yojson.name "ATNConfig.__eq__"]
+| ATNConfig_equalsForConfigSet of config_t * config_t * bool
+                                    [@yojson.name "ATNConfig.equalsForConfigSet"]
+                                    [@located_yojson.name "ATNConfig.equalsForConfigSet"]
 | DFA_init of int * dfa_t
                       [@yojson.name "DFA.__init__"]
                       [@located_yojson.name "DFA.__init__"]
@@ -301,11 +306,38 @@ type json_log_t =
                       [@yojson.name "EXIT PredictionContext.mergeSingletons"]
                       [@located_yojson.name "EXIT PredictionContext.mergeSingletons"]
 
-| AtnConfig_ENTER_init of deser_state_id option * int option * prediction_context_t option * semantic_context_t option * config_t option
-                                    [@yojson.name "ENTER AtnConfig.__init__"]
-                                    [@located_yojson.name "ENTER AtnConfig.__init__"]
-| AtnConfig_EXIT_init of config_t
-                                    [@yojson.name "EXIT AtnConfig.__init__"]
-                                    [@located_yojson.name "EXIT AtnConfig.__init__"]
+| ATNConfig_ENTER_init of deser_state_id option * int option * prediction_context_t option * semantic_context_t option * config_t option
+                                    [@yojson.name "ENTER ATNConfig.__init__"]
+                                    [@located_yojson.name "ENTER ATNConfig.__init__"]
+| ATNConfig_EXIT_init of config_t
+                                    [@yojson.name "EXIT ATNConfig.__init__"]
+                                    [@located_yojson.name "EXIT ATNConfig.__init__"]
+
+| LexerATNConfig_ENTER_init of deser_state_id option * int option * prediction_context_t option * semantic_context_t option * lexer_action_executor_t option * config_t option
+                                    [@yojson.name "ENTER LexerATNConfig.__init__"]
+                                    [@located_yojson.name "ENTER LexerATNConfig.__init__"]
+| LexerATNConfig_EXIT_init of config_t
+                                    [@yojson.name "EXIT LexerATNConfig.__init__"]
+                                    [@located_yojson.name "EXIT LexerATNConfig.__init__"]
+
+| ATNConfigSet_ENTER_init of int
+                                    [@yojson.name "ENTER ATNConfigSet.__init__"]
+                                    [@located_yojson.name "ENTER ATNConfigSet.__init__"]
+| ATNConfigSet_EXIT_init of config_set_t
+                                    [@yojson.name "EXIT ATNConfigSet.__init__"]
+                                    [@located_yojson.name "EXIT ATNConfigSet.__init__"]
+| ATNConfigSet_ENTER_add of config_set_t * config_t * merge_cache_t option
+                                    [@yojson.name "ENTER ATNConfigSet.add"]
+                                    [@located_yojson.name "ENTER ATNConfigSet.add"]
+| ATNConfigSet_EXIT_add of config_set_t * bool
+                                    [@yojson.name "EXIT ATNConfigSet.add"]
+                                    [@located_yojson.name "EXIT ATNConfigSet.add"]
+
+| ATNConfigSet_getOrAdd of int * config_t[@yojson.name "ATNConfigSet.getOrAdd"]
+                                  [@located_yojson.name "ATNConfigSet.getOrAdd"]
+|
+ ATNConfigSet_optimizeConfigs of config_set_t
+                                    [@yojson.name "ATNConfigSet.optimizeConfigs"]
+                                    [@located_yojson.name "ATNConfigSet.optimizeConfigs"]
 
 [@@deriving yojson,located_yojson, show]

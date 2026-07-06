@@ -91,7 +91,7 @@ class DFAState(object):
     def asdict(self):
         d = {
             'stateNumber' : self.stateNumber,
-            'configs' : self.configs.asdict(),
+            'configset' : self.configs.asdict(),
             'edges' : None if self.edges is None else [(None if e is None else e.stateNumber) for e in self.edges],
             'isAcceptState' : self.isAcceptState,
             'prediction' : self.prediction,
