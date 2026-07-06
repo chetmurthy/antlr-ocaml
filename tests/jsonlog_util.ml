@@ -155,6 +155,7 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
+(*
 module Simulate = struct
 
 let simulate1_filter ~verbose ~pattern ~case_insensitive file =
@@ -220,11 +221,17 @@ let cmd =
   simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter files ;
   Cmdliner.Cmd.Exit.ok
 end
-
+ *)
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [Deserialize.cmd; Filter.cmd; EntryExit.cmd; Simulate.cmd]
+  [Deserialize.cmd
+  ; Filter.cmd
+  ; EntryExit.cmd
+(*
+  ; Simulate.cmd
+ *)
+]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())

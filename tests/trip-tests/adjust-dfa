@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use strict ;
+
+{
+  my $f = $ARGV[0] ;
+  open(F,"<$f") || die "cannot open $f for read" ;
+  my @l = <F> ;
+  close(F) ;
+  my $txt = join("", @l) ;
+  if ($txt =~ m,ATNType,s) {
+    warn "$f: already applied adjustment" ;
+    exit 0 ;
+  }
+
+  if ($txt =~ m,Lexer,) {
+    $txt =~ s|DFA\(|DFA\(ATNType.LEXER, |s ;
+  }
+  elsif ($txt =~ m,Parser,) {
+    $txt =~ s|DFA\(|DFA\(ATNType.PARSER, |s ;
+  }
+  else {
+    die "cannot detect if $f is parser or lexer" ;
+  }
+  $txt = "from antlr4.atn.ATNType import ATNType\n".$txt ;
+
+  open(F,">$f.NEW") ;
+  print F $txt ;
+  close(F) ;
+  rename($f,"$f.BAK") || die "cannot backup $f -> $f.BANK" ;
+  rename("$f.NEW",$f) || die "cannot rename $f.NEW -> $f" ;
+}

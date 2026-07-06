@@ -41,6 +41,9 @@ simulate-all:: jsonlog_util.opt
 generate-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) generate -v
 
+prepare-all:: antlrtest_util.opt
+	mkdir -p _build && $(MANAGETRIP) prepare -v
+
 test-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) test -v
 
@@ -58,6 +61,9 @@ DTEST=$(shell ls fixtures/descriptors/LexerExec/*)
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _build && $(MANAGETRIP) generate -v $(SELECTED)
+
+prepare-selected:: antlrtest_test.exe
+	mkdir -p _build && $(MANAGETRIP) prepare -v $(SELECTED)
 
 test-selected:: antlrtest_test.exe
 	mkdir -p _build && $(MANAGETRIP) test -v $(SELECTED)

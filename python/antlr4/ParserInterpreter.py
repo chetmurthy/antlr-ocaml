@@ -17,13 +17,14 @@
 #
 #  See TestParserInterpreter for examples.
 #
-from antlr4.dfa.DFA import DFA
+nfrom antlr4.dfa.DFA import DFA
 from antlr4.BufferedTokenStream import TokenStream
 from antlr4.Lexer import Lexer
 from antlr4.Parser import Parser
 from antlr4.ParserRuleContext import InterpreterRuleContext, ParserRuleContext
 from antlr4.Token import Token
 from antlr4.atn.ATN import ATN
+from antlr4.atn.ATNType import ATNType
 from antlr4.atn.ATNState import StarLoopEntryState, ATNState, LoopEndState
 from antlr4.atn.ParserATNSimulator import ParserATNSimulator
 from antlr4.PredictionContext import PredictionContextCache
@@ -44,7 +45,7 @@ class ParserInterpreter(Parser):
         self.atn = atn
         self.tokenNames = tokenNames
         self.ruleNames = ruleNames
-        self.decisionToDFA = [ DFA(state) for state in atn.decisionToState ]
+        self.decisionToDFA = [ DFA(ATNType.PARSER, state) for state in atn.decisionToState ]
         self.sharedContextCache = PredictionContextCache()
         self._parentContextStack = list()
         # identify the ATN states where pushNewRecursionContext must be called

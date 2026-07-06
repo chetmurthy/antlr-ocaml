@@ -2,8 +2,17 @@ TOP=/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml
 PYTHONPATH:=$(TOP)/python:$(PYTHONPATH)
 #PYTHONPATH:=/home/chet/Hack/Antlr/src/antlr4/runtime/Python3/src:$(PYTHONPATH)
 SHELL := /bin/bash
+ADJUST=$(TOP)/tests/trip-tests/adjust-dfa
 
 all: compare
+
+prepare:: <lexerName>.py
+<if(parserName)>
+	$(ADJUST) <grammarName>Lexer.py
+	$(ADJUST) <grammarName>Parser.py
+<else>
+	$(ADJUST) <lexerName>.py
+<endif>
 
 compare:: output.NEW errors.NEW
 	diff -Bwiu output output.NEW

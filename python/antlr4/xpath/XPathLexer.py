@@ -1,5 +1,6 @@
 # Generated from XPathLexer.g4 by ANTLR 4.13.1
 from antlr4 import *
+from antlr4.atn.ATNType import ATNType
 from io import StringIO
 import sys
 if sys.version_info[1] > 5:
@@ -34,7 +35,7 @@ class XPathLexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
-    decisionsToDFA = [ DFA(ds, i) for i, ds in enumerate(atn.decisionToState) ]
+    decisionsToDFA = [ DFA(ATNType.LEXER, ds, i) for i, ds in enumerate(atn.decisionToState) ]
 
     TOKEN_REF = 1
     RULE_REF = 2

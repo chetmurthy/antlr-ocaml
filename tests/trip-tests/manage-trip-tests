@@ -38,6 +38,9 @@ $ENV{'TOP'} = ".." ;
     elsif ($ARGV[0] eq 'generate') {
       $subcommand = shift @ARGV ;
     }
+    elsif ($ARGV[0] eq 'prepare') {
+      $subcommand = shift @ARGV ;
+    }
     elsif ($ARGV[0] eq 'test') {
       $subcommand = shift @ARGV ;
     }
@@ -90,6 +93,14 @@ $ENV{'TOP'} = ".." ;
       my $dir = "_build/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["make", "-C", $dir, "clean"]) ;
+    }
+  }
+  elsif ($subcommand eq 'prepare') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_build/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], ["make", "-C", $dir, "prepare"]) ;
     }
   }
   elsif ($subcommand eq 'test') {

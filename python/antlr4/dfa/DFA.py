@@ -7,6 +7,7 @@ import Trace
 # Use of this file is governed by the BSD 3-clause license that
 # can be found in the LICENSE.txt file in the project root.
 from antlr4.atn.ATNState import StarLoopEntryState
+from antlr4.atn.ATNType import ATNType
 
 from antlr4.atn.ATNConfigSet import ATNConfigSet
 from antlr4.atn.ATNState import DecisionState
@@ -16,13 +17,16 @@ from antlr4.error.Errors import IllegalStateException
 dfaCounter = 0
 
 class DFA(object):
-    __slots__ = ('id', 'atnStartState', 'decision', '_states', 's0', 'precedenceDfa')
+    __slots__ = (
+        'grammarType',
+        'id', 'atnStartState', 'decision', '_states', 's0', 'precedenceDfa')
 
-    def __init__(self, atnStartState:DecisionState, decision:int=0):
+    def __init__(self, grammarType:ATNType, atnStartState:DecisionState, decision:int=0):
         global dfaCounter
         # From which ATN state did we create this DFA?
         self.id = dfaCounter
         dfaCounter += 1
+        self.grammarType = grammarType
         self.atnStartState = atnStartState
         self.decision = decision
         # A set of all DFA states. Use {@link Map} so we can get old state back
@@ -50,6 +54,7 @@ class DFA(object):
         for v in self._states.values():
             states[v.stateNumber] = v.asdict()
         d = {
+            'grammarType' : [ self.grammarType.asdict() ],
             'id' : self.id,
             'atnStartState' : self.atnStartState.stateNumber,
             'decision' : self.decision,

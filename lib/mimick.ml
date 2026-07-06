@@ -81,7 +81,8 @@ and semantic_context_t =
              [@located_yojson.name "OR"]
 
 and dfa_t = {
-    id : int
+    grammarType : atn_type_t
+  ; id : int
   ; atnStartState : deser_state_id
   ; decision : int
   ; _states : dfa_state_t strmap
@@ -155,6 +156,7 @@ and lexer_t =
   Lexer of {
       _channel : int
     ; _factory : common_token_factory_t
+    ; _interp : lexer_atn_simulator_t option
     ; _hitEOF : bool
     ; _mode : int
     ; _modeStack : int list
