@@ -5,7 +5,7 @@ open Pa_ppx_located_yojson
 open Exec
 module M = Mimick
 
-let sim1 (loc,j) = match j with
+let sim1 atn (loc,j) = match j with
     M.PredictionContext_ENTER_merge (pc1, pc2, rootIsWildcard, mc_opt) -> begin
       try
         let pc1 = PC.of_mimick pc1 in
@@ -83,8 +83,8 @@ let sim1 (loc,j) = match j with
 
   | M.ATNConfigSet_ENTER_add (cs, c, mc_opt) -> begin
       try
-      let cs = ACS.of_mimick cs in
-      let c = AC.of_mimick c in
+      let cs = ACS.of_mimick atn cs in
+      let c = AC.of_mimick atn c in
       let mc_opt = Option.map PC.MC.of_mimick mc_opt in
       let rv = match mc_opt with
           None -> ACS.add cs c

@@ -310,6 +310,8 @@ module State = struct
 and atn_state_type_t = [%import: Types.atn_state_type_t]
 [@@deriving yojson,located_yojson, show]
 
+let isDecisionState = Types.isDecisionState
+
   let dump pps st =
     Fmt.(pf pps {|  stateNumber: %a@.|} dump_state_id st.stateNumber)
     ; Fmt.(pf pps {|  stateType: %a@.|} pp_atn_state_type_t Node.(serialization_name st.node))

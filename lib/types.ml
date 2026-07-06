@@ -202,3 +202,18 @@ type lexer_action_t =
     mutable type_ : int [@yojson.key "type"] [@located_yojson.key "type"]
   }
 
+let isDecisionState st =
+  match st.node with
+    (BasicState
+     | RuleStartState _
+    | RuleStopState
+    | BlockEndState _
+    | StarLoopbackState
+    | LoopEndState _) -> None
+
+  | (BasicBlockStartState { decision ; nonGreedy } 
+     | PlusBlockStartState { decision ; nonGreedy }
+    | StarBlockStartState { decision ; nonGreedy }
+    | TokensStartState { decision ; nonGreedy }
+    | StarLoopEntryState { decision ; nonGreedy }
+    | PlusLoopbackState { decision ; nonGreedy }) -> Some (decision, nonGreedy)

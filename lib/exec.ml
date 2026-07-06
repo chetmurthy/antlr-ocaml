@@ -407,16 +407,22 @@ module SemanticContext = SC
 
 module AC = struct
 type t = {
-    state : M.deser_state_id
+    atn : Atn.t
+  ; state : M.deser_state_id
   ; alt : int
   ; mutable context : PC.t option
   ; semanticContext : SC.t
   ; mutable reachesIntoOuterContext : int
   ; mutable precedenceFilterSuppressed : bool
+  ; lexer_ext : lexer_ext_t option
+  }
+and lexer_ext_t = {
+    lexerActionExecutor : M.lexer_action_executor_t option
+  ; passedThroughNonGreedyDecision : bool
   }
 
 let hash t =
-  Hashtbl.hash (t.state, t.alt, t.context, t.semanticContext)
+  Hashtbl.hash (t.state, t.alt, t.context, t.semanticContext, t.lexer_ext)
 
 let real_eq t1 t2 =
   t1 == t2 ||
@@ -424,7 +430,9 @@ let real_eq t1 t2 =
      && t1.alt = t2.alt
      && t1.context = t2.context
      && t1.semanticContext = t2.semanticContext
-    && t1.precedenceFilterSuppressed = t2.precedenceFilterSuppressed)
+     && t1.precedenceFilterSuppressed = t2.precedenceFilterSuppressed
+     && t1.lexer_ext = t2.lexer_ext
+    )
 
 let hash_for_config_set t =
   Hashtbl.hash (t.state, t.alt, t.semanticContext)
@@ -435,7 +443,7 @@ let eq_for_config_set t1 t2 =
      && t1.alt = t2.alt
      && t1.semanticContext = t2.semanticContext)
 
-let _init state_opt alt_opt context_opt semantic_opt config_opt =
+let _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt =
   let state = match (state_opt, config_opt) with
       (Some st, _) -> st
     | (None, Some c) -> c.state
@@ -453,40 +461,107 @@ let _init state_opt alt_opt context_opt semantic_opt config_opt =
     | (None, Some c) -> c.semanticContext
     | _ -> SC.EMPTY in
   {
-    state
+    atn
+  ; state
   ; alt
   ; context
   ; semanticContext = semantic
   ; reachesIntoOuterContext = (match config_opt with None -> 0 | Some c -> c.reachesIntoOuterContext)
   ; precedenceFilterSuppressed = (match config_opt with None -> false | Some c -> c.precedenceFilterSuppressed)
+  ; lexer_ext = None
+  }
+
+let checkNonGreedyDecision atn lexer_ext target =
+      lexer_ext.passedThroughNonGreedyDecision
+    || (match Atn.State.isDecisionState Atn.(State.get_state atn.states target) with
+          None -> false
+        | Some (_, nonGreedy) -> nonGreedy)
+
+
+let _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt =
+  let t = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
+  let config_lexer_ext = match config_opt with
+      None -> None
+    | Some { lexer_ext = Some e } -> Some e
+    | Some _ -> failwith "internal error: _LexerATNConfig_init: config_opt wasn't a LexerATNConfig" in
+  let lexerActionExecutor =
+    match config_lexer_ext with
+      None -> lexerActionExecutor_opt
+    | Some ext -> ext.lexerActionExecutor in
+  { (t) with
+    lexer_ext =
+      Some {
+          lexerActionExecutor
+        ; passedThroughNonGreedyDecision =
+            match config_lexer_ext with
+              None -> false
+            | Some ext -> checkNonGreedyDecision atn ext t.state
+        }
   }
 
 let to_mimick t =
-  M.ATNConfig {
-      state = t.state
-    ; alt = t.alt
-    ; context = Option.map PC.to_mimick t.context
-    ; semanticContext = SC.to_mimick t.semanticContext
-    ; reachesIntoOuterContext = t.reachesIntoOuterContext
-    ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
-  }
+  match t.lexer_ext with
+    None ->
+    M.ATNConfig {
+        state = t.state
+      ; alt = t.alt
+      ; context = Option.map PC.to_mimick t.context
+      ; semanticContext = SC.to_mimick t.semanticContext
+      ; reachesIntoOuterContext = t.reachesIntoOuterContext
+      ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+      }
+  | Some x ->
+     M.LexerATNConfig {
+        state = t.state
+      ; alt = t.alt
+      ; context = Option.map PC.to_mimick t.context
+      ; semanticContext = SC.to_mimick t.semanticContext
+      ; reachesIntoOuterContext = t.reachesIntoOuterContext
+      ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+      ; lexerActionExecutor = x.lexerActionExecutor
+      ; passedThroughNonGreedyDecision = x.passedThroughNonGreedyDecision
+      }
 
-let of_mimick t = match t with
+let of_mimick atn t = match t with
     M.ATNConfig t ->
-  {
-    state = t.state
-  ; alt = t.alt
-  ; context = Option.map PC.of_mimick t.context
-  ; semanticContext = SC.of_mimick t.semanticContext
-  ; reachesIntoOuterContext = t.reachesIntoOuterContext
-  ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
-  }
+     {
+       atn
+     ; state = t.state
+     ; alt = t.alt
+     ; context = Option.map PC.of_mimick t.context
+     ; semanticContext = SC.of_mimick t.semanticContext
+     ; reachesIntoOuterContext = t.reachesIntoOuterContext
+     ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+     ; lexer_ext = None
+     }
+  | M.LexerATNConfig t ->
+     {
+       atn
+     ; state = t.state
+     ; alt = t.alt
+     ; context = Option.map PC.of_mimick t.context
+     ; semanticContext = SC.of_mimick t.semanticContext
+     ; reachesIntoOuterContext = t.reachesIntoOuterContext
+     ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+     ; lexer_ext =
+         Some {
+             lexerActionExecutor = t.lexerActionExecutor
+           ; passedThroughNonGreedyDecision = t.passedThroughNonGreedyDecision
+           }
+     }
 
-let init state_opt alt_opt context_opt semantic_opt config_opt =
+let init_ATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt : t =
   Tracelog.write
     (ATNConfig_ENTER_init (state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
-  let rv = _init state_opt alt_opt context_opt semantic_opt config_opt in
+  let rv = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
   Tracelog.write (ATNConfig_EXIT_init (to_mimick rv)) ;
+  rv
+
+let init_LexerATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt : t =
+  Tracelog.write
+    (LexerATNConfig_ENTER_init (state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), lexerActionExecutor_opt, (Option.map to_mimick config_opt))) ;
+  let rv = _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt in
+  Tracelog.write (LexerATNConfig_EXIT_init (to_mimick rv)) ;
   rv
 
 end
@@ -523,8 +598,8 @@ let ht_ofList l =
   l |> List.iter (fun (k,v) -> HT.add ht k v) ;
   ht
 
-let of_mimick t =
-  let configs = List.map (fun (_, c) -> AC.of_mimick c) t.M.configs in
+let of_mimick atn t =
+  let configs = List.map (fun (_, c) -> AC.of_mimick atn c) t.M.configs in
   {
     fullCtx = t.M.fullCtx
   ; configHT = ht_ofList (List.map (fun c -> (c,c)) configs)
