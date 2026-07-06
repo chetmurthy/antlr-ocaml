@@ -6,6 +6,8 @@ open Atn
 
 module M = Mimick
 
+type atns_t = { lexer : Atn.t ; _parser : Atn.t option }
+
 module PC = struct
 let _EMPTY_RETURN_STATE = 0x7FFFFFFF
 
@@ -522,8 +524,8 @@ let to_mimick t =
       ; passedThroughNonGreedyDecision = x.passedThroughNonGreedyDecision
       }
 
-let of_mimick atn t = match t with
-    M.ATNConfig t ->
+let of_mimick atns t = match (atns,t) with
+    ({_parser=Some atn}, M.ATNConfig t) ->
      {
        atn
      ; state = t.state
@@ -534,7 +536,7 @@ let of_mimick atn t = match t with
      ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
      ; lexer_ext = None
      }
-  | M.LexerATNConfig t ->
+  | ({lexer=atn}, M.LexerATNConfig t) ->
      {
        atn
      ; state = t.state
@@ -598,8 +600,8 @@ let ht_ofList l =
   l |> List.iter (fun (k,v) -> HT.add ht k v) ;
   ht
 
-let of_mimick atn t =
-  let configs = List.map (fun (_, c) -> AC.of_mimick atn c) t.M.configs in
+let of_mimick atns t =
+  let configs = List.map (fun (_, c) -> AC.of_mimick atns c) t.M.configs in
   {
     fullCtx = t.M.fullCtx
   ; configHT = ht_ofList (List.map (fun c -> (c,c)) configs)
