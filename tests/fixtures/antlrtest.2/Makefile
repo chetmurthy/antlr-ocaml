@@ -10,8 +10,11 @@ prepare:: <lexerName>.py
 <if(parserName)>
 	$(ADJUST) <grammarName>Lexer.py
 	$(ADJUST) <grammarName>Parser.py
+	cp <grammarName>Lexer.interp Lexer.interp
+	cp <grammarName>.interp Parser.interp
 <else>
 	$(ADJUST) <lexerName>.py
+	cp <grammarName>.interp Lexer.interp
 <endif>
 
 compare:: output.NEW errors.NEW

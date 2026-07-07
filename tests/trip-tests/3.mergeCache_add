@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+for f in _build/*/*/json.log
+do
+    echo $f
+ATNARGS=""
+DIR=`dirname $f`
+if [ -r $DIR/Lexer.interp ]; then ATNARGS+=" --lexer-atn $DIR/Lexer.interp"; fi
+if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; fi
+
+    ./jsonlog_util.opt entry-exit -e "mergeCache_add" $f | jq -s 'length | "\(.) lines"'
+    diff -Bwiu <( ./jsonlog_util.opt entry-exit -e "mergeCache_add" $f | jq . ) <( ./jsonlog_util.opt simulate $ATNARGS --ooe -e "mergeCache_add" $f | jq . )
+done
+
+
+
+

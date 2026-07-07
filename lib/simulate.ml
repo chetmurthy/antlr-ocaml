@@ -1,5 +1,7 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
+open Pa_ppx_base
+open Ppxutil
 open Pa_ppx_utils
 open Pa_ppx_located_yojson
 open Exec
@@ -99,3 +101,9 @@ let sim1 atns (loc,j) = match j with
                exn e) ;
         Printexc.raise_with_backtrace e bt
     end
+
+  | _ ->
+     Fmt.(pf stderr "%s: sim1: Match failure on @.%a@."
+          (Ploc.string_of_location loc)
+          M.pp_json_log_t j) ;
+     Fmt.(raise_failwithf loc "sim1: Match failure on @.%a@." M.pp_json_log_t j)

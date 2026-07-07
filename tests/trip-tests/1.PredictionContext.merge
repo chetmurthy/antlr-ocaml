@@ -6,9 +6,12 @@ for f in _build/*/*/json.log
 do
     echo $f
     ./jsonlog_util.opt entry-exit -e "PredictionContext.merge" $f | jq -s 'length | "\(.) lines"'
-    diff -Bwiu <( ./jsonlog_util.opt entry-exit -e "PredictionContext.merge" $f | jq . ) <( ./jsonlog_util.opt simulate --ooe -e "PredictionContext.merge" $f | jq . )
+
+ATNARGS=""
+DIR=`dirname $f`
+if [ -r $DIR/Lexer.interp ]; then ATNARGS+=" --lexer-atn $DIR/Lexer.interp"; fi
+if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; fi
+
+
+    diff -Bwiu <( ./jsonlog_util.opt entry-exit -e "PredictionContext.merge" $f | jq . ) <( ./jsonlog_util.opt simulate $ATNARGS --ooe -e "PredictionContext.merge" $f | jq . )
 done
-
-
-
-

@@ -1,5 +1,7 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson *)
 
+open Pa_ppx_base
+open Ppxutil
 open Pa_ppx_utils
 open Pa_ppx_located_yojson
 open Antlr
@@ -9,6 +11,8 @@ open Antlr
 
 open Cmdliner
 open Cmdliner.Term.Syntax
+
+let file = Arg.(value & pos 0 file "" & info [] ~docv:"JSON-FILE")
 
 let files = Arg.(non_empty & pos_all file [] & info [] ~docv:"JSON-FILE")
 
@@ -39,6 +43,14 @@ let entry_exit_name =
 let entry_exit_nth =
   let doc = "entry-exit-nth: extract NTH event-tree with tag '{ENTER,EXIT} name'." in
   Arg.(value & opt (some int) None & info ["n";"entry-exit-nth"] ~doc)
+
+let lexer_atn =
+  let doc = "lexer-atn: lexer ATN filename'." in
+  Arg.(value & opt (some file) None & info ["lexer-atn"] ~doc)
+
+let parser_atn =
+  let doc = "parser-atn: parser ATN filename'." in
+  Arg.(value & opt (some file) None & info ["parser-atn"] ~doc)
 
 let only_outermost_enter =
   let doc = "pass thru only the outermost ENTER of a tree of events." in
@@ -106,7 +118,9 @@ let filter1 ~verbose matchers file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
   let doit stream =
-    stream |> filter_json_stream matchers |> pp_json_stream stdout in
+    stream
+    |> filter_json_stream matchers
+    |> pp_json_stream stdout in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
 let filter ~verbose ~yojson ~debug ~pattern ~case_insensitive files =
@@ -155,10 +169,23 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
-(*
+
 module Simulate = struct
 
-let simulate1_filter ~verbose ~pattern ~case_insensitive file =
+let read_atn ~grammarType file =
+  let atn = 
+    file
+    |> Fpath.v
+    |>  Bos.OS.File.read
+    |> Result.get_ok
+    |> Antlr.Interp_syntax.read_raw
+    |> Antlr.Atn.deser ~verify:true in
+  if atn.Atn.grammarType <> grammarType then
+    Fmt.(failwithf "%s: ATN was supposed to be %a but was %a@."
+           file Atn.pp_atn_type_t atn.Atn.grammarType Atn.pp_atn_type_t grammarType) ;
+  atn
+
+let simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file =
   let flags = if case_insensitive then [`CASELESS] else [] in
   let matchers = List.map (Pcre2.regexp ~flags) pattern in
   let open Rresult.R in
@@ -174,10 +201,10 @@ let simulate1_filter ~verbose ~pattern ~case_insensitive file =
     |> Filter.filter_json_stream matchers
     |> Std.stream_map demarsh
     |> Std.stream_map Json.raise_failwith_error_msg
-    |> Util.stream_iter Simulate.sim1 in
+    |> Util.stream_iter (Simulate.sim1 atns) in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let simulate1_entry_exit ?nth ~verbose ~entry_exit_name ~only_outermost_enter file =
+let simulate1_entry_exit ~atns ?nth ~verbose ~entry_exit_name ~only_outermost_enter file =
   let open Rresult.R in
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
@@ -191,19 +218,28 @@ let simulate1_entry_exit ?nth ~verbose ~entry_exit_name ~only_outermost_enter fi
     |> Util.entry_exit_yojson ?nth ~only_outermost_enter entry_exit_name
     |> Std.stream_map demarsh
     |> Std.stream_map Json.raise_failwith_error_msg
-    |> Util.stream_iter Simulate.sim1 in
+    |> Util.stream_iter (Simulate.sim1 atns) in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter files =
+let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter file =
+  let atns = match (lexer_atn, parser_atn) with
+      (None, None) -> failwith "must specify at least lexer-atn"
+    | (None, Some _) -> failwith "cannot specify parser-atn without lexer-atn"
+    | (Some f1, None) ->
+       Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
+            ; _parser = None }
+    | (Some f1, Some f2) ->
+       Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
+            ; _parser = Some (read_atn ~grammarType:Atn.PARSER f2) } in
   match (pattern, entry_exit_name) with
     (_::_,[]) ->
-    List.iter (simulate1_filter ~verbose ~pattern ~case_insensitive) files
+    simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file
   | ([],_::_) -> begin
       match entry_exit_nth with
         None ->
-        List.iter (simulate1_entry_exit ~verbose ~entry_exit_name ~only_outermost_enter) files
+        simulate1_entry_exit ~atns ~verbose ~entry_exit_name ~only_outermost_enter file
       | Some nth ->
-         List.iter (simulate1_entry_exit ~nth ~verbose ~entry_exit_name ~only_outermost_enter) files
+         simulate1_entry_exit ~atns ~nth ~verbose ~entry_exit_name ~only_outermost_enter file
     end
   | ([],[]) -> Fmt.(failwith "simulate: must provide either pattern or entry-exit-name")
   | (_::_, _::_) ->
@@ -216,21 +252,19 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "simulate" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ files and+ debug and+ verbose and+ pattern and+ case_insensitive
+  let+ file and+ parser_atn and+ lexer_atn and+ debug and+ verbose and+ pattern and+ case_insensitive
      and+ entry_exit_name and+ entry_exit_nth and+ only_outermost_enter in
-  simulate ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter files ;
+  simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter file ;
   Cmdliner.Cmd.Exit.ok
 end
- *)
+
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
   [Deserialize.cmd
   ; Filter.cmd
   ; EntryExit.cmd
-(*
   ; Simulate.cmd
- *)
 ]
 
 let main () = Cmd.eval' cmd

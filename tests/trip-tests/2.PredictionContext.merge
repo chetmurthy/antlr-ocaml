@@ -10,6 +10,12 @@ ARGS=" -e PredictionContext.merge"
 ./jsonlog_util.opt entry-exit --ooe $ARGS $F | jq -s 'length | "\(.) lines (only entry)"'
 
 ./jsonlog_util.opt entry-exit $ARGS $F | jq . > _build/1.log
-./jsonlog_util.opt simulate --ooe $ARGS $F | jq . > _build/2.log
+
+ATNARGS=""
+DIR=`dirname $F`
+if [ -r $DIR/Lexer.interp ]; then ATNARGS+=" --lexer-atn $DIR/Lexer.interp"; fi
+if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; fi
+
+./jsonlog_util.opt simulate $ATNARGS --ooe $ARGS $F | jq . > _build/2.log
 
 diff -Bwiu _build/1.log _build/2.log
