@@ -19,7 +19,8 @@ type deser_state_id = state_id[@yojson.to_yojson state_id_to_yojson]
 
 type config_t =
   ATNConfig of {
-    state : deser_state_id
+    id : int
+  ; state : deser_state_id
   ; alt : int
   ; context : prediction_context_t option
   ; semanticContext : semantic_context_t
@@ -27,7 +28,8 @@ type config_t =
   ; precedenceFilterSuppressed : bool
   }
 | LexerATNConfig of {
-    state : deser_state_id
+    id : int
+  ; state : deser_state_id
   ; alt : int
   ; context : prediction_context_t option
   ; semanticContext : semantic_context_t
@@ -40,6 +42,7 @@ type config_t =
 and config_set_t = {
     fullCtx : bool
   ; configs : (string * config_t) list
+  ; configHT : (string * config_t) list list
   ; readonly : bool
   ; conflictingAlts : int list option
   ; hasSemanticContext : bool
@@ -308,7 +311,7 @@ type json_log_t =
                       [@yojson.name "EXIT PredictionContext.mergeSingletons"]
                       [@located_yojson.name "EXIT PredictionContext.mergeSingletons"]
 
-| ATNConfig_ENTER_init of deser_state_id option * int option * prediction_context_t option * semantic_context_t option * config_t option
+| ATNConfig_ENTER_init of int * deser_state_id option * int option * prediction_context_t option * semantic_context_t option * config_t option
                                     [@yojson.name "ENTER ATNConfig.__init__"]
                                     [@located_yojson.name "ENTER ATNConfig.__init__"]
 | ATNConfig_EXIT_init of config_t
@@ -335,11 +338,21 @@ type json_log_t =
                                     [@yojson.name "EXIT ATNConfigSet.add"]
                                     [@located_yojson.name "EXIT ATNConfigSet.add"]
 
-| ATNConfigSet_getOrAdd of int * config_t[@yojson.name "ATNConfigSet.getOrAdd"]
-                                  [@located_yojson.name "ATNConfigSet.getOrAdd"]
-|
- ATNConfigSet_optimizeConfigs of config_set_t
+| ATNConfigSet_ENTER_getOrAdd of config_set_t * config_t[@yojson.name "ENTER ATNConfigSet.getOrAdd"]
+                                  [@located_yojson.name "ENTER ATNConfigSet.getOrAdd"]
+| ATNConfigSet_EXIT_getOrAdd of config_set_t * config_t[@yojson.name "EXIT ATNConfigSet.getOrAdd"]
+                                  [@located_yojson.name "EXIT ATNConfigSet.getOrAdd"]
+
+| ATNConfigSet_optimizeConfigs of config_set_t
                                     [@yojson.name "ATNConfigSet.optimizeConfigs"]
                                     [@located_yojson.name "ATNConfigSet.optimizeConfigs"]
+
+| ATNConfigSet_BEFORE_update_existing of config_set_t * config_t * config_t[@yojson.name "BEFORE update existing"]
+                                  [@located_yojson.name "BEFORE update existing"]
+| ATNConfigSet_AFTER_update_existing of config_set_t * config_t * config_t[@yojson.name "AFTER update existing"]
+                                  [@located_yojson.name "AFTER update existing"]
+
+| ATNConfigSet_AFTER_append_configs of config_set_t * config_t[@yojson.name "AFTER append configs"]
+                                  [@located_yojson.name "AFTER append configs"]
 
 [@@deriving yojson,located_yojson, show]

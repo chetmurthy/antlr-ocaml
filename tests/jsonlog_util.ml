@@ -201,7 +201,7 @@ let simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file =
     |> Filter.filter_json_stream matchers
     |> Std.stream_map demarsh
     |> Std.stream_map Json.raise_failwith_error_msg
-    |> Util.stream_iter (Simulate.sim1 atns) in
+    |> Util.stream_iter_i (Simulate.sim1 atns) in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
 let simulate1_entry_exit ~atns ?nth ~verbose ~entry_exit_name ~only_outermost_enter file =
@@ -218,7 +218,7 @@ let simulate1_entry_exit ~atns ?nth ~verbose ~entry_exit_name ~only_outermost_en
     |> Util.entry_exit_yojson ?nth ~only_outermost_enter entry_exit_name
     |> Std.stream_map demarsh
     |> Std.stream_map Json.raise_failwith_error_msg
-    |> Util.stream_iter (Simulate.sim1 atns) in
+    |> Util.stream_iter_i (Simulate.sim1 atns) in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
 let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter file =

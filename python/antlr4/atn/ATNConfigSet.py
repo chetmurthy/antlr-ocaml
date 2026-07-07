@@ -77,11 +77,14 @@ class ATNConfigSet(object):
     def asdict(self):
         configs = []
         for c in self.configs:
-            txt = "%d/%d/%s/%s" % (c.state.stateNumber, c.alt, str(c.context), str(c.semanticContext))
+            txt = c.strkey()
             configs.append([txt, c.asdict()])
+        configHT = ([] if self.configLookup is None else [[(x.strkey(),x.asdict()) for x in self.configLookup[h]] for h in self.configLookup])
+        configHT.sort()
         d = {
             'fullCtx' : self.fullCtx,
             'configs' : configs,
+            'configHT' : configHT,
             'uniqueAlt' : self.uniqueAlt,
             'readonly' : self.readonly,
             'conflictingAlts' : None if self.conflictingAlts is None else [c for c in self.conflictingAlts],
@@ -93,6 +96,11 @@ class ATNConfigSet(object):
 
     def __iter__(self):
         return self.configs.__iter__()
+
+    def in_configs(self, config):
+        for c in self.configs:
+            if c is config: return True
+        return False
 
     # Adding a new config means merging contexts with existing configs for
     # {@code (s, i, pi, _)}, where {@code s} is the
@@ -114,20 +122,38 @@ class ATNConfigSet(object):
         if existing is config:
             self.cachedHashCode = -1
             self.configs.append(config)  # track order here
+            Trace.write(json.dumps([ 'AFTER append configs',
+                                     self.asdict(),
+                                     config.asdict(),
+                                    ],
+                                   sort_keys=True, indent=4))
             return True
         # a previous (s,i,pi,_), merge with it and save result
         rootIsWildcard = not self.fullCtx
+        assert (self.in_configs(existing))
         assert (existing.context is not None)
         assert (config.context is not None)
         merged = merge(existing.context, config.context, rootIsWildcard, mergeCache)
         # no need to check for existing.context, config.context in cache
         # since only way to create new graphs is "call rule" and here.
         # We cache at both places.
+        Trace.write(json.dumps([ 'BEFORE update existing',
+                                 self.asdict(),
+                                 config.asdict(),
+                                 existing.asdict()
+                                ],
+                               sort_keys=True, indent=4))
         existing.reachesIntoOuterContext = max(existing.reachesIntoOuterContext, config.reachesIntoOuterContext)
         # make sure to preserve the precedence filter suppression during the merge
         if config.precedenceFilterSuppressed:
             existing.precedenceFilterSuppressed = True
         existing.context = merged # replace context; no need to alt mapping
+        Trace.write(json.dumps([ 'AFTER update existing',
+                                 self.asdict(),
+                                 config.asdict(),
+                                 existing.asdict()
+                                ],
+                               sort_keys=True, indent=4))
         return True
 
     def add(self, config:ATNConfig, mergeCache=None):
@@ -146,7 +172,7 @@ class ATNConfigSet(object):
 
         return rv
 
-    def getOrAdd(self, config:ATNConfig):
+    def _getOrAdd(self, config:ATNConfig):
         h = config.hashCodeForConfigSet()
         l = self.configLookup.get(h, None)
         if l is not None:
@@ -158,9 +184,16 @@ class ATNConfigSet(object):
             self.configLookup[h] = l
         else:
             l.append(config)
-        Trace.write(json.dumps([ 'ATNConfigSet.getOrAdd', self.id, config.asdict() ],
-                               sort_keys=True, indent=4))
         return config
+
+    def getOrAdd(self, config:ATNConfig):
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.getOrAdd', self.asdict(), config.asdict() ],
+                               sort_keys=True, indent=4))
+        rv = self._getOrAdd(config)
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.getOrAdd', self.asdict(), rv.asdict() ],
+                               sort_keys=True, indent=4))
+        assert (rv is config or self.in_configs(rv))
+        return rv
 
     def getStates(self):
         return set(c.state for c in self.configs)

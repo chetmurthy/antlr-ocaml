@@ -7,7 +7,7 @@ open Pa_ppx_located_yojson
 open Exec
 module M = Mimick
 
-let sim1 atns (loc,j) = match j with
+let sim1 atns (i:int) (loc,j) = match j with
     M.PredictionContext_ENTER_merge (pc1, pc2, rootIsWildcard, mc_opt) -> begin
       try
         let pc1 = PC.of_mimick pc1 in
@@ -17,7 +17,7 @@ let sim1 atns (loc,j) = match j with
         ()
       with e ->
         let bt = Printexc.get_raw_backtrace () in
-        Fmt.(pf stderr "sim1: %s: exception %a@."
+        Fmt.(pf stderr "sim1[%d]: %s: exception %a@." i
                (Ploc.string_of_location loc)
                exn e) ;
         Printexc.raise_with_backtrace e bt
@@ -32,7 +32,7 @@ let sim1 atns (loc,j) = match j with
         ()
       with e ->
         let bt = Printexc.get_raw_backtrace () in
-        Fmt.(pf stderr "sim1: %s: exception %a@."
+        Fmt.(pf stderr "sim1[%d]: %s: exception %a@." i
                (Ploc.string_of_location loc)
                exn e) ;
         Printexc.raise_with_backtrace e bt
@@ -46,7 +46,7 @@ let sim1 atns (loc,j) = match j with
         ()
       with e ->
         let bt = Printexc.get_raw_backtrace () in
-        Fmt.(pf stderr "sim1: %s: exception %a@."
+        Fmt.(pf stderr "sim1[%d]: %s: exception %a@." i
                (Ploc.string_of_location loc)
                exn e) ;
         Printexc.raise_with_backtrace e bt
@@ -62,7 +62,7 @@ let sim1 atns (loc,j) = match j with
         ()
       with e ->
         let bt = Printexc.get_raw_backtrace () in
-        Fmt.(pf stderr "sim1: %s: exception %a@."
+        Fmt.(pf stderr "sim1[%d]: %s: exception %a@." i
                (Ploc.string_of_location loc)
                exn e) ;
         Printexc.raise_with_backtrace e bt
@@ -77,7 +77,7 @@ let sim1 atns (loc,j) = match j with
         ()
       with e ->
         let bt = Printexc.get_raw_backtrace () in
-        Fmt.(pf stderr "sim1: %s: exception %a@."
+        Fmt.(pf stderr "sim1[%d]: %s: exception %a@." i
                (Ploc.string_of_location loc)
                exn e) ;
         Printexc.raise_with_backtrace e bt
@@ -96,14 +96,14 @@ let sim1 atns (loc,j) = match j with
       ()
       with e ->
         let bt = Printexc.get_raw_backtrace () in
-        Fmt.(pf stderr "sim1: %s: exception %a@."
+        Fmt.(pf stderr "sim1[%d]: %s: exception %a@." i
                (Ploc.string_of_location loc)
                exn e) ;
         Printexc.raise_with_backtrace e bt
     end
 
   | _ ->
-     Fmt.(pf stderr "%s: sim1: Match failure on @.%a@."
-          (Ploc.string_of_location loc)
+     Fmt.(pf stderr "%s: sim1[%d]: Match failure on @.%a@."
+          (Ploc.string_of_location loc) i
           M.pp_json_log_t j) ;
-     Fmt.(raise_failwithf loc "sim1: Match failure on @.%a@." M.pp_json_log_t j)
+     Fmt.(raise_failwithf loc "sim1[%d]: Match failure on @.%a@." i M.pp_json_log_t j)

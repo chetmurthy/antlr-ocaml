@@ -17,7 +17,9 @@ type pc_t =
   EMPTY
 | SINGLETON of (pc_t option * int)
 | ARRAY of (pc_t option * int) list
+[@@deriving show]
 type t = pc_t
+[@@deriving show]
 
 let rec toString = function
     EMPTY -> "$"
@@ -55,7 +57,14 @@ let rec of_mimick = function
 
 module MC = struct
   open Coll
+  type list_t = ((pc_t * pc_t) * pc_t) list
+[@@deriving show]
+
   type t = ((pc_t * pc_t), pc_t) MHM.t
+
+  let pp pps t =
+    let l = MHM.toList t in
+    pp_list_t pps l
 
   let mk () = MHM.mk 23
   let get_opt t (a,b) =
@@ -114,6 +123,7 @@ type interim_t =
   CacheHit of pc_t
 | Computed of pc_t
 | Nothing
+[@@deriving show]
 
 let _mergeRoot a b rootIsWildcard =
   if rootIsWildcard then
@@ -340,6 +350,7 @@ type t =
 | PRECEDENCE of int
 | AND of t list
 | OR of t list
+[@@deriving show]
 
 let mkPredicate ?(ruleIndex= -1) ?(predIndex= -1) ?(isCtxDependent = false) () =
   PREDICATE { ruleIndex ; predIndex ; isCtxDependent }
@@ -404,12 +415,23 @@ let rec of_mimick = function
   | SC_AND { opnds } -> AND (List.map of_mimick opnds)
   | SC_OR { opnds } -> OR (List.map of_mimick opnds)
 
+let toString sc =
+  let rec pprec pps = function
+    EMPTY -> Fmt.(pf pps "{empty}")
+  | PREDICATE { ruleIndex ; predIndex ; isCtxDependent } ->
+     Fmt.(pf pps "{%d:%d}?" ruleIndex predIndex)
+  | PRECEDENCE n -> Fmt.(pf pps "{%d>=prec}?" n)
+  | AND l -> Fmt.(pf pps "%a" (list ~sep:(const string "&&") pprec) l)
+  | OR l -> Fmt.(pf pps "%a" (list ~sep:(const string "||") pprec) l)
+  in Fmt.(str "%a" pprec sc)
+
 end
 module SemanticContext = SC
 
 module AC = struct
 type t = {
-    atn : Atn.t
+    atn : Atn.t [@printer (fun pps _ -> Fmt.(pf pps "<atn>"))]
+  ; id : int
   ; state : M.deser_state_id
   ; alt : int
   ; mutable context : PC.t option
@@ -422,6 +444,85 @@ and lexer_ext_t = {
     lexerActionExecutor : M.lexer_action_executor_t option
   ; passedThroughNonGreedyDecision : bool
   }
+[@@deriving show]
+
+let hashkey c =
+  Fmt.(str "%a/%d/%s"
+         Atn.dump_state_id c.state
+         c.alt
+         (SC.toString c.semanticContext))
+
+let strkey c =
+  Fmt.(str "%s/%s"
+         (hashkey c)
+         (Option.fold ~none:"<none>" ~some:PC.toString c.context))
+
+let to_mimick t =
+  match t.lexer_ext with
+    None ->
+    M.ATNConfig {
+        state = t.state
+      ; id = t.id
+      ; alt = t.alt
+      ; context = Option.map PC.to_mimick t.context
+      ; semanticContext = SC.to_mimick t.semanticContext
+      ; reachesIntoOuterContext = t.reachesIntoOuterContext
+      ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+      }
+  | Some x ->
+     M.LexerATNConfig {
+        state = t.state
+      ; id = t.id
+      ; alt = t.alt
+      ; context = Option.map PC.to_mimick t.context
+      ; semanticContext = SC.to_mimick t.semanticContext
+      ; reachesIntoOuterContext = t.reachesIntoOuterContext
+      ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+      ; lexerActionExecutor = x.lexerActionExecutor
+      ; passedThroughNonGreedyDecision = x.passedThroughNonGreedyDecision
+      }
+
+let _of_mimick atns t = match (atns,t) with
+    ({_parser=Some atn}, M.ATNConfig t) ->
+     {
+       atn
+     ; id = t.id
+     ; state = t.state
+     ; alt = t.alt
+     ; context = Option.map PC.of_mimick t.context
+     ; semanticContext = SC.of_mimick t.semanticContext
+     ; reachesIntoOuterContext = t.reachesIntoOuterContext
+     ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+     ; lexer_ext = None
+     }
+  | ({lexer=atn}, M.LexerATNConfig t) ->
+     {
+       atn
+     ; id = t.id
+     ; state = t.state
+     ; alt = t.alt
+     ; context = Option.map PC.of_mimick t.context
+     ; semanticContext = SC.of_mimick t.semanticContext
+     ; reachesIntoOuterContext = t.reachesIntoOuterContext
+     ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
+     ; lexer_ext =
+         Some {
+             lexerActionExecutor = t.lexerActionExecutor
+           ; passedThroughNonGreedyDecision = t.passedThroughNonGreedyDecision
+           }
+     }
+
+open Coll
+let id2ac = MHM.mk 23
+
+let of_mimick atns t =
+  let t = _of_mimick atns t in
+  if MHM.in_dom id2ac t.id then
+    MHM.map id2ac t.id
+  else begin
+      MHM.add id2ac (t.id, t) ;
+      t
+    end
 
 let hash t =
   Hashtbl.hash (t.state, t.alt, t.context, t.semanticContext, t.lexer_ext)
@@ -439,13 +540,24 @@ let real_eq t1 t2 =
 let hash_for_config_set t =
   Hashtbl.hash (t.state, t.alt, t.semanticContext)
 
-let eq_for_config_set t1 t2 =
+let _eq_for_config_set t1 t2 =
   t1 == t2 ||
     (t1.state = t2.state
      && t1.alt = t2.alt
      && t1.semanticContext = t2.semanticContext)
 
+let eq_for_config_set t1 t2 =
+  let rv = _eq_for_config_set t1 t2 in
+(*
+  Tracelog.write (ATNConfig_equalsForConfigSet(to_mimick t1, to_mimick t2, rv)) ;
+ *)
+  rv
+
+let configCounter = ref 0
+
 let _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt =
+  let id = !configCounter in
+  incr configCounter ;
   let state = match (state_opt, config_opt) with
       (Some st, _) -> st
     | (None, Some c) -> c.state
@@ -464,6 +576,7 @@ let _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt =
     | _ -> SC.EMPTY in
   {
     atn
+  ; id
   ; state
   ; alt
   ; context
@@ -501,60 +614,9 @@ let _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_o
         }
   }
 
-let to_mimick t =
-  match t.lexer_ext with
-    None ->
-    M.ATNConfig {
-        state = t.state
-      ; alt = t.alt
-      ; context = Option.map PC.to_mimick t.context
-      ; semanticContext = SC.to_mimick t.semanticContext
-      ; reachesIntoOuterContext = t.reachesIntoOuterContext
-      ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
-      }
-  | Some x ->
-     M.LexerATNConfig {
-        state = t.state
-      ; alt = t.alt
-      ; context = Option.map PC.to_mimick t.context
-      ; semanticContext = SC.to_mimick t.semanticContext
-      ; reachesIntoOuterContext = t.reachesIntoOuterContext
-      ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
-      ; lexerActionExecutor = x.lexerActionExecutor
-      ; passedThroughNonGreedyDecision = x.passedThroughNonGreedyDecision
-      }
-
-let of_mimick atns t = match (atns,t) with
-    ({_parser=Some atn}, M.ATNConfig t) ->
-     {
-       atn
-     ; state = t.state
-     ; alt = t.alt
-     ; context = Option.map PC.of_mimick t.context
-     ; semanticContext = SC.of_mimick t.semanticContext
-     ; reachesIntoOuterContext = t.reachesIntoOuterContext
-     ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
-     ; lexer_ext = None
-     }
-  | ({lexer=atn}, M.LexerATNConfig t) ->
-     {
-       atn
-     ; state = t.state
-     ; alt = t.alt
-     ; context = Option.map PC.of_mimick t.context
-     ; semanticContext = SC.of_mimick t.semanticContext
-     ; reachesIntoOuterContext = t.reachesIntoOuterContext
-     ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
-     ; lexer_ext =
-         Some {
-             lexerActionExecutor = t.lexerActionExecutor
-           ; passedThroughNonGreedyDecision = t.passedThroughNonGreedyDecision
-           }
-     }
-
 let init_ATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt : t =
   Tracelog.write
-    (ATNConfig_ENTER_init (state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
+    (ATNConfig_ENTER_init (!configCounter, state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
   let rv = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
   Tracelog.write (ATNConfig_EXIT_init (to_mimick rv)) ;
   rv
@@ -571,18 +633,10 @@ module ATNConfig = AC
 
 
 module ACS = struct
-
-module H = struct
-  type t = AC.t
-  let equal = AC.eq_for_config_set
-  let hash = AC.hash_for_config_set
-end
-
-module HT = Hashtbl.Make(H)
-
+open Coll
 type t = {
     fullCtx : bool
-  ; configHT : AC.t HT.t
+  ; configHT : (int, AC.t list ref) MHM.t [@printer (fun pps _ -> Fmt.(pf pps "<configHT>"))]
   ; configs : AC.t list ref
   ; mutable readonly : bool
   ; uniqueAlt : int
@@ -591,21 +645,28 @@ type t = {
   ; mutable dipsIntoOuterContext : bool
   ; id : int
   }
-
-let ht_toList t =
-  HT.fold (fun k v acc -> (k,v)::acc) t []
-
-let ht_ofList l =
-  let ht = HT.create 23 in
-  l |> List.iter (fun (k,v) -> HT.add ht k v) ;
-  ht
+[@@deriving show]
 
 let of_mimick atns t =
-  let configs = List.map (fun (_, c) -> AC.of_mimick atns c) t.M.configs in
+  let row_hash l =
+    assert (l <> []) ;
+    let pl = List.map (fun c -> (AC.hash_for_config_set c, c)) l in
+    let h = fst(List.hd pl) in
+    (match List.filter (fun (h',_) -> h <> h') pl with
+       [] -> ()
+     | mismatches ->
+        Fmt.(pf stderr "ACS.of_mimick: config-sets that don't have the same hash-code as %a (but should):@.%a@."
+             AC.pp (snd(List.hd pl))
+             (list ~sep:(const string "\n") AC.pp) (List.map snd mismatches)) ;
+        failwith "mismatched configHT row") ;
+    h in
   {
     fullCtx = t.M.fullCtx
-  ; configHT = ht_ofList (List.map (fun c -> (c,c)) configs)
-  ; configs = ref configs
+  ; configHT = MHM.ofList 23 (List.map (fun l ->
+                                  let l = List.map snd l in
+                                  let l = (List.map (AC.of_mimick atns) l) in
+                                  (row_hash l, ref l)) t.M.configHT)
+  ; configs = ref (List.map (fun (_, c) -> AC.of_mimick atns c) t.M.configs)
   ; readonly = t.readonly
   ; uniqueAlt = t.uniqueAlt
   ; conflictingAlts = t.conflictingAlts
@@ -617,7 +678,8 @@ let of_mimick atns t =
 let to_mimick t =
   {
     M.fullCtx = t.fullCtx
-  ; configs = List.map (fun c -> ("", AC.to_mimick c)) !(t.configs)
+  ; configs = List.map (fun c -> (AC.strkey c, AC.to_mimick c)) !(t.configs)
+  ; configHT = List.stable_sort Stdlib.compare (List.map (fun (h,l) -> (List.map (fun c -> (AC.strkey c, AC.to_mimick c)) !l)) (MHM.toList t.configHT))
   ; readonly = t.readonly
   ; uniqueAlt = 0
   ; conflictingAlts = t.conflictingAlts
@@ -626,12 +688,34 @@ let to_mimick t =
   ; id = t.id
   }
 
-let get_or_add t c =
-  match HT.find_opt t.configHT c  with
-    Some c' -> c'
+let in_configs t c =
+  List.exists (fun c' -> c' == c) !(t.configs)
+
+let in_configs' t c =
+  List.exists (fun c' -> c'.AC.id == c.AC.id) !(t.configs)
+
+let _get_or_add t c =
+  let h = AC.hash_for_config_set c in
+  let l = match MHM.map t.configHT h  with
+    l -> l
+  | exception Not_found ->
+     let l = ref [] in
+     MHM.add t.configHT (h, l) ;
+     l in
+  match List.find_opt (fun c' -> AC.eq_for_config_set c c') !l with
+    Some c -> c
   | None ->
-     HT.add t.configHT c c ;
+     l := !l @ [c] ;
      c
+
+let get_or_add t c =
+  Tracelog.write
+    (ATNConfigSet_ENTER_getOrAdd(to_mimick t,AC.to_mimick c)) ;
+  let rv = _get_or_add t c in
+  Tracelog.write
+    (ATNConfigSet_EXIT_getOrAdd(to_mimick t,AC.to_mimick rv)) ;
+  assert (rv.id == c.id || in_configs' t rv) ;
+  rv
 
 let _add ?mergeCache t c =
   if t.readonly then
@@ -642,18 +726,25 @@ let _add ?mergeCache t c =
     t.dipsIntoOuterContext <- true ;
   let existing = get_or_add t c in
   if existing == c then begin
-      Std.push t.configs c ;
+      t.configs := !(t.configs) @ [c] ;
+      Tracelog.write
+        (ATNConfigSet_AFTER_append_configs(to_mimick t, AC.to_mimick c)) ;
       true
     end
   else begin
       let rootIsWildcard = not t.fullCtx in
+      assert (in_configs' t existing) ;
       assert (existing.context <> None) ;
       assert (c.context <> None) ;
       let merged = PC.merge (Std.outSome existing.context) (Std.outSome c.context) rootIsWildcard mergeCache in
+      Tracelog.write
+        (ATNConfigSet_BEFORE_update_existing(to_mimick t, AC.to_mimick c, AC.to_mimick existing)) ;
       existing.reachesIntoOuterContext <- max existing.reachesIntoOuterContext c.reachesIntoOuterContext ;
       if c.precedenceFilterSuppressed then
         existing.precedenceFilterSuppressed <- true ;
       existing.context <- Some merged ;
+      Tracelog.write
+        (ATNConfigSet_AFTER_update_existing(to_mimick t, AC.to_mimick c, AC.to_mimick existing)) ;
       true
     end
 

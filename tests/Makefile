@@ -27,7 +27,7 @@ test:: all
 
 MANAGETRIP=./trip-tests/manage-trip-tests
 deserialize-all:: jsonlog_util.opt
-	./jsonlog_util.opt deserialize _build/*/*/json.log
+	./jsonlog_util.opt deserialize -v _build/*/*/json.log
 
 filter-all:: jsonlog_util.opt
 	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log

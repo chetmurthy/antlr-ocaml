@@ -23,15 +23,19 @@ from antlr4.atn.SemanticContext import SemanticContext
 # need a forward declaration
 ATNConfig = None
 
+configCounter = 0
+
 class ATNConfig(object):
     __slots__ = (
         'state', 'alt', 'context', 'semanticContext', 'reachesIntoOuterContext',
-        'precedenceFilterSuppressed'
+        'precedenceFilterSuppressed', 'id'
 
     )
 
     def __init__(self, state:ATNState=None, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=None, config:ATNConfig=None):
-        Trace.write(json.dumps([ 'ENTER ATNConfig.__init__',
+        global configCounter
+        self.id = configCounter
+        Trace.write(json.dumps([ 'ENTER ATNConfig.__init__', self.id,
                                  (None if state is None else state.stateNumber),
                                  (None if alt is None else alt),
                                  (None if context is None else context.asdict()),
@@ -39,6 +43,7 @@ class ATNConfig(object):
                                  (None if config is None else config.asdict())
                                 ],
                                sort_keys=True, indent=4))
+        configCounter += 1
         if config is not None:
             if state is None:
                 state = config.state
@@ -80,6 +85,7 @@ class ATNConfig(object):
                                sort_keys=True, indent=4))
     def asdict(self):
         d = {
+            'id' : self.id,
             'state' : self.state.stateNumber,
             'alt' : self.alt,
             'context' : None if self.context is None else self.context.asdict(),
@@ -130,10 +136,16 @@ class ATNConfig(object):
 
     def equalsForConfigSet(self, other):
         rv = self._equalsForConfigSet(other)
-        Trace.write(json.dumps([ 'ATNConfig.equalsForConfigSet',
+        Trace.nowrite(json.dumps([ 'ATNConfig.equalsForConfigSet',
                                  self.asdict(), other.asdict(), rv ],
                                sort_keys=True, indent=4))
         return rv
+
+    def strkey(self):
+        return ("%s/%s" % (self.hashkey(), str(self.context)))
+
+    def hashkey(self):
+        return ("%d/%d/%s" % (self.state.stateNumber, self.alt, str(self.semanticContext)))
 
     def __str__(self):
         with StringIO() as buf:

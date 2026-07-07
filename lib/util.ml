@@ -66,6 +66,12 @@ let stream_iter f strm =
   | [< >] -> ()
   in itrec strm
 
+let stream_iter_i f strm =
+  let rec itrec = parser
+    bp [< 't ; s >] -> f bp t ; itrec s
+  | [< >] -> ()
+  in itrec strm
+
 let extract_tag = function
     (_,`List ((_, `String tag):: _)) -> Some tag
   | _ -> None

@@ -1,7 +1,6 @@
 import Trace
 import json
 import traceback
-import copy
 
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
@@ -299,9 +298,6 @@ def mergeCache_asdict(mergeCache):
     return ["MergeCache", l]
 
 def mergeCache_add(mergeCache, a,b,merged):
-#    a = copy.deepcopy(a)
-#    b = copy.deepcopy(b)
-#    merged = copy.deepcopy(merged)
     Trace.write(json.dumps([ 'ENTER mergeCache_add',
                              mergeCache_asdict(mergeCache),
                              a.asdict(),
