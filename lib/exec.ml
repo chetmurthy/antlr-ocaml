@@ -591,7 +591,7 @@ let rec real_eq t1 t2 =
 
   | _ -> assert false
 
-let equal t1 t2 =
+let __eq__ t1 t2 =
   let rv = real_eq t1 t2 in
   (match t1.lexer_ext with
      None ->
@@ -614,7 +614,7 @@ let _eq_for_config_set t1 t2 =
      && t1.alt = t2.alt
      && t1.semanticContext = t2.semanticContext)
   | ({ lexer_ext = Some _ }, { lexer_ext = Some _ }) ->
-     equal t1 t2
+     __eq__ t1 t2
   | _ -> assert false
 
 let eq_for_config_set t1 t2 =
