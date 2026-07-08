@@ -719,9 +719,17 @@ module ATNConfig = AC
 
 module ACS = struct
 open Coll
+
+let configHT_equal ht1 ht2 =
+  let l1 = List.stable_sort Stdlib.compare (MHM.toList ht1) in
+  let l2 = List.stable_sort Stdlib.compare (MHM.toList ht2) in
+  List.for_all2 [%eq: string * (AC.t list ref)] l1 l2
+
 type t = {
     fullCtx : bool
-  ; configHT : (string, AC.t list ref) MHM.t [@printer (fun pps _ -> Fmt.(pf pps "<configHT>"))]
+  ; configHT : (string, AC.t list ref) MHM.t
+    [@printer (fun pps _ -> Fmt.(pf pps "<configHT>"))]
+    [@equal configHT_equal]
   ; configs : AC.t list ref
   ; mutable readonly : bool
   ; uniqueAlt : int
@@ -730,7 +738,17 @@ type t = {
   ; mutable dipsIntoOuterContext : bool
   ; id : int
   }
-[@@deriving show]
+[@@deriving show, eq]
+
+let real__eq__ t1 t2 =
+  t1==t2 ||
+    (List.for_all2 AC.__eq__ !(t1.configs) !(t2.configs)
+     && t1.fullCtx = t2.fullCtx
+     && t1.uniqueAlt = t2.uniqueAlt
+     && t1.conflictingAlts = t2.conflictingAlts
+     && t1.hasSemanticContext = t2.hasSemanticContext
+     && t1.dipsIntoOuterContext = t2.dipsIntoOuterContext)
+
 
 let of_mimick ~ac_cache atns t =
   let row_hash l =
