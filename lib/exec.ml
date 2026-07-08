@@ -450,7 +450,7 @@ module LexerActionExecutor = LAE
 
 module AC = struct
 let disable_builtin_equality (x: int) = x
-type t = {
+type ac_t = {
     disable_builtin_equality : int -> int [@printer (fun pps _ -> Fmt.(pf pps "_"))]
   ; atn : Atn.t [@printer (fun pps _ -> Fmt.(pf pps "<atn>"))]
   ; id : int
@@ -466,6 +466,8 @@ and lexer_ext_t = {
     lexerActionExecutor : LAE.t option
   ; passedThroughNonGreedyDecision : bool
   }
+[@@deriving show]
+type t = ac_t
 [@@deriving show]
 
 let hashkey c =
@@ -553,16 +555,22 @@ let _of_mimick atns t = match (atns,t) with
      }
 
 open Coll
-let id2ac = MHM.mk 23
+module Cache = struct
+type t = (int, ac_t) MHM.t
+let mk () = MHM.mk 23
 
-let of_mimick atns t =
-  let t = _of_mimick atns t in
-  if MHM.in_dom id2ac t.id then
-    MHM.map id2ac t.id
+let get cache t =
+  if MHM.in_dom cache t.id then
+    MHM.map cache t.id
   else begin
-      MHM.add id2ac (t.id, t) ;
+      MHM.add cache (t.id, t) ;
       t
     end
+end
+
+let of_mimick ~ac_cache atns t =
+  let t = _of_mimick atns t in
+  Cache.get ac_cache t
 
 let hash t =
   Hashtbl.hash (t.state, t.alt, t.context, t.semanticContext, t.lexer_ext)
@@ -711,7 +719,7 @@ type t = {
   }
 [@@deriving show]
 
-let of_mimick atns t =
+let of_mimick ~ac_cache atns t =
   let row_hash l =
     assert (l <> []) ;
     let pl = List.map (fun c -> (AC.hash_for_config_set c, c)) l in
@@ -728,9 +736,9 @@ let of_mimick atns t =
     fullCtx = t.M.fullCtx
   ; configHT = MHM.ofList 23 (List.map (fun (h,l) ->
                                   let l = List.map snd l in
-                                  let l = (List.map (AC.of_mimick atns) l) in
+                                  let l = (List.map (AC.of_mimick ~ac_cache atns) l) in
                                   (h, ref l)) t.M.configHT)
-  ; configs = ref (List.map (fun (_, c) -> AC.of_mimick atns c) t.M.configs)
+  ; configs = ref (List.map (fun (_, c) -> AC.of_mimick ~ac_cache atns c) t.M.configs)
   ; readonly = t.readonly
   ; uniqueAlt = t.uniqueAlt
   ; conflictingAlts = t.conflictingAlts
