@@ -79,7 +79,7 @@ class ATNConfigSet(object):
         for c in self.configs:
             txt = c.strkey()
             configs.append([txt, c.asdict()])
-        configHT = ([] if self.configLookup is None else [[(x.strkey(),x.asdict()) for x in self.configLookup[h]] for h in self.configLookup])
+        configHT = ([] if self.configLookup is None else [(h,[(x.strkey(),x.asdict()) for x in self.configLookup[h]]) for h in self.configLookup])
         configHT.sort()
         d = {
             'fullCtx' : self.fullCtx,

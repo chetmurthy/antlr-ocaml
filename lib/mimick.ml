@@ -42,7 +42,7 @@ type config_t =
 and config_set_t = {
     fullCtx : bool
   ; configs : (string * config_t) list
-  ; configHT : (string * config_t) list list
+  ; configHT : (string * (string * config_t) list) list
   ; readonly : bool
   ; conflictingAlts : int list option
   ; hasSemanticContext : bool
@@ -207,6 +207,9 @@ type json_log_t =
   ATNConfig_eq of config_t * config_t * bool
                                     [@yojson.name "ATNConfig.__eq__"]
                                     [@located_yojson.name "ATNConfig.__eq__"]
+| LexerATNConfig_eq of config_t * config_t * bool
+                                    [@yojson.name "LexerATNConfig.__eq__"]
+                                    [@located_yojson.name "LexerATNConfig.__eq__"]
 | ATNConfig_equalsForConfigSet of config_t * config_t * bool
                                     [@yojson.name "ATNConfig.equalsForConfigSet"]
                                     [@located_yojson.name "ATNConfig.equalsForConfigSet"]

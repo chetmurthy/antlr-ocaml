@@ -428,9 +428,31 @@ let toString sc =
 end
 module SemanticContext = SC
 
+module LA = struct
+  type t = [%import: Types.lexer_action_t
+            [@with lexer_action_t := t]
+           ]
+[@@deriving yojson,located_yojson, show]
+
+let pp_hum pps t = Fmt.(pf pps "%s" (Atn.LexerAction.toString t))
+end
+module LexerAction = LA
+
+module LAE = struct
+  type t = [%import: Mimick.lexer_action_executor_t
+           ]
+[@@deriving yojson,located_yojson, show]
+
+let pp_hum pps t = Fmt.(pf pps "%a" (list ~sep:(const string ":") LA.pp_hum) t.lexerActions)
+let toString t = Fmt.(str "%a" pp_hum t)
+end
+module LexerActionExecutor = LAE
+
 module AC = struct
+let disable_builtin_equality (x: int) = x
 type t = {
-    atn : Atn.t [@printer (fun pps _ -> Fmt.(pf pps "<atn>"))]
+    disable_builtin_equality : int -> int [@printer (fun pps _ -> Fmt.(pf pps "_"))]
+  ; atn : Atn.t [@printer (fun pps _ -> Fmt.(pf pps "<atn>"))]
   ; id : int
   ; state : M.deser_state_id
   ; alt : int
@@ -441,21 +463,37 @@ type t = {
   ; lexer_ext : lexer_ext_t option
   }
 and lexer_ext_t = {
-    lexerActionExecutor : M.lexer_action_executor_t option
+    lexerActionExecutor : LAE.t option
   ; passedThroughNonGreedyDecision : bool
   }
 [@@deriving show]
 
 let hashkey c =
-  Fmt.(str "%a/%d/%s"
-         Atn.dump_state_id c.state
-         c.alt
-         (SC.toString c.semanticContext))
+  match c.lexer_ext with
+    None ->
+    Fmt.(str "%a/%d/%s"
+           Atn.dump_state_id c.state
+           c.alt
+           (SC.toString c.semanticContext))
+  | Some ext ->
+    Fmt.(str "%a/%d/%s/%s/%s/%s"
+           Atn.dump_state_id c.state
+           c.alt
+           (Option.fold ~none:"None" ~some:PC.toString c.context)
+           (SC.toString c.semanticContext)
+           (if ext.passedThroughNonGreedyDecision then "True" else "False")
+           (Option.fold ~none:"None" ~some:LAE.toString ext.lexerActionExecutor)
+           
+
+)
 
 let strkey c =
-  Fmt.(str "%s/%s"
-         (hashkey c)
-         (Option.fold ~none:"<none>" ~some:PC.toString c.context))
+  match c.lexer_ext with
+    None ->
+    Fmt.(str "%s/%s"
+           (hashkey c)
+           (Option.fold ~none:"None" ~some:PC.toString c.context))
+  | Some _ -> hashkey c
 
 let to_mimick t =
   match t.lexer_ext with
@@ -485,7 +523,8 @@ let to_mimick t =
 let _of_mimick atns t = match (atns,t) with
     ({_parser=Some atn}, M.ATNConfig t) ->
      {
-       atn
+       disable_builtin_equality
+     ; atn
      ; id = t.id
      ; state = t.state
      ; alt = t.alt
@@ -497,7 +536,8 @@ let _of_mimick atns t = match (atns,t) with
      }
   | ({lexer=atn}, M.LexerATNConfig t) ->
      {
-       atn
+       disable_builtin_equality
+     ; atn
      ; id = t.id
      ; state = t.state
      ; alt = t.alt
@@ -527,7 +567,9 @@ let of_mimick atns t =
 let hash t =
   Hashtbl.hash (t.state, t.alt, t.context, t.semanticContext, t.lexer_ext)
 
-let real_eq t1 t2 =
+let rec real_eq t1 t2 =
+  match (t1,t2) with
+    ({ lexer_ext = None }, { lexer_ext = None }) ->
   t1 == t2 ||
     (t1.state = t2.state
      && t1.alt = t2.alt
@@ -536,15 +578,36 @@ let real_eq t1 t2 =
      && t1.precedenceFilterSuppressed = t2.precedenceFilterSuppressed
      && t1.lexer_ext = t2.lexer_ext
     )
+  | ({ lexer_ext = Some ext1 }, { lexer_ext = Some ext2 }) ->
+     ext1 = ext2 && real_eq {(t1) with lexer_ext=None} {(t2) with lexer_ext=None}
+
+  | _ -> assert false
+
+let equal t1 t2 =
+  let rv = real_eq t1 t2 in
+  (match t1.lexer_ext with
+     None ->
+     Tracelog.write (ATNConfig_eq (to_mimick t1, to_mimick t2, rv))
+   | Some _ ->
+     Tracelog.write (LexerATNConfig_eq (to_mimick t1, to_mimick t2, rv))) ;
+  rv
 
 let hash_for_config_set t =
+(*
   Hashtbl.hash (t.state, t.alt, t.semanticContext)
+*)
+  hashkey t
 
 let _eq_for_config_set t1 t2 =
+  match (t1, t2) with
+    ({ lexer_ext = None }, { lexer_ext = None }) ->
   t1 == t2 ||
     (t1.state = t2.state
      && t1.alt = t2.alt
      && t1.semanticContext = t2.semanticContext)
+  | ({ lexer_ext = Some _ }, { lexer_ext = Some _ }) ->
+     equal t1 t2
+  | _ -> assert false
 
 let eq_for_config_set t1 t2 =
   let rv = _eq_for_config_set t1 t2 in
@@ -575,7 +638,8 @@ let _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt =
     | (None, Some c) -> c.semanticContext
     | _ -> SC.EMPTY in
   {
-    atn
+    disable_builtin_equality
+  ; atn
   ; id
   ; state
   ; alt
@@ -636,7 +700,7 @@ module ACS = struct
 open Coll
 type t = {
     fullCtx : bool
-  ; configHT : (int, AC.t list ref) MHM.t [@printer (fun pps _ -> Fmt.(pf pps "<configHT>"))]
+  ; configHT : (string, AC.t list ref) MHM.t [@printer (fun pps _ -> Fmt.(pf pps "<configHT>"))]
   ; configs : AC.t list ref
   ; mutable readonly : bool
   ; uniqueAlt : int
@@ -662,10 +726,10 @@ let of_mimick atns t =
     h in
   {
     fullCtx = t.M.fullCtx
-  ; configHT = MHM.ofList 23 (List.map (fun l ->
+  ; configHT = MHM.ofList 23 (List.map (fun (h,l) ->
                                   let l = List.map snd l in
                                   let l = (List.map (AC.of_mimick atns) l) in
-                                  (row_hash l, ref l)) t.M.configHT)
+                                  (h, ref l)) t.M.configHT)
   ; configs = ref (List.map (fun (_, c) -> AC.of_mimick atns c) t.M.configs)
   ; readonly = t.readonly
   ; uniqueAlt = t.uniqueAlt
@@ -679,7 +743,7 @@ let to_mimick t =
   {
     M.fullCtx = t.fullCtx
   ; configs = List.map (fun c -> (AC.strkey c, AC.to_mimick c)) !(t.configs)
-  ; configHT = List.stable_sort Stdlib.compare (List.map (fun (h,l) -> (List.map (fun c -> (AC.strkey c, AC.to_mimick c)) !l)) (MHM.toList t.configHT))
+  ; configHT = List.stable_sort Stdlib.compare (List.map (fun (h,l) -> (h,List.map (fun c -> (AC.strkey c, AC.to_mimick c)) !l)) (MHM.toList t.configHT))
   ; readonly = t.readonly
   ; uniqueAlt = 0
   ; conflictingAlts = t.conflictingAlts

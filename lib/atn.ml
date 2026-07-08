@@ -434,6 +434,18 @@ let dump pps = function
 
 | x -> Fmt.(pf pps "#<unhandled< %a >>" pp x)
 
+let rec toString = function
+  LexerChannelAction { channel } -> Fmt.(str "channel(%d)" channel)
+| LexerCustomAction { ruleIndex ; actionIndex } -> Fmt.(str "custom(%d:%d)" ruleIndex actionIndex)
+| LexerModeAction { mode } -> Fmt.(str "mode(%d)" mode)
+| LexerMoreAction _ -> "more"
+| LexerPopModeAction _ -> "popMode"
+| LexerPushModeAction { mode } -> Fmt.(str "pushMode(%d)" mode)
+| LexerSkipAction _ -> "skip"
+| LexerTypeAction { type_ } -> Fmt.(str "type(%d)" type_)
+| LexerIndexedCustomAction { action ; offset } -> Fmt.(str "indexedcustom(%s:%d)" (toString action) offset)
+| x -> Fmt.(failwithf "LexerModeAction.toString: #<unhandled< %a >>" pp x)
+
 module LexerActionType = struct
   let _CHANNEL = 0    (* #The type of a {@link LexerChannelAction} action.*)
   let _CUSTOM = 1     (* #The type of a {@link LexerCustomAction} action. *)

@@ -2,7 +2,10 @@
 
 #F=_build/CompositeLexers/LexerDelegatorInvokesDelegateRule/json.log
 #F=_build/FullContextParsing/AmbiguityNoLoop/json.log
-F=_build/LexerExec/GreedyClosure/json.log
+#F=_build/LexerExec/GreedyClosure/json.log
+#F=_build/LexerExec/ActionPlacement/json.log
+#F=_build/LexerExec/RecursiveLexerRuleRefWithWildcardPlus_1/json.log
+F=_build/LexerExec/ZeroLengthToken/json.log
 echo $F
 
 ATNARGS=""
@@ -12,7 +15,7 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 
 
 ARGS=" -e ATNConfigSet.add"
-NARGS="-n 27"
+#NARGS="-n 1"
 ./jsonlog_util.opt entry-exit $ARGS $F | jq -s 'length | "\(.) lines (full entry/exit)"'
 ./jsonlog_util.opt entry-exit --ooe $ARGS $F | jq -s 'length | "\(.) lines (only entry)"'
 ./jsonlog_util.opt entry-exit $NARGS $ARGS $F | jq -S . > _build/1.log

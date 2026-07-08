@@ -1,5 +1,6 @@
 import Trace
 import json
+import traceback
 
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
@@ -118,11 +119,18 @@ class ATNConfig(object):
                                sort_keys=True, indent=4))
         return rv
 
+    def strkey(self):
+        return ("%s/%s" % (self.hashkey(), str(self.context)))
+
+    def hashkey(self):
+        return ("%d/%d/%s" % (self.state.stateNumber, self.alt, str(self.semanticContext)))
+
     def __hash__(self):
         return hash((self.state.stateNumber, self.alt, self.context, self.semanticContext))
 
     def hashCodeForConfigSet(self):
-        return hash((self.state.stateNumber, self.alt, hash(self.semanticContext)))
+#        return hash((self.state.stateNumber, self.alt, hash(self.semanticContext)))
+        return self.hashkey()
 
     def _equalsForConfigSet(self, other):
         if self is other:
@@ -140,12 +148,6 @@ class ATNConfig(object):
                                  self.asdict(), other.asdict(), rv ],
                                sort_keys=True, indent=4))
         return rv
-
-    def strkey(self):
-        return ("%s/%s" % (self.hashkey(), str(self.context)))
-
-    def hashkey(self):
-        return ("%d/%d/%s" % (self.state.stateNumber, self.alt, str(self.semanticContext)))
 
     def __str__(self):
         with StringIO() as buf:
@@ -203,12 +205,7 @@ class LexerATNConfig(ATNConfig):
             d['passedThroughNonGreedyDecision'] = self.passedThroughNonGreedyDecision
         return ["LexerATNConfig", d]
 
-    def __hash__(self):
-        return hash((self.state.stateNumber, self.alt, self.context,
-                self.semanticContext, self.passedThroughNonGreedyDecision,
-                self.lexerActionExecutor))
-
-    def __eq__(self, other):
+    def real__eq__(self, other):
         if self is other:
             return True
         elif not isinstance(other, LexerATNConfig):
@@ -217,13 +214,34 @@ class LexerATNConfig(ATNConfig):
             return False
         if not(self.lexerActionExecutor == other.lexerActionExecutor):
             return False
-        return super().__eq__(other)
+        return super().real__eq__(other)
 
+    def __eq__(self, other):
+        rv = self.real__eq__(other)
+#        traceback.print_stack(file=Trace.fh)
+        Trace.write(json.dumps([ 'LexerATNConfig.__eq__',
+                                 self.asdict(), other.asdict(), rv ],
+                               sort_keys=True, indent=4))
+        return rv
 
+    def __hash__(self):
+        return hash((self.state.stateNumber, self.alt, self.context,
+                self.semanticContext, self.passedThroughNonGreedyDecision,
+                self.lexerActionExecutor))
+
+    def hashkey(self):
+        return ("%d/%d/%s/%s/%s/%s" % (self.state.stateNumber, self.alt, self.context,
+                                       str(self.semanticContext),
+                                       self.passedThroughNonGreedyDecision,
+                                       str(self.lexerActionExecutor)
+                                       ))
+
+    def strkey(self):
+        return self.hashkey()
 
     def hashCodeForConfigSet(self):
-        return hash(self)
-
+#        return hash(self)
+        return self.hashkey()
 
 
     def equalsForConfigSet(self, other):

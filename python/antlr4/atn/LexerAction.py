@@ -286,6 +286,9 @@ class LexerCustomAction(LexerAction):
         else:
             return self.ruleIndex == other.ruleIndex and self.actionIndex == other.actionIndex
 
+    def __str__(self):
+        return "custom(" + str(self.ruleIndex) + ":" + str(self.actionIndex) + ")"
+
 # Implements the {@code channel} lexer action by calling
 # {@link Lexer#setChannel} with the assigned channel.
 class LexerChannelAction(LexerAction):
@@ -348,6 +351,9 @@ class LexerIndexedCustomAction(LexerAction):
         self.offset = offset
         self.action = action
         self.isPositionDependent = True
+
+    def __str__(self):
+        return "indexedcustom(" + str(self.action) + ":" + str(self.offset) + ")"
 
     def asdict(self):
         d = super(LexerIndexedCustomAction, self).asdict()[1]
