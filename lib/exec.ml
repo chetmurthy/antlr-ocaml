@@ -17,9 +17,9 @@ type pc_t =
   EMPTY
 | SINGLETON of (pc_t option * int)
 | ARRAY of (pc_t option * int) list
-[@@deriving show]
+[@@deriving show, eq]
 type t = pc_t
-[@@deriving show]
+[@@deriving show, eq]
 
 let rec toString = function
     EMPTY -> "$"
@@ -350,7 +350,7 @@ type t =
 | PRECEDENCE of int
 | AND of t list
 | OR of t list
-[@@deriving show]
+[@@deriving show, eq]
 
 let mkPredicate ?(ruleIndex= -1) ?(predIndex= -1) ?(isCtxDependent = false) () =
   PREDICATE { ruleIndex ; predIndex ; isCtxDependent }
@@ -432,7 +432,7 @@ module LA = struct
   type t = [%import: Types.lexer_action_t
             [@with lexer_action_t := t]
            ]
-[@@deriving yojson,located_yojson, show]
+[@@deriving yojson,located_yojson, show, eq]
 
 let pp_hum pps t = Fmt.(pf pps "%s" (Atn.LexerAction.toString t))
 end
@@ -440,8 +440,9 @@ module LexerAction = LA
 
 module LAE = struct
   type t = [%import: Mimick.lexer_action_executor_t
+            [@with Atn.LexerAction.t := LA.t]
            ]
-[@@deriving yojson,located_yojson, show]
+[@@deriving yojson,located_yojson, show, eq]
 
 let pp_hum pps t = Fmt.(pf pps "%a" (list ~sep:(const string ":") LA.pp_hum) t.lexerActions)
 let toString t = Fmt.(str "%a" pp_hum t)
@@ -451,8 +452,12 @@ module LexerActionExecutor = LAE
 module AC = struct
 let disable_builtin_equality (x: int) = x
 type ac_t = {
-    disable_builtin_equality : int -> int [@printer (fun pps _ -> Fmt.(pf pps "_"))]
-  ; atn : Atn.t [@printer (fun pps _ -> Fmt.(pf pps "<atn>"))]
+    disable_builtin_equality : int -> int
+    [@printer (fun pps _ -> Fmt.(pf pps "_"))]
+    [@equal fun x y -> true]
+  ; atn : Atn.t
+    [@printer (fun pps _ -> Fmt.(pf pps "<atn>"))]
+    [@equal (fun x y -> x==y)]
   ; id : int
   ; state : M.deser_state_id
   ; alt : int
@@ -466,9 +471,9 @@ and lexer_ext_t = {
     lexerActionExecutor : LAE.t option
   ; passedThroughNonGreedyDecision : bool
   }
-[@@deriving show]
+[@@deriving show, eq]
 type t = ac_t
-[@@deriving show]
+[@@deriving show, eq]
 
 let hashkey c =
   match c.lexer_ext with
@@ -561,7 +566,15 @@ let mk () = MHM.mk 23
 
 let get cache t =
   if MHM.in_dom cache t.id then
-    MHM.map cache t.id
+    let t' = MHM.map cache t.id in
+    if not (equal_ac_t t t') then begin
+      Fmt.(pf stderr "ATNConfig: id=%d: cached value was different from demarshalled one.@.cached:@.%a@.demarshalled:@.%a@."
+             t.id
+             pp_ac_t t'
+             pp_ac_t t) ;
+      failwith "ATNConfig: cached value was different from demarshalled one"
+      end ;
+    t'
   else begin
       MHM.add cache (t.id, t) ;
       t

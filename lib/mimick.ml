@@ -16,6 +16,7 @@ type deser_state_id = state_id[@yojson.to_yojson state_id_to_yojson]
               [@located_yojson.to_located_yojson state_id_to_located_yojson]
               [@located_yojson.of_located_yojson state_id_of_located_yojson]
 [@@deriving yojson,located_yojson, show]
+let equal_deser_state_id (x:deser_state_id) y = x=y
 
 type config_t =
   ATNConfig of {
