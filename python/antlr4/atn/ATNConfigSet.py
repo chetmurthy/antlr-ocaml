@@ -41,7 +41,7 @@ class ATNConfigSet(object):
     def __init__(self, fullCtx:bool=True):
         global configSetCounter
         self.id = configSetCounter
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.__init__', self.id ],
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.__init__', self.id, fullCtx ],
                                sort_keys=True, indent=4))
         configSetCounter += 1
         # All configs but hashed by (s, i, _, pi) not including context. Wiped out
@@ -219,7 +219,7 @@ class ATNConfigSet(object):
             self.add(c)
         return False
 
-    def __eq__(self, other):
+    def real__eq__(self, other):
         if self is other:
             return True
         elif not isinstance(other, ATNConfigSet):
@@ -234,6 +234,14 @@ class ATNConfigSet(object):
             self.dipsIntoOuterContext == other.dipsIntoOuterContext
 
         return same
+
+    def __eq__(self, other):
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.__eq__', self.asdict(), other.asdict() ],
+                               sort_keys=True, indent=4))
+        rv = self.real__eq__(other)
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.__eq__', rv ],
+                               sort_keys=True, indent=4))
+        return rv
 
     def __hash__(self):
         if self.readonly:
@@ -293,4 +301,8 @@ class ATNConfigSet(object):
 class OrderedATNConfigSet(ATNConfigSet):
 
     def __init__(self):
+        Trace.write(json.dumps([ 'ENTER OrderedATNConfigSet.__init__' ],
+                               sort_keys=True, indent=4))
         super().__init__()
+        Trace.write(json.dumps([ 'EXIT OrderedATNConfigSet.__init__', self.asdict() ],
+                               sort_keys=True, indent=4))

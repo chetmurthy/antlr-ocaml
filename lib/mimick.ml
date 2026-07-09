@@ -329,12 +329,20 @@ type json_log_t =
                                     [@yojson.name "EXIT LexerATNConfig.__init__"]
                                     [@located_yojson.name "EXIT LexerATNConfig.__init__"]
 
-| ATNConfigSet_ENTER_init of int
+| ATNConfigSet_ENTER_init of int * bool
                                     [@yojson.name "ENTER ATNConfigSet.__init__"]
                                     [@located_yojson.name "ENTER ATNConfigSet.__init__"]
 | ATNConfigSet_EXIT_init of config_set_t
                                     [@yojson.name "EXIT ATNConfigSet.__init__"]
                                     [@located_yojson.name "EXIT ATNConfigSet.__init__"]
+| OrderedATNConfigSet_ENTER_init
+                                    [@yojson.name "ENTER OrderedATNConfigSet.__init__"]
+                                    [@located_yojson.name "ENTER OrderedATNConfigSet.__init__"]
+| OrderedATNConfigSet_EXIT_init of config_set_t
+                                    [@yojson.name "EXIT OrderedATNConfigSet.__init__"]
+                                    [@located_yojson.name "EXIT OrderedATNConfigSet.__init__"]
+
+
 | ATNConfigSet_ENTER_add of config_set_t * config_t * merge_cache_t option
                                     [@yojson.name "ENTER ATNConfigSet.add"]
                                     [@located_yojson.name "ENTER ATNConfigSet.add"]
@@ -358,5 +366,12 @@ type json_log_t =
 
 | ATNConfigSet_AFTER_append_configs of config_set_t * config_t[@yojson.name "AFTER append configs"]
                                   [@located_yojson.name "AFTER append configs"]
+
+| ATNConfigSet_ENTER_eq of config_set_t * config_set_t
+                                    [@yojson.name "ENTER ATNConfigSet.__eq__"]
+                                    [@located_yojson.name "ENTER ATNConfigSet.__eq__"]
+| ATNConfigSet_EXIT_eq of bool
+                                    [@yojson.name "EXIT ATNConfigSet.__eq__"]
+                                    [@located_yojson.name "EXIT ATNConfigSet.__eq__"]
 
 [@@deriving yojson,located_yojson, show]

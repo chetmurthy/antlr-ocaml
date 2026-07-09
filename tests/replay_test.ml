@@ -104,6 +104,10 @@ let cmd =
 end
 
 module Filter = struct
+let make_matchers ~pattern ~case_insensitive =
+  let flags = if case_insensitive then [`CASELESS] else [] in
+  List.map (Pcre2.regexp ~flags) pattern
+
 let filter_json_stream matchers strm =
   let filter1 j = match j with
       (_,`List ((_,`String tag)::l)) ->
@@ -114,19 +118,18 @@ let filter_json_stream matchers strm =
       
   Std.stream_concat_map filter1 strm
 
-let filter1 ~verbose matchers file =
+let filter1_then ~verbose matchers consumer file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
   let doit stream =
     stream
     |> filter_json_stream matchers
-    |> pp_json_stream stdout in
+    |> consumer in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
 let filter ~verbose ~yojson ~debug ~pattern ~case_insensitive files =
-  let flags = if case_insensitive then [`CASELESS] else [] in
-  let matchers = List.map (Pcre2.regexp ~flags) pattern in
-  List.iter (filter1 ~verbose matchers) files
+  let matchers = make_matchers ~pattern ~case_insensitive in
+  List.iter (filter1_then ~verbose matchers (pp_json_stream stdout)) files
 
 let cmd =
   let doc = "filter json.log files for only selected JSON log objects." in
@@ -142,15 +145,17 @@ end
 
 module EntryExit = struct
 
-let filter1 ?nth ~only_outermost_enter ~verbose names file =
+let filter1_then ?nth ~only_outermost_enter ~verbose names consumer file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
   let doit stream =
-    stream |> Util.entry_exit_yojson ?nth ~only_outermost_enter names |> pp_json_stream stdout in
+    stream
+    |> Util.entry_exit_yojson ?nth ~only_outermost_enter names
+    |> consumer in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
 let filter ?nth ~verbose ~yojson ~debug ~entry_exit_name ~only_outermost_enter files =
-  List.iter (filter1 ?nth ~only_outermost_enter ~verbose entry_exit_name) files
+  List.iter (filter1_then ?nth ~only_outermost_enter ~verbose entry_exit_name (pp_json_stream stdout)) files
 
 let cmd =
   let doc = "filter json.log files for selected ENTER events." in
@@ -169,8 +174,7 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
-
-module Simulate = struct
+module Entrypoints = struct
 
 let read_atn ~grammarType file =
   let atn = 
@@ -185,54 +189,39 @@ let read_atn ~grammarType file =
            file Atn.pp_atn_type_t atn.Atn.grammarType Atn.pp_atn_type_t grammarType) ;
   atn
 
-let simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file =
-  let flags = if case_insensitive then [`CASELESS] else [] in
-  let matchers = List.map (Pcre2.regexp ~flags) pattern in
+let simulate_json atns stream =
   let open Rresult.R in
-  if verbose then
-    Fmt.(pf stderr "[READ %s]@." file) ;
-  Tracelog._enabled := true ;
   let demarsh j =
     let loc = Json.loc_of_json j in
     ([%of_located_yojson: Mimick.json_log_t] j)
     >>= (fun j ->  Result.Ok(loc,j)) in
-  let caches = Simulate.Caches.mk() in
-  let doit stream =
-    stream
-    |> Filter.filter_json_stream matchers
-    |> Std.stream_map demarsh
-    |> Std.stream_map Json.raise_failwith_error_msg
-    |> Util.stream_iter_i (Simulate.Entrypoints.sim1 caches atns) in
-  Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
+  stream
+  |> Std.stream_map demarsh
+  |> Std.stream_map Json.raise_failwith_error_msg
+  |> Util.stream_iter_i (Simulate.Entrypoints.sim1 atns)
+
+let simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file =
+  Tracelog._enabled := true ;
+  let matchers = Filter.make_matchers ~pattern ~case_insensitive in
+  Filter.filter1_then ~verbose matchers (simulate_json atns) file
 
 let simulate1_entry_exit ~atns ?nth ~verbose ~entry_exit_name ~only_outermost_enter file =
-  let open Rresult.R in
-  if verbose then
-    Fmt.(pf stderr "[READ %s]@." file) ;
   Tracelog._enabled := true ;
-  let demarsh j =
-    let loc = Json.loc_of_json j in
-    ([%of_located_yojson: Mimick.json_log_t] j)
-    >>= (fun j ->  Result.Ok(loc,j)) in
-  let caches = Simulate.Caches.mk() in
-  let doit stream =
-    stream
-    |> Util.entry_exit_yojson ?nth ~only_outermost_enter entry_exit_name
-    |> Std.stream_map demarsh
-    |> Std.stream_map Json.raise_failwith_error_msg
-    |> Util.stream_iter_i (Simulate.Entrypoints.sim1 caches atns) in
-  Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
+  EntryExit.filter1_then  ?nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json atns) file
+
+let load_atns ~lexer_atn ~parser_atn =
+  match (lexer_atn, parser_atn) with
+    (None, None) -> failwith "must specify at least lexer-atn"
+  | (None, Some _) -> failwith "cannot specify parser-atn without lexer-atn"
+  | (Some f1, None) ->
+     Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
+          ; _parser = None }
+  | (Some f1, Some f2) ->
+     Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
+          ; _parser = Some (read_atn ~grammarType:Atn.PARSER f2) }
 
 let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter file =
-  let atns = match (lexer_atn, parser_atn) with
-      (None, None) -> failwith "must specify at least lexer-atn"
-    | (None, Some _) -> failwith "cannot specify parser-atn without lexer-atn"
-    | (Some f1, None) ->
-       Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
-            ; _parser = None }
-    | (Some f1, Some f2) ->
-       Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
-            ; _parser = Some (read_atn ~grammarType:Atn.PARSER f2) } in
+  let atns = load_atns ~lexer_atn ~parser_atn in
   match (pattern, entry_exit_name) with
     (_::_,[]) ->
     simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file
@@ -248,12 +237,12 @@ let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insen
      Fmt.(failwith "simulate: must NOT provide BOTH pattern AND entry-exit-name")
 
 let cmd =
-  let doc = "simulate json.log files for only selected JSON log objects." in
+  let doc = "simulate json.log files for only selected UNRELATED JSON log objects." in
   let man = [
     `S Manpage.s_bugs;
     `P "Email bug reports to <bugs@example.org>." ]
   in
-  Cmd.make (Cmd.info "simulate" ~version:"%%VERSION%%" ~doc ~man) @@
+  Cmd.make (Cmd.info "entrypoints" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ parser_atn and+ lexer_atn and+ debug and+ verbose and+ pattern and+ case_insensitive
      and+ entry_exit_name and+ entry_exit_nth and+ only_outermost_enter in
   simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter file ;
@@ -266,7 +255,7 @@ let cmd =
   [Deserialize.cmd
   ; Filter.cmd
   ; EntryExit.cmd
-  ; Simulate.cmd
+  ; Entrypoints.cmd
 ]
 
 let main () = Cmd.eval' cmd

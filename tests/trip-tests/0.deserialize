@@ -2,10 +2,10 @@
 
 set -e
 
-for f in _build/*/*/json.log
+for f in _generated/*/*/json.log
 do
     echo $f
-    ./jsonlog_util.opt deserialize $f
+    ./replay_test.opt deserialize $f
 done
 
 

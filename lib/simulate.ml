@@ -7,19 +7,8 @@ open Pa_ppx_located_yojson
 open Exec
 module M = Mimick
 
-module Caches = struct
-  open Coll
-  type t = {
-      ac : AC.Cache.t
-    }
-  let mk () = {
-      ac = AC.Cache.mk ()
-    }
-end
-
 module Entrypoints = struct
-open Caches
-let sim1 caches atns (i:int) (loc,j) = match j with
+let sim1 atns (i:int) (loc,j) = match j with
     M.PredictionContext_ENTER_merge (pc1, pc2, rootIsWildcard, mc_opt) -> begin
       try
         let pc1 = PC.of_mimick pc1 in
@@ -95,10 +84,37 @@ let sim1 caches atns (i:int) (loc,j) = match j with
         Printexc.raise_with_backtrace e bt
     end
 
-  | M.ATNConfigSet_ENTER_add (cs, c, mc_opt) -> begin
+  | _ ->
+     Fmt.(pf stderr "%s: sim1[%d]: Match failure on @.%a@."
+          (Ploc.string_of_location loc) i
+          M.pp_json_log_t j) ;
+     Fmt.(raise_failwithf loc "sim1[%d]: Match failure on @.%a@." i M.pp_json_log_t j)
+end
+
+module Caches = struct
+  open Coll
+  type t = {
+      ac : AC.Cache.t
+    ; acs : ACS.Cache.t
+    }
+  let mk () = {
+      ac = AC.Cache.mk ()
+    ; acs = ACS.Cache.mk ()
+    }
+end
+
+module ACS = struct
+open Caches
+let sim1 caches atns (i:int) (loc,j) = match j with
+    M.ATNConfigSet_ENTER_init (id, fullCtx) ->
+     let rv = ACS._ATNConfigSet_init ~id fullCtx in
+     ACS.Cache.add caches.acs rv ;
+     ()
+
+  | ATNConfigSet_ENTER_add (cs, c, mc_opt) -> begin
       try
-      let cs = ACS.of_mimick ~ac_cache:caches.ac atns cs in
-      let c = AC.of_mimick ~ac_cache:caches.ac atns c in
+      let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
+      let c = AC.of_mimick ~ac_cache:(Some caches.ac) atns c in
       let mc_opt = Option.map PC.MC.of_mimick mc_opt in
       let rv = match mc_opt with
           None -> ACS.add cs c
@@ -114,9 +130,4 @@ let sim1 caches atns (i:int) (loc,j) = match j with
         Printexc.raise_with_backtrace e bt
     end
 
-  | _ ->
-     Fmt.(pf stderr "%s: sim1[%d]: Match failure on @.%a@."
-          (Ploc.string_of_location loc) i
-          M.pp_json_log_t j) ;
-     Fmt.(raise_failwithf loc "sim1[%d]: Match failure on @.%a@." i M.pp_json_log_t j)
 end

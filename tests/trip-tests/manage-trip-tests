@@ -69,7 +69,7 @@ $ENV{'TOP'} = ".." ;
   if ($subcommand eq 'realclean') {
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
-      my $dir = "_build/$p" ;
+      my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["rm", "-rf", $dir]) ;
       my $dirdir = dirname($dir) ;
@@ -83,14 +83,14 @@ $ENV{'TOP'} = ".." ;
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
       v_systemx([0], ["$ENV{'TOP'}/tests/antlrtest_util.opt", "generate", @genargs,
-		      "-d", "_build/$p",
+		      "-d", "_generated/$p",
 		      $tf]) ;
     }
   }
   elsif ($subcommand eq 'clean') {
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
-      my $dir = "_build/$p" ;
+      my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["make", "-C", $dir, "clean"]) ;
     }
@@ -98,7 +98,7 @@ $ENV{'TOP'} = ".." ;
   elsif ($subcommand eq 'prepare') {
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
-      my $dir = "_build/$p" ;
+      my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["make", "-C", $dir, "prepare"]) ;
     }
@@ -106,7 +106,7 @@ $ENV{'TOP'} = ".." ;
   elsif ($subcommand eq 'test') {
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
-      my $dir = "_build/$p" ;
+      my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["make", "-C", $dir, "all"]) ;
     }
@@ -114,7 +114,7 @@ $ENV{'TOP'} = ".." ;
   elsif ($subcommand eq 'compare-atns') {
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
-      my $dir = "_build/$p" ;
+      my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["make", "-C", $dir, "compare-atns"]) ;
     }

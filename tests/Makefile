@@ -7,14 +7,14 @@ PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 ML= \
 	lib_test.ml antlr_test.ml atn_util.ml \
 	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
-	jsonlog_util.ml
+	replay_test.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
 TESTS=lib_test.exe antlr_test.exe atn_util.exe \
 	antlrtest_test.exe antlrtest_util.exe \
-	deserialize_jsonlog.exe jsonlog_util.exe
+	deserialize_jsonlog.exe replay_test.exe
 
 TESTSOPT=$(TESTS:.exe=.opt)
 
@@ -26,17 +26,17 @@ test:: all
 	mkdir -p _build && ./antlrtest_test.exe
 
 MANAGETRIP=./trip-tests/manage-trip-tests
-deserialize-all:: jsonlog_util.opt
-	./jsonlog_util.opt deserialize -v _build/*/*/json.log
+deserialize-all:: replay_test.opt
+	./replay_test.opt deserialize -v _generated/*/*/json.log
 
-filter-all:: jsonlog_util.opt
-	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log
+filter-all:: replay_test.opt
+	./replay_test.opt simulate -it "ENTER PredictionContext.merge" _generated/*/*/json.log
 
-simulate-all:: jsonlog_util.opt
-	./jsonlog_util.opt simulate --ooe -e "PredictionContext.merge" _build/*/*/json.log
-#	./jsonlog_util.opt simulate -it "ENTER PredictionContext.merge" _build/*/*/json.log
-#	./jsonlog_util.opt simulate -it "ENTER PredictionContext.mergeArrays" _build/*/*/json.log
-#	./jsonlog_util.opt simulate -it "ENTER PredictionContext.mergeRoot" _build/*/*/json.log
+simulate-all:: replay_test.opt
+	./replay_test.opt simulate --ooe -e "PredictionContext.merge" _generated/*/*/json.log
+#	./replay_test.opt simulate -it "ENTER PredictionContext.merge" _generated/*/*/json.log
+#	./replay_test.opt simulate -it "ENTER PredictionContext.mergeArrays" _generated/*/*/json.log
+#	./replay_test.opt simulate -it "ENTER PredictionContext.mergeRoot" _generated/*/*/json.log
 
 generate-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) generate -v
@@ -83,15 +83,15 @@ ONE=ParserExec/Basic
 #ONE=CompositeParsers/KeywordVSIDOrder
 generate-one:: antlrtest_util.opt
 	mkdir -p _build && \
-	rm -rf _build/$(ONE) && \
-	./antlrtest_util.opt generate $(GENARGS) -d _build/$(ONE) \
+	rm -rf _generated/$(ONE) && \
+	./antlrtest_util.opt generate $(GENARGS) -d _generated/$(ONE) \
 	fixtures/descriptors/$(ONE).txt
 
 test-one:: antlrtest_test.exe
-	$(MAKE) -C _build/$(ONE) all
+	$(MAKE) -C _generated/$(ONE) all
 
 compare-one:: antlrtest_test.exe
-	$(MAKE) -C _build/$(ONE) compare-atns
+	$(MAKE) -C _generated/$(ONE) compare-atns
 
 %.exe: %.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
@@ -133,3 +133,6 @@ test-all-python::
 clean::
 	rm -rf *.cm* _build *.exe
 
+
+realclean:: clean
+	rm -rf _generated

@@ -1,8 +1,59 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
+open Pa_ppx_base
+open Ppxutil
 open Pa_ppx_utils
 open Util
 open Atn
+
+open Coll
+module type CACHEABLE = sig
+  type t
+  val id : t -> int
+  val equal : t -> t -> bool
+  val pp : t Fmt.t
+  val name : string
+end
+module type CACHE = sig
+  module C : CACHEABLE
+  type t = (int, C.t) MHM.t
+  val mk : unit -> t
+  val recache : t -> C.t -> C.t
+  val remap : t -> C.t -> unit
+  val add : t -> C.t -> unit
+  val get : t -> int -> C.t
+end
+module Cacher(C : CACHEABLE): (CACHE with module C = C) = struct
+module C = C
+type t = (int, C.t) MHM.t
+let mk () = MHM.mk 23
+
+let add cache t =
+  MHM.add cache (C.id t, t)
+
+let remap cache t =
+  let id = C.id t in
+  MHM.remap cache id t
+
+let get cache id = MHM.map cache id
+let recache cache t =
+  let tid = C.id t in
+  if MHM.in_dom cache tid then
+    let t' = MHM.map cache tid in
+    if not (C.equal t t') then begin
+      Fmt.(pf stderr "%s: id=%d: cached value was different from demarshalled one.@.cached:@.%a@.demarshalled:@.%a@."
+           C.name
+             tid
+             C.pp t'
+             C.pp t) ;
+      Fmt.(failwithf "%s: cached value was different from demarshalled one" C.name)
+      end ;
+    t'
+  else begin
+      MHM.add cache (tid, t) ;
+      t
+    end
+end
 
 module M = Mimick
 
@@ -560,30 +611,19 @@ let _of_mimick atns t = match (atns,t) with
      }
 
 open Coll
-module Cache = struct
-type t = (int, ac_t) MHM.t
-let mk () = MHM.mk 23
-
-let get cache t =
-  if MHM.in_dom cache t.id then
-    let t' = MHM.map cache t.id in
-    if not (equal_ac_t t t') then begin
-      Fmt.(pf stderr "ATNConfig: id=%d: cached value was different from demarshalled one.@.cached:@.%a@.demarshalled:@.%a@."
-             t.id
-             pp_ac_t t'
-             pp_ac_t t) ;
-      failwith "ATNConfig: cached value was different from demarshalled one"
-      end ;
-    t'
-  else begin
-      MHM.add cache (t.id, t) ;
-      t
-    end
-end
+module Cache = Cacher(struct
+                   type t  = ac_t
+                   let id t = t.id
+                   let equal = equal_ac_t
+                   let pp = pp_ac_t
+                   let name = "ATNConfig"
+                 end)
 
 let of_mimick ~ac_cache atns t =
   let t = _of_mimick atns t in
-  Cache.get ac_cache t
+  match ac_cache with
+    None -> t
+  | Some ac_cache -> Cache.recache ac_cache t
 
 let hash t =
   Hashtbl.hash (t.state, t.alt, t.context, t.semanticContext, t.lexer_ext)
@@ -725,7 +765,7 @@ let configHT_equal ht1 ht2 =
   let l2 = List.stable_sort Stdlib.compare (MHM.toList ht2) in
   List.for_all2 [%eq: string * (AC.t list ref)] l1 l2
 
-type t = {
+type acs_t = {
     fullCtx : bool
   ; configHT : (string, AC.t list ref) MHM.t
     [@printer (fun pps _ -> Fmt.(pf pps "<configHT>"))]
@@ -739,6 +779,16 @@ type t = {
   ; id : int
   }
 [@@deriving show, eq]
+type t = acs_t
+[@@deriving show, eq]
+
+module Cache = Cacher(struct
+                   type t  = acs_t
+                   let id t = t.id
+                   let equal = equal_acs_t
+                   let pp = pp_acs_t
+                   let name = "ATNConfigSet"
+                 end)
 
 let real__eq__ t1 t2 =
   t1==t2 ||
@@ -750,7 +800,7 @@ let real__eq__ t1 t2 =
      && t1.dipsIntoOuterContext = t2.dipsIntoOuterContext)
 
 
-let of_mimick ~ac_cache atns t =
+let _of_mimick ~ac_cache atns t =
   let row_hash l =
     assert (l <> []) ;
     let pl = List.map (fun c -> (AC.hash_for_config_set c, c)) l in
@@ -778,6 +828,12 @@ let of_mimick ~ac_cache atns t =
   ; id = t.id
   }
 
+let of_mimick ~acs_cache ~ac_cache atns t =
+  let t = _of_mimick ~ac_cache atns t in
+  match acs_cache with
+    None -> t
+  | Some acs_cache -> Cache.recache acs_cache t
+
 let to_mimick t =
   {
     M.fullCtx = t.fullCtx
@@ -789,6 +845,27 @@ let to_mimick t =
   ; hasSemanticContext = t.hasSemanticContext
   ; dipsIntoOuterContext = t.dipsIntoOuterContext
   ; id = t.id
+  }
+
+let configSetCounter = ref 0
+
+let _ATNConfigSet_init ?id fullCtx =
+  let id = match id with
+      Some id -> id
+    | None ->
+       let id = !configSetCounter in
+       incr configSetCounter ;
+       id in
+  {
+    id
+  ; configs = ref []
+  ; configHT = MHM.mk 23
+  ; fullCtx
+  ; readonly = false
+  ; uniqueAlt = 0
+  ; conflictingAlts = None
+  ; hasSemanticContext = false
+  ; dipsIntoOuterContext = false
   }
 
 let in_configs t c =
