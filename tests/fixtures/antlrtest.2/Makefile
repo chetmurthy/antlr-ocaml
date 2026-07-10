@@ -21,13 +21,19 @@ compare:: output.NEW errors.NEW
 	diff -Bwiu output output.NEW
 	diff -Bwiu errors errors.NEW
 
+save-json-log: json.log
+	cp json.log json.log.SAVED
+
+compare-json-log:: json.log.SAVED json.log
+	diff -Bwiu json.log.SAVED json.log
+
 <if(parserName)>
 VISITOR=-visitor
 <endif>
 <lexerName>.py: <grammarName>.g4
 	antlr4 $(VISITOR) -Dlanguage=Python3 <grammarName>.g4
 
-output.NEW errors.NEW:: <lexerName>.py
+output.NEW errors.NEW json.log:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 Test.py input > output.NEW 2> errors.NEW
 
 <if(parserName)>

@@ -50,6 +50,12 @@ $ENV{'TOP'} = ".." ;
     elsif ($ARGV[0] eq 'compare-atns') {
       $subcommand = shift @ARGV ;
     }
+    elsif ($ARGV[0] eq 'save-json-log') {
+      $subcommand = shift @ARGV ;
+    }
+    elsif ($ARGV[0] eq 'compare-json-log') {
+      $subcommand = shift @ARGV ;
+    }
     else { last ; }
   }
 
@@ -119,6 +125,27 @@ $ENV{'TOP'} = ".." ;
       v_systemx([0], ["make", "-C", $dir, "compare-atns"]) ;
     }
   }
+
+  elsif ($subcommand eq 'save-json-log') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_generated/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], ["make", "-C", $dir, "save-json-log"]) ;
+    }
+  }
+
+  elsif ($subcommand eq 'compare-json-log') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_generated/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], ["make", "-C", $dir, "compare-json-log"]) ;
+    }
+  }
+
+  else { die "unrecognized subcommand <<$subcommand>>" ; }
+
 }
 
 # "$ENV{'TOP'}/tests/fixtures/descriptors/*/*.txt"

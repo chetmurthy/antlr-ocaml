@@ -50,6 +50,12 @@ test-all:: antlrtest_util.opt
 compare-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) compare-atns -v
 
+save-json-log-all:: antlrtest_util.opt
+	mkdir -p _build && $(MANAGETRIP) save-json-log -v
+
+compare-json-log-all:: antlrtest_util.opt
+	mkdir -p _build && $(MANAGETRIP) compare-json-log -v
+
 clean-all:: antlrtest_util.opt
 	mkdir -p _build && $(MANAGETRIP) clean -v
 
