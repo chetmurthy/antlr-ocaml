@@ -97,6 +97,17 @@ class ATNConfigSet(object):
     def __iter__(self):
         return self.configs.__iter__()
 
+    def set_DIOC(self):
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.set_DIOC',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
+        self.dipsIntoOuterContext = True
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.set_DIOC',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
+
     def in_configs(self, config):
         for c in self.configs:
             if c is config: return True

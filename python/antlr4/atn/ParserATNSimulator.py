@@ -1193,7 +1193,7 @@ class ParserATNSimulator(ATNSimulator):
                         # avoid infinite recursion for right-recursive rules
                         continue
                     closureBusy.add(c)
-                    configs.dipsIntoOuterContext = True # TODO: can remove? only care when we add to set per middle of this method
+                    configs.set_DIOC() # TODO: can remove? only care when we add to set per middle of this method
                     newDepth -= 1
                     if ParserATNSimulator.debug:
                         print("dips into outer ctx: " + str(c))

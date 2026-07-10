@@ -380,5 +380,11 @@ type json_log_t =
 | ATNConfigSet_EXIT_eq of bool
                                     [@yojson.name "EXIT ATNConfigSet.__eq__"]
                                     [@located_yojson.name "EXIT ATNConfigSet.__eq__"]
+| ATNConfigSet_ENTER_set_DIOC of config_set_t
+                                    [@yojson.name "ENTER ATNConfigSet.set_DIOC"]
+                                    [@located_yojson.name "ENTER ATNConfigSet.set_DIOC"]
+| ATNConfigSet_EXIT_set_DIOC of config_set_t
+                                    [@yojson.name "EXIT ATNConfigSet.set_DIOC"]
+                                    [@located_yojson.name "EXIT ATNConfigSet.set_DIOC"]
 
 [@@deriving yojson,located_yojson, show]

@@ -154,6 +154,13 @@ let sim1 caches atns (i:int) (loc,j) =
          Tracelog.write (ATNConfig_EXIT_incrementRIOC (AC.to_mimick c)) ;
          ()
 
+      | ATNConfigSet_ENTER_set_DIOC cs ->
+         let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
+         Tracelog.write (ATNConfigSet_ENTER_set_DIOC (ACS.to_mimick cs)) ;
+         cs.ACS.dipsIntoOuterContext <- true ;
+         Tracelog.write (ATNConfigSet_EXIT_set_DIOC (ACS.to_mimick cs)) ;
+         ()
+
 
     end
   with exc ->

@@ -15,6 +15,7 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 
 ARGS=" -e ATNConfigSet.add"
 ARGS+=" -e ATNConfigSet.__init__"
+ARGS+=" -e ATNConfigSet.set_DIOC"
 ARGS+=" -e ATNConfig.__init__"
 ARGS+=" -e ATNConfig.incrementRIOC"
 ARGS+=" -e LexerATNConfig.__init__"
