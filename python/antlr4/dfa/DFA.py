@@ -66,6 +66,7 @@ class DFA(object):
             'atnStartState' : self.atnStartState.stateNumber,
             'decision' : self.decision,
             '_states': states,
+            'precedenceDfa' : self.precedenceDfa,
             's0' : None if self.s0 is None else self.s0.asdict(),
         }
         return d

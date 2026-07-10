@@ -960,4 +960,46 @@ let add ?mergeCache t c =
 
 end
 module ATNConfigSet = ACS
+(*
+module DFA = struct
+  type dfa_t = {
+    disable_builtin_equality : int -> int
+    [@printer (fun pps _ -> Fmt.(pf pps "_"))]
+    [@equal fun x y -> true]
+  ; atn : Atn.t
+    [@printer (fun pps x -> Fmt.(pf pps "<atn 0x%08x>" (Hashtbl.hash x)))]
+    [@equal (fun x y -> x==y)]
+  ; grammarType : Atn.atn_type_t
+  ; id : int
+  ; atnStartState : M.deser_state_id
+  ; decision : int
+  ; _states : dfa_state_t strmap
+  ; predecenceDfa : bool
+  ; s0 : dfa_state_t option
+  }
+  and dfa_state_t = {
+    stateNumber : int
+  ; configset : ACS.t
+  ; edges: int option array option
+  ; isAcceptState : bool
+  ; prediction : int
+  ; lexerActionExecutor : LAE.t option
+  ; requiresFullContext : bool
+  ; predicates : pred_prediction_t list option
+  }
+and pred_prediction_t = (int * SC.t)
+[@@deriving show, eq]
+type t = dfa_t
+[@@deriving show, eq]
 
+module Cache = Cacher(struct
+                   type t  = dfa_t
+                   let id t = t.id
+                   let equal = equal_dfa_t
+                   let pp = pp_dfa_t
+                   let name = "DFA"
+                 end)
+
+
+end
+ *)

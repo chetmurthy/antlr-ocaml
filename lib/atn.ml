@@ -486,7 +486,7 @@ end
 type atn_type_t =
     LEXER
   | PARSER
-[@@deriving yojson,located_yojson, show { with_path = false }]
+[@@deriving yojson,located_yojson, show { with_path = false }, eq]
 
 let dump_atn_type_t pps t =
   let n = match t with LEXER -> 0 | PARSER -> 1 in

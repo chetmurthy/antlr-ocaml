@@ -90,6 +90,7 @@ and dfa_t = {
   ; atnStartState : deser_state_id
   ; decision : int
   ; _states : dfa_state_t strmap
+  ; predecenceDfa : bool
   ; s0 : dfa_state_t option
   }
 
