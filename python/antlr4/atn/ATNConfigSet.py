@@ -79,8 +79,8 @@ class ATNConfigSet(object):
         for c in self.configs:
             txt = c.strkey()
             configs.append([txt, c.asdict()])
-        configHT = ([] if self.configLookup is None else [(h,[(x.strkey(),x.asdict()) for x in self.configLookup[h]]) for h in self.configLookup])
-        configHT.sort()
+        configHT = (None if self.configLookup is None else [(h,[(x.strkey(),x.asdict()) for x in self.configLookup[h]]) for h in self.configLookup])
+        if configHT is not None: configHT.sort()
         d = {
             'fullCtx' : self.fullCtx,
             'configs' : configs,
@@ -196,6 +196,7 @@ class ATNConfigSet(object):
         return rv
 
     def _getOrAdd(self, config:ATNConfig):
+        assert (not self.readonly)
         h = config.hashCodeForConfigSet()
         l = self.configLookup.get(h, None)
         if l is not None:
@@ -301,6 +302,7 @@ class ATNConfigSet(object):
         self.configLookup.clear()
 
     def setReadonly(self, readonly:bool):
+        assert (readonly)
         Trace.write(json.dumps([ 'ENTER ATNConfigSet.setReadonly',
                                  self.asdict(),
                                  readonly
@@ -309,6 +311,18 @@ class ATNConfigSet(object):
         self.readonly = readonly
         self.configLookup = None # can't mod, no need for lookup cache
         Trace.write(json.dumps([ 'EXIT ATNConfigSet.setReadonly',
+                                 self.asdict(),
+                                ],
+                               sort_keys=True, indent=4))
+
+    def set_UA(self, v):
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.set_UA',
+                                 self.asdict(),
+                                 v
+                                ],
+                               sort_keys=True, indent=4))
+        self.uniqueAlt = v
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.set_UA',
                                  self.asdict(),
                                 ],
                                sort_keys=True, indent=4))

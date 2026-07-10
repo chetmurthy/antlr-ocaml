@@ -43,7 +43,7 @@ type config_t =
 and config_set_t = {
     fullCtx : bool
   ; configs : (string * config_t) list
-  ; configHT : (string * (string * config_t) list) list
+  ; configHT : (string * (string * config_t) list) list option
   ; readonly : bool
   ; conflictingAlts : int list option
   ; hasSemanticContext : bool
@@ -419,5 +419,12 @@ type json_log_t =
 | ATNConfigSet_EXIT_set_DIOC of config_set_t
                                     [@yojson.name "EXIT ATNConfigSet.set_DIOC"]
                                     [@located_yojson.name "EXIT ATNConfigSet.set_DIOC"]
+
+| ATNConfigSet_ENTER_set_UA of config_set_t * int
+                                    [@yojson.name "ENTER ATNConfigSet.set_UA"]
+                                    [@located_yojson.name "ENTER ATNConfigSet.set_UA"]
+| ATNConfigSet_EXIT_set_UA of config_set_t
+                                    [@yojson.name "EXIT ATNConfigSet.set_UA"]
+                                    [@located_yojson.name "EXIT ATNConfigSet.set_UA"]
 
 [@@deriving yojson,located_yojson, show]

@@ -776,18 +776,22 @@ module ACS = struct
 open Coll
 
 let configHT_equal ht1 ht2 =
-  let l1 = List.stable_sort Stdlib.compare (MHM.toList ht1) in
-  let l2 = List.stable_sort Stdlib.compare (MHM.toList ht2) in
-  List.for_all2 [%eq: string * (AC.t list ref)] l1 l2
+  match (ht1, ht2) with
+    (None, None) -> true
+  | ((Some _, None)|(None, Some _)) -> false
+  | (Some ht1, Some ht2) ->
+     let l1 = List.stable_sort Stdlib.compare (MHM.toList ht1) in
+     let l2 = List.stable_sort Stdlib.compare (MHM.toList ht2) in
+     List.for_all2 [%eq: string * (AC.t list ref)] l1 l2
 
 type acs_t = {
     fullCtx : bool
-  ; configHT : (string, AC.t list ref) MHM.t
+  ; mutable configHT : (string, AC.t list ref) MHM.t option
     [@printer (fun pps _ -> Fmt.(pf pps "<configHT>"))]
     [@equal configHT_equal]
   ; configs : AC.t list ref
   ; mutable readonly : bool
-  ; uniqueAlt : int
+  ; mutable uniqueAlt : int
   ; conflictingAlts : int list option
   ; mutable hasSemanticContext : bool
   ; mutable dipsIntoOuterContext : bool
@@ -832,10 +836,13 @@ let _of_mimick ~ac_cache atns t =
     h in
   {
     fullCtx = t.M.fullCtx
-  ; configHT = MHM.ofList 23 (List.map (fun (h,l) ->
-                                  let l = List.map snd l in
-                                  let l = (List.map (AC.of_mimick ~ac_cache atns) l) in
-                                  (h, ref l)) t.M.configHT)
+  ; configHT =
+      t.M.configHT
+      |> Option.map (fun ht ->
+             (MHM.ofList 23 (List.map (fun (h,l) ->
+                                      let l = List.map snd l in
+                                      let l = (List.map (AC.of_mimick ~ac_cache atns) l) in
+                                      (h, ref l)) ht)))
   ; configs = ref (List.map (fun (_, c) -> AC.of_mimick ~ac_cache atns c) t.M.configs)
   ; readonly = t.readonly
   ; uniqueAlt = t.uniqueAlt
@@ -855,9 +862,12 @@ let to_mimick t =
   {
     M.fullCtx = t.fullCtx
   ; configs = List.map (fun c -> (AC.strkey c, AC.to_mimick c)) !(t.configs)
-  ; configHT = List.stable_sort Stdlib.compare (List.map (fun (h,l) -> (h,List.map (fun c -> (AC.strkey c, AC.to_mimick c)) !l)) (MHM.toList t.configHT))
+  ; configHT =
+      t.configHT
+      |> Option.map (fun ht ->
+ List.stable_sort Stdlib.compare (List.map (fun (h,l) -> (h,List.map (fun c -> (AC.strkey c, AC.to_mimick c)) !l)) (MHM.toList ht)))
   ; readonly = t.readonly
-  ; uniqueAlt = 0
+  ; uniqueAlt = t.uniqueAlt
   ; conflictingAlts = t.conflictingAlts
   ; hasSemanticContext = t.hasSemanticContext
   ; dipsIntoOuterContext = t.dipsIntoOuterContext
@@ -876,7 +886,7 @@ let _init ?id fullCtx =
   {
     id
   ; configs = ref []
-  ; configHT = MHM.mk 23
+  ; configHT = Some (MHM.mk 23)
   ; fullCtx
   ; readonly = false
   ; uniqueAlt = 0
@@ -899,12 +909,15 @@ let in_configs' t c =
   List.exists (fun c' -> c'.AC.id == c.AC.id) !(t.configs)
 
 let _get_or_add t c =
+  assert (not t.readonly) ;
+  assert (Std.isSome t.configHT) ;
+  let configHT = Std.outSome t.configHT in
   let h = AC.hash_for_config_set c in
-  let l = match MHM.map t.configHT h  with
+  let l = match MHM.map configHT h  with
     l -> l
   | exception Not_found ->
      let l = ref [] in
-     MHM.add t.configHT (h, l) ;
+     MHM.add configHT (h, l) ;
      l in
   match List.find_opt (fun c' -> AC.eq_for_config_set c c') !l with
     Some c -> c

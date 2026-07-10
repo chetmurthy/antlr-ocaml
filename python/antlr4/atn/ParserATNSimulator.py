@@ -536,7 +536,7 @@ class ParserATNSimulator(ATNSimulator):
         if predictedAlt!=ATN.INVALID_ALT_NUMBER:
             # NO CONFLICT, UNIQUELY PREDICTED ALT
             D.isAcceptState = True
-            D.configs.uniqueAlt = predictedAlt
+            D.configs.set_UA(predictedAlt)
             D.prediction = predictedAlt
         elif PredictionMode.hasSLLConflictTerminatingPrediction(self.predictionMode, reach):
             # MORE THAN ONE VIABLE ALTERNATIVE
@@ -613,7 +613,7 @@ class ParserATNSimulator(ATNSimulator):
                       str(PredictionMode.getUniqueAlt(altSubSets)) + ", resolvesToJustOneViableAlt=" +
                       str(PredictionMode.resolvesToJustOneViableAlt(altSubSets)))
 
-            reach.uniqueAlt = self.getUniqueAlt(reach)
+            reach.set_UA(self.getUniqueAlt(reach))
             # unique prediction?
             if reach.uniqueAlt!=ATN.INVALID_ALT_NUMBER:
                 predictedAlt = reach.uniqueAlt

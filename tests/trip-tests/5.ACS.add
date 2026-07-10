@@ -1,6 +1,8 @@
 #!/bin/bash
 
-F=_generated/SemPredEvalLexer/DisableRule/json.log
+#F=_generated/SemPredEvalLexer/DisableRule/json.log
+F=_generated/CompositeParsers/DelegatorRuleOverridesLookaheadInDelegate/json.log
+
 echo $F
 
 ATNARGS=""
@@ -12,16 +14,18 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 ARGS=" -e ATNConfigSet.add"
 ARGS+=" -e ATNConfigSet.__init__"
 ARGS+=" -e ATNConfigSet.set_DIOC"
+ARGS+=" -e ATNConfigSet.setReadonly"
 ARGS+=" -e ATNConfigSet.update_HSC"
+ARGS+=" -e ATNConfigSet.set_UA"
 ARGS+=" -e ATNConfig.__init__"
 ARGS+=" -e ATNConfig.incrementRIOC"
 ARGS+=" -e ATNConfig.update_RIOC"
 ARGS+=" -e ATNConfig.set_PFS"
 ARGS+=" -e LexerATNConfig.__init__"
 
-#NARGS=" --stop-nth 64"
+#NARGS=" --stop-nth 172"
 
-rm _generated/*.log
+rm -f _generated/*.log
 
 ./replay_test.opt entry-exit $ARGS $F | jq -s 'length | "\(.) lines (full entry/exit)"'
 ./replay_test.opt entry-exit --ooe $ARGS $F | jq -s 'length | "\(.) lines (only entry)"'
