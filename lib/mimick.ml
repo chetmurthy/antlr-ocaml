@@ -427,4 +427,11 @@ type json_log_t =
                                     [@yojson.name "EXIT ATNConfigSet.set_UA"]
                                     [@located_yojson.name "EXIT ATNConfigSet.set_UA"]
 
+| ATNConfigSet_ENTER_set_CA of config_set_t * int list option
+                                    [@yojson.name "ENTER ATNConfigSet.set_CA"]
+                                    [@located_yojson.name "ENTER ATNConfigSet.set_CA"]
+| ATNConfigSet_EXIT_set_CA of config_set_t
+                                    [@yojson.name "EXIT ATNConfigSet.set_CA"]
+                                    [@located_yojson.name "EXIT ATNConfigSet.set_CA"]
+
 [@@deriving yojson,located_yojson, show]

@@ -792,7 +792,7 @@ type acs_t = {
   ; configs : AC.t list ref
   ; mutable readonly : bool
   ; mutable uniqueAlt : int
-  ; conflictingAlts : int list option
+  ; mutable conflictingAlts : int list option
   ; mutable hasSemanticContext : bool
   ; mutable dipsIntoOuterContext : bool
   ; id : int

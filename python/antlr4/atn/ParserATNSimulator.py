@@ -540,7 +540,7 @@ class ParserATNSimulator(ATNSimulator):
             D.prediction = predictedAlt
         elif PredictionMode.hasSLLConflictTerminatingPrediction(self.predictionMode, reach):
             # MORE THAN ONE VIABLE ALTERNATIVE
-            D.configs.conflictingAlts = self.getConflictingAlts(reach)
+            D.configs.set_CA(self.getConflictingAlts(reach))
             D.requiresFullContext = True
             # in SLL-only mode, we will stop at this state and return the minimum alt
             D.isAcceptState = True

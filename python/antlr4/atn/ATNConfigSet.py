@@ -327,6 +327,18 @@ class ATNConfigSet(object):
                                 ],
                                sort_keys=True, indent=4))
 
+    def set_CA(self, v):
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.set_CA',
+                                 self.asdict(),
+                                 None if v is None else [c for c in v],
+                                ],
+                               sort_keys=True, indent=4))
+        self.conflictingAlts = v
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.set_CA',
+                                 self.asdict(),
+                                ],
+                               sort_keys=True, indent=4))
+
     def __str__(self):
         with StringIO() as buf:
             buf.write(str_list(self.configs))

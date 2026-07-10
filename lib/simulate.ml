@@ -198,6 +198,13 @@ let sim1 caches atns (i:int) (loc,j) =
          Tracelog.write (ATNConfigSet_EXIT_set_UA (ACS.to_mimick cs)) ;
          ()
 
+      | ATNConfigSet_ENTER_set_CA (cs, v) ->
+         let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
+         Tracelog.write (ATNConfigSet_ENTER_set_CA (ACS.to_mimick cs, v)) ;
+         cs.ACS.conflictingAlts <- v ;
+         Tracelog.write (ATNConfigSet_EXIT_set_CA (ACS.to_mimick cs)) ;
+         ()
+
 
     end
   with exc ->
