@@ -1188,7 +1188,7 @@ class ParserATNSimulator(ATNSimulator):
                     if self._dfa is not None and self._dfa.precedenceDfa:
                         if t.outermostPrecedenceReturn == self._dfa.atnStartState.ruleIndex:
                             c.precedenceFilterSuppressed = True
-                    c.reachesIntoOuterContext += 1
+                    c.incrementRIOC()
                     if c in closureBusy:
                         # avoid infinite recursion for right-recursive rules
                         continue

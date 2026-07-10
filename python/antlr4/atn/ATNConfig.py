@@ -84,6 +84,7 @@ class ATNConfig(object):
                                  ATNConfig.asdict(self)
                                 ],
                                sort_keys=True, indent=4))
+
     def asdict(self):
         d = {
             'id' : self.id,
@@ -167,6 +168,17 @@ class ATNConfig(object):
                 buf.write(str(self.reachesIntoOuterContext))
             buf.write(')')
             return buf.getvalue()
+
+    def incrementRIOC(self):
+        Trace.write(json.dumps([ 'ENTER ATNConfig.incrementRIOC',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
+        self.reachesIntoOuterContext += 1
+        Trace.write(json.dumps([ 'EXIT ATNConfig.incrementRIOC',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
 
 # need a forward declaration
 LexerATNConfig = None

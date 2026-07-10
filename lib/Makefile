@@ -13,7 +13,7 @@ TARGET_PACKAGE=antlr
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
-	util.ml range.ml intervalSet.ml interp.ml interp_syntax.ml token.ml \
+	range.ml util.ml intervalSet.ml interp.ml interp_syntax.ml token.ml \
 	types.ml atn.ml mimick.ml visualization.ml \
 	tracelog.ml exec.ml simulate.ml
 

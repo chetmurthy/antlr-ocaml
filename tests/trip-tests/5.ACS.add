@@ -1,11 +1,9 @@
 #!/bin/bash
 
 #F=_generated/CompositeLexers/LexerDelegatorInvokesDelegateRule/json.log
+#F=_generated/CompositeParsers/DelegatorRuleOverridesDelegates/json.log
+#F=_generated/CompositeParsers/DelegatorRuleOverridesLookaheadInDelegate/json.log
 F=_generated/FullContextParsing/AmbiguityNoLoop/json.log
-#F=_generated/LexerExec/GreedyClosure/json.log
-#F=_generated/LexerExec/ActionPlacement/json.log
-#F=_generated/LexerExec/RecursiveLexerRuleRefWithWildcardPlus_1/json.log
-#F=_generated/LexerExec/ZeroLengthToken/json.log
 
 echo $F
 
@@ -16,10 +14,23 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 
 
 ARGS=" -e ATNConfigSet.add"
-#NARGS="-n 1"
+ARGS+=" -e ATNConfigSet.__init__"
+ARGS+=" -e ATNConfig.__init__"
+ARGS+=" -e ATNConfig.incrementRIOC"
+ARGS+=" -e LexerATNConfig.__init__"
+
+#NARGS=" --stop-nth 216"
+
+rm _generated/*.log
+
 ./replay_test.opt entry-exit $ARGS $F | jq -s 'length | "\(.) lines (full entry/exit)"'
 ./replay_test.opt entry-exit --ooe $ARGS $F | jq -s 'length | "\(.) lines (only entry)"'
-./replay_test.opt entry-exit $NARGS $ARGS $F | jq -S . > _generated/1.log
-./replay_test.opt simulate $NARGS $ATNARGS --ooe $ARGS $F | jq -S . > _generated/2.log
 
-diff -Bwiu _generated/1.log _generated/2.log
+./replay_test.opt entry-exit $ARGS $F | jq -S . > _generated/ee.log
+./replay_test.opt entry-exit --ooe $ARGS $F | jq -S . > _generated/ooe.log
+
+./replay_test.opt entry-exit $NARGS $ARGS $F | jq -S . > _generated/1.log
+./replay_test.opt entry-exit $NARGS --ooe $ARGS $F | jq -S . > _generated/2in.log
+./replay_test.opt acs $NARGS $ATNARGS --ooe $ARGS $F | jq -S . > _generated/2out.log
+
+diff -Bwiu _generated/1.log _generated/2out.log

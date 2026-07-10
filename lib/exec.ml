@@ -29,13 +29,17 @@ type t = (int, C.t) MHM.t
 let mk () = MHM.mk 23
 
 let add cache t =
-  MHM.add cache (C.id t, t)
+  let tid = C.id t in
+  if MHM.in_dom cache tid then
+    Fmt.(failwithf "%s: value already exists for id=%d" C.name tid) ;
+  MHM.add cache (tid, t)
 
 let remap cache t =
   let id = C.id t in
   MHM.remap cache id t
 
 let get cache id = MHM.map cache id
+
 let recache cache t =
   let tid = C.id t in
   if MHM.in_dom cache tid then
@@ -50,8 +54,9 @@ let recache cache t =
       end ;
     t'
   else begin
-      MHM.add cache (tid, t) ;
-      t
+        Fmt.(pf stderr "%s: no cached value for id=%d; demarshalled value was@.%a@."
+               C.name tid C.pp t) ;
+        Fmt.(failwithf "%s: no cached value for demarshalled value with id=%d" C.name tid)
     end
 end
 
@@ -507,7 +512,7 @@ type ac_t = {
     [@printer (fun pps _ -> Fmt.(pf pps "_"))]
     [@equal fun x y -> true]
   ; atn : Atn.t
-    [@printer (fun pps _ -> Fmt.(pf pps "<atn>"))]
+    [@printer (fun pps x -> Fmt.(pf pps "<atn 0x%08x>" (Hashtbl.hash x)))]
     [@equal (fun x y -> x==y)]
   ; id : int
   ; state : M.deser_state_id
@@ -679,7 +684,16 @@ let eq_for_config_set t1 t2 =
 
 let configCounter = ref 0
 
-let _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt =
+let check_configCounter predicted_id =
+  match predicted_id with
+    None -> ()
+  | Some n ->
+     if n <> !configCounter then
+       Fmt.(failwithf "ATNConfig.init: predicted/actual id mismatch: %d <> %d@."
+              n !configCounter)
+
+let _ATNConfig_init ?predicted_id atn state_opt alt_opt context_opt semantic_opt config_opt =
+  check_configCounter predicted_id;
   let id = !configCounter in
   incr configCounter ;
   let state = match (state_opt, config_opt) with
@@ -718,16 +732,24 @@ let checkNonGreedyDecision atn lexer_ext target =
         | Some (_, nonGreedy) -> nonGreedy)
 
 
+let init_ATNConfig ?predicted_id atn state_opt alt_opt context_opt semantic_opt config_opt : t =
+  check_configCounter predicted_id ;
+  Tracelog.write
+    (ATNConfig_ENTER_init (!configCounter, state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
+  let rv = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
+  Tracelog.write (ATNConfig_EXIT_init (to_mimick rv)) ;
+  rv
+
 let _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt =
-  let t = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
+  let t = init_ATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt in
   let config_lexer_ext = match config_opt with
       None -> None
     | Some { lexer_ext = Some e } -> Some e
     | Some _ -> failwith "internal error: _LexerATNConfig_init: config_opt wasn't a LexerATNConfig" in
   let lexerActionExecutor =
-    match config_lexer_ext with
-      None -> lexerActionExecutor_opt
-    | Some ext -> ext.lexerActionExecutor in
+    match (config_lexer_ext, lexerActionExecutor_opt) with
+      (Some ext, None) -> ext.lexerActionExecutor
+    | (_, x) -> x in
   { (t) with
     lexer_ext =
       Some {
@@ -738,13 +760,6 @@ let _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_o
             | Some ext -> checkNonGreedyDecision atn ext t.state
         }
   }
-
-let init_ATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt : t =
-  Tracelog.write
-    (ATNConfig_ENTER_init (!configCounter, state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
-  let rv = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
-  Tracelog.write (ATNConfig_EXIT_init (to_mimick rv)) ;
-  rv
 
 let init_LexerATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt : t =
   Tracelog.write
@@ -849,7 +864,7 @@ let to_mimick t =
 
 let configSetCounter = ref 0
 
-let _ATNConfigSet_init ?id fullCtx =
+let _init ?id fullCtx =
   let id = match id with
       Some id -> id
     | None ->
@@ -867,6 +882,13 @@ let _ATNConfigSet_init ?id fullCtx =
   ; hasSemanticContext = false
   ; dipsIntoOuterContext = false
   }
+
+let init ?id fullCtx =
+  let arg_id = match id with None -> !configSetCounter | Some n -> n in
+  Tracelog.write (ATNConfigSet_ENTER_init (arg_id, fullCtx));
+  let rv = _init ?id fullCtx in
+  Tracelog.write (ATNConfigSet_EXIT_init (to_mimick rv));
+  rv
 
 let in_configs t c =
   List.exists (fun c' -> c' == c) !(t.configs)

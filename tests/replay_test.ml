@@ -40,9 +40,13 @@ let entry_exit_name =
   let doc = "entry-exit-name: extract events with tag '{ENTER,EXIT} name'." in
   Arg.(value & opt_all string [] & info ["e";"entry-exit-name"] ~doc)
 
-let entry_exit_nth =
-  let doc = "entry-exit-nth: extract NTH event-tree with tag '{ENTER,EXIT} name'." in
-  Arg.(value & opt (some int) None & info ["n";"entry-exit-nth"] ~doc)
+let start_nth =
+  let doc = "start-nth: start (inclusive) of range of accepted event-tree with tag '{ENTER,EXIT} name'." in
+  Arg.(value & opt (some int) None & info ["start-nth"] ~doc)
+
+let stop_nth =
+  let doc = "stop-nth: limit (exclusive) of range of accepted ac event-tree with tag '{ENTER,EXIT} name'." in
+  Arg.(value & opt (some int) None & info ["stop-nth"] ~doc)
 
 let lexer_atn =
   let doc = "lexer-atn: lexer ATN filename'." in
@@ -145,17 +149,17 @@ end
 
 module EntryExit = struct
 
-let filter1_then ?nth ~only_outermost_enter ~verbose names consumer file =
+let filter1_then ?start_nth ?stop_nth ~only_outermost_enter ~verbose names consumer file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
   let doit stream =
     stream
-    |> Util.entry_exit_yojson ?nth ~only_outermost_enter names
+    |> Util.entry_exit_yojson ?start_nth ?stop_nth ~only_outermost_enter names
     |> consumer in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let filter ?nth ~verbose ~yojson ~debug ~entry_exit_name ~only_outermost_enter files =
-  List.iter (filter1_then ?nth ~only_outermost_enter ~verbose entry_exit_name (pp_json_stream stdout)) files
+let filter ?start_nth ?stop_nth ~verbose ~yojson ~debug ~entry_exit_name ~only_outermost_enter files =
+  List.iter (filter1_then ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (pp_json_stream stdout)) files
 
 let cmd =
   let doc = "filter json.log files for selected ENTER events." in
@@ -164,13 +168,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "entry-exit" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ files and+ debug and+ verbose and+ entry_exit_name and+ entry_exit_nth and+ only_outermost_enter in
-  begin match entry_exit_nth with
-    None ->
-     filter ~only_outermost_enter ~verbose ~yojson ~debug ~entry_exit_name files
-  | Some nth ->
-     filter ~nth ~only_outermost_enter ~verbose ~yojson ~debug ~entry_exit_name files
-  end ;
+  let+ files and+ debug and+ verbose and+ entry_exit_name and+ start_nth and+ stop_nth and+ only_outermost_enter in
+     filter ?start_nth ?stop_nth ~only_outermost_enter ~verbose ~yojson ~debug ~entry_exit_name files ;
   Cmdliner.Cmd.Exit.ok
 end
 
@@ -187,6 +186,7 @@ let read_atn ~grammarType file =
   if atn.Atn.grammarType <> grammarType then
     Fmt.(failwithf "%s: ATN was supposed to be %a but was %a@."
            file Atn.pp_atn_type_t atn.Atn.grammarType Atn.pp_atn_type_t grammarType) ;
+  Fmt.(pf stderr "ATN %s: 0x%08x@." file (Hashtbl.hash atn)) ;
   atn
 
 let simulate_json atns stream =
@@ -205,9 +205,9 @@ let simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file =
   let matchers = Filter.make_matchers ~pattern ~case_insensitive in
   Filter.filter1_then ~verbose matchers (simulate_json atns) file
 
-let simulate1_entry_exit ~atns ?nth ~verbose ~entry_exit_name ~only_outermost_enter file =
+let simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file =
   Tracelog._enabled := true ;
-  EntryExit.filter1_then  ?nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json atns) file
+  EntryExit.filter1_then  ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json atns) file
 
 let load_atns ~lexer_atn ~parser_atn =
   match (lexer_atn, parser_atn) with
@@ -220,18 +220,14 @@ let load_atns ~lexer_atn ~parser_atn =
      Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
           ; _parser = Some (read_atn ~grammarType:Atn.PARSER f2) }
 
-let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter file =
+let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =
   let atns = load_atns ~lexer_atn ~parser_atn in
   match (pattern, entry_exit_name) with
     (_::_,[]) ->
     simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file
-  | ([],_::_) -> begin
-      match entry_exit_nth with
-        None ->
-        simulate1_entry_exit ~atns ~verbose ~entry_exit_name ~only_outermost_enter file
-      | Some nth ->
-         simulate1_entry_exit ~atns ~nth ~verbose ~entry_exit_name ~only_outermost_enter file
-    end
+  | ([],_::_) ->
+     simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file
+
   | ([],[]) -> Fmt.(failwith "simulate: must provide either pattern or entry-exit-name")
   | (_::_, _::_) ->
      Fmt.(failwith "simulate: must NOT provide BOTH pattern AND entry-exit-name")
@@ -244,8 +240,43 @@ let cmd =
   in
   Cmd.make (Cmd.info "entrypoints" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ parser_atn and+ lexer_atn and+ debug and+ verbose and+ pattern and+ case_insensitive
-     and+ entry_exit_name and+ entry_exit_nth and+ only_outermost_enter in
-  simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ~entry_exit_nth ~only_outermost_enter file ;
+     and+ entry_exit_name and+ start_nth and+ stop_nth and+ only_outermost_enter in
+  simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file ;
+  Cmdliner.Cmd.Exit.ok
+end
+
+module ACS = struct
+
+let simulate_json atns stream =
+  let caches = Simulate.Caches.mk() in
+  let open Rresult.R in
+  let demarsh j =
+    let loc = Json.loc_of_json j in
+    ([%of_located_yojson: Mimick.json_log_t] j)
+    >>= (fun j ->  Result.Ok(loc,j)) in
+  stream
+  |> Std.stream_map demarsh
+  |> Std.stream_map Json.raise_failwith_error_msg
+  |> Util.stream_iter_i (Simulate.ACS.sim1 caches atns)
+
+let simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file =
+  Tracelog._enabled := true ;
+  EntryExit.filter1_then  ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json atns) file
+
+let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =
+  let atns = Entrypoints.load_atns ~lexer_atn ~parser_atn in
+  simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file
+
+let cmd =
+  let doc = "simulate json.log files for AtnConfigSet." in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "acs" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ parser_atn and+ lexer_atn and+ debug and+ verbose
+     and+ entry_exit_name and+ start_nth and+ stop_nth and+ only_outermost_enter in
+  simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file ;
   Cmdliner.Cmd.Exit.ok
 end
 
@@ -256,6 +287,7 @@ let cmd =
   ; Filter.cmd
   ; EntryExit.cmd
   ; Entrypoints.cmd
+  ; ACS.cmd
 ]
 
 let main () = Cmd.eval' cmd

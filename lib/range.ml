@@ -48,3 +48,6 @@ let merge r1 r2 =
 let must_merge r1 r2 =
   assert (0 = compare r1 r2)
   ; outSome(merge r1 r2)
+
+let contains r n =
+  r.start <= n && n < r.stop

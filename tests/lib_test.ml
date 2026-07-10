@@ -27,8 +27,13 @@ let test_interval_set ctxt =
   ; ()
 
 let test_entry_exit ctxt =
-  let entry_exit_string ?nth ~ooe names = Util.entry_exit ?nth ~only_outermost_enter:ooe names (fun x -> Some x) in
-  let eelist ?nth ?(ooe=false) names l = l |> Stream.of_list |> entry_exit_string ?nth ~ooe names |> Std.list_of_stream in
+  let entry_exit_string ?start_nth ?stop_nth ~ooe names =
+    Util.entry_exit ?start_nth ?stop_nth ~only_outermost_enter:ooe names (fun x -> Some x) in
+  let eelist ?start_nth ?stop_nth ?(ooe=false) names l =
+    l
+    |> Stream.of_list
+    |> entry_exit_string ?start_nth ?stop_nth ~ooe names
+    |> Std.list_of_stream in
   let printer l = Fmt.(str "[%a]" (list ~sep:(const string "; ") Dump.string) l) in
   ()
   ; assert_equal ~printer [] (eelist ["x"] ["y"])
@@ -69,46 +74,79 @@ let test_entry_exit ctxt =
          ; "ENTER x"; "a"])
   ; assert_equal ~printer
       ["ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"]
-      (eelist ~nth:0 ["x"; "y"]
+      (eelist ~start_nth:0 ["x"; "y"]
          ["x"
          ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
          ; "z"
          ; "ENTER x"; "a"; "EXIT x"])
   ; assert_equal ~printer
       ["ENTER x"; "a"; "EXIT x"]
-      (eelist ~nth:1 ["x"; "y"]
+      (eelist ~start_nth:1 ["x"; "y"]
          ["x"
          ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
          ; "z"
          ; "ENTER x"; "a"; "EXIT x"])
   ; assert_equal ~printer
       ["ENTER y"; "a"; "EXIT y"]
-      (eelist ~nth:1 ["x"; "y"]
+      (eelist ~start_nth:1 ["x"; "y"]
          ["x"
          ; "ENTER x"; "a"; "ENTER z"; "b"; "EXIT z"; "c"; "EXIT x"
          ; "z"
          ; "ENTER y"; "a"; "EXIT y"])
   ; assert_equal ~printer
       ["ENTER y"]
-      (eelist ~ooe:true ~nth:1 ["x"; "y"]
+      (eelist ~ooe:true ~start_nth:1 ["x"; "y"]
          ["x"
          ; "ENTER x"; "a"; "ENTER z"; "b"; "EXIT z"; "c"; "EXIT x"
          ; "z"
          ; "ENTER y"; "a"; "EXIT y"])
   ; assert_equal ~printer
       []
-      (eelist ~nth:2 ["x"; "y"]
+      (eelist ~start_nth:2 ["x"; "y"]
          ["x"
          ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
          ; "z"
          ; "ENTER x"; "a"; "EXIT x"])
   ; assert_equal ~printer
       []
-      (eelist ~nth:(-1) ["x"; "y"]
+      (eelist ~start_nth:(-1) ["x"; "y"]
          ["x"
          ; "ENTER x"; "a"; "ENTER y"; "b"; "EXIT y"; "c"; "EXIT x"
          ; "z"
          ; "ENTER x"; "a"; "EXIT x"])
+  ; assert_equal ~printer
+      ["ENTER x"; "a2"; "EXIT x"; "ENTER x"; "a3"; "EXIT x"]
+      (eelist ~start_nth:2 ~stop_nth:4 ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a0"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a1"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a2"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a3"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a4"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a5"; "EXIT x"
+      ])
+  ; assert_equal ~printer
+      ["ENTER x"; "a0"; "EXIT x"; "ENTER x"; "a1"; "EXIT x"]
+      (eelist ~stop_nth:2 ["x"; "y"]
+         ["x"
+         ; "ENTER x"; "a0"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a1"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a2"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a3"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a4"; "EXIT x"
+         ; "z"
+         ; "ENTER x"; "a5"; "EXIT x"
+      ])
+
 
 let suite = "Test library" >::: [
       "range"   >:: test_range

@@ -214,6 +214,13 @@ type json_log_t =
 | ATNConfig_equalsForConfigSet of config_t * config_t * bool
                                     [@yojson.name "ATNConfig.equalsForConfigSet"]
                                     [@located_yojson.name "ATNConfig.equalsForConfigSet"]
+| ATNConfig_ENTER_incrementRIOC of config_t
+                                    [@yojson.name "ENTER ATNConfig.incrementRIOC"]
+                                    [@located_yojson.name "ENTER ATNConfig.incrementRIOC"]
+| ATNConfig_EXIT_incrementRIOC of config_t
+                                    [@yojson.name "EXIT ATNConfig.incrementRIOC"]
+                                    [@located_yojson.name "EXIT ATNConfig.incrementRIOC"]
+
 | DFA_init of int * dfa_t
                       [@yojson.name "DFA.__init__"]
                       [@located_yojson.name "DFA.__init__"]

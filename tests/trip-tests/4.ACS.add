@@ -3,6 +3,9 @@
 set -e
 
 ARGS=" -e ATNConfigSet.add"
+ARGS+=" -e ATNConfigSet.__init__"
+ARGS+=" -e ATNConfig.__init__"
+ARGS+=" -e LexerATNConfig.__init__"
 
 for f in _generated/*/*/json.log
 do
@@ -15,9 +18,5 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 
 
     ./replay_test.opt entry-exit $ARGS $f | jq -s 'length | "\(.) lines"'
-    diff -Bwiu <( ./replay_test.opt entry-exit $ARGS $f | jq -S . ) <( ./replay_test.opt simulate $ATNARGS --ooe $ARGS $f | jq -S . )
+    diff -Bwiu <( ./replay_test.opt entry-exit $ARGS $f | jq -S . ) <( ./replay_test.opt acs $ATNARGS --ooe $ARGS $f | jq -S . )
 done
-
-
-
-

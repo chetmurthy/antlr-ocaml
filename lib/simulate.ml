@@ -105,29 +105,62 @@ end
 
 module ACS = struct
 open Caches
-let sim1 caches atns (i:int) (loc,j) = match j with
-    M.ATNConfigSet_ENTER_init (id, fullCtx) ->
-     let rv = ACS._ATNConfigSet_init ~id fullCtx in
-     ACS.Cache.add caches.acs rv ;
-     ()
+let sim1 caches atns (i:int) (loc,j) =
+  try
+    begin
+      match j with
+        M.LexerATNConfig_ENTER_init (state_opt, alt_opt, context_opt, semantic_opt, lexerActionExecutor_opt, config_opt) ->
+         let atn = atns.lexer in
+         let context_opt = Option.map PC.of_mimick context_opt in
+         let semantic_opt = Option.map SC.of_mimick semantic_opt in
+         let config_opt = Option.map (AC.of_mimick ~ac_cache:(Some caches.ac) atns) config_opt in
+         let rv = AC.init_LexerATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt in
+         AC.Cache.add caches.ac rv ;
+         ()
 
-  | ATNConfigSet_ENTER_add (cs, c, mc_opt) -> begin
-      try
-      let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
-      let c = AC.of_mimick ~ac_cache:(Some caches.ac) atns c in
-      let mc_opt = Option.map PC.MC.of_mimick mc_opt in
-      let rv = match mc_opt with
-          None -> ACS.add cs c
-        | Some mergeCache -> ACS.add ~mergeCache cs c
-      in
-      let cs2 = ACS.to_mimick cs in
-      ()
-      with e ->
-        let bt = Printexc.get_raw_backtrace () in
-        Fmt.(pf stderr "sim1[%d]: %s: exception %a@." i
-               (Ploc.string_of_location loc)
-               exn e) ;
-        Printexc.raise_with_backtrace e bt
+      | ATNConfig_ENTER_init (id, state_opt, alt_opt, context_opt, semantic_opt, config_opt) ->
+         let atn = match atns._parser with
+             None ->
+             Fmt.(failwith "%s: sim1[%d]: in ATNConfig_ENTER_init, parser ATN was None" 
+                    (Ploc.string_of_location loc) i)
+           | Some atn -> atn in
+         let context_opt = Option.map PC.of_mimick context_opt in
+         let semantic_opt = Option.map SC.of_mimick semantic_opt in
+         let config_opt = Option.map (AC.of_mimick ~ac_cache:(Some caches.ac) atns) config_opt in
+         let rv = AC.init_ATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt in
+         AC.Cache.add caches.ac rv ;
+         ()
+
+      | ATNConfigSet_ENTER_init (id, fullCtx) ->
+         let rv = ACS.init ~id fullCtx in
+         ACS.Cache.add caches.acs rv ;
+         ()
+
+      | ATNConfigSet_ENTER_add (cs, c, mc_opt) ->
+         let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
+         let c = AC.of_mimick ~ac_cache:(Some caches.ac) atns c in
+         let mc_opt = Option.map PC.MC.of_mimick mc_opt in
+         let rv = match mc_opt with
+             None -> ACS.add cs c
+           | Some mergeCache -> ACS.add ~mergeCache cs c
+         in
+         let cs2 = ACS.to_mimick cs in
+         ()
+
+      | ATNConfig_ENTER_incrementRIOC c ->
+         let c = AC.of_mimick ~ac_cache:(Some caches.ac) atns c in
+         Tracelog.write (ATNConfig_ENTER_incrementRIOC (AC.to_mimick c)) ;
+         c.AC.reachesIntoOuterContext <- c.AC.reachesIntoOuterContext + 1 ;
+         Tracelog.write (ATNConfig_EXIT_incrementRIOC (AC.to_mimick c)) ;
+         ()
+
+
     end
-
+  with exc ->
+    let bt = Printexc.get_raw_backtrace () in
+    Fmt.(pf stderr "%s: ACS.sim1[%d]: Exception @.%a@.%a@."
+           (Ploc.string_of_location loc) i
+           exn exc
+           M.pp_json_log_t j) ;
+        Printexc.raise_with_backtrace exc bt
 end

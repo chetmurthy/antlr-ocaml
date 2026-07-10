@@ -131,7 +131,7 @@ test-all-python::
 	find $(ANTLRROOT) -name '*.interp' -print | xargs -n 1 --verbose python3 deserialize_test.py 
 
 clean::
-	rm -rf *.cm* _build *.exe
+	rm -rf *.cm* _build *.exe _generated/*.log
 
 
 realclean:: clean
