@@ -150,7 +150,7 @@ class DFA(object):
         Trace.write(json.dumps([ 'ENTER DFA.states_get', self.id, x.asdict(),
                                  (None if y is None else y.asdict()) ],
                                sort_keys=True, indent=4))
-        rv = self._states.get(x,y)
+        rv = self._states.get(x.configs,y)
         Trace.write(json.dumps([ 'EXIT DFA.states_get', self.id,
                                  (None if rv is None else rv.asdict()) ],
                                sort_keys=True, indent=4))
@@ -160,7 +160,7 @@ class DFA(object):
         Trace.write(json.dumps([ 'ENTER DFA.states_add', self.id, x.asdict() ],
                                sort_keys=True, indent=4))
 #        sys.stderr.write("BEFORE states_add: _states: %s\n" % self._states)
-        self._states[x] = x
+        self._states[x.configs] = x
 #        sys.stderr.write("AFTER states_add: _states: %s\n" % self._states)
         Trace.write(json.dumps([ 'EXIT DFA.states_add', self.id, self.asdict() ],
                                sort_keys=True, indent=4))
@@ -173,7 +173,7 @@ class DFA(object):
 
     # Return a list of all states in this DFA, ordered by state number.
     def sortedStates(self):
-        return sorted(self._states.keys(), key=lambda state: state.stateNumber)
+        return sorted(self._states.values(), key=lambda state: state.stateNumber)
 
     def __str__(self):
         return self.toString(None)

@@ -58,6 +58,7 @@ class DFAState(object):
     )
 
     def __init__(self, stateNumber:int=-1, configs:ATNConfigSet=ATNConfigSet()):
+        assert (configs is not None)
         self.stateNumber = stateNumber
         self.configs = configs
         # {@code edges[symbol]} points to target of symbol. Shift up by 1 so (-1)
