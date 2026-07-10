@@ -23,6 +23,13 @@ class DFA(object):
 
     def __init__(self, grammarType:ATNType, atnStartState:DecisionState, decision:int=0):
         global dfaCounter
+        Trace.write(json.dumps([ 'ENTER DFA.__init__', 
+                                 dfaCounter,
+                                 [ grammarType.asdict() ],
+                                 atnStartState.stateNumber,
+                                 decision,
+                                ],
+                               sort_keys=True, indent=4))
         # From which ATN state did we create this DFA?
         self.id = dfaCounter
         dfaCounter += 1
@@ -46,7 +53,7 @@ class DFA(object):
                 precedenceState.isAcceptState = False
                 precedenceState.requiresFullContext = False
                 self.s0 = precedenceState
-        Trace.write(json.dumps([ 'DFA.__init__', self.id, self.asdict() ],
+        Trace.write(json.dumps([ 'EXIT DFA.__init__', self.id, self.asdict() ],
                                sort_keys=True, indent=4))
 
     def asdict(self):

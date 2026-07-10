@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+ARGS=" -e ATNConfigSet.add"
+ARGS+=" -e ATNConfigSet.__init__"
+ARGS+=" -e ATNConfigSet.set_DIOC"
+ARGS+=" -e ATNConfigSet.update_HSC"
+ARGS+=" -e ATNConfig.__init__"
+ARGS+=" -e ATNConfig.incrementRIOC"
+ARGS+=" -e ATNConfig.update_RIOC"
+ARGS+=" -e ATNConfig.set_PFS"
+ARGS+=" -e LexerATNConfig.__init__"
+ARGS+=" -e DFA.__init__"
+
+for f in _generated/*/*/json.log
+do
+    echo $f
+
+ATNARGS=""
+DIR=`dirname $f`
+if [ -r $DIR/Lexer.interp ]; then ATNARGS+=" --lexer-atn $DIR/Lexer.interp"; fi
+if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; fi
+
+
+    ./replay_test.opt entry-exit $ARGS $f | jq -s 'length | "\(.) lines"'
+    diff -Bwiu <( ./replay_test.opt entry-exit $ARGS $f | jq -S . ) <( ./replay_test.opt acs $ATNARGS --ooe $ARGS $f | jq -S . )
+done

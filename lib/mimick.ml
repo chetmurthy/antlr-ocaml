@@ -242,9 +242,12 @@ type json_log_t =
                                     [@yojson.name "EXIT ATNConfigSet.update_HSC"]
                                     [@located_yojson.name "EXIT ATNConfigSet.update_HSC"]
 
-| DFA_init of int * dfa_t
-                      [@yojson.name "DFA.__init__"]
-                      [@located_yojson.name "DFA.__init__"]
+| ENTER_DFA_init of int * atn_type_t * deser_state_id * int
+                      [@yojson.name "ENTER DFA.__init__"]
+                      [@located_yojson.name "ENTER DFA.__init__"]
+| EXIT_DFA_init of int * dfa_t
+                      [@yojson.name "EXIT DFA.__init__"]
+                      [@located_yojson.name "EXIT DFA.__init__"]
 | ENTER_DFA_states_get of int * dfa_state_t * string option
                       [@yojson.name "ENTER DFA.states_get"]
                       [@located_yojson.name "ENTER DFA.states_get"]
