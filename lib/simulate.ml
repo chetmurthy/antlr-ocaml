@@ -182,6 +182,13 @@ let sim1 caches atns (i:int) (loc,j) =
          Tracelog.write (ATNConfigSet_EXIT_update_HSC (ACS.to_mimick cs)) ;
          ()
 
+      | ATNConfigSet_ENTER_setReadonly (cs, v) ->
+         let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
+         Tracelog.write (ATNConfigSet_ENTER_setReadonly (ACS.to_mimick cs, v)) ;
+         cs.ACS.readonly <- v ;
+         Tracelog.write (ATNConfigSet_EXIT_setReadonly (ACS.to_mimick cs)) ;
+         ()
+
 
     end
   with exc ->

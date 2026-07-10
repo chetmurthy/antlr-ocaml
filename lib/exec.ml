@@ -814,6 +814,8 @@ let real__eq__ t1 t2 =
      && t1.hasSemanticContext = t2.hasSemanticContext
      && t1.dipsIntoOuterContext = t2.dipsIntoOuterContext)
 
+let hash t =
+  List.fold_left (fun n c -> Hashtbl.hash((n, AC.hash c))) 0 !(t.configs)
 
 let _of_mimick ~ac_cache atns t =
   let row_hash l =
@@ -960,6 +962,16 @@ let add ?mergeCache t c =
 
 end
 module ATNConfigSet = ACS
+
+module ACSMap =
+  Hashtbl.Make(
+      struct
+        type t = ACS.t
+        let equal = ACS.real__eq__
+        let hash = ACS.hash
+      end
+    )
+
 (*
 module DFA = struct
   type dfa_t = {

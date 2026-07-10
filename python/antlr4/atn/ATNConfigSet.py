@@ -301,8 +301,17 @@ class ATNConfigSet(object):
         self.configLookup.clear()
 
     def setReadonly(self, readonly:bool):
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.setReadonly',
+                                 self.asdict(),
+                                 readonly
+                                ],
+                               sort_keys=True, indent=4))
         self.readonly = readonly
         self.configLookup = None # can't mod, no need for lookup cache
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.setReadonly',
+                                 self.asdict(),
+                                ],
+                               sort_keys=True, indent=4))
 
     def __str__(self):
         with StringIO() as buf:

@@ -90,7 +90,7 @@ and dfa_t = {
   ; atnStartState : deser_state_id
   ; decision : int
   ; _states : dfa_state_t strmap
-  ; predecenceDfa : bool
+  ; precedenceDfa : bool
   ; s0 : dfa_state_t option
   }
 
@@ -242,6 +242,14 @@ type json_log_t =
 | ATNConfigSet_EXIT_update_HSC of config_set_t
                                     [@yojson.name "EXIT ATNConfigSet.update_HSC"]
                                     [@located_yojson.name "EXIT ATNConfigSet.update_HSC"]
+
+| ATNConfigSet_ENTER_setReadonly of config_set_t * bool
+                                    [@yojson.name "ENTER ATNConfigSet.setReadonly"]
+                                    [@located_yojson.name "ENTER ATNConfigSet.setReadonly"]
+| ATNConfigSet_EXIT_setReadonly of config_set_t
+                                    [@yojson.name "EXIT ATNConfigSet.setReadonly"]
+                                    [@located_yojson.name "EXIT ATNConfigSet.setReadonly"]
+
 
 | ENTER_DFA_init of int * atn_type_t * deser_state_id * int
                       [@yojson.name "ENTER DFA.__init__"]
