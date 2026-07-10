@@ -108,6 +108,18 @@ class ATNConfigSet(object):
                                 ],
                                sort_keys=True, indent=4))
 
+    def update_HSC(self, v):
+        Trace.write(json.dumps([ 'ENTER ATNConfigSet.update_HSC',
+                                 self.asdict(),
+                                 v
+                                ],
+                               sort_keys=True, indent=4))
+        self.hasSemanticContext = v
+        Trace.write(json.dumps([ 'EXIT ATNConfigSet.update_HSC',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
+
     def in_configs(self, config):
         for c in self.configs:
             if c is config: return True

@@ -180,6 +180,30 @@ class ATNConfig(object):
                                 ],
                                sort_keys=True, indent=4))
 
+    def update_RIOC(self, v):
+        Trace.write(json.dumps([ 'ENTER ATNConfig.update_RIOC',
+                                 self.asdict(),
+                                 v
+                                ],
+                               sort_keys=True, indent=4))
+        self.reachesIntoOuterContext = v
+        Trace.write(json.dumps([ 'EXIT ATNConfig.update_RIOC',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
+
+    def set_PFS(self):
+        Trace.write(json.dumps([ 'ENTER ATNConfig.set_PFS',
+                                 self.asdict(),
+                                ],
+                               sort_keys=True, indent=4))
+        self.precedenceFilterSuppressed = True
+        Trace.write(json.dumps([ 'EXIT ATNConfig.set_PFS',
+                                 self.asdict()
+                                ],
+                               sort_keys=True, indent=4))
+
+
 # need a forward declaration
 LexerATNConfig = None
 

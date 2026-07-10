@@ -1,10 +1,6 @@
 #!/bin/bash
 
-#F=_generated/CompositeLexers/LexerDelegatorInvokesDelegateRule/json.log
-#F=_generated/CompositeParsers/DelegatorRuleOverridesDelegates/json.log
-#F=_generated/CompositeParsers/DelegatorRuleOverridesLookaheadInDelegate/json.log
-F=_generated/FullContextParsing/AmbiguityNoLoop/json.log
-
+F=_generated/SemPredEvalLexer/DisableRule/json.log
 echo $F
 
 ATNARGS=""
@@ -16,11 +12,14 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 ARGS=" -e ATNConfigSet.add"
 ARGS+=" -e ATNConfigSet.__init__"
 ARGS+=" -e ATNConfigSet.set_DIOC"
+ARGS+=" -e ATNConfigSet.update_HSC"
 ARGS+=" -e ATNConfig.__init__"
 ARGS+=" -e ATNConfig.incrementRIOC"
+ARGS+=" -e ATNConfig.update_RIOC"
+ARGS+=" -e ATNConfig.set_PFS"
 ARGS+=" -e LexerATNConfig.__init__"
 
-#NARGS=" --stop-nth 216"
+#NARGS=" --stop-nth 64"
 
 rm _generated/*.log
 

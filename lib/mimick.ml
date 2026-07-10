@@ -221,6 +221,27 @@ type json_log_t =
                                     [@yojson.name "EXIT ATNConfig.incrementRIOC"]
                                     [@located_yojson.name "EXIT ATNConfig.incrementRIOC"]
 
+| ATNConfig_ENTER_update_RIOC of config_t * int
+                                    [@yojson.name "ENTER ATNConfig.update_RIOC"]
+                                    [@located_yojson.name "ENTER ATNConfig.update_RIOC"]
+| ATNConfig_EXIT_update_RIOC of config_t
+                                    [@yojson.name "EXIT ATNConfig.update_RIOC"]
+                                    [@located_yojson.name "EXIT ATNConfig.update_RIOC"]
+
+| ATNConfig_ENTER_set_PFS of config_t
+                                    [@yojson.name "ENTER ATNConfig.set_PFS"]
+                                    [@located_yojson.name "ENTER ATNConfig.set_PFS"]
+| ATNConfig_EXIT_set_PFS of config_t
+                                    [@yojson.name "EXIT ATNConfig.set_PFS"]
+                                    [@located_yojson.name "EXIT ATNConfig.set_PFS"]
+
+| ATNConfigSet_ENTER_update_HSC of config_set_t * bool
+                                    [@yojson.name "ENTER ATNConfigSet.update_HSC"]
+                                    [@located_yojson.name "ENTER ATNConfigSet.update_HSC"]
+| ATNConfigSet_EXIT_update_HSC of config_set_t
+                                    [@yojson.name "EXIT ATNConfigSet.update_HSC"]
+                                    [@located_yojson.name "EXIT ATNConfigSet.update_HSC"]
+
 | DFA_init of int * dfa_t
                       [@yojson.name "DFA.__init__"]
                       [@located_yojson.name "DFA.__init__"]

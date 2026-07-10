@@ -160,7 +160,7 @@ class LexerATNSimulator(ATNSimulator):
         old_mode = self.mode
         s0_closure = self.computeStartState(input, startState)
         suppressEdge = s0_closure.hasSemanticContext
-        s0_closure.hasSemanticContext = False
+        s0_closure.update_HSC(False)
 
         next = self.addDFAState(s0_closure)
         if not suppressEdge:
@@ -432,7 +432,7 @@ class LexerATNSimulator(ATNSimulator):
 
                 if LexerATNSimulator.debug:
                     print("EVAL rule "+ str(t.ruleIndex) + ":" + str(t.predIndex))
-                configs.hasSemanticContext = True
+                configs.update_HSC(True)
                 if self.evaluatePredicate(input, t.ruleIndex, t.predIndex, speculative):
                     c = LexerATNConfig(state=t.target, config=config)
 
@@ -530,7 +530,7 @@ class LexerATNSimulator(ATNSimulator):
             # state, we can continue in pure DFA mode from there.
             #/
             suppressEdge = cfgs.hasSemanticContext
-            cfgs.hasSemanticContext = False
+            cfgs.update_HSC(False)
 
             to = self.addDFAState(cfgs)
 

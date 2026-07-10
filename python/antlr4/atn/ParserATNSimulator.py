@@ -1145,7 +1145,7 @@ class ParserATNSimulator(ATNSimulator):
                     # While we have context to pop back from, we may have
                     # gotten that context AFTER having falling off a rule.
                     # Make sure we track that we are now out of context.
-                    c.reachesIntoOuterContext = config.reachesIntoOuterContext
+                    c.update_RIOC(config.reachesIntoOuterContext)
                     self.closureCheckingStopState(c, configs, closureBusy, collectPredicates, fullCtx, depth - 1, treatEofAsEpsilon)
                 return
             elif fullCtx:
@@ -1187,7 +1187,7 @@ class ParserATNSimulator(ATNSimulator):
                     # preds if this is > 0.
                     if self._dfa is not None and self._dfa.precedenceDfa:
                         if t.outermostPrecedenceReturn == self._dfa.atnStartState.ruleIndex:
-                            c.precedenceFilterSuppressed = True
+                            c.set_PFS()
                     c.incrementRIOC()
                     if c in closureBusy:
                         # avoid infinite recursion for right-recursive rules
