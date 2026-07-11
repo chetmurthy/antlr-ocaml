@@ -2,25 +2,43 @@
 #camlp5o ;;
 #require "camlp5.pr_o";;
 
+let pp_ploc_t pps (loc : Ploc.t) = Fmt.(pf pps "<%s>" (Ploc.string_of_location loc)) ;;
+
+#install_printer pp_ploc_t ;;
+
+let pp_location_t pps (loc : Location.t) = Fmt.(pf pps "<loc>") ;;
+
+let pp_char_stream strm =
+  let l = Stream.npeek !Toploop.max_printer_depth strm in
+  Fmt.(pf stdout "<strm<[%a]>>" (list char) l)
+;;
+#install_printer pp_char_stream ;;
+
+
+#require "pa_ppx.utils" ;;
 #require "pa_ppx_regexp";;
+#require "pa_ppx.runtime";;
+#require "pa_ppx.runtime_fat";;
+#require "pa_ppx.located_yojson";;
+#require "pa_ppx.deriving_plugins.located_yojson";;
+
+open Pa_ppx_utils ;;
+
 #require "antlr";;
 #require "antlrtest" ;;
 open Antlr ;;
-#require "pa_ppx.located_yojson";;
-#require "pa_ppx.deriving_plugins.located_yojson";;
-#require "pa_ppx.runtime";;
-#require "pa_ppx.runtime_fat";;
 Atn.debug := true ;;
 
+open Atn ;;
 open Pa_ppx_located_yojson ;;
 
-let l = Json.JsonListEOI.load "_build/ParserExec/Basic/json.log" ;;
+#require "cmdliner";;
 
-Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
-Pa_ppx_runtime_fat.Exceptions.Ploc.pp_loc_verbose := true ;;
-#install_printer Pa_ppx_runtime.Exceptions.Ploc.pp ;;
+open Util ;;
+  let entry_exit_string names = Util.entry_exit names (fun x -> Some x) ;;
+  let eelist names l = l |> Stream.of_list |> entry_exit_string names |> Std.list_of_stream ;;
 
-Pa_ppx_runtime.Runtime.map_bind Atn.json_log_t_of_located_yojson [] l ;;
+
 
 (*
 ;;; Local Variables: ***

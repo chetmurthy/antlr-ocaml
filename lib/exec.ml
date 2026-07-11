@@ -818,6 +818,8 @@ let real__eq__ t1 t2 =
      && t1.hasSemanticContext = t2.hasSemanticContext
      && t1.dipsIntoOuterContext = t2.dipsIntoOuterContext)
 
+let __eq__ t1 t2 = real__eq__ t1 t2
+
 let hash t =
   List.fold_left (fun n c -> Hashtbl.hash((n, AC.hash c))) 0 !(t.configs)
 
@@ -895,7 +897,7 @@ let _init ?id fullCtx =
   ; dipsIntoOuterContext = false
   }
 
-let init ?id fullCtx =
+let init ?id ?(fullCtx = true) () =
   let arg_id = match id with None -> !configSetCounter | Some n -> n in
   Tracelog.write (ATNConfigSet_ENTER_init (arg_id, fullCtx));
   let rv = _init ?id fullCtx in
@@ -985,9 +987,104 @@ module ACSMap =
       end
     )
 
-(*
+
+module DFASt = struct
+
+type pred_prediction_t = (int * SC.t)
+[@@deriving show, eq]
+
+type t = {
+    stateNumber : int
+  ; configset : ACS.t
+  ; mutable edges: int option array option
+  ; mutable isAcceptState : bool
+  ; prediction : int
+  ; lexerActionExecutor : LAE.t option
+  ; mutable requiresFullContext : bool
+  ; predicates : pred_prediction_t list option
+  }
+[@@deriving show, eq]
+
+let to_mimick t =
+  {
+      M.stateNumber = t.stateNumber
+    ; configset = ACS.to_mimick t.configset
+    ; edges = t.edges
+    ; isAcceptState = t.isAcceptState
+    ; prediction = t.prediction
+    ; lexerActionExecutor = t.lexerActionExecutor
+    ; requiresFullContext = t.requiresFullContext
+    ; predicates =
+        Option.map
+          (List.map (fun (alt,sc) -> M.PredPrediction {alt;pred=SC.to_mimick sc}))
+          t.predicates
+  }
+
+let of_mimick ~acs_cache ~ac_cache atns t =
+  {
+    stateNumber = t.M.stateNumber
+  ; configset = ACS.of_mimick ~acs_cache ~ac_cache atns t.M.configset
+  ; edges = t.M.edges
+  ; isAcceptState = t.M.isAcceptState
+  ; prediction = t.prediction
+  ; lexerActionExecutor = t.lexerActionExecutor
+  ; requiresFullContext = t.requiresFullContext
+  ; predicates =
+      t.predicates
+      |> Option.map
+           (List.map (function
+                  M.PredPrediction{alt;pred} -> (alt, SC.of_mimick pred)))
+  }
+
+let _init stateNumber configs =
+  {
+    stateNumber
+  ; configset = configs
+  ; edges = None
+  ; isAcceptState = false
+  ; prediction = 0
+  ; lexerActionExecutor = None
+  ; requiresFullContext = false
+  ; predicates = None
+  }
+
+let init  ?(stateNumber = -1) ?(configs = ACS.init()) () =
+  let rv = _init stateNumber configs in
+  rv
+end
+
+
 module DFA = struct
-  type dfa_t = {
+let disable_builtin_equality (x: int) = x
+
+  let acsmap_for_all pred ht =
+    ACSMap.fold (fun k v sofar -> sofar && pred k v) ht true
+
+  let acsmap_values ht =
+    ACSMap.fold (fun _ v acc -> v::acc) ht []
+
+  let acsmap_oflist l =
+    let ht = ACSMap.create 23 in
+    List.iter (fun (cs, st) ->
+        ACSMap.add ht cs st) l ;
+    ht
+
+  let states_equal ht1 ht2 =
+    let open DFASt in
+    ht1
+    |> acsmap_for_all
+         (fun cs1 st1 ->
+           match ACSMap.find_opt ht2 cs1 with
+             Some st2 -> ACS.__eq__ st1.configset st2.configset
+           | None -> false)
+    && ht2
+    |> acsmap_for_all
+         (fun cs2 st2 ->
+           match ACSMap.find_opt ht1 cs2 with
+             Some st1 -> ACS.__eq__ st1.configset st2.configset
+           | None -> false)
+
+type dfa_t = {
     disable_builtin_equality : int -> int
     [@printer (fun pps _ -> Fmt.(pf pps "_"))]
     [@equal fun x y -> true]
@@ -998,21 +1095,13 @@ module DFA = struct
   ; id : int
   ; atnStartState : M.deser_state_id
   ; decision : int
-  ; _states : dfa_state_t strmap
-  ; predecenceDfa : bool
-  ; s0 : dfa_state_t option
+  ; _states : DFASt.t ACSMap.t
+    [@printer (fun pps _ -> Fmt.(pf pps "<_states>"))]
+    [@equal states_equal]
+
+  ; mutable precedenceDfa : bool
+  ; mutable s0 : DFASt.t option
   }
-  and dfa_state_t = {
-    stateNumber : int
-  ; configset : ACS.t
-  ; edges: int option array option
-  ; isAcceptState : bool
-  ; prediction : int
-  ; lexerActionExecutor : LAE.t option
-  ; requiresFullContext : bool
-  ; predicates : pred_prediction_t list option
-  }
-and pred_prediction_t = (int * SC.t)
 [@@deriving show, eq]
 type t = dfa_t
 [@@deriving show, eq]
@@ -1025,6 +1114,88 @@ module Cache = Cacher(struct
                    let name = "DFA"
                  end)
 
+let to_mimick t =
+  {
+    M.grammarType = t.grammarType
+  ; id = t.id
+  ; atnStartState = t.atnStartState
+  ; decision = t.decision
+  ; _states =
+      t._states
+      |> acsmap_values
+      |> List.stable_sort (fun a b -> Stdlib.compare a.DFASt.stateNumber b.DFASt.stateNumber)
+      |> List.map (fun st -> (string_of_int st.DFASt.stateNumber, DFASt.to_mimick st))
+  ; precedenceDfa = t.precedenceDfa
+  ; s0 = Option.map DFASt.to_mimick t.s0
+  }
+
+let _of_mimick  ~acs_cache ~ac_cache atns t =
+  let atn = match (t.M.grammarType, atns) with
+    (LEXER, { lexer }) -> lexer
+  | (PARSER, { _parser = Some atn }) -> atn
+  | _ -> failwith "must supply parser ATN for a parser DFA" in
+  {
+    disable_builtin_equality
+  ; atn
+  ; grammarType = t.M.grammarType
+  ; id = t.id
+  ; atnStartState = t.atnStartState
+  ; decision = t.decision
+  ; _states =
+      t._states
+      |> List.map (fun (stnum, st) ->
+             let st = DFASt.of_mimick ~acs_cache ~ac_cache atns st in
+             assert (stnum = string_of_int st.stateNumber) ;
+             (st.configset, st))
+      |> acsmap_oflist
+  ; precedenceDfa = t.precedenceDfa
+  ; s0 = Option.map (DFASt.of_mimick ~acs_cache ~ac_cache atns) t.s0
+  }
+
+let dfaCounter = ref 0
+let check_dfaCounter predicted_id =
+  match predicted_id with
+    None -> ()
+  | Some n ->
+     if n <> !dfaCounter then
+       Fmt.(failwithf "DFA.init: predicted/actual id mismatch: %d <> %d@."
+              n !dfaCounter)
+
+
+let _init ?predicted_id atn grammarType atnStartState decision =
+  check_dfaCounter predicted_id ;
+  let id = !dfaCounter in
+  incr dfaCounter ;
+  let rv = {
+      disable_builtin_equality
+    ; id
+    ; atn
+    ; grammarType
+    ; atnStartState
+    ; decision
+    ; _states = ACSMap.create 23
+    ; s0 = None
+    ; precedenceDfa = false
+    } in
+  let st = Atn.State.get_state atn.states atnStartState in begin
+      match st.node with
+        Node.StarLoopEntryState {isPrecedenceDecision=Some true} ->
+        rv.precedenceDfa <- true ;
+        let precedenceState = DFASt.init ~configs:(ACS.init()) () in
+        precedenceState.edges <- Some [||] ;
+        precedenceState.isAcceptState <- false ;
+        precedenceState.requiresFullContext <- false ;
+        rv.s0 <- Some precedenceState
+    end ;
+  rv
+
+let init ?predicted_id atn grammarType atnStartState decision =
+  check_dfaCounter predicted_id ;
+  Tracelog.write
+    (DFA_ENTER_init (!dfaCounter, grammarType, atnStartState, decision)) ;
+  let rv = _init  ?predicted_id atn grammarType atnStartState decision in
+  Tracelog.write
+    (DFA_EXIT_init (rv.id, to_mimick rv)) ;
+  rv
 
 end
- *)

@@ -1,0 +1,13 @@
+
+ARGS+=" -e ATNConfigSet.add"
+ARGS+=" -e ATNConfigSet.__init__"
+ARGS+=" -e ATNConfigSet.set_DIOC"
+ARGS+=" -e ATNConfigSet.setReadonly"
+ARGS+=" -e ATNConfigSet.update_HSC"
+ARGS+=" -e ATNConfigSet.set_UA"
+ARGS+=" -e ATNConfigSet.set_CA"
+ARGS+=" -e ATNConfig.__init__"
+ARGS+=" -e ATNConfig.incrementRIOC"
+ARGS+=" -e ATNConfig.update_RIOC"
+ARGS+=" -e ATNConfig.set_PFS"
+ARGS+=" -e LexerATNConfig.__init__"

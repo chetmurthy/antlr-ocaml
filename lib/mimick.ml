@@ -251,25 +251,25 @@ type json_log_t =
                                     [@located_yojson.name "EXIT ATNConfigSet.setReadonly"]
 
 
-| ENTER_DFA_init of int * atn_type_t * deser_state_id * int
+| DFA_ENTER_init of int * atn_type_t * deser_state_id * int
                       [@yojson.name "ENTER DFA.__init__"]
                       [@located_yojson.name "ENTER DFA.__init__"]
-| EXIT_DFA_init of int * dfa_t
+| DFA_EXIT_init of int * dfa_t
                       [@yojson.name "EXIT DFA.__init__"]
                       [@located_yojson.name "EXIT DFA.__init__"]
-| ENTER_DFA_states_get of int * dfa_state_t * string option
+| DFA_ENTER_states_get of int * dfa_state_t * string option
                       [@yojson.name "ENTER DFA.states_get"]
                       [@located_yojson.name "ENTER DFA.states_get"]
-| EXIT_DFA_states_get of int * dfa_state_t option
+| DFA_EXIT_states_get of int * dfa_state_t option
                       [@yojson.name "EXIT DFA.states_get"]
                       [@located_yojson.name "EXIT DFA.states_get"]
-| EXIT_DFA_states_len of int * int
+| DFA_EXIT_states_len of int * int
                       [@yojson.name "EXIT DFA.states_len"]
                       [@located_yojson.name "EXIT DFA.states_len"]
-| ENTER_DFA_states_add of int * dfa_state_t
+| DFA_ENTER_states_add of int * dfa_state_t
                       [@yojson.name "ENTER DFA.states_add"]
                       [@located_yojson.name "ENTER DFA.states_add"]
-| EXIT_DFA_states_add of int * dfa_t
+| DFA_EXIT_states_add of int * dfa_t
                       [@yojson.name "EXIT DFA.states_add"]
                       [@located_yojson.name "EXIT DFA.states_add"]
 | LexerATNSimulator_add_state of int * dfa_state_t

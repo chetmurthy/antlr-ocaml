@@ -132,7 +132,7 @@ let sim1 caches atns (i:int) (loc,j) =
          ()
 
       | ATNConfigSet_ENTER_init (id, fullCtx) ->
-         let rv = ACS.init ~id fullCtx in
+         let rv = ACS.init ~id ~fullCtx () in
          ACS.Cache.add caches.acs rv ;
          ()
 
