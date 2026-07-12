@@ -694,12 +694,17 @@ let rec real_eq t1 t2 =
   | _ -> assert false
 
 let __eq__ t1 t2 =
+  (match t1.lexer_ext with
+     None ->
+     Tracelog.write (ATNConfig_ENTER_eq (to_mimick t1, to_mimick t2))
+   | Some _ ->
+     Tracelog.write (LexerATNConfig_ENTER_eq (to_mimick t1, to_mimick t2))) ;
   let rv = real_eq t1 t2 in
   (match t1.lexer_ext with
      None ->
-     Tracelog.write (ATNConfig_eq (to_mimick t1, to_mimick t2, rv))
+     Tracelog.write (ATNConfig_EXIT_eq (rv))
    | Some _ ->
-     Tracelog.write (LexerATNConfig_eq (to_mimick t1, to_mimick t2, rv))) ;
+     Tracelog.write (LexerATNConfig_EXIT_eq (rv))) ;
   rv
 
 let hash_for_config_set t =
@@ -817,6 +822,7 @@ let configHT_equal ht1 ht2 =
   | (Some ht1, Some ht2) ->
      let l1 = List.stable_sort Stdlib.compare (MHM.toList ht1) in
      let l2 = List.stable_sort Stdlib.compare (MHM.toList ht2) in
+     List.length l1 = List.length l2 &&
      List.for_all2 [%eq: string * (AC.t list ref)] l1 l2
 
 type acs_t = {
@@ -846,31 +852,18 @@ module Cache = Cacher(struct
 
 let real__eq__ t1 t2 =
   t1==t2 ||
-    (List.for_all2 AC.__eq__ !(t1.configs) !(t2.configs)
+    (List.length !(t1.configs) = List.length !(t2.configs)
+     && List.for_all2 AC.__eq__ !(t1.configs) !(t2.configs)
      && t1.fullCtx = t2.fullCtx
      && t1.uniqueAlt = t2.uniqueAlt
      && t1.conflictingAlts = t2.conflictingAlts
      && t1.hasSemanticContext = t2.hasSemanticContext
      && t1.dipsIntoOuterContext = t2.dipsIntoOuterContext)
 
-let __eq__ t1 t2 = real__eq__ t1 t2
-
 let hash t =
   List.fold_left (fun n c -> Hashtbl.hash((n, AC.hash c))) 0 !(t.configs)
 
 let _of_mimick ~ac_cache atns t =
-  let row_hash l =
-    assert (l <> []) ;
-    let pl = List.map (fun c -> (AC.hash_for_config_set c, c)) l in
-    let h = fst(List.hd pl) in
-    (match List.filter (fun (h',_) -> h <> h') pl with
-       [] -> ()
-     | mismatches ->
-        Fmt.(pf stderr "ACS.of_mimick: config-sets that don't have the same hash-code as %a (but should):@.%a@."
-             AC.pp (snd(List.hd pl))
-             (list ~sep:(const string "\n") AC.pp) (List.map snd mismatches)) ;
-        failwith "mismatched configHT row") ;
-    h in
   {
     fullCtx = t.M.fullCtx
   ; configHT =
@@ -910,6 +903,12 @@ let to_mimick t =
   ; dipsIntoOuterContext = t.dipsIntoOuterContext
   ; id = t.id
   }
+
+let __eq__ t1 t2 =
+  Tracelog.write(ATNConfigSet_ENTER_eq(to_mimick t1, to_mimick t2)) ;
+  let rv = real__eq__ t1 t2 in
+  Tracelog.write(ATNConfigSet_EXIT_eq rv) ;
+  rv
 
 module ConfigSetCounter = Counter(struct let name = "ATNConfigSet" end)
 
@@ -1013,7 +1012,7 @@ module ACSMap =
   Hashtbl.Make(
       struct
         type t = ACS.t
-        let equal = ACS.real__eq__
+        let equal = ACS.__eq__
         let hash = ACS.hash
       end
     )
@@ -1152,18 +1151,16 @@ let makeEdges st n =
   _makeEdges st n ;
   Tracelog.write(DFAState_EXIT_makeEdges (to_mimick st))
 
-(*
 let _setEdge st n v =
   match st.edges with
     None -> failwith "DFAState.setEdge: edges array is not initialized"
   | Some edges -> 
-     edges.(n) <- Some v
+     edges.(n) <- Some v.stateNumber
 
-let setEdge st n =
-  Tracelog.write(DFAState_ENTER_setEdge (to_mimick st, n)) ;
-  _setEdge st n ;
+let setEdge st n v =
+  Tracelog.write(DFAState_ENTER_setEdge (to_mimick st, n, to_mimick v)) ;
+  _setEdge st n v ;
   Tracelog.write(DFAState_EXIT_setEdge (to_mimick st))
- *)
 
 end
 
@@ -1189,13 +1186,13 @@ let disable_builtin_equality (x: int) = x
     |> acsmap_for_all
          (fun cs1 st1 ->
            match ACSMap.find_opt ht2 cs1 with
-             Some st2 -> ACS.__eq__ st1.configset st2.configset
+             Some st2 -> ACS.real__eq__ st1.configset st2.configset
            | None -> false)
     && ht2
     |> acsmap_for_all
          (fun cs2 st2 ->
            match ACSMap.find_opt ht1 cs2 with
-             Some st1 -> ACS.__eq__ st1.configset st2.configset
+             Some st1 -> ACS.real__eq__ st1.configset st2.configset
            | None -> false)
 
 type dfa_t = {
@@ -1212,6 +1209,10 @@ type dfa_t = {
   ; _states : DFASt.t ACSMap.t
     [@printer (fun pps _ -> Fmt.(pf pps "<_states>"))]
     [@equal states_equal]
+
+  ; num2state : (int, DFASt.t) MHM.t
+    [@printer (fun pps _ -> Fmt.(pf pps "<num2state>"))]
+    [@equal (fun _ _ -> true)]
 
   ; mutable precedenceDfa : bool
   ; mutable s0 : DFASt.t option
@@ -1245,6 +1246,15 @@ let to_mimick t =
 
 let _of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t =
   let atn = Atns.for_grammar atns t.M.grammarType in
+  let _states =
+    t._states
+    |> List.map (fun (stnum, st) ->
+           let st = DFASt.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns st in
+           assert (stnum = string_of_int st.stateNumber) ;
+           (st.configset, st))
+    |> acsmap_oflist in
+  let num2state = MHM.mk 23 in
+  let () = ACSMap.iter (fun _ v -> MHM.add num2state (v.DFASt.stateNumber, v)) _states in
   {
     disable_builtin_equality
   ; atn
@@ -1252,13 +1262,8 @@ let _of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t =
   ; id = t.id
   ; atnStartState = t.atnStartState
   ; decision = t.decision
-  ; _states =
-      t._states
-      |> List.map (fun (stnum, st) ->
-             let st = DFASt.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns st in
-             assert (stnum = string_of_int st.stateNumber) ;
-             (st.configset, st))
-      |> acsmap_oflist
+  ; _states
+  ; num2state
   ; precedenceDfa = t.precedenceDfa
   ; s0 = Option.map (DFASt.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns) t.s0
   }
@@ -1282,6 +1287,7 @@ let _init ?predicted_id atn grammarType atnStartState decision =
     ; atnStartState
     ; decision
     ; _states = ACSMap.create 23
+    ; num2state = MHM.mk 23
     ; s0 = None
     ; precedenceDfa = false
     } in
@@ -1325,7 +1331,8 @@ let states_len dfa =
   rv
 
 let _states_add dfa st =
-  ACSMap.add dfa._states st.DFASt.configset st
+  ACSMap.add dfa._states st.DFASt.configset st ;
+  MHM.add dfa.num2state (st.stateNumber, st)
 
 let states_add dfa st =
   Tracelog.write(DFA_ENTER_states_add(to_mimick dfa, DFASt.to_mimick st)) ;

@@ -1,8 +1,7 @@
 #!/bin/bash
 
-#F=_generated/SemPredEvalLexer/DisableRule/json.log
-#F=_generated/CompositeParsers/DelegatorRuleOverridesLookaheadInDelegate/json.log
-F=_generated/FullContextParsing/AmbiguityNoLoop/json.log
+F=_generated/CompositeParsers/DelegatorRuleOverridesLookaheadInDelegate/json.log
+
 echo $F
 
 ATNARGS=""
@@ -13,7 +12,7 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 
 source trip-tests/ACS.entrypoints.sh
 
-#NARGS=" --stop-nth 172"
+#NARGS=" --stop-nth 26"
 
 rm -f _generated/*.log
 

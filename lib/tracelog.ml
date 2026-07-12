@@ -14,3 +14,8 @@ let write jlog =
     let j = [%to_located_yojson: M.json_log_t] jlog in
     Json.pp_hum_to_channel ~std:true (oc()) j
 
+let writemsg txt =
+  if enabled() then
+  let j = (Ploc.dummy, `List [(Ploc.dummy, `String txt)]) in
+    Json.pp_hum_to_channel ~std:true (oc()) j
+

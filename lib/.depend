@@ -54,17 +54,21 @@ exec.cmo : \
     types.cmo \
     tracelog.cmo \
     mimick.cmo \
+    interp_syntax.cmo \
     atn.cmo
 exec.cmx : \
     util.cmx \
     types.cmx \
     tracelog.cmx \
     mimick.cmx \
+    interp_syntax.cmx \
     atn.cmx
 simulate.cmo : \
+    tracelog.cmo \
     mimick.cmo \
     exec.cmo
 simulate.cmx : \
+    tracelog.cmx \
     mimick.cmx \
     exec.cmx
 mk_meta.cmo :

@@ -207,15 +207,24 @@ and merge_cache_t =
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
-  ATNConfig_eq of config_t * config_t * bool
-                                    [@yojson.name "ATNConfig.__eq__"]
-                                    [@located_yojson.name "ATNConfig.__eq__"]
-| LexerATNConfig_eq of config_t * config_t * bool
-                                    [@yojson.name "LexerATNConfig.__eq__"]
-                                    [@located_yojson.name "LexerATNConfig.__eq__"]
-| ATNConfig_equalsForConfigSet of config_t * config_t * bool
-                                    [@yojson.name "ATNConfig.equalsForConfigSet"]
-                                    [@located_yojson.name "ATNConfig.equalsForConfigSet"]
+  ATNConfig_ENTER_eq of config_t * config_t
+                                    [@yojson.name "ENTER ATNConfig.__eq__"]
+                                    [@located_yojson.name "ENTER ATNConfig.__eq__"]
+| ATNConfig_EXIT_eq of bool
+                                    [@yojson.name "EXIT ATNConfig.__eq__"]
+                                    [@located_yojson.name "EXIT ATNConfig.__eq__"]
+| LexerATNConfig_ENTER_eq of config_t * config_t
+                                    [@yojson.name "ENTER LexerATNConfig.__eq__"]
+                                    [@located_yojson.name "ENTER LexerATNConfig.__eq__"]
+| LexerATNConfig_EXIT_eq of bool
+                                    [@yojson.name "EXIT LexerATNConfig.__eq__"]
+                                    [@located_yojson.name "EXIT LexerATNConfig.__eq__"]
+| ATNConfig_ENTER_equalsForConfigSet of config_t * config_t
+                                    [@yojson.name "ENTER ATNConfig.equalsForConfigSet"]
+                                    [@located_yojson.name "ENTER ATNConfig.equalsForConfigSet"]
+| ATNConfig_EXIT_equalsForConfigSet of bool
+                                    [@yojson.name "EXIT ATNConfig.equalsForConfigSet"]
+                                    [@located_yojson.name "EXIT ATNConfig.equalsForConfigSet"]
 | ATNConfig_ENTER_incrementRIOC of config_t
                                     [@yojson.name "ENTER ATNConfig.incrementRIOC"]
                                     [@located_yojson.name "ENTER ATNConfig.incrementRIOC"]

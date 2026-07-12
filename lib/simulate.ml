@@ -151,6 +151,18 @@ let sim1 caches atns (i:int) (loc,j) =
          let cs2 = ACS.to_mimick cs in
          ()
 
+      | ATNConfigSet_ENTER_eq (cs1, cs2) ->
+         let cs1 = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs1 in
+         let cs2 = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs2 in
+         let rv = ACS.__eq__ cs1 cs2 in
+         ()
+
+      | ATNConfig_ENTER_eq (c1, c2) ->
+         let c1 = AC.of_mimick ~ac_cache:(Some caches.ac) atns c1 in
+         let c2 = AC.of_mimick ~ac_cache:(Some caches.ac) atns c2 in
+         let rv = AC.__eq__ c1 c2 in
+         ()
+
       | ATNConfig_ENTER_incrementRIOC c ->
          let c = AC.of_mimick ~ac_cache:(Some caches.ac) atns c in
          Tracelog.write (ATNConfig_ENTER_incrementRIOC (AC.to_mimick c)) ;
@@ -234,14 +246,17 @@ let sim1 caches atns (i:int) (loc,j) =
  *)
          let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
          let rv = DFA.states_add dfa (DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
+         Tracelog.writemsg "after states_add\n" ;
          ()
 
       | DFA_ENTER_set_s0(dfa, st) ->
-(*
-         let dfa = DFA.Cache.get caches.dfa dfa_id in
- *)
+         Tracelog.writemsg "START set_s0\n" ;
          let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
-         DFA.set_s0 dfa (DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) ;
+         Tracelog.writemsg "[1] set_s0\n" ;
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         Tracelog.writemsg "[2] set_s0\n" ;
+         DFA.set_s0 dfa st ;
+         Tracelog.writemsg "[3] set_s0\n" ;
          ()
 
       | DFAState_ENTER_init (predicted_id, stateNumber, configs) ->
@@ -279,6 +294,12 @@ let sim1 caches atns (i:int) (loc,j) =
          let () = DFASt.makeEdges st n in
          ()
 
+
+      | DFAState_ENTER_setEdge(st, n, v) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let v = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns v in
+         let () = DFASt.setEdge st n v in
+         ()
 
     end
   with exc ->

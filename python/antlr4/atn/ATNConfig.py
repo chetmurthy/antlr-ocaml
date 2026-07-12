@@ -114,9 +114,11 @@ class ATNConfig(object):
                 and self.precedenceFilterSuppressed==other.precedenceFilterSuppressed
 
     def __eq__(self, other):
+        Trace.write(json.dumps([ 'ENTER ATNConfig.__eq__',
+                                 self.asdict(), other.asdict() ],
+                               sort_keys=True, indent=4))
         rv = self.real__eq__(other)
-        Trace.write(json.dumps([ 'ATNConfig.__eq__',
-                                 self.asdict(), other.asdict(), rv ],
+        Trace.write(json.dumps([ 'EXIT ATNConfig.__eq__', rv ],
                                sort_keys=True, indent=4))
         return rv
 
@@ -144,9 +146,11 @@ class ATNConfig(object):
                 and self.semanticContext==other.semanticContext
 
     def equalsForConfigSet(self, other):
+        Trace.nowrite(json.dumps([ 'ENTER ATNConfig.equalsForConfigSet',
+                                 self.asdict(), other.asdict() ],
+                               sort_keys=True, indent=4))
         rv = self._equalsForConfigSet(other)
-        Trace.nowrite(json.dumps([ 'ATNConfig.equalsForConfigSet',
-                                 self.asdict(), other.asdict(), rv ],
+        Trace.nowrite(json.dumps([ 'EXIT ATNConfig.equalsForConfigSet', rv ],
                                sort_keys=True, indent=4))
         return rv
 
@@ -253,10 +257,11 @@ class LexerATNConfig(ATNConfig):
         return super().real__eq__(other)
 
     def __eq__(self, other):
+        Trace.write(json.dumps([ 'ENTER LexerATNConfig.__eq__',
+                                 self.asdict(), other.asdict() ],
+                               sort_keys=True, indent=4))
         rv = self.real__eq__(other)
-#        traceback.print_stack(file=Trace.fh)
-        Trace.write(json.dumps([ 'LexerATNConfig.__eq__',
-                                 self.asdict(), other.asdict(), rv ],
+        Trace.write(json.dumps([ 'EXIT LexerATNConfig.__eq__', rv ],
                                sort_keys=True, indent=4))
         return rv
 
