@@ -133,6 +133,36 @@ class DFAState(object):
         Trace.write(json.dumps([ 'EXIT DFAState.setEdge', self.asdict() ],
                                sort_keys=True, indent=4))
 
+    def set_stateNumber(self,n):
+        Trace.write(json.dumps([ 'ENTER DFAState.set_stateNumber', self.asdict(), n ],
+                               sort_keys=True, indent=4))
+        self.stateNumber = n
+        Trace.write(json.dumps([ 'EXIT DFAState.set_stateNumber', self.asdict() ],
+                               sort_keys=True, indent=4))
+
+    def set_isAcceptState(self,n):
+        Trace.write(json.dumps([ 'ENTER DFAState.set_isAcceptState', self.asdict(), n ],
+                               sort_keys=True, indent=4))
+        self.isAcceptState = n
+        Trace.write(json.dumps([ 'EXIT DFAState.set_isAcceptState', self.asdict() ],
+                               sort_keys=True, indent=4))
+
+    def set_prediction(self,n):
+        Trace.write(json.dumps([ 'ENTER DFAState.set_prediction', self.asdict(), n ],
+                               sort_keys=True, indent=4))
+        self.prediction = n
+        Trace.write(json.dumps([ 'EXIT DFAState.set_prediction', self.asdict() ],
+                               sort_keys=True, indent=4))
+
+    def set_lexerActionExecutor(self,n):
+        Trace.write(json.dumps([ 'ENTER DFAState.set_lexerActionExecutor',
+                                 self.asdict(),
+                                 (None if n is None else n.asdict()) ],
+                               sort_keys=True, indent=4))
+        self.lexerActionExecutor = n
+        Trace.write(json.dumps([ 'EXIT DFAState.set_lexerActionExecutor', self.asdict() ],
+                               sort_keys=True, indent=4))
+
     # Get the set of all alts mentioned by all ATN configurations in this
     #  DFA state.
     def getAltSet(self):

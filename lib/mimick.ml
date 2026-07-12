@@ -274,6 +274,33 @@ type json_log_t =
                       [@yojson.name "EXIT DFAState.setEdge"]
                       [@located_yojson.name "EXIT DFAState.setEdge"]
 
+| DFAState_ENTER_set_stateNumber of dfa_state_t * int
+                      [@yojson.name "ENTER DFAState.set_stateNumber"]
+                      [@located_yojson.name "ENTER DFAState.set_stateNumber"]
+| DFAState_EXIT_set_stateNumber of dfa_state_t
+                      [@yojson.name "EXIT DFAState.set_stateNumber"]
+                      [@located_yojson.name "EXIT DFAState.set_stateNumber"]
+
+| DFAState_ENTER_set_isAcceptState of dfa_state_t * bool
+                      [@yojson.name "ENTER DFAState.set_isAcceptState"]
+                      [@located_yojson.name "ENTER DFAState.set_isAcceptState"]
+| DFAState_EXIT_set_isAcceptState of dfa_state_t
+                      [@yojson.name "EXIT DFAState.set_isAcceptState"]
+                      [@located_yojson.name "EXIT DFAState.set_isAcceptState"]
+
+| DFAState_ENTER_set_prediction of dfa_state_t * int
+                      [@yojson.name "ENTER DFAState.set_prediction"]
+                      [@located_yojson.name "ENTER DFAState.set_prediction"]
+| DFAState_EXIT_set_prediction of dfa_state_t
+                      [@yojson.name "EXIT DFAState.set_prediction"]
+                      [@located_yojson.name "EXIT DFAState.set_prediction"]
+| DFAState_ENTER_set_lexerActionExecutor of dfa_state_t * lexer_action_executor_t option
+                      [@yojson.name "ENTER DFAState.set_lexerActionExecutor"]
+                      [@located_yojson.name "ENTER DFAState.set_lexerActionExecutor"]
+| DFAState_EXIT_set_lexerActionExecutor of dfa_state_t
+                      [@yojson.name "EXIT DFAState.set_lexerActionExecutor"]
+                      [@located_yojson.name "EXIT DFAState.set_lexerActionExecutor"]
+
 
 | DFA_ENTER_init of int * atn_type_t * deser_state_id * int
                       [@yojson.name "ENTER DFA.__init__"]

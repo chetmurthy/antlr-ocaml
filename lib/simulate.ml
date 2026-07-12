@@ -247,8 +247,38 @@ let sim1 caches atns (i:int) (loc,j) =
       | DFAState_ENTER_init (predicted_id, stateNumber, configs) ->
          let configs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns configs in
          let rv = DFASt.init ~predicted_id ~stateNumber ~configs () in
-         DFASt.Cache.add caches.dfast rv ;
+         let () = DFASt.Cache.add caches.dfast rv in
          ()
+
+
+      | DFAState_ENTER_set_stateNumber(st, n) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let () = DFASt.set_stateNumber st n in
+         ()
+
+      | DFAState_ENTER_set_isAcceptState(st, n) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let () = DFASt.set_isAcceptState st n in
+         ()
+
+
+      | DFAState_ENTER_set_prediction(st, n) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let () = DFASt.set_prediction st n in
+         ()
+
+
+      | DFAState_ENTER_set_lexerActionExecutor(st, n) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let () = DFASt.set_lexerActionExecutor st n in
+         ()
+
+
+      | DFAState_ENTER_makeEdges(st, n) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let () = DFASt.makeEdges st n in
+         ()
+
 
     end
   with exc ->

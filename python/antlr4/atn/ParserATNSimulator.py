@@ -535,21 +535,21 @@ class ParserATNSimulator(ATNSimulator):
 
         if predictedAlt!=ATN.INVALID_ALT_NUMBER:
             # NO CONFLICT, UNIQUELY PREDICTED ALT
-            D.isAcceptState = True
+            D.set_isAcceptState(True)
             D.configs.set_UA(predictedAlt)
-            D.prediction = predictedAlt
+            D.set_prediction(predictedAlt)
         elif PredictionMode.hasSLLConflictTerminatingPrediction(self.predictionMode, reach):
             # MORE THAN ONE VIABLE ALTERNATIVE
             D.configs.set_CA(self.getConflictingAlts(reach))
             D.requiresFullContext = True
             # in SLL-only mode, we will stop at this state and return the minimum alt
-            D.isAcceptState = True
-            D.prediction = min(D.configs.conflictingAlts)
+            D.set_isAcceptState(True)
+            D.set_prediction(min(D.configs.conflictingAlts))
 
         if D.isAcceptState and D.configs.hasSemanticContext:
             self.predicateDFAState(D, self.atn.getDecisionState(dfa.decision))
             if D.predicates is not None:
-                D.prediction = ATN.INVALID_ALT_NUMBER
+                D.set_prediction(ATN.INVALID_ALT_NUMBER)
 
         # all adds to dfa are done after we've created full D state
         D = self.addDFAEdge(dfa, previousD, t, D)
@@ -565,12 +565,12 @@ class ParserATNSimulator(ATNSimulator):
         altToPred = self.getPredsForAmbigAlts(altsToCollectPredsFrom, dfaState.configs, nalts)
         if altToPred is not None:
             dfaState.predicates = self.getPredicatePredictions(altsToCollectPredsFrom, altToPred)
-            dfaState.prediction = ATN.INVALID_ALT_NUMBER # make sure we use preds
+            dfaState.set_prediction(ATN.INVALID_ALT_NUMBER) # make sure we use preds
         else:
             # There are preds in configs but they might go away
             # when OR'd together like {p}? || NONE == NONE. If neither
             # alt has preds, resolve to min alt
-            dfaState.prediction = min(altsToCollectPredsFrom)
+            dfaState.set_prediction(min(altsToCollectPredsFrom))
 
     # comes back with reach.uniqueAlt set to a valid alt
     def execATNWithFullContext(self, dfa:DFA, D:DFAState, # how far we got before failing over
@@ -1629,7 +1629,7 @@ class ParserATNSimulator(ATNSimulator):
             if ParserATNSimulator.trace_atn_sim: print("addDFAState", str(D), "exists")
             return existing
 
-        D.stateNumber = dfa.states_len()
+        D.set_stateNumber(dfa.states_len())
         if not D.configs.readonly:
             D.configs.optimizeConfigs(self)
             D.configs.setReadonly(True)

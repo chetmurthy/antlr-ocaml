@@ -1026,12 +1026,12 @@ type pred_prediction_t = (int * SC.t)
 
 type dfa_state_t = {
     id : int
-  ; stateNumber : int
+  ; mutable stateNumber : int
   ; configset : ACS.t
-  ; mutable edges: int option array option
+  ; mutable edges : int option array option
   ; mutable isAcceptState : bool
-  ; prediction : int
-  ; lexerActionExecutor : LAE.t option
+  ; mutable prediction : int
+  ; mutable lexerActionExecutor : LAE.t option
   ; mutable requiresFullContext : bool
   ; predicates : pred_prediction_t list option
   }
@@ -1111,6 +1111,60 @@ let init ?predicted_id ?(stateNumber = -1) ?(configs = ACS.init()) () =
   let rv = _init ?predicted_id stateNumber configs in
   Tracelog.write(DFAState_EXIT_init (to_mimick rv)) ;
   rv
+
+let _set_stateNumber st n =
+  st.stateNumber <- n
+
+let set_stateNumber st n =
+  Tracelog.write(DFAState_ENTER_set_stateNumber (to_mimick st, n)) ;
+  _set_stateNumber st n ;
+  Tracelog.write(DFAState_EXIT_set_stateNumber (to_mimick st))
+
+let _set_isAcceptState st n =
+  st.isAcceptState <- n
+
+let set_isAcceptState st n =
+  Tracelog.write(DFAState_ENTER_set_isAcceptState (to_mimick st, n)) ;
+  _set_isAcceptState st n ;
+  Tracelog.write(DFAState_EXIT_set_isAcceptState (to_mimick st))
+
+let _set_prediction st n =
+  st.prediction <- n
+
+let set_prediction st n =
+  Tracelog.write(DFAState_ENTER_set_prediction (to_mimick st, n)) ;
+  _set_prediction st n ;
+  Tracelog.write(DFAState_EXIT_set_prediction (to_mimick st))
+
+let _set_lexerActionExecutor st n =
+  st.lexerActionExecutor <- n
+
+let set_lexerActionExecutor st n =
+  Tracelog.write(DFAState_ENTER_set_lexerActionExecutor (to_mimick st, n)) ;
+  _set_lexerActionExecutor st n ;
+  Tracelog.write(DFAState_EXIT_set_lexerActionExecutor (to_mimick st))
+
+let _makeEdges st n =
+  st.edges <- Some n
+
+let makeEdges st n =
+  Tracelog.write(DFAState_ENTER_makeEdges (to_mimick st, n)) ;
+  _makeEdges st n ;
+  Tracelog.write(DFAState_EXIT_makeEdges (to_mimick st))
+
+(*
+let _setEdge st n v =
+  match st.edges with
+    None -> failwith "DFAState.setEdge: edges array is not initialized"
+  | Some edges -> 
+     edges.(n) <- Some v
+
+let setEdge st n =
+  Tracelog.write(DFAState_ENTER_setEdge (to_mimick st, n)) ;
+  _setEdge st n ;
+  Tracelog.write(DFAState_EXIT_setEdge (to_mimick st))
+ *)
+
 end
 
 

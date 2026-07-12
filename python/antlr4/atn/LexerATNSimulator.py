@@ -569,9 +569,9 @@ class LexerATNSimulator(ATNSimulator):
         firstConfigWithRuleStopState = next((cfg for cfg in configs if isinstance(cfg.state, RuleStopState)), None)
 
         if firstConfigWithRuleStopState is not None:
-            proposed.isAcceptState = True
-            proposed.lexerActionExecutor = firstConfigWithRuleStopState.lexerActionExecutor
-            proposed.prediction = self.atn.ruleToTokenType[firstConfigWithRuleStopState.state.ruleIndex]
+            proposed.set_isAcceptState(True)
+            proposed.set_lexerActionExecutor(firstConfigWithRuleStopState.lexerActionExecutor)
+            proposed.set_prediction(self.atn.ruleToTokenType[firstConfigWithRuleStopState.state.ruleIndex])
 
         dfa = self.decisionToDFA[self.mode]
         existing = dfa.states_get(proposed, None)
@@ -580,7 +580,7 @@ class LexerATNSimulator(ATNSimulator):
 
         newState = proposed
 
-        newState.stateNumber = dfa.states_len()
+        newState.set_stateNumber(dfa.states_len())
         configs.setReadonly(True)
         newState.configs = configs
         dfa.states_add(newState)

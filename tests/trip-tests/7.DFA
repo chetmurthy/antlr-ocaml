@@ -14,7 +14,7 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 source trip-tests/ACS.entrypoints.sh
 source trip-tests/DFA.entrypoints.sh
 
-NARGS=" --stop-nth 25"
+#NARGS=" --stop-nth 25"
 
 rm -f _generated/*.log
 
