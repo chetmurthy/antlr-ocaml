@@ -213,6 +213,29 @@ let sim1 caches atns (i:int) (loc,j) =
          DFA.Cache.add caches.dfa rv ;
          ()
 
+      | DFA_ENTER_states_get(dfa, st) ->
+(*
+         let dfa = DFA.Cache.get caches.dfa dfa_id in
+ *)
+         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         let rv = DFA.states_get dfa (DFASt.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
+         ()
+
+      | DFA_ENTER_states_add(dfa, st) ->
+(*
+         let dfa = DFA.Cache.get caches.dfa dfa_id in
+ *)
+         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         let rv = DFA.states_add dfa (DFASt.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
+         ()
+
+      | DFA_ENTER_set_s0(dfa, st) ->
+(*
+         let dfa = DFA.Cache.get caches.dfa dfa_id in
+ *)
+         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         DFA.set_s0 dfa (DFASt.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) ;
+         ()
 
     end
   with exc ->

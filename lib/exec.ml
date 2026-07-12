@@ -1180,6 +1180,12 @@ let _of_mimick  ~acs_cache ~ac_cache atns t =
   ; s0 = Option.map (DFASt.of_mimick ~acs_cache ~ac_cache atns) t.s0
   }
 
+let of_mimick ~dfa_cache ~acs_cache ~ac_cache atns t =
+  let t = _of_mimick ~acs_cache ~ac_cache atns t in
+  match dfa_cache with
+    None -> t
+  | Some dfa_cache -> Cache.recache dfa_cache t
+
 module DFACounter = Counter(struct let name = "DFA" end)
 
 let _init ?predicted_id atn grammarType atnStartState decision =
@@ -1217,5 +1223,32 @@ let init ?predicted_id atn grammarType atnStartState decision =
   Tracelog.write
     (DFA_EXIT_init (rv.id, to_mimick rv)) ;
   rv
+
+let _states_get dfa st =
+  ACSMap.find_opt dfa._states st.DFASt.configset
+
+let states_get dfa st =
+  Tracelog.write(DFA_ENTER_states_get(to_mimick dfa, DFASt.to_mimick st)) ;
+  let rv = _states_get dfa st in
+  Tracelog.write(DFA_EXIT_states_get(dfa.id, Option.map DFASt.to_mimick rv)) ;
+  rv
+
+let _states_add dfa st =
+  ACSMap.add dfa._states st.DFASt.configset st
+
+let states_add dfa st =
+  Tracelog.write(DFA_ENTER_states_add(to_mimick dfa, DFASt.to_mimick st)) ;
+  let rv = _states_add dfa st in
+  Tracelog.write(DFA_EXIT_states_add(dfa.id, to_mimick dfa)) ;
+  rv
+
+let _set_s0 dfa st =
+  dfa.s0 <- Some st
+
+let set_s0 dfa st =
+  Tracelog.write(DFA_ENTER_set_s0(to_mimick dfa, DFASt.to_mimick st)) ;
+  _set_s0 dfa st ;
+  Tracelog.write(DFA_EXIT_set_s0(dfa.id, to_mimick dfa)) ;
+  ()
 
 end

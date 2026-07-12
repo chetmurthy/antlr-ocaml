@@ -147,8 +147,8 @@ class DFA(object):
         return self._states
 
     def states_get(self, x, y):
-        Trace.write(json.dumps([ 'ENTER DFA.states_get', self.id, x.asdict(),
-                                 (None if y is None else y.asdict()) ],
+        assert(y is None)
+        Trace.write(json.dumps([ 'ENTER DFA.states_get', self.asdict(), x.asdict() ],
                                sort_keys=True, indent=4))
         rv = self._states.get(x.configs,y)
         Trace.write(json.dumps([ 'EXIT DFA.states_get', self.id,
@@ -156,12 +156,17 @@ class DFA(object):
                                sort_keys=True, indent=4))
         return rv
 
-    def states_add(self, x):
-        Trace.write(json.dumps([ 'ENTER DFA.states_add', self.id, x.asdict() ],
+    def set_s0(self, x):
+        Trace.write(json.dumps([ 'ENTER DFA.set_s0', self.asdict(), x.asdict() ],
                                sort_keys=True, indent=4))
-#        sys.stderr.write("BEFORE states_add: _states: %s\n" % self._states)
+        self.s0 = x
+        Trace.write(json.dumps([ 'EXIT DFA.set_s0', self.id, self.asdict() ],
+                               sort_keys=True, indent=4))
+
+    def states_add(self, x):
+        Trace.write(json.dumps([ 'ENTER DFA.states_add', self.asdict(), x.asdict() ],
+                               sort_keys=True, indent=4))
         self._states[x.configs] = x
-#        sys.stderr.write("AFTER states_add: _states: %s\n" % self._states)
         Trace.write(json.dumps([ 'EXIT DFA.states_add', self.id, self.asdict() ],
                                sort_keys=True, indent=4))
 

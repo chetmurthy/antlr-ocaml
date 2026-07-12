@@ -359,7 +359,7 @@ class ParserATNSimulator(ATNSimulator):
                     dfa.setPrecedenceStartState(self.parser.getPrecedence(), s0)
                 else:
                     s0 = self.addDFAState(dfa, DFAState(configs=s0_closure))
-                    dfa.s0 = s0
+                    dfa.set_s0(s0)
 
             alt = self.execATN(dfa, s0, input, index, outerContext)
             if ParserATNSimulator.debug:
@@ -1595,8 +1595,8 @@ class ParserATNSimulator(ATNSimulator):
             return to
 
         if from_.edges is None:
-            from_.edges = [None] * (self.atn.maxTokenType + 2)
-        from_.edges[t+1] = to # connect
+            from_.makeEdges([None] * (self.atn.maxTokenType + 2))
+        from_.setEdge(t+1, to) # connect
 
         if ParserATNSimulator.debug:
             names = None if self.parser is None else self.parser.literalNames

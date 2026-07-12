@@ -164,7 +164,7 @@ class LexerATNSimulator(ATNSimulator):
 
         next = self.addDFAState(s0_closure)
         if not suppressEdge:
-            self.decisionToDFA[self.mode].s0 = next
+            self.decisionToDFA[self.mode].set_s0(next)
 
         predict = self.execATN(input, next)
 
@@ -547,9 +547,9 @@ class LexerATNSimulator(ATNSimulator):
 
         if from_.edges is None:
             #  make room for tokens 1..n and -1 masquerading as index 0
-            from_.edges = [ None ] * (self.MAX_DFA_EDGE - self.MIN_DFA_EDGE + 1)
+            from_.makeEdges([ None ] * (self.MAX_DFA_EDGE - self.MIN_DFA_EDGE + 1))
 
-        from_.edges[tk - self.MIN_DFA_EDGE] = to # connect
+        from_.setEdge(tk - self.MIN_DFA_EDGE, to) # connect
         Trace.write(json.dumps([ 'END LexerATNSimulator.addDFAEdge',
                                  from_.stateNumber,
                                  tk,

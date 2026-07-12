@@ -1,3 +1,7 @@
+import sys
+import json
+import Trace
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -58,6 +62,8 @@ class DFAState(object):
     )
 
     def __init__(self, stateNumber:int=-1, configs:ATNConfigSet=ATNConfigSet()):
+        Trace.write(json.dumps([ 'ENTER DFAState.__init__', stateNumber, configs.asdict() ],
+                               sort_keys=True, indent=4))
         assert (configs is not None)
         self.stateNumber = stateNumber
         self.configs = configs
@@ -87,6 +93,8 @@ class DFAState(object):
         #
         #  <p>This list is computed by {@link ParserATNSimulator#predicateDFAState}.</p>
         self.predicates = None
+        Trace.write(json.dumps([ 'EXIT DFAState.__init__', self.asdict() ],
+                               sort_keys=True, indent=4))
 
 
     def asdict(self):
@@ -101,6 +109,20 @@ class DFAState(object):
             'predicates' : None if self.predicates is None else [p.asdict() for p in self.predicates],
         }
         return d
+
+    def makeEdges(self, edges):
+        Trace.write(json.dumps([ 'ENTER DFAState.makeEdges', self.asdict(), edges ],
+                               sort_keys=True, indent=4))
+        self.edges = edges
+        Trace.write(json.dumps([ 'EXIT DFAState.makeEdges', self.asdict() ],
+                               sort_keys=True, indent=4))
+
+    def setEdge(self,pos,v):
+        Trace.write(json.dumps([ 'ENTER DFAState.setEdge', self.asdict(), pos, v.asdict() ],
+                               sort_keys=True, indent=4))
+        self.edges[pos] = v
+        Trace.write(json.dumps([ 'EXIT DFAState.setEdge', self.asdict() ],
+                               sort_keys=True, indent=4))
 
     # Get the set of all alts mentioned by all ATN configurations in this
     #  DFA state.
