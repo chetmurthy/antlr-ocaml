@@ -171,8 +171,10 @@ class DFA(object):
                                sort_keys=True, indent=4))
 
     def states_len(self):
+        Trace.write(json.dumps([ 'ENTER DFA.states_len', self.asdict() ],
+                               sort_keys=True, indent=4))
         rv = len(self._states)
-        Trace.write(json.dumps([ 'EXIT DFA.states_len', self.id, rv ],
+        Trace.write(json.dumps([ 'EXIT DFA.states_len', rv ],
                                sort_keys=True, indent=4))
         return rv
 

@@ -96,11 +96,13 @@ module Caches = struct
   type t = {
       ac : AC.Cache.t
     ; acs : ACS.Cache.t
+    ; dfast : DFASt.Cache.t
     ; dfa : DFA.Cache.t
     }
   let mk () = {
       ac = AC.Cache.mk ()
     ; acs = ACS.Cache.mk ()
+    ; dfast = DFASt.Cache.mk ()
     ; dfa = DFA.Cache.mk ()
     }
 end
@@ -217,24 +219,35 @@ let sim1 caches atns (i:int) (loc,j) =
 (*
          let dfa = DFA.Cache.get caches.dfa dfa_id in
  *)
-         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
-         let rv = DFA.states_get dfa (DFASt.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
+         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         let rv = DFA.states_get dfa (DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
+         ()
+
+      | DFA_ENTER_states_len(dfa) ->
+         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         let rv = DFA.states_len dfa in
          ()
 
       | DFA_ENTER_states_add(dfa, st) ->
 (*
          let dfa = DFA.Cache.get caches.dfa dfa_id in
  *)
-         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
-         let rv = DFA.states_add dfa (DFASt.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
+         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         let rv = DFA.states_add dfa (DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
          ()
 
       | DFA_ENTER_set_s0(dfa, st) ->
 (*
          let dfa = DFA.Cache.get caches.dfa dfa_id in
  *)
-         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
-         DFA.set_s0 dfa (DFASt.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) ;
+         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         DFA.set_s0 dfa (DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) ;
+         ()
+
+      | DFAState_ENTER_init (predicted_id, stateNumber, configs) ->
+         let configs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns configs in
+         let rv = DFASt.init ~predicted_id ~stateNumber ~configs () in
+         DFASt.Cache.add caches.dfast rv ;
          ()
 
     end

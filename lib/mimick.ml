@@ -95,7 +95,8 @@ and dfa_t = {
   }
 
 and dfa_state_t = {
-    stateNumber : int
+    id : int
+  ; stateNumber : int
   ; configset : config_set_t
   ; edges: int option array option
   ; isAcceptState : bool
@@ -251,6 +252,29 @@ type json_log_t =
                                     [@located_yojson.name "EXIT ATNConfigSet.setReadonly"]
 
 
+| DFAState_ENTER_init of int * int * config_set_t
+                      [@yojson.name "ENTER DFAState.__init__"]
+                      [@located_yojson.name "ENTER DFAState.__init__"]
+| DFAState_EXIT_init of dfa_state_t
+                      [@yojson.name "EXIT DFAState.__init__"]
+                      [@located_yojson.name "EXIT DFAState.__init__"]
+
+| DFAState_ENTER_makeEdges of dfa_state_t * int option array
+                      [@yojson.name "ENTER DFAState.makeEdges"]
+                      [@located_yojson.name "ENTER DFAState.makeEdges"]
+| DFAState_EXIT_makeEdges of dfa_state_t
+                      [@yojson.name "EXIT DFAState.makeEdges"]
+                      [@located_yojson.name "EXIT DFAState.makeEdges"]
+
+
+| DFAState_ENTER_setEdge of dfa_state_t * int * dfa_state_t
+                      [@yojson.name "ENTER DFAState.setEdge"]
+                      [@located_yojson.name "ENTER DFAState.setEdge"]
+| DFAState_EXIT_setEdge of dfa_state_t
+                      [@yojson.name "EXIT DFAState.setEdge"]
+                      [@located_yojson.name "EXIT DFAState.setEdge"]
+
+
 | DFA_ENTER_init of int * atn_type_t * deser_state_id * int
                       [@yojson.name "ENTER DFA.__init__"]
                       [@located_yojson.name "ENTER DFA.__init__"]
@@ -263,7 +287,10 @@ type json_log_t =
 | DFA_EXIT_states_get of int * dfa_state_t option
                       [@yojson.name "EXIT DFA.states_get"]
                       [@located_yojson.name "EXIT DFA.states_get"]
-| DFA_EXIT_states_len of int * int
+| DFA_ENTER_states_len of dfa_t
+                      [@yojson.name "ENTER DFA.states_len"]
+                      [@located_yojson.name "ENTER DFA.states_len"]
+| DFA_EXIT_states_len of int
                       [@yojson.name "EXIT DFA.states_len"]
                       [@located_yojson.name "EXIT DFA.states_len"]
 | DFA_ENTER_states_add of dfa_t * dfa_state_t

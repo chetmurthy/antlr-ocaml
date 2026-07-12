@@ -1024,8 +1024,9 @@ module DFASt = struct
 type pred_prediction_t = (int * SC.t)
 [@@deriving show, eq]
 
-type t = {
-    stateNumber : int
+type dfa_state_t = {
+    id : int
+  ; stateNumber : int
   ; configset : ACS.t
   ; mutable edges: int option array option
   ; mutable isAcceptState : bool
@@ -1035,10 +1036,22 @@ type t = {
   ; predicates : pred_prediction_t list option
   }
 [@@deriving show, eq]
+type t = dfa_state_t
+[@@deriving show, eq]
+
+module Cache = Cacher(struct
+                   type t  = dfa_state_t
+                   let id t = t.id
+                   let equal = equal_dfa_state_t
+                   let pp = pp_dfa_state_t
+                   let name = "DFAState"
+                 end)
+
 
 let to_mimick t =
   {
-      M.stateNumber = t.stateNumber
+      M.id = t.id
+    ; stateNumber = t.stateNumber
     ; configset = ACS.to_mimick t.configset
     ; edges = t.edges
     ; isAcceptState = t.isAcceptState
@@ -1051,9 +1064,10 @@ let to_mimick t =
           t.predicates
   }
 
-let of_mimick ~acs_cache ~ac_cache atns t =
+let _of_mimick ~acs_cache ~ac_cache atns t =
   {
-    stateNumber = t.M.stateNumber
+    id = t.M.id
+  ; stateNumber = t.M.stateNumber
   ; configset = ACS.of_mimick ~acs_cache ~ac_cache atns t.M.configset
   ; edges = t.M.edges
   ; isAcceptState = t.M.isAcceptState
@@ -1067,9 +1081,20 @@ let of_mimick ~acs_cache ~ac_cache atns t =
                   M.PredPrediction{alt;pred} -> (alt, SC.of_mimick pred)))
   }
 
-let _init stateNumber configs =
+let of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t =
+  let t = _of_mimick ~acs_cache ~ac_cache atns t in
+  match dfast_cache with
+    None -> t
+  | Some dfast_cache -> Cache.recache dfast_cache t
+
+module DFAStCounter = Counter(struct let name = "DFAState" end)
+
+let _init ?predicted_id stateNumber configs =
+  DFAStCounter.check predicted_id ;
+  let id = DFAStCounter.get_incr () in
   {
-    stateNumber
+    id
+  ; stateNumber
   ; configset = configs
   ; edges = None
   ; isAcceptState = false
@@ -1079,8 +1104,12 @@ let _init stateNumber configs =
   ; predicates = None
   }
 
-let init  ?(stateNumber = -1) ?(configs = ACS.init()) () =
-  let rv = _init stateNumber configs in
+let init ?predicted_id ?(stateNumber = -1) ?(configs = ACS.init()) () =
+  DFAStCounter.check predicted_id ;
+  Tracelog.write
+    (DFAState_ENTER_init (DFAStCounter.get(), stateNumber, ACS.to_mimick configs)) ;
+  let rv = _init ?predicted_id stateNumber configs in
+  Tracelog.write(DFAState_EXIT_init (to_mimick rv)) ;
   rv
 end
 
@@ -1160,7 +1189,7 @@ let to_mimick t =
   ; s0 = Option.map DFASt.to_mimick t.s0
   }
 
-let _of_mimick  ~acs_cache ~ac_cache atns t =
+let _of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t =
   let atn = Atns.for_grammar atns t.M.grammarType in
   {
     disable_builtin_equality
@@ -1172,16 +1201,16 @@ let _of_mimick  ~acs_cache ~ac_cache atns t =
   ; _states =
       t._states
       |> List.map (fun (stnum, st) ->
-             let st = DFASt.of_mimick ~acs_cache ~ac_cache atns st in
+             let st = DFASt.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns st in
              assert (stnum = string_of_int st.stateNumber) ;
              (st.configset, st))
       |> acsmap_oflist
   ; precedenceDfa = t.precedenceDfa
-  ; s0 = Option.map (DFASt.of_mimick ~acs_cache ~ac_cache atns) t.s0
+  ; s0 = Option.map (DFASt.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns) t.s0
   }
 
-let of_mimick ~dfa_cache ~acs_cache ~ac_cache atns t =
-  let t = _of_mimick ~acs_cache ~ac_cache atns t in
+let of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t =
+  let t = _of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t in
   match dfa_cache with
     None -> t
   | Some dfa_cache -> Cache.recache dfa_cache t
@@ -1231,6 +1260,14 @@ let states_get dfa st =
   Tracelog.write(DFA_ENTER_states_get(to_mimick dfa, DFASt.to_mimick st)) ;
   let rv = _states_get dfa st in
   Tracelog.write(DFA_EXIT_states_get(dfa.id, Option.map DFASt.to_mimick rv)) ;
+  rv
+
+let _states_len dfa = ACSMap.length dfa._states
+
+let states_len dfa =
+  Tracelog.write(DFA_ENTER_states_len(to_mimick dfa)) ;
+  let rv = _states_len dfa in
+  Tracelog.write(DFA_EXIT_states_len(rv)) ;
   rv
 
 let _states_add dfa st =

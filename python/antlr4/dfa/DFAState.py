@@ -55,15 +55,23 @@ class PredPrediction(object):
 #  but with different ATN contexts (with same or different alts)
 #  meaning that state was reached via a different set of rule invocations.</p>
 #/
+dfaStateCounter = 0
+
 class DFAState(object):
     __slots__ = (
         'stateNumber', 'configs', 'edges', 'isAcceptState', 'prediction',
-        'lexerActionExecutor', 'requiresFullContext', 'predicates'
+        'lexerActionExecutor', 'requiresFullContext', 'predicates',
+        'id'
     )
 
     def __init__(self, stateNumber:int=-1, configs:ATNConfigSet=ATNConfigSet()):
-        Trace.write(json.dumps([ 'ENTER DFAState.__init__', stateNumber, configs.asdict() ],
+        global dfaStateCounter
+        Trace.write(json.dumps([ 'ENTER DFAState.__init__',
+                                 dfaStateCounter,
+                                 stateNumber, configs.asdict() ],
                                sort_keys=True, indent=4))
+        self.id = dfaStateCounter
+        dfaStateCounter += 1
         assert (configs is not None)
         self.stateNumber = stateNumber
         self.configs = configs
@@ -99,6 +107,7 @@ class DFAState(object):
 
     def asdict(self):
         d = {
+            'id' : self.id,
             'stateNumber' : self.stateNumber,
             'configset' : self.configs.asdict(),
             'edges' : None if self.edges is None else [(None if e is None else e.stateNumber) for e in self.edges],
