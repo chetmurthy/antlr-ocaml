@@ -4,7 +4,7 @@ set -e
 
 ARGS=""
 source trip-tests/ACS.entrypoints.sh
-ARGS+=" -e DFA.__init__"
+source trip-tests/DFA.entrypoints.sh
 
 for f in _generated/*/*/json.log
 do

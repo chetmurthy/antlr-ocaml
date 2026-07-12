@@ -6,6 +6,24 @@ open Pa_ppx_utils
 open Util
 open Atn
 
+
+module Counter(M: sig val name : string end) = struct
+  let it = ref 0
+  let check predicted =
+    match predicted with
+      None -> ()
+    | Some n ->
+     if n <> !it then
+       Fmt.(failwithf "%s: predicted/actual id mismatch: %d <> %d@."
+              M.name n !it)
+
+  let get () = !it
+  let get_incr () =
+    let n = !it in
+    incr it ;
+    n
+end
+
 open Coll
 module type CACHEABLE = sig
   type t
@@ -62,8 +80,34 @@ end
 
 module M = Mimick
 
-type atns_t = { lexer : Atn.t ; _parser : Atn.t option }
+module Atns = struct
+type t = { lexer : Atn.t ; _parser : Atn.t option }
 
+let read_atn ~grammarType file =
+  let atn = 
+    file
+    |> Fpath.v
+    |>  Bos.OS.File.read
+    |> Result.get_ok
+    |> Interp_syntax.read_raw
+    |> Atn.deser ~verify:true in
+  if atn.Atn.grammarType <> grammarType then
+    Fmt.(failwithf "%s: ATN was supposed to be %a but was %a@."
+           file Atn.pp_atn_type_t atn.Atn.grammarType Atn.pp_atn_type_t grammarType) ;
+  Fmt.(pf stderr "ATN %s: 0x%08x@." file (Hashtbl.hash atn)) ;
+  atn
+
+let load ~lexer_atn ~parser_atn =
+  { lexer = read_atn ~grammarType:Atn.LEXER lexer_atn
+  ; _parser = Option.map (read_atn ~grammarType:Atn.PARSER) parser_atn
+  }
+
+let for_grammar atns grammarType =
+  match (grammarType, atns) with
+    (LEXER, { lexer }) -> lexer
+  | (PARSER, { _parser = Some atn }) -> atn
+  | _ -> failwith "must supply parser ATN for a parser DFA"
+end
 module PC = struct
 let _EMPTY_RETURN_STATE = 0x7FFFFFFF
 
@@ -584,7 +628,7 @@ let to_mimick t =
       }
 
 let _of_mimick atns t = match (atns,t) with
-    ({_parser=Some atn}, M.ATNConfig t) ->
+    (Atns.{_parser=Some atn}, M.ATNConfig t) ->
      {
        disable_builtin_equality
      ; atn
@@ -682,20 +726,11 @@ let eq_for_config_set t1 t2 =
  *)
   rv
 
-let configCounter = ref 0
-
-let check_configCounter predicted_id =
-  match predicted_id with
-    None -> ()
-  | Some n ->
-     if n <> !configCounter then
-       Fmt.(failwithf "ATNConfig.init: predicted/actual id mismatch: %d <> %d@."
-              n !configCounter)
+module ConfigCounter = Counter(struct let name = "ATNConfig" end)
 
 let _ATNConfig_init ?predicted_id atn state_opt alt_opt context_opt semantic_opt config_opt =
-  check_configCounter predicted_id;
-  let id = !configCounter in
-  incr configCounter ;
+  ConfigCounter.check predicted_id;
+  let id = ConfigCounter.get_incr() in
   let state = match (state_opt, config_opt) with
       (Some st, _) -> st
     | (None, Some c) -> c.state
@@ -733,9 +768,9 @@ let checkNonGreedyDecision atn lexer_ext target =
 
 
 let init_ATNConfig ?predicted_id atn state_opt alt_opt context_opt semantic_opt config_opt : t =
-  check_configCounter predicted_id ;
+  ConfigCounter.check predicted_id ;
   Tracelog.write
-    (ATNConfig_ENTER_init (!configCounter, state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
+    (ATNConfig_ENTER_init (ConfigCounter.get(), state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
   let rv = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
   Tracelog.write (ATNConfig_EXIT_init (to_mimick rv)) ;
   rv
@@ -876,15 +911,11 @@ let to_mimick t =
   ; id = t.id
   }
 
-let configSetCounter = ref 0
+module ConfigSetCounter = Counter(struct let name = "ATNConfigSet" end)
 
 let _init ?id fullCtx =
-  let id = match id with
-      Some id -> id
-    | None ->
-       let id = !configSetCounter in
-       incr configSetCounter ;
-       id in
+  ConfigSetCounter.check id ;
+  let id = ConfigSetCounter.get_incr () in
   {
     id
   ; configs = ref []
@@ -898,8 +929,8 @@ let _init ?id fullCtx =
   }
 
 let init ?id ?(fullCtx = true) () =
-  let arg_id = match id with None -> !configSetCounter | Some n -> n in
-  Tracelog.write (ATNConfigSet_ENTER_init (arg_id, fullCtx));
+  ConfigSetCounter.check id ;
+  Tracelog.write (ATNConfigSet_ENTER_init (ConfigSetCounter.get (), fullCtx));
   let rv = _init ?id fullCtx in
   Tracelog.write (ATNConfigSet_EXIT_init (to_mimick rv));
   rv
@@ -1130,10 +1161,7 @@ let to_mimick t =
   }
 
 let _of_mimick  ~acs_cache ~ac_cache atns t =
-  let atn = match (t.M.grammarType, atns) with
-    (LEXER, { lexer }) -> lexer
-  | (PARSER, { _parser = Some atn }) -> atn
-  | _ -> failwith "must supply parser ATN for a parser DFA" in
+  let atn = Atns.for_grammar atns t.M.grammarType in
   {
     disable_builtin_equality
   ; atn
@@ -1152,20 +1180,11 @@ let _of_mimick  ~acs_cache ~ac_cache atns t =
   ; s0 = Option.map (DFASt.of_mimick ~acs_cache ~ac_cache atns) t.s0
   }
 
-let dfaCounter = ref 0
-let check_dfaCounter predicted_id =
-  match predicted_id with
-    None -> ()
-  | Some n ->
-     if n <> !dfaCounter then
-       Fmt.(failwithf "DFA.init: predicted/actual id mismatch: %d <> %d@."
-              n !dfaCounter)
-
+module DFACounter = Counter(struct let name = "DFA" end)
 
 let _init ?predicted_id atn grammarType atnStartState decision =
-  check_dfaCounter predicted_id ;
-  let id = !dfaCounter in
-  incr dfaCounter ;
+  DFACounter.check predicted_id ;
+  let id = DFACounter.get_incr () in
   let rv = {
       disable_builtin_equality
     ; id
@@ -1186,13 +1205,14 @@ let _init ?predicted_id atn grammarType atnStartState decision =
         precedenceState.isAcceptState <- false ;
         precedenceState.requiresFullContext <- false ;
         rv.s0 <- Some precedenceState
+      | _ -> ()
     end ;
   rv
 
 let init ?predicted_id atn grammarType atnStartState decision =
-  check_dfaCounter predicted_id ;
+  DFACounter.check predicted_id ;
   Tracelog.write
-    (DFA_ENTER_init (!dfaCounter, grammarType, atnStartState, decision)) ;
+    (DFA_ENTER_init (DFACounter.get(), grammarType, atnStartState, decision)) ;
   let rv = _init  ?predicted_id atn grammarType atnStartState decision in
   Tracelog.write
     (DFA_EXIT_init (rv.id, to_mimick rv)) ;

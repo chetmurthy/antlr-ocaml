@@ -96,10 +96,12 @@ module Caches = struct
   type t = {
       ac : AC.Cache.t
     ; acs : ACS.Cache.t
+    ; dfa : DFA.Cache.t
     }
   let mk () = {
       ac = AC.Cache.mk ()
     ; acs = ACS.Cache.mk ()
+    ; dfa = DFA.Cache.mk ()
     }
 end
 
@@ -110,7 +112,7 @@ let sim1 caches atns (i:int) (loc,j) =
     begin
       match j with
         M.LexerATNConfig_ENTER_init (state_opt, alt_opt, context_opt, semantic_opt, lexerActionExecutor_opt, config_opt) ->
-         let atn = atns.lexer in
+         let atn = atns.Atns.lexer in
          let context_opt = Option.map PC.of_mimick context_opt in
          let semantic_opt = Option.map SC.of_mimick semantic_opt in
          let config_opt = Option.map (AC.of_mimick ~ac_cache:(Some caches.ac) atns) config_opt in
@@ -203,6 +205,12 @@ let sim1 caches atns (i:int) (loc,j) =
          Tracelog.write (ATNConfigSet_ENTER_set_CA (ACS.to_mimick cs, v)) ;
          cs.ACS.conflictingAlts <- v ;
          Tracelog.write (ATNConfigSet_EXIT_set_CA (ACS.to_mimick cs)) ;
+         ()
+
+      | DFA_ENTER_init (predicted_id, grammarType, atnStartState, decision) ->
+         let atn  = Atns.for_grammar atns grammarType in
+         let rv = DFA.init ~predicted_id atn grammarType atnStartState decision in
+         DFA.Cache.add caches.dfa rv ;
          ()
 
 

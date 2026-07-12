@@ -175,20 +175,6 @@ end
 
 module Entrypoints = struct
 
-let read_atn ~grammarType file =
-  let atn = 
-    file
-    |> Fpath.v
-    |>  Bos.OS.File.read
-    |> Result.get_ok
-    |> Antlr.Interp_syntax.read_raw
-    |> Antlr.Atn.deser ~verify:true in
-  if atn.Atn.grammarType <> grammarType then
-    Fmt.(failwithf "%s: ATN was supposed to be %a but was %a@."
-           file Atn.pp_atn_type_t atn.Atn.grammarType Atn.pp_atn_type_t grammarType) ;
-  Fmt.(pf stderr "ATN %s: 0x%08x@." file (Hashtbl.hash atn)) ;
-  atn
-
 let simulate_json atns stream =
   let open Rresult.R in
   let demarsh j =
@@ -209,19 +195,12 @@ let simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~o
   Tracelog._enabled := true ;
   EntryExit.filter1_then  ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json atns) file
 
-let load_atns ~lexer_atn ~parser_atn =
-  match (lexer_atn, parser_atn) with
-    (None, None) -> failwith "must specify at least lexer-atn"
-  | (None, Some _) -> failwith "cannot specify parser-atn without lexer-atn"
-  | (Some f1, None) ->
-     Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
-          ; _parser = None }
-  | (Some f1, Some f2) ->
-     Exec.{ lexer = read_atn ~grammarType:Atn.LEXER f1
-          ; _parser = Some (read_atn ~grammarType:Atn.PARSER f2) }
-
 let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~pattern ~case_insensitive ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =
-  let atns = load_atns ~lexer_atn ~parser_atn in
+  let lexer_atn = match lexer_atn with
+      None -> failwith "simulate: must provide lexer-atn"
+    | Some x -> x in
+  let open Exec in
+  let atns = Atns.load ~lexer_atn ~parser_atn in
   match (pattern, entry_exit_name) with
     (_::_,[]) ->
     simulate1_filter ~atns ~verbose ~pattern ~case_insensitive file
@@ -264,7 +243,11 @@ let simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~o
   EntryExit.filter1_then  ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json atns) file
 
 let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =
-  let atns = Entrypoints.load_atns ~lexer_atn ~parser_atn in
+  let open Exec in
+  let lexer_atn = match lexer_atn with
+      None -> failwith "simulate: must provide lexer-atn"
+    | Some x -> x in
+  let atns = Atns.load ~lexer_atn ~parser_atn in
   simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file
 
 let cmd =
