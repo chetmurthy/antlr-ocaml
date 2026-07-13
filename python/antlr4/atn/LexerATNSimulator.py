@@ -120,10 +120,12 @@ class LexerATNSimulator(ATNSimulator):
 
     def match(self, input:InputStream , mode:int):
         Trace.writej([ 'ENTER LexerATNSimulator.match',
-                                 self.asdict(), mode ])
+                       self.asdict(),
+                       input.asdict(),
+                       mode ])
         rv = self._match(input, mode)
         Trace.writej([ 'EXIT LexerATNSimulator.match',
-                                 self.asdict(), rv ])
+                       self.asdict(), rv ])
         return rv
 
     def _match(self, input:InputStream , mode:int):
@@ -511,8 +513,7 @@ class LexerATNSimulator(ATNSimulator):
         settings.column = self.column
         settings.dfaState = dfaState
 
-    def addDFAEdge(self, from_:DFAState, tk:int, to:DFAState=None, cfgs:ATNConfigSet=None) -> DFAState:
-
+    def _addDFAEdge(self, from_:DFAState, tk:int, to:DFAState=None, cfgs:ATNConfigSet=None) -> DFAState:
         if to is None and cfgs is not None:
             # leading to this call, ATNConfigSet.hasSemanticContext is used as a
             # marker indicating dynamic predicate evaluation makes this edge
@@ -546,12 +547,21 @@ class LexerATNSimulator(ATNSimulator):
             from_.makeEdges([ None ] * (self.MAX_DFA_EDGE - self.MIN_DFA_EDGE + 1))
 
         from_.setEdge(tk - self.MIN_DFA_EDGE, to) # connect
-        Trace.writej([ 'END LexerATNSimulator.addDFAEdge',
-                                 from_.stateNumber,
-                                 tk,
-                                 (None if to is None else -1 if to == self.ERROR else to.stateNumber) ])
-
         return to
+
+
+    def addDFAEdge(self, from_:DFAState, tk:int, to:DFAState=None, cfgs:ATNConfigSet=None) -> DFAState:
+        Trace.writej([ 'ENTER LexerATNSimulator.addDFAEdge',
+                       self.asdict(),
+                       from_.stateNumber,
+                       tk,
+                       (None if to is None else -1 if to == self.ERROR else to.stateNumber),
+                       (None if cfgs is None else cfgs.asdict()),
+                      ])
+        to = self._addDFAEdge(from_, tk, to, cfgs)
+        Trace.writej([ 'EXIT LexerATNSimulator.addDFAEdge', self.asdict(), to.asdict()])
+        return to
+
 
 
     # Add a new DFA state if there isn't one with this set of

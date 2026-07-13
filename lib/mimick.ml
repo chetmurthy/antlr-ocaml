@@ -204,6 +204,16 @@ and merge_cache_entry_t = {
 and merge_cache_t =
   MergeCache of (string * merge_cache_entry_t) list
 
+and input_stream_t =
+  InputStream of {
+      id : int
+    ; name : string
+    ; strdata : string
+    ; _index : int
+    ; data : int array
+    ; _size : int
+  }
+
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
@@ -375,16 +385,21 @@ type json_log_t =
 | LexerATNSimulator_add_state of int * dfa_state_t
                       [@yojson.name "LexerATNSimulator.__add_state__"]
                       [@located_yojson.name "LexerATNSimulator.__add_state__"]
-| LexerATNSimulator_addDFAEdge of int * int * int option
-                      [@yojson.name "END LexerATNSimulator.addDFAEdge"]
-                      [@located_yojson.name "END LexerATNSimulator.addDFAEdge"]
+
+| LexerATNSimulator_ENTER_addDFAEdge of lexer_atn_simulator_t * int * int * int option * config_set_t option
+                      [@yojson.name "ENTER LexerATNSimulator.addDFAEdge"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.addDFAEdge"]
+| LexerATNSimulator_EXIT_addDFAEdge of lexer_atn_simulator_t * dfa_state_t
+                      [@yojson.name "EXIT LexerATNSimulator.addDFAEdge"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.addDFAEdge"]
+
 | LexerATNSimulator_ENTER_init of Atn.t * dfa_t array * prediction_context_cache_t
                       [@yojson.name "ENTER LexerATNSimulator.__init__"]
                       [@located_yojson.name "ENTER LexerATNSimulator.__init__"]
 | LexerATNSimulator_EXIT_init of lexer_atn_simulator_t
                       [@yojson.name "EXIT LexerATNSimulator.__init__"]
                       [@located_yojson.name "EXIT LexerATNSimulator.__init__"]
-| LexerATNSimulator_ENTER_match of lexer_atn_simulator_t * int
+| LexerATNSimulator_ENTER_match of lexer_atn_simulator_t * input_stream_t * int
                       [@yojson.name "ENTER LexerATNSimulator.match"]
                       [@located_yojson.name "ENTER LexerATNSimulator.match"]
 | LexerATNSimulator_EXIT_match of lexer_atn_simulator_t * int
@@ -530,5 +545,48 @@ type json_log_t =
 | ATNConfigSet_EXIT_set_CA of config_set_t
                                     [@yojson.name "EXIT ATNConfigSet.set_CA"]
                                     [@located_yojson.name "EXIT ATNConfigSet.set_CA"]
+
+| InputStream_ENTER_init of int * string
+                                    [@yojson.name "ENTER InputStream.__init__"]
+                                    [@located_yojson.name "ENTER InputStream.__init__"]
+| InputStream_EXIT_init of input_stream_t
+                                    [@yojson.name "EXIT InputStream.__init__"]
+                                    [@located_yojson.name "EXIT InputStream.__init__"]
+
+| InputStream_ENTER_reset of input_stream_t
+                                    [@yojson.name "ENTER InputStream.reset"]
+                                    [@located_yojson.name "ENTER InputStream.reset"]
+| InputStream_EXIT_reset of input_stream_t
+                                    [@yojson.name "EXIT InputStream.reset"]
+                                    [@located_yojson.name "EXIT InputStream.reset"]
+
+| InputStream_ENTER_consume of input_stream_t
+                                    [@yojson.name "ENTER InputStream.consume"]
+                                    [@located_yojson.name "ENTER InputStream.consume"]
+| InputStream_EXIT_consume of input_stream_t
+                                    [@yojson.name "EXIT InputStream.consume"]
+                                    [@located_yojson.name "EXIT InputStream.consume"]
+
+| InputStream_ENTER_LA of input_stream_t * int
+                                    [@yojson.name "ENTER InputStream.LA"]
+                                    [@located_yojson.name "ENTER InputStream.LA"]
+| InputStream_EXIT_LA of input_stream_t * int
+                                    [@yojson.name "EXIT InputStream.LA"]
+                                    [@located_yojson.name "EXIT InputStream.LA"]
+
+| InputStream_ENTER_seek of input_stream_t * int
+                                    [@yojson.name "ENTER InputStream.seek"]
+                                    [@located_yojson.name "ENTER InputStream.seek"]
+| InputStream_EXIT_seek of input_stream_t
+                                    [@yojson.name "EXIT InputStream.seek"]
+                                    [@located_yojson.name "EXIT InputStream.seek"]
+
+
+| InputStream_ENTER_getText of input_stream_t * int * int
+                                    [@yojson.name "ENTER InputStream.getText"]
+                                    [@located_yojson.name "ENTER InputStream.getText"]
+| InputStream_EXIT_getText of input_stream_t * string
+                                    [@yojson.name "EXIT InputStream.getText"]
+                                    [@located_yojson.name "EXIT InputStream.getText"]
 
 [@@deriving yojson,located_yojson, show]
