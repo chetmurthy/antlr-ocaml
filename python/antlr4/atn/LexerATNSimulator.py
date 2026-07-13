@@ -239,7 +239,7 @@ class LexerATNSimulator(ATNSimulator):
     # {@code t}, or {@code null} if the target state for this edge is not
     # already cached
     def getExistingTargetState(self, s:DFAState, t:int):
-        if s.edges is None or t < self.MIN_DFA_EDGE or t > self.MAX_DFA_EDGE:
+        if len(s.edges) == 0 or t < self.MIN_DFA_EDGE or t > self.MAX_DFA_EDGE:
             return None
 
         target = s.edges[t - self.MIN_DFA_EDGE]
@@ -541,7 +541,7 @@ class LexerATNSimulator(ATNSimulator):
         if LexerATNSimulator.debug:
             print("EDGE " + str(from_) + " -> " + str(to) + " upon "+ chr(tk))
 
-        if from_.edges is None:
+        if len(from_.edges) == 0:
             #  make room for tokens 1..n and -1 masquerading as index 0
             from_.makeEdges([ None ] * (self.MAX_DFA_EDGE - self.MIN_DFA_EDGE + 1))
 

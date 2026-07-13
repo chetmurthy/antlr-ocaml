@@ -1593,7 +1593,7 @@ class ParserATNSimulator(ATNSimulator):
         if from_ is None or t < -1 or t > self.atn.maxTokenType:
             return to
 
-        if from_.edges is None:
+        if len(from_.edges) == 0:
             from_.makeEdges([None] * (self.atn.maxTokenType + 2))
         from_.setEdge(t+1, to) # connect
 

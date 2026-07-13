@@ -1057,7 +1057,7 @@ type dfa_state_t = {
     id : int
   ; mutable stateNumber : int
   ; mutable configset : ACS.t
-  ; mutable edges : int option array option
+  ; mutable edges : int array
   ; mutable isAcceptState : bool
   ; mutable prediction : int
   ; mutable lexerActionExecutor : LAE.t option
@@ -1082,7 +1082,7 @@ let to_mimick t =
       M.id = t.id
     ; stateNumber = t.stateNumber
     ; configset = ACS.to_mimick t.configset
-    ; edges = t.edges
+    ; edges = Array.map (fun n -> if n = Int.min_int then None else Some n) t.edges
     ; isAcceptState = t.isAcceptState
     ; prediction = t.prediction
     ; lexerActionExecutor = t.lexerActionExecutor
@@ -1096,7 +1096,7 @@ let _of_mimick ~acs_cache ~ac_cache atns t =
   ; stateNumber =
       t.M.stateNumber
   ; configset = ACS.of_mimick ~acs_cache ~ac_cache atns t.M.configset
-  ; edges = t.M.edges
+  ; edges = Array.map (function None -> Int.min_int | Some n -> n) t.M.edges
   ; isAcceptState = t.M.isAcceptState
   ; prediction = t.prediction
   ; lexerActionExecutor = t.lexerActionExecutor
@@ -1119,7 +1119,7 @@ let _init ?predicted_id stateNumber configs =
     id
   ; stateNumber
   ; configset = configs
-  ; edges = None
+  ; edges = [||]
   ; isAcceptState = false
   ; prediction = 0
   ; lexerActionExecutor = None
@@ -1192,18 +1192,16 @@ let set_lexerActionExecutor st n =
   Tracelog.write(DFAState_EXIT_set_lexerActionExecutor (to_mimick st))
 
 let _makeEdges st n =
-  st.edges <- Some n
+  st.edges <- n
 
 let makeEdges st n =
   Tracelog.write(DFAState_ENTER_makeEdges (to_mimick st, n)) ;
+  let n = Array.map (function None -> Int.min_int | Some n -> n) n in
   _makeEdges st n ;
   Tracelog.write(DFAState_EXIT_makeEdges (to_mimick st))
 
 let _setEdge st n v =
-  match st.edges with
-    None -> failwith "DFAState.setEdge: edges array is not initialized"
-  | Some edges -> 
-     edges.(n) <- Some v.stateNumber
+  st.edges.(n) <- v.stateNumber
 
 let setEdge st n v =
   Tracelog.write(DFAState_ENTER_setEdge (to_mimick st, n, to_mimick v)) ;
@@ -1348,7 +1346,7 @@ let _init ?predicted_id atn grammarType atnStartState decision =
         Node.StarLoopEntryState {isPrecedenceDecision=Some true} ->
         rv.precedenceDfa <- true ;
         let precedenceState = DFASt.init ~configs:(ACS.init()) () in
-        precedenceState.edges <- Some [||] ;
+        precedenceState.edges <- [||] ;
         precedenceState.isAcceptState <- false ;
         precedenceState.requiresFullContext <- false ;
         rv.s0 <- Some precedenceState
@@ -1408,16 +1406,16 @@ let _setPrecedenceStartState dfa precedence st =
   if precedence < 0 then ()
   else begin
       match dfa.s0 with
-        Some ({DFASt.edges=Some edges} as s0) ->
+        Some s0 ->
          let edges =
-           if precedence >= Array.length edges then begin
-               let ext = Array.make (precedence + 1 - (Array.length edges)) None in
-               let edges = Array.append edges ext in 
-               s0.DFASt.edges <- Some edges ;
+           if precedence >= Array.length s0.edges then begin
+               let ext = Array.make (precedence + 1 - (Array.length s0.edges)) Int.min_int in
+               let edges = Array.append s0.edges ext in 
+               s0.DFASt.edges <- edges ;
                edges
              end
-           else edges in
-         edges.(precedence) <- Some st.DFASt.stateNumber
+           else s0.edges in
+         edges.(precedence) <- st.DFASt.stateNumber
 
       | None -> assert false
     end

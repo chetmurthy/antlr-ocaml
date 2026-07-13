@@ -76,7 +76,7 @@ class DFAState(object):
         self.configs = configs
         # {@code edges[symbol]} points to target of symbol. Shift up by 1 so (-1)
         #  {@link Token#EOF} maps to {@code edges[0]}.
-        self.edges = None
+        self.edges = []
         self.isAcceptState = False
         # if accept state, what ttype do we match or alt do we predict?
         #  This is set to {@link ATN#INVALID_ALT_NUMBER} when {@link #predicates}{@code !=null} or

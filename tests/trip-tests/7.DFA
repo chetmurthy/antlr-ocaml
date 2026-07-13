@@ -1,6 +1,6 @@
 #!/bin/bash
 
-F=_generated/ParserErrors/LL2/json.log
+F=_generated/LeftRecursion/AmbigLR_1/json.log
 
 echo $F
 

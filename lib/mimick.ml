@@ -98,7 +98,7 @@ and dfa_state_t = {
     id : int
   ; stateNumber : int
   ; configset : config_set_t
-  ; edges: int option array option
+  ; edges : int option array
   ; isAcceptState : bool
   ; prediction : int
   ; lexerActionExecutor : lexer_action_executor_t option

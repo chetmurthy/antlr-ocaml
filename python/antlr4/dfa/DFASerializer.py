@@ -25,7 +25,7 @@ class DFASerializer(object):
         with StringIO() as buf:
             for s in self.dfa.sortedStates():
                 n = 0
-                if s.edges is not None:
+                if len(s.edges) != 0:
                     n = len(s.edges)
                 for i in range(0, n):
                     t = s.edges[i]
