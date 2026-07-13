@@ -93,9 +93,8 @@ class Lexer(Recognizer, TokenSource):
         #  the input char buffer.  Use setText() or can set self instance var.
         #/
         self._text = None
-        Trace.write(json.dumps([ 'Lexer.__init__',
-                                 self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.__init__',
+                                 self.asdict() ])
 
     def asdict(self):
         d = {
@@ -131,18 +130,15 @@ class Lexer(Recognizer, TokenSource):
         self._modeStack = []
 
         self._interp.reset()
-        Trace.write(json.dumps([ 'Lexer.reset',
-                                 self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.reset',
+                                 self.asdict() ])
 
     def nextToken(self):
-        Trace.write(json.dumps([ 'ENTER Lexer.nextToken',
-                                 self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER Lexer.nextToken',
+                                 self.asdict() ])
         rv = self._nextToken()
-        Trace.write(json.dumps([ 'EXIT Lexer.nextToken',
-                                 self.asdict(), rv.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT Lexer.nextToken',
+                                 self.asdict(), rv.asdict() ])
         return rv
 
     # Return a token from self source; i.e., match a token on the char
@@ -201,31 +197,27 @@ class Lexer(Recognizer, TokenSource):
     #/
     def skip(self):
         self._type = self.SKIP
-        Trace.write(json.dumps([ 'Lexer.skip',
-                                 self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.skip',
+                                 self.asdict() ])
 
 
     def more(self):
         self._type = self.MORE
-        Trace.write(json.dumps([ 'Lexer.more',
-                                 self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.more',
+                                 self.asdict() ])
 
     def mode(self, m:int):
         self._mode = m
-        Trace.write(json.dumps([ 'Lexer.mode',
-                                 self.asdict(), m ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.mode',
+                                 self.asdict(), m ])
 
     def pushMode(self, m:int):
         if self._interp.debug:
             print("pushMode " + str(m), file=self._output)
         self._modeStack.append(self._mode)
         self.mode(m)
-        Trace.write(json.dumps([ 'Lexer.pushMode',
-                                 self.asdict(), m ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.pushMode',
+                                 self.asdict(), m ])
 
     def popMode(self):
         if len(self._modeStack)==0:
@@ -233,9 +225,8 @@ class Lexer(Recognizer, TokenSource):
         if self._interp.debug:
             print("popMode back to "+ self._modeStack[:-1], file=self._output)
         self.mode( self._modeStack.pop() )
-        Trace.write(json.dumps([ 'Lexer.popMode',
-                                 self.asdict(), self._mode ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.popMode',
+                                 self.asdict(), self._mode ])
         return self._mode
 
     # Set the char stream and reset the lexer#/
@@ -263,9 +254,8 @@ class Lexer(Recognizer, TokenSource):
     def emitToken(self, token:Token):
         self._token = token
         return
-        Trace.write(json.dumps([ 'Lexer.emitToken',
-                                 self.asdict(), token.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.emitToken',
+                                 self.asdict(), token.asdict() ])
 
     # The standard method called to automatically emit a token at the
     #  outermost lexical rule.  The token object should point into the
@@ -277,11 +267,10 @@ class Lexer(Recognizer, TokenSource):
         t = self._factory.create(self._tokenFactorySourcePair, self._type, self._text, self._channel, self._tokenStartCharIndex,
                                  self.getCharIndex()-1, self._tokenStartLine, self._tokenStartColumn)
         self.emitToken(t)
-        Trace.write(json.dumps([ 'Lexer.emit',
+        Trace.writej([ 'Lexer.emit',
                                  self.asdict(),
                                  t.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         return t
 
     def emitEOF(self):
@@ -290,9 +279,8 @@ class Lexer(Recognizer, TokenSource):
         eof = self._factory.create(self._tokenFactorySourcePair, Token.EOF, None, Token.DEFAULT_CHANNEL, self._input.index,
                                    self._input.index-1, lpos, cpos)
         self.emitToken(eof)
-        Trace.write(json.dumps([ 'Lexer.emitEOF',
-                                 self.asdict(), eof.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'Lexer.emitEOF',
+                                 self.asdict(), eof.asdict() ])
         return eof
 
     @property

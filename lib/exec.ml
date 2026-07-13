@@ -34,34 +34,42 @@ module type CACHEABLE = sig
 end
 module type CACHE = sig
   module C : CACHEABLE
-  type t = (int, C.t) MHM.t
-  val mk : unit -> t
+  type t
+  val mk : ?do_recache:bool -> unit -> t
   val recache : t -> C.t -> C.t
   val remap : t -> C.t -> unit
   val add : t -> C.t -> unit
+  val upsert : t -> C.t -> C.t
   val get : t -> int -> C.t
 end
 module Cacher(C : CACHEABLE): (CACHE with module C = C) = struct
 module C = C
-type t = (int, C.t) MHM.t
-let mk () = MHM.mk 23
+type t = {
+    do_recache : bool
+  ; cache : (int, C.t) MHM.t
+  }
+let mk ?(do_recache = true) () =
+  {
+    do_recache
+  ; cache = MHM.mk 23
+  }
 
 let add cache t =
   let tid = C.id t in
-  if MHM.in_dom cache tid then
+  if MHM.in_dom cache.cache tid then
     Fmt.(failwithf "%s: value already exists for id=%d" C.name tid) ;
-  MHM.add cache (tid, t)
+  MHM.add cache.cache (tid, t)
 
 let remap cache t =
   let id = C.id t in
-  MHM.remap cache id t
+  MHM.remap cache.cache id t
 
-let get cache id = MHM.map cache id
+let get cache id = MHM.map cache.cache id
 
 let recache cache t =
   let tid = C.id t in
-  if MHM.in_dom cache tid then
-    let t' = MHM.map cache tid in
+  if MHM.in_dom cache.cache tid then
+    let t' = MHM.map cache.cache tid in
     if not (C.equal t t') then begin
       Fmt.(pf stderr "%s: id=%d: cached value was different from demarshalled one.@.cached:@.%a@.demarshalled:@.%a@."
            C.name
@@ -71,11 +79,21 @@ let recache cache t =
       Fmt.(failwithf "%s: cached value was different from demarshalled one" C.name)
       end ;
     t'
-  else begin
+    else if cache.do_recache then
+      begin
         Fmt.(pf stderr "%s: no cached value for id=%d; demarshalled value was@.%a@."
                C.name tid C.pp t) ;
         Fmt.(failwithf "%s: no cached value for demarshalled value with id=%d" C.name tid)
-    end
+      end
+    else t
+
+let upsert cache t =
+  let tid = C.id t in
+  if MHM.in_dom cache.cache tid then
+    recache cache t
+  else
+    (MHM.add cache.cache (tid, t) ; t)
+
 end
 
 module M = Mimick
@@ -808,6 +826,9 @@ let init_LexerATNConfig atn state_opt alt_opt context_opt semantic_opt config_op
   Tracelog.write (LexerATNConfig_EXIT_init (to_mimick rv)) ;
   rv
 
+let recache ~ac_cache c =
+  Cache.upsert ac_cache c
+
 end
 module ATNConfig = AC
 
@@ -976,8 +997,6 @@ let _add ?mergeCache t c =
   let existing = get_or_add t c in
   if existing == c then begin
       t.configs := !(t.configs) @ [c] ;
-      Tracelog.write
-        (ATNConfigSet_AFTER_append_configs(to_mimick t, AC.to_mimick c)) ;
       true
     end
   else begin
@@ -986,14 +1005,10 @@ let _add ?mergeCache t c =
       assert (existing.context <> None) ;
       assert (c.context <> None) ;
       let merged = PC.merge (Std.outSome existing.context) (Std.outSome c.context) rootIsWildcard mergeCache in
-      Tracelog.write
-        (ATNConfigSet_BEFORE_update_existing(to_mimick t, AC.to_mimick c, AC.to_mimick existing)) ;
       existing.reachesIntoOuterContext <- max existing.reachesIntoOuterContext c.reachesIntoOuterContext ;
       if c.precedenceFilterSuppressed then
         existing.precedenceFilterSuppressed <- true ;
       existing.context <- Some merged ;
-      Tracelog.write
-        (ATNConfigSet_AFTER_update_existing(to_mimick t, AC.to_mimick c, AC.to_mimick existing)) ;
       true
     end
 
@@ -1004,6 +1019,10 @@ let add ?mergeCache t c =
   Tracelog.write
     (ATNConfigSet_EXIT_add (to_mimick t, rv)) ;
   rv
+
+let recache ~acs_cache ~ac_cache cs =
+  Cache.upsert acs_cache cs ;
+  !(cs.configs) |> List.iter (fun c -> AC.recache ~ac_cache c ; ())
 
 end
 module ATNConfigSet = ACS
@@ -1018,21 +1037,32 @@ module ACSMap =
     )
 
 
-module DFASt = struct
 
-type pred_prediction_t = (int * SC.t)
+module PP = struct
+type t = (int * SC.t)
 [@@deriving show, eq]
+
+let to_mimick (alt, sc) =
+  M.PredPrediction {alt;pred=SC.to_mimick sc}
+
+let of_mimick = function
+    M.PredPrediction{alt;pred} -> (alt, SC.of_mimick pred)
+
+end
+module PredPrediction = PP
+
+module DFASt = struct
 
 type dfa_state_t = {
     id : int
   ; mutable stateNumber : int
-  ; configset : ACS.t
+  ; mutable configset : ACS.t
   ; mutable edges : int option array option
   ; mutable isAcceptState : bool
   ; mutable prediction : int
   ; mutable lexerActionExecutor : LAE.t option
   ; mutable requiresFullContext : bool
-  ; predicates : pred_prediction_t list option
+  ; mutable predicates : PP.t list option
   }
 [@@deriving show, eq]
 type t = dfa_state_t
@@ -1057,27 +1087,21 @@ let to_mimick t =
     ; prediction = t.prediction
     ; lexerActionExecutor = t.lexerActionExecutor
     ; requiresFullContext = t.requiresFullContext
-    ; predicates =
-        Option.map
-          (List.map (fun (alt,sc) -> M.PredPrediction {alt;pred=SC.to_mimick sc}))
-          t.predicates
+    ; predicates = Option.map (List.map PP.to_mimick) t.predicates
   }
 
 let _of_mimick ~acs_cache ~ac_cache atns t =
   {
     id = t.M.id
-  ; stateNumber = t.M.stateNumber
+  ; stateNumber =
+      t.M.stateNumber
   ; configset = ACS.of_mimick ~acs_cache ~ac_cache atns t.M.configset
   ; edges = t.M.edges
   ; isAcceptState = t.M.isAcceptState
   ; prediction = t.prediction
   ; lexerActionExecutor = t.lexerActionExecutor
   ; requiresFullContext = t.requiresFullContext
-  ; predicates =
-      t.predicates
-      |> Option.map
-           (List.map (function
-                  M.PredPrediction{alt;pred} -> (alt, SC.of_mimick pred)))
+  ; predicates = t.predicates |> Option.map (List.map PP.of_mimick)
   }
 
 let of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t =
@@ -1119,6 +1143,14 @@ let set_stateNumber st n =
   _set_stateNumber st n ;
   Tracelog.write(DFAState_EXIT_set_stateNumber (to_mimick st))
 
+let _set_configs st n =
+  st.configset <- n
+
+let set_configs st n =
+  Tracelog.write(DFAState_ENTER_set_configs (to_mimick st, ACS.to_mimick n)) ;
+  _set_configs st n ;
+  Tracelog.write(DFAState_EXIT_set_configs (to_mimick st))
+
 let _set_isAcceptState st n =
   st.isAcceptState <- n
 
@@ -1127,6 +1159,14 @@ let set_isAcceptState st n =
   _set_isAcceptState st n ;
   Tracelog.write(DFAState_EXIT_set_isAcceptState (to_mimick st))
 
+let _set_requiresFullContext st n =
+  st.requiresFullContext <- n
+
+let set_requiresFullContext st n =
+  Tracelog.write(DFAState_ENTER_set_requiresFullContext (to_mimick st, n)) ;
+  _set_requiresFullContext st n ;
+  Tracelog.write(DFAState_EXIT_set_requiresFullContext (to_mimick st))
+
 let _set_prediction st n =
   st.prediction <- n
 
@@ -1134,6 +1174,14 @@ let set_prediction st n =
   Tracelog.write(DFAState_ENTER_set_prediction (to_mimick st, n)) ;
   _set_prediction st n ;
   Tracelog.write(DFAState_EXIT_set_prediction (to_mimick st))
+
+let _set_predicates st n =
+  st.predicates <- n
+
+let set_predicates st n =
+  Tracelog.write(DFAState_ENTER_set_predicates (to_mimick st, Option.map (List.map PP.to_mimick) n)) ;
+  _set_predicates st n ;
+  Tracelog.write(DFAState_EXIT_set_predicates (to_mimick st))
 
 let _set_lexerActionExecutor st n =
   st.lexerActionExecutor <- n
@@ -1161,6 +1209,10 @@ let setEdge st n v =
   Tracelog.write(DFAState_ENTER_setEdge (to_mimick st, n, to_mimick v)) ;
   _setEdge st n v ;
   Tracelog.write(DFAState_EXIT_setEdge (to_mimick st))
+
+let recache ~dfast_cache ~acs_cache ~ac_cache st =
+  Cache.upsert dfast_cache st ;
+  ACS.recache ~acs_cache ~ac_cache st.configset
 
 end
 
@@ -1314,7 +1366,8 @@ let init ?predicted_id atn grammarType atnStartState decision =
   rv
 
 let _states_get dfa st =
-  ACSMap.find_opt dfa._states st.DFASt.configset
+Tracelog.with_disabled
+  (fun () -> ACSMap.find_opt dfa._states st.DFASt.configset) ()
 
 let states_get dfa st =
   Tracelog.write(DFA_ENTER_states_get(to_mimick dfa, DFASt.to_mimick st)) ;
@@ -1348,5 +1401,39 @@ let set_s0 dfa st =
   _set_s0 dfa st ;
   Tracelog.write(DFA_EXIT_set_s0(dfa.id, to_mimick dfa)) ;
   ()
+
+let _setPrecedenceStartState dfa precedence st =
+  if not dfa.precedenceDfa then
+    failwith "Only precedence DFAs may contain a precedence start state." ;
+  if precedence < 0 then ()
+  else begin
+      match dfa.s0 with
+        Some ({DFASt.edges=Some edges} as s0) ->
+         let edges =
+           if precedence >= Array.length edges then begin
+               let ext = Array.make (precedence + 1 - (Array.length edges)) None in
+               let edges = Array.append edges ext in 
+               s0.DFASt.edges <- Some edges ;
+               edges
+             end
+           else edges in
+         edges.(precedence) <- Some st.DFASt.stateNumber
+
+      | None -> assert false
+    end
+
+
+let setPrecedenceStartState dfa precedence st =
+  Tracelog.write(DFA_ENTER_setPrecedenceStartState(to_mimick dfa, precedence, DFASt.to_mimick st)) ;
+  _setPrecedenceStartState dfa precedence st ;
+  Tracelog.write(DFA_EXIT_setPrecedenceStartState(to_mimick dfa)) ;
+  ()
+
+let recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa =
+  Cache.upsert dfa_cache dfa
+  ; ACSMap.iter (fun k v ->
+        ACS.recache ~acs_cache ~ac_cache k ;
+        DFASt.recache ~dfast_cache ~acs_cache ~ac_cache v) dfa._states
+  ; Option.iter (DFASt.recache ~dfast_cache ~acs_cache ~ac_cache) dfa.s0
 
 end

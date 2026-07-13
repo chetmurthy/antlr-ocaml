@@ -298,32 +298,28 @@ def mergeCache_asdict(mergeCache):
     return ["MergeCache", l]
 
 def mergeCache_add(mergeCache, a,b,merged):
-    Trace.write(json.dumps([ 'ENTER mergeCache_add',
+    Trace.writej([ 'ENTER mergeCache_add',
                              mergeCache_asdict(mergeCache),
                              a.asdict(),
                              b.asdict(),
                              merged.asdict(),
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     mergeCache[(a,b)] = merged
-    Trace.write(json.dumps([ 'EXIT mergeCache_add',
+    Trace.writej([ 'EXIT mergeCache_add',
                              mergeCache_asdict(mergeCache),
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
 
 def merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCache:dict):
-    Trace.write(json.dumps([ 'ENTER PredictionContext.merge',
+    Trace.writej([ 'ENTER PredictionContext.merge',
                              a.asdict(),
                              b.asdict(),
                              rootIsWildcard,
                              (None if mergeCache is None else mergeCache_asdict(mergeCache))
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     rv = _merge(a, b, rootIsWildcard, mergeCache)
-    Trace.write(json.dumps([ 'EXIT PredictionContext.merge',
+    Trace.writej([ 'EXIT PredictionContext.merge',
                              rv.asdict()
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     return rv
 
 def _merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCache:dict):
@@ -444,19 +440,17 @@ def _mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext,
         return merged
 
 def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool, mergeCache:dict):
-    Trace.write(json.dumps([ 'ENTER PredictionContext.mergeSingletons',
+    Trace.writej([ 'ENTER PredictionContext.mergeSingletons',
                              a.asdict(),
                              b.asdict(),
                              rootIsWildcard,
                              (None if mergeCache is None else mergeCache_asdict(mergeCache))
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     rv = _mergeSingletons(a, b, rootIsWildcard, mergeCache)
-    Trace.write(json.dumps([ 'EXIT PredictionContext.mergeSingletons',
+    Trace.writej([ 'EXIT PredictionContext.mergeSingletons',
                              rv.asdict(),
                              (None if mergeCache is None else mergeCache_asdict(mergeCache))
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     return rv
 
 #
@@ -518,17 +512,15 @@ def _mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootI
 
 
 def mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool):
-    Trace.write(json.dumps([ 'ENTER PredictionContext.mergeRoot',
+    Trace.writej([ 'ENTER PredictionContext.mergeRoot',
                              a.asdict(),
                              b.asdict(),
                              rootIsWildcard
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     rv = _mergeRoot(a, b, rootIsWildcard)
-    Trace.write(json.dumps([ 'EXIT PredictionContext.mergeRoot',
+    Trace.writej([ 'EXIT PredictionContext.mergeRoot',
                              (None if rv is None else rv.asdict())
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     return rv
 
 #
@@ -648,18 +640,16 @@ def _mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildc
     return merged
 
 def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildcard:bool, mergeCache:dict):
-    Trace.write(json.dumps([ 'ENTER PredictionContext.mergeArrays',
+    Trace.writej([ 'ENTER PredictionContext.mergeArrays',
                              a.asdict(),
                              b.asdict(),
                              rootIsWildcard,
                              (None if mergeCache is None else mergeCache_asdict(mergeCache))
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     rv = _mergeArrays(a, b, rootIsWildcard, mergeCache)
-    Trace.write(json.dumps([ 'EXIT PredictionContext.mergeArrays',
+    Trace.writej([ 'EXIT PredictionContext.mergeArrays',
                              rv.asdict()
-                            ],
-                           sort_keys=True, indent=4))
+                            ])
     return rv
 
 #

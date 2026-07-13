@@ -41,8 +41,7 @@ class ATNConfigSet(object):
     def __init__(self, fullCtx:bool=True):
         global configSetCounter
         self.id = configSetCounter
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.__init__', self.id, fullCtx ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER ATNConfigSet.__init__', self.id, fullCtx ])
         configSetCounter += 1
         # All configs but hashed by (s, i, _, pi) not including context. Wiped out
         # when we go readonly as this set becomes a DFA state.
@@ -71,8 +70,7 @@ class ATNConfigSet(object):
         self.dipsIntoOuterContext = False
 
         self.cachedHashCode = -1
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.__init__', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT ATNConfigSet.__init__', self.asdict() ])
 
     def asdict(self):
         configs = []
@@ -98,27 +96,23 @@ class ATNConfigSet(object):
         return self.configs.__iter__()
 
     def set_DIOC(self):
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.set_DIOC',
+        Trace.writej([ 'ENTER ATNConfigSet.set_DIOC',
                                  self.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         self.dipsIntoOuterContext = True
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.set_DIOC',
+        Trace.writej([ 'EXIT ATNConfigSet.set_DIOC',
                                  self.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
     def update_HSC(self, v):
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.update_HSC',
+        Trace.writej([ 'ENTER ATNConfigSet.update_HSC',
                                  self.asdict(),
                                  v
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         self.hasSemanticContext = v
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.update_HSC',
+        Trace.writej([ 'EXIT ATNConfigSet.update_HSC',
                                  self.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
     def in_configs(self, config):
         for c in self.configs:
@@ -145,11 +139,7 @@ class ATNConfigSet(object):
         if existing is config:
             self.cachedHashCode = -1
             self.configs.append(config)  # track order here
-            Trace.write(json.dumps([ 'AFTER append configs',
-                                     self.asdict(),
-                                     config.asdict(),
-                                    ],
-                                   sort_keys=True, indent=4))
+
             return True
         # a previous (s,i,pi,_), merge with it and save result
         rootIsWildcard = not self.fullCtx
@@ -160,38 +150,24 @@ class ATNConfigSet(object):
         # no need to check for existing.context, config.context in cache
         # since only way to create new graphs is "call rule" and here.
         # We cache at both places.
-        Trace.write(json.dumps([ 'BEFORE update existing',
-                                 self.asdict(),
-                                 config.asdict(),
-                                 existing.asdict()
-                                ],
-                               sort_keys=True, indent=4))
         existing.reachesIntoOuterContext = max(existing.reachesIntoOuterContext, config.reachesIntoOuterContext)
         # make sure to preserve the precedence filter suppression during the merge
         if config.precedenceFilterSuppressed:
             existing.precedenceFilterSuppressed = True
         existing.context = merged # replace context; no need to alt mapping
-        Trace.write(json.dumps([ 'AFTER update existing',
-                                 self.asdict(),
-                                 config.asdict(),
-                                 existing.asdict()
-                                ],
-                               sort_keys=True, indent=4))
         return True
 
     def add(self, config:ATNConfig, mergeCache=None):
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.add',
+        Trace.writej([ 'ENTER ATNConfigSet.add',
                                  self.asdict(),
                                  config.asdict(),
                                  (None if mergeCache is None else mergeCache_asdict(mergeCache))
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         rv = self._add(config, mergeCache)
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.add',
+        Trace.writej([ 'EXIT ATNConfigSet.add',
                                  self.asdict(),
                                  rv
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
         return rv
 
@@ -211,11 +187,9 @@ class ATNConfigSet(object):
         return config
 
     def getOrAdd(self, config:ATNConfig):
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.getOrAdd', self.asdict(), config.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER ATNConfigSet.getOrAdd', self.asdict(), config.asdict() ])
         rv = self._getOrAdd(config)
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.getOrAdd', self.asdict(), rv.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT ATNConfigSet.getOrAdd', self.asdict(), rv.asdict() ])
         assert (rv is config or self.in_configs(rv))
         return rv
 
@@ -235,8 +209,7 @@ class ATNConfigSet(object):
             return
         for config in self.configs:
             config.context = interpreter.getCachedContext(config.context)
-        Trace.write(json.dumps([ 'ATNConfigSet.optimizeConfigs', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ATNConfigSet.optimizeConfigs', self.asdict() ])
 
     def addAll(self, coll:list):
         for c in coll:
@@ -260,11 +233,9 @@ class ATNConfigSet(object):
         return same
 
     def __eq__(self, other):
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.__eq__', self.asdict(), other.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER ATNConfigSet.__eq__', self.asdict(), other.asdict() ])
         rv = self.real__eq__(other)
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.__eq__', rv ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT ATNConfigSet.__eq__', rv ])
         return rv
 
     def __hash__(self):
@@ -303,41 +274,35 @@ class ATNConfigSet(object):
 
     def setReadonly(self, readonly:bool):
         assert (readonly)
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.setReadonly',
+        Trace.writej([ 'ENTER ATNConfigSet.setReadonly',
                                  self.asdict(),
                                  readonly
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         self.readonly = readonly
         self.configLookup = None # can't mod, no need for lookup cache
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.setReadonly',
+        Trace.writej([ 'EXIT ATNConfigSet.setReadonly',
                                  self.asdict(),
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
     def set_UA(self, v):
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.set_UA',
+        Trace.writej([ 'ENTER ATNConfigSet.set_UA',
                                  self.asdict(),
                                  v
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         self.uniqueAlt = v
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.set_UA',
+        Trace.writej([ 'EXIT ATNConfigSet.set_UA',
                                  self.asdict(),
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
     def set_CA(self, v):
-        Trace.write(json.dumps([ 'ENTER ATNConfigSet.set_CA',
+        Trace.writej([ 'ENTER ATNConfigSet.set_CA',
                                  self.asdict(),
                                  None if v is None else [c for c in v],
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         self.conflictingAlts = v
-        Trace.write(json.dumps([ 'EXIT ATNConfigSet.set_CA',
+        Trace.writej([ 'EXIT ATNConfigSet.set_CA',
                                  self.asdict(),
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
     def __str__(self):
         with StringIO() as buf:
@@ -359,8 +324,6 @@ class ATNConfigSet(object):
 class OrderedATNConfigSet(ATNConfigSet):
 
     def __init__(self):
-        Trace.write(json.dumps([ 'ENTER OrderedATNConfigSet.__init__' ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER OrderedATNConfigSet.__init__' ])
         super().__init__()
-        Trace.write(json.dumps([ 'EXIT OrderedATNConfigSet.__init__', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT OrderedATNConfigSet.__init__', self.asdict() ])

@@ -290,6 +290,13 @@ type json_log_t =
                       [@yojson.name "EXIT DFAState.set_stateNumber"]
                       [@located_yojson.name "EXIT DFAState.set_stateNumber"]
 
+| DFAState_ENTER_set_configs of dfa_state_t * config_set_t
+                      [@yojson.name "ENTER DFAState.set_configs"]
+                      [@located_yojson.name "ENTER DFAState.set_configs"]
+| DFAState_EXIT_set_configs of dfa_state_t
+                      [@yojson.name "EXIT DFAState.set_configs"]
+                      [@located_yojson.name "EXIT DFAState.set_configs"]
+
 | DFAState_ENTER_set_isAcceptState of dfa_state_t * bool
                       [@yojson.name "ENTER DFAState.set_isAcceptState"]
                       [@located_yojson.name "ENTER DFAState.set_isAcceptState"]
@@ -297,12 +304,27 @@ type json_log_t =
                       [@yojson.name "EXIT DFAState.set_isAcceptState"]
                       [@located_yojson.name "EXIT DFAState.set_isAcceptState"]
 
+| DFAState_ENTER_set_requiresFullContext of dfa_state_t * bool
+                      [@yojson.name "ENTER DFAState.set_requiresFullContext"]
+                      [@located_yojson.name "ENTER DFAState.set_requiresFullContext"]
+| DFAState_EXIT_set_requiresFullContext of dfa_state_t
+                      [@yojson.name "EXIT DFAState.set_requiresFullContext"]
+                      [@located_yojson.name "EXIT DFAState.set_requiresFullContext"]
+
 | DFAState_ENTER_set_prediction of dfa_state_t * int
                       [@yojson.name "ENTER DFAState.set_prediction"]
                       [@located_yojson.name "ENTER DFAState.set_prediction"]
 | DFAState_EXIT_set_prediction of dfa_state_t
                       [@yojson.name "EXIT DFAState.set_prediction"]
                       [@located_yojson.name "EXIT DFAState.set_prediction"]
+
+| DFAState_ENTER_set_predicates of dfa_state_t * pred_prediction_t list option
+                      [@yojson.name "ENTER DFAState.set_predicates"]
+                      [@located_yojson.name "ENTER DFAState.set_predicates"]
+| DFAState_EXIT_set_predicates of dfa_state_t
+                      [@yojson.name "EXIT DFAState.set_predicates"]
+                      [@located_yojson.name "EXIT DFAState.set_predicates"]
+
 | DFAState_ENTER_set_lexerActionExecutor of dfa_state_t * lexer_action_executor_t option
                       [@yojson.name "ENTER DFAState.set_lexerActionExecutor"]
                       [@located_yojson.name "ENTER DFAState.set_lexerActionExecutor"]
@@ -335,12 +357,20 @@ type json_log_t =
 | DFA_EXIT_states_add of int * dfa_t
                       [@yojson.name "EXIT DFA.states_add"]
                       [@located_yojson.name "EXIT DFA.states_add"]
+
 | DFA_ENTER_set_s0 of dfa_t * dfa_state_t
                       [@yojson.name "ENTER DFA.set_s0"]
                       [@located_yojson.name "ENTER DFA.set_s0"]
 | DFA_EXIT_set_s0 of int * dfa_t
                       [@yojson.name "EXIT DFA.set_s0"]
                       [@located_yojson.name "EXIT DFA.set_s0"]
+
+| DFA_ENTER_setPrecedenceStartState of dfa_t * int * dfa_state_t
+                      [@yojson.name "ENTER DFA.setPrecedenceStartState"]
+                      [@located_yojson.name "ENTER DFA.setPrecedenceStartState"]
+| DFA_EXIT_setPrecedenceStartState of dfa_t
+                      [@yojson.name "EXIT DFA.setPrecedenceStartState"]
+                      [@located_yojson.name "EXIT DFA.setPrecedenceStartState"]
 
 | LexerATNSimulator_add_state of int * dfa_state_t
                       [@yojson.name "LexerATNSimulator.__add_state__"]
@@ -468,14 +498,6 @@ type json_log_t =
 | ATNConfigSet_optimizeConfigs of config_set_t
                                     [@yojson.name "ATNConfigSet.optimizeConfigs"]
                                     [@located_yojson.name "ATNConfigSet.optimizeConfigs"]
-
-| ATNConfigSet_BEFORE_update_existing of config_set_t * config_t * config_t[@yojson.name "BEFORE update existing"]
-                                  [@located_yojson.name "BEFORE update existing"]
-| ATNConfigSet_AFTER_update_existing of config_set_t * config_t * config_t[@yojson.name "AFTER update existing"]
-                                  [@located_yojson.name "AFTER update existing"]
-
-| ATNConfigSet_AFTER_append_configs of config_set_t * config_t[@yojson.name "AFTER append configs"]
-                                  [@located_yojson.name "AFTER append configs"]
 
 | ATNConfigSet_ENTER_eq of config_set_t * config_set_t
                                     [@yojson.name "ENTER ATNConfigSet.__eq__"]

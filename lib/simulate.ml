@@ -99,9 +99,9 @@ module Caches = struct
     ; dfast : DFASt.Cache.t
     ; dfa : DFA.Cache.t
     }
-  let mk () = {
-      ac = AC.Cache.mk ()
-    ; acs = ACS.Cache.mk ()
+  let mk ~recache_ac ~recache_acs () = {
+      ac = AC.Cache.mk ~do_recache:recache_ac ()
+    ; acs = ACS.Cache.mk ~do_recache:recache_acs ()
     ; dfast = DFASt.Cache.mk ()
     ; dfa = DFA.Cache.mk ()
     }
@@ -119,7 +119,7 @@ let sim1 caches atns (i:int) (loc,j) =
          let semantic_opt = Option.map SC.of_mimick semantic_opt in
          let config_opt = Option.map (AC.of_mimick ~ac_cache:(Some caches.ac) atns) config_opt in
          let rv = AC.init_LexerATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt in
-         AC.Cache.add caches.ac rv ;
+         AC.recache ~ac_cache:caches.ac rv ;
          ()
 
       | ATNConfig_ENTER_init (id, state_opt, alt_opt, context_opt, semantic_opt, config_opt) ->
@@ -132,12 +132,12 @@ let sim1 caches atns (i:int) (loc,j) =
          let semantic_opt = Option.map SC.of_mimick semantic_opt in
          let config_opt = Option.map (AC.of_mimick ~ac_cache:(Some caches.ac) atns) config_opt in
          let rv = AC.init_ATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt in
-         AC.Cache.add caches.ac rv ;
+         AC.recache ~ac_cache:caches.ac rv ;
          ()
 
       | ATNConfigSet_ENTER_init (id, fullCtx) ->
          let rv = ACS.init ~id ~fullCtx () in
-         ACS.Cache.add caches.acs rv ;
+         ACS.recache ~acs_cache:caches.acs ~ac_cache:caches.ac rv ;
          ()
 
       | ATNConfigSet_ENTER_add (cs, c, mc_opt) ->
@@ -224,51 +224,51 @@ let sim1 caches atns (i:int) (loc,j) =
       | DFA_ENTER_init (predicted_id, grammarType, atnStartState, decision) ->
          let atn  = Atns.for_grammar atns grammarType in
          let rv = DFA.init ~predicted_id atn grammarType atnStartState decision in
-         DFA.Cache.add caches.dfa rv ;
+         let () = DFA.recache ~dfa_cache:caches.dfa ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv in
          ()
 
       | DFA_ENTER_states_get(dfa, st) ->
-(*
-         let dfa = DFA.Cache.get caches.dfa dfa_id in
- *)
-         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         let dfa = Tracelog.with_disabled (fun () -> DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa) () in
          let rv = DFA.states_get dfa (DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
          ()
 
       | DFA_ENTER_states_len(dfa) ->
-         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         let dfa = Tracelog.with_disabled (fun () -> DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa) () in
          let rv = DFA.states_len dfa in
          ()
 
       | DFA_ENTER_states_add(dfa, st) ->
-(*
-         let dfa = DFA.Cache.get caches.dfa dfa_id in
- *)
-         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
+         let dfa = Tracelog.with_disabled (fun () -> DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa) () in
          let rv = DFA.states_add dfa (DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) in
-         Tracelog.writemsg "after states_add\n" ;
          ()
 
       | DFA_ENTER_set_s0(dfa, st) ->
-         Tracelog.writemsg "START set_s0\n" ;
-         let dfa = DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa in
-         Tracelog.writemsg "[1] set_s0\n" ;
+         let dfa = Tracelog.with_disabled (fun () -> DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa) () in
          let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
-         Tracelog.writemsg "[2] set_s0\n" ;
          DFA.set_s0 dfa st ;
-         Tracelog.writemsg "[3] set_s0\n" ;
+         ()
+
+      | DFA_ENTER_setPrecedenceStartState(dfa, precedence, st) ->
+         let dfa = Tracelog.with_disabled (fun () -> DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns dfa) () in
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         DFA.setPrecedenceStartState dfa precedence st ;
          ()
 
       | DFAState_ENTER_init (predicted_id, stateNumber, configs) ->
          let configs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns configs in
          let rv = DFASt.init ~predicted_id ~stateNumber ~configs () in
-         let () = DFASt.Cache.add caches.dfast rv in
+         let () = DFASt.recache ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv  in
          ()
 
 
       | DFAState_ENTER_set_stateNumber(st, n) ->
-         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let st = Tracelog.with_disabled (fun () -> DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st) () in
          let () = DFASt.set_stateNumber st n in
+         ()
+
+      | DFAState_ENTER_set_configs(st, configs) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let configs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns configs in         let () = DFASt.set_configs st configs in
          ()
 
       | DFAState_ENTER_set_isAcceptState(st, n) ->
@@ -276,10 +276,20 @@ let sim1 caches atns (i:int) (loc,j) =
          let () = DFASt.set_isAcceptState st n in
          ()
 
+      | DFAState_ENTER_set_requiresFullContext(st, n) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let () = DFASt.set_requiresFullContext st n in
+         ()
+
 
       | DFAState_ENTER_set_prediction(st, n) ->
          let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
          let () = DFASt.set_prediction st n in
+         ()
+
+      | DFAState_ENTER_set_predicates(st, n) ->
+         let st = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns st in
+         let () = DFASt.set_predicates st (Option.map (List.map PP.of_mimick) n) in
          ()
 
 

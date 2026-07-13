@@ -290,10 +290,9 @@ class ParserATNSimulator(ATNSimulator):
         #  also be examined during cache lookup.
         #
         self.mergeCache = None
-        Trace.write(json.dumps([ 'EXIT ParserATNSimulator.__init__',
+        Trace.writej([ 'EXIT ParserATNSimulator.__init__',
                                  atn.asdict(),
-                                 self.asdict() ],
-                               sort_keys=True, indent=4))
+                                 self.asdict() ])
 
 
     def asdict(self):
@@ -353,7 +352,7 @@ class ParserATNSimulator(ATNSimulator):
                     # appropriate start state for the precedence level rather
                     # than simply setting DFA.s0.
                     #
-                    dfa.s0.configs = s0_closure # not used for prediction but useful to know start configs anyway
+                    dfa.s0.set_configs(s0_closure) # not used for prediction but useful to know start configs anyway
                     s0_closure = self.applyPrecedenceFilter(s0_closure)
                     s0 = self.addDFAState(dfa, DFAState(configs=s0_closure))
                     dfa.setPrecedenceStartState(self.parser.getPrecedence(), s0)
@@ -541,7 +540,7 @@ class ParserATNSimulator(ATNSimulator):
         elif PredictionMode.hasSLLConflictTerminatingPrediction(self.predictionMode, reach):
             # MORE THAN ONE VIABLE ALTERNATIVE
             D.configs.set_CA(self.getConflictingAlts(reach))
-            D.requiresFullContext = True
+            D.set_requiresFullContext(True)
             # in SLL-only mode, we will stop at this state and return the minimum alt
             D.set_isAcceptState(True)
             D.set_prediction(min(D.configs.conflictingAlts))
@@ -564,7 +563,7 @@ class ParserATNSimulator(ATNSimulator):
         altsToCollectPredsFrom = self.getConflictingAltsOrUniqueAlt(dfaState.configs)
         altToPred = self.getPredsForAmbigAlts(altsToCollectPredsFrom, dfaState.configs, nalts)
         if altToPred is not None:
-            dfaState.predicates = self.getPredicatePredictions(altsToCollectPredsFrom, altToPred)
+            dfaState.set_predicates(self.getPredicatePredictions(altsToCollectPredsFrom, altToPred))
             dfaState.set_prediction(ATN.INVALID_ALT_NUMBER) # make sure we use preds
         else:
             # There are preds in configs but they might go away

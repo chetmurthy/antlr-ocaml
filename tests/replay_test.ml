@@ -60,6 +60,14 @@ let only_outermost_enter =
   let doc = "pass thru only the outermost ENTER of a tree of events." in
   Arg.(value & flag & info ["ooe"; "only-outermost-enter"] ~doc)
 
+let recache_acs =
+  let doc = "check that ATNConfigSet in replay is already in cache." in
+  Arg.(value & opt bool true & info ["recache-acs"] ~doc)
+
+let recache_ac =
+  let doc = "check that ATNConfig in replay is already in cache." in
+  Arg.(value & opt bool true & info ["recache-ac"] ~doc)
+
 let pp_json_stream oc strm =
   Util.stream_iter (Json.pp_hum_to_channel ~std:true oc) strm
 
@@ -226,8 +234,7 @@ end
 
 module ACS = struct
 
-let simulate_json atns stream =
-  let caches = Simulate.Caches.mk() in
+let simulate_json caches atns stream =
   let open Rresult.R in
   let demarsh j =
     let loc = Json.loc_of_json j in
@@ -238,17 +245,18 @@ let simulate_json atns stream =
   |> Std.stream_map Json.raise_failwith_error_msg
   |> Util.stream_iter_i (Simulate.ACS.sim1 caches atns)
 
-let simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file =
+let simulate1_entry_exit caches ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file =
   Tracelog._enabled := true ;
-  EntryExit.filter1_then  ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json atns) file
+  EntryExit.filter1_then  ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json caches atns) file
 
-let simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =
+let simulate ~recache_acs ~recache_ac ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =
   let open Exec in
   let lexer_atn = match lexer_atn with
       None -> failwith "simulate: must provide lexer-atn"
     | Some x -> x in
+  let caches = Simulate.Caches.mk ~recache_acs ~recache_ac () in
   let atns = Atns.load ~lexer_atn ~parser_atn in
-  simulate1_entry_exit ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file
+  simulate1_entry_exit caches ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file
 
 let cmd =
   let doc = "simulate json.log files for AtnConfigSet." in
@@ -258,8 +266,9 @@ let cmd =
   in
   Cmd.make (Cmd.info "acs" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ parser_atn and+ lexer_atn and+ debug and+ verbose
-     and+ entry_exit_name and+ start_nth and+ stop_nth and+ only_outermost_enter in
-  simulate ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file ;
+     and+ entry_exit_name and+ start_nth and+ stop_nth and+ only_outermost_enter
+     and+ recache_acs and+ recache_ac in
+  simulate ~recache_acs ~recache_ac ~lexer_atn ~parser_atn ~verbose ~yojson ~debug ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file ;
   Cmdliner.Cmd.Exit.ok
 end
 

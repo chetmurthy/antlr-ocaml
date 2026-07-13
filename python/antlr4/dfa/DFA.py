@@ -23,13 +23,12 @@ class DFA(object):
 
     def __init__(self, grammarType:ATNType, atnStartState:DecisionState, decision:int=0):
         global dfaCounter
-        Trace.write(json.dumps([ 'ENTER DFA.__init__', 
+        Trace.writej([ 'ENTER DFA.__init__', 
                                  dfaCounter,
                                  [ grammarType.asdict() ],
                                  atnStartState.stateNumber,
                                  decision,
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         # From which ATN state did we create this DFA?
         self.id = dfaCounter
         dfaCounter += 1
@@ -53,8 +52,7 @@ class DFA(object):
                 precedenceState.isAcceptState = False
                 precedenceState.requiresFullContext = False
                 self.s0 = precedenceState
-        Trace.write(json.dumps([ 'EXIT DFA.__init__', self.id, self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFA.__init__', self.id, self.asdict() ])
 
     def asdict(self):
         states = {}
@@ -98,7 +96,7 @@ class DFA(object):
     # @throws IllegalStateException if this is not a precedence DFA.
     # @see #isPrecedenceDfa()
     #
-    def setPrecedenceStartState(self, precedence:int, startState:DFAState):
+    def _setPrecedenceStartState(self, precedence:int, startState:DFAState):
         if not self.precedenceDfa:
             raise IllegalStateException("Only precedence DFAs may contain a precedence start state.")
 
@@ -112,6 +110,16 @@ class DFA(object):
             ext = [None] * (precedence + 1 - len(self.s0.edges))
             self.s0.edges.extend(ext)
         self.s0.edges[precedence] = startState
+
+    def setPrecedenceStartState(self, precedence:int, startState:DFAState):
+        Trace.writej([ 'ENTER DFA.setPrecedenceStartState', self.asdict(),
+                       precedence,
+                       startState.asdict(),
+                      ])
+        rv = self._setPrecedenceStartState(precedence, startState)
+        Trace.writej([ 'EXIT DFA.setPrecedenceStartState', self.asdict() ])
+        return rv
+
     #
     # Sets whether this is a precedence DFA. If the specified value differs
     # from the current DFA configuration, the following actions are taken;
@@ -148,34 +156,30 @@ class DFA(object):
 
     def states_get(self, x, y):
         assert(y is None)
-        Trace.write(json.dumps([ 'ENTER DFA.states_get', self.asdict(), x.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFA.states_get', self.asdict(), x.asdict() ])
+        Trace._enabled = False
         rv = self._states.get(x.configs,y)
-        Trace.write(json.dumps([ 'EXIT DFA.states_get', self.id,
-                                 (None if rv is None else rv.asdict()) ],
-                               sort_keys=True, indent=4))
+        Trace._enabled = True
+        Trace.writej([ 'EXIT DFA.states_get', self.id,
+                                 (None if rv is None else rv.asdict()) ])
         return rv
 
     def set_s0(self, x):
-        Trace.write(json.dumps([ 'ENTER DFA.set_s0', self.asdict(), x.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFA.set_s0', self.asdict(), x.asdict() ])
         self.s0 = x
-        Trace.write(json.dumps([ 'EXIT DFA.set_s0', self.id, self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFA.set_s0', self.id, self.asdict() ])
 
     def states_add(self, x):
-        Trace.write(json.dumps([ 'ENTER DFA.states_add', self.asdict(), x.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFA.states_add', self.asdict(), x.asdict() ])
+        Trace._enabled = False
         self._states[x.configs] = x
-        Trace.write(json.dumps([ 'EXIT DFA.states_add', self.id, self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace._enabled = True
+        Trace.writej([ 'EXIT DFA.states_add', self.id, self.asdict() ])
 
     def states_len(self):
-        Trace.write(json.dumps([ 'ENTER DFA.states_len', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFA.states_len', self.asdict() ])
         rv = len(self._states)
-        Trace.write(json.dumps([ 'EXIT DFA.states_len', rv ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFA.states_len', rv ])
         return rv
 
     # Return a list of all states in this DFA, ordered by state number.

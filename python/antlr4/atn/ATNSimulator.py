@@ -13,8 +13,8 @@ class ATNSimulator(object):
     __slots__ = ('atn', 'sharedContextCache', '__dict__')
 
     # Must distinguish between missing edge and edge we know leads nowhere#/
-    ERROR = DFAState(configs=ATNConfigSet())
-    ERROR.stateNumber = 0x7FFFFFFF
+    ERROR = DFAState(stateNumber=0x7FFFFFFF, configs=ATNConfigSet())
+#    ERROR.stateNumber = 0x7FFFFFFF
 
     # The context cache maps all PredictionContext objects that are ==
     #  to a single cached copy. This cache is shared across all contexts

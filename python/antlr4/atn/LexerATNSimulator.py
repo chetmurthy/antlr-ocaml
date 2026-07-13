@@ -77,11 +77,10 @@ class LexerATNSimulator(ATNSimulator):
     ERROR = None
 
     def __init__(self, recog:Lexer, atn:ATN, decisionToDFA:list, sharedContextCache:PredictionContextCache):
-        Trace.write(json.dumps([ 'ENTER LexerATNSimulator.__init__', atn.asdict(),
+        Trace.writej([ 'ENTER LexerATNSimulator.__init__', atn.asdict(),
                                  [d.asdict() for d in decisionToDFA],
                                  sharedContextCache.asdict(),
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         super().__init__(atn, sharedContextCache)
         self.decisionToDFA = decisionToDFA
         self.recog = recog
@@ -101,8 +100,7 @@ class LexerATNSimulator(ATNSimulator):
         self.MAX_CHAR_VALUE = Lexer.MAX_CHAR_VALUE
         # Used during DFA/ATN exec to record the most recent accept configuration info
         self.prevAccept = SimState()
-        Trace.write(json.dumps([ 'EXIT LexerATNSimulator.__init__', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT LexerATNSimulator.__init__', self.asdict() ])
 
     def asdict(self):
         d = super(LexerATNSimulator,self).asdict()[1]
@@ -121,13 +119,11 @@ class LexerATNSimulator(ATNSimulator):
         self.startIndex = simulator.startIndex
 
     def match(self, input:InputStream , mode:int):
-        Trace.write(json.dumps([ 'ENTER LexerATNSimulator.match',
-                                 self.asdict(), mode ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER LexerATNSimulator.match',
+                                 self.asdict(), mode ])
         rv = self._match(input, mode)
-        Trace.write(json.dumps([ 'EXIT LexerATNSimulator.match',
-                                 self.asdict(), rv ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT LexerATNSimulator.match',
+                                 self.asdict(), rv ])
         return rv
 
     def _match(self, input:InputStream , mode:int):
@@ -550,11 +546,10 @@ class LexerATNSimulator(ATNSimulator):
             from_.makeEdges([ None ] * (self.MAX_DFA_EDGE - self.MIN_DFA_EDGE + 1))
 
         from_.setEdge(tk - self.MIN_DFA_EDGE, to) # connect
-        Trace.write(json.dumps([ 'END LexerATNSimulator.addDFAEdge',
+        Trace.writej([ 'END LexerATNSimulator.addDFAEdge',
                                  from_.stateNumber,
                                  tk,
-                                 (None if to is None else -1 if to == self.ERROR else to.stateNumber) ],
-                               sort_keys=True, indent=4))
+                                 (None if to is None else -1 if to == self.ERROR else to.stateNumber) ])
 
         return to
 
@@ -584,8 +579,7 @@ class LexerATNSimulator(ATNSimulator):
         configs.setReadonly(True)
         newState.configs = configs
         dfa.states_add(newState)
-        Trace.write(json.dumps([ 'LexerATNSimulator.__add_state__', dfa.id, newState.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'LexerATNSimulator.__add_state__', dfa.id, newState.asdict() ])
         return newState
 
     def getDFA(self, mode:int):

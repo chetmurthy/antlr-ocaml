@@ -36,14 +36,13 @@ class ATNConfig(object):
     def __init__(self, state:ATNState=None, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=None, config:ATNConfig=None):
         global configCounter
         self.id = configCounter
-        Trace.write(json.dumps([ 'ENTER ATNConfig.__init__', self.id,
-                                 (None if state is None else state.stateNumber),
-                                 (None if alt is None else alt),
-                                 (None if context is None else context.asdict()),
-                                 (None if semantic is None else semantic.asdict()),
-                                 (None if config is None else config.asdict())
-                                ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER ATNConfig.__init__', self.id,
+                       (None if state is None else state.stateNumber),
+                       (None if alt is None else alt),
+                       (None if context is None else context.asdict()),
+                       (None if semantic is None else semantic.asdict()),
+                       (None if config is None else config.asdict())
+                      ])
         configCounter += 1
         if config is not None:
             if state is None:
@@ -80,10 +79,9 @@ class ATNConfig(object):
         # accurate depth since I don't ever decrement. TODO: make it a boolean then
         self.reachesIntoOuterContext = 0 if config is None else config.reachesIntoOuterContext
         self.precedenceFilterSuppressed = False if config is None else config.precedenceFilterSuppressed
-        Trace.write(json.dumps([ 'EXIT ATNConfig.__init__',
-                                 ATNConfig.asdict(self)
-                                ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT ATNConfig.__init__',
+                       ATNConfig.asdict(self)
+                      ])
 
     def asdict(self):
         d = {
@@ -114,12 +112,10 @@ class ATNConfig(object):
                 and self.precedenceFilterSuppressed==other.precedenceFilterSuppressed
 
     def __eq__(self, other):
-        Trace.write(json.dumps([ 'ENTER ATNConfig.__eq__',
-                                 self.asdict(), other.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER ATNConfig.__eq__',
+                     self.asdict(), other.asdict() ])
         rv = self.real__eq__(other)
-        Trace.write(json.dumps([ 'EXIT ATNConfig.__eq__', rv ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT ATNConfig.__eq__', rv ])
         return rv
 
     def strkey(self):
@@ -174,38 +170,32 @@ class ATNConfig(object):
             return buf.getvalue()
 
     def incrementRIOC(self):
-        Trace.write(json.dumps([ 'ENTER ATNConfig.incrementRIOC',
+        Trace.writej([ 'ENTER ATNConfig.incrementRIOC',
                                  self.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         self.reachesIntoOuterContext += 1
-        Trace.write(json.dumps([ 'EXIT ATNConfig.incrementRIOC',
+        Trace.writej([ 'EXIT ATNConfig.incrementRIOC',
                                  self.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
     def update_RIOC(self, v):
-        Trace.write(json.dumps([ 'ENTER ATNConfig.update_RIOC',
+        Trace.writej([ 'ENTER ATNConfig.update_RIOC',
                                  self.asdict(),
                                  v
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         self.reachesIntoOuterContext = v
-        Trace.write(json.dumps([ 'EXIT ATNConfig.update_RIOC',
+        Trace.writej([ 'EXIT ATNConfig.update_RIOC',
                                  self.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
     def set_PFS(self):
-        Trace.write(json.dumps([ 'ENTER ATNConfig.set_PFS',
+        Trace.writej([ 'ENTER ATNConfig.set_PFS',
                                  self.asdict(),
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         self.precedenceFilterSuppressed = True
-        Trace.write(json.dumps([ 'EXIT ATNConfig.set_PFS',
+        Trace.writej([ 'EXIT ATNConfig.set_PFS',
                                  self.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
 
 # need a forward declaration
@@ -216,15 +206,14 @@ class LexerATNConfig(ATNConfig):
 
     def __init__(self, state:ATNState, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=SemanticContext.NONE,
                  lexerActionExecutor:LexerActionExecutor=None, config:LexerATNConfig=None):
-        Trace.write(json.dumps([ 'ENTER LexerATNConfig.__init__',
+        Trace.writej([ 'ENTER LexerATNConfig.__init__',
                                  (None if state is None else state.stateNumber),
                                  (None if alt is None else alt),
                                  (None if context is None else context.asdict()),
                                  (None if semantic is None else semantic.asdict()),
                                  (None if lexerActionExecutor is None else lexerActionExecutor.asdict()),
                                  (None if config is None else config.asdict())
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
         super().__init__(state=state, alt=alt, context=context, semantic=semantic, config=config)
         if config is not None:
             if lexerActionExecutor is None:
@@ -232,10 +221,9 @@ class LexerATNConfig(ATNConfig):
         # This is the backing field for {@link #getLexerActionExecutor}.
         self.lexerActionExecutor = lexerActionExecutor
         self.passedThroughNonGreedyDecision = False if config is None else self.checkNonGreedyDecision(config, state)
-        Trace.write(json.dumps([ 'EXIT LexerATNConfig.__init__',
+        Trace.writej([ 'EXIT LexerATNConfig.__init__',
                                  self.asdict()
-                                ],
-                               sort_keys=True, indent=4))
+                                ])
 
     def asdict(self):
         d = super(LexerATNConfig, self).asdict()[1]
@@ -257,12 +245,10 @@ class LexerATNConfig(ATNConfig):
         return super().real__eq__(other)
 
     def __eq__(self, other):
-        Trace.write(json.dumps([ 'ENTER LexerATNConfig.__eq__',
-                                 self.asdict(), other.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER LexerATNConfig.__eq__',
+                                 self.asdict(), other.asdict() ])
         rv = self.real__eq__(other)
-        Trace.write(json.dumps([ 'EXIT LexerATNConfig.__eq__', rv ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT LexerATNConfig.__eq__', rv ])
         return rv
 
     def __hash__(self):

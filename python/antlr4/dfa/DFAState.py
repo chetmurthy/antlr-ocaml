@@ -66,10 +66,9 @@ class DFAState(object):
 
     def __init__(self, stateNumber:int=-1, configs:ATNConfigSet=ATNConfigSet()):
         global dfaStateCounter
-        Trace.write(json.dumps([ 'ENTER DFAState.__init__',
+        Trace.writej([ 'ENTER DFAState.__init__',
                                  dfaStateCounter,
-                                 stateNumber, configs.asdict() ],
-                               sort_keys=True, indent=4))
+                                 stateNumber, configs.asdict() ])
         self.id = dfaStateCounter
         dfaStateCounter += 1
         assert (configs is not None)
@@ -101,8 +100,7 @@ class DFAState(object):
         #
         #  <p>This list is computed by {@link ParserATNSimulator#predicateDFAState}.</p>
         self.predicates = None
-        Trace.write(json.dumps([ 'EXIT DFAState.__init__', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFAState.__init__', self.asdict() ])
 
 
     def asdict(self):
@@ -120,48 +118,53 @@ class DFAState(object):
         return d
 
     def makeEdges(self, edges):
-        Trace.write(json.dumps([ 'ENTER DFAState.makeEdges', self.asdict(), edges ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFAState.makeEdges', self.asdict(), edges ])
         self.edges = edges
-        Trace.write(json.dumps([ 'EXIT DFAState.makeEdges', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFAState.makeEdges', self.asdict() ])
 
     def setEdge(self,pos,v):
-        Trace.write(json.dumps([ 'ENTER DFAState.setEdge', self.asdict(), pos, v.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFAState.setEdge', self.asdict(), pos, v.asdict() ])
         self.edges[pos] = v
-        Trace.write(json.dumps([ 'EXIT DFAState.setEdge', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFAState.setEdge', self.asdict() ])
 
     def set_stateNumber(self,n):
-        Trace.write(json.dumps([ 'ENTER DFAState.set_stateNumber', self.asdict(), n ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFAState.set_stateNumber', self.asdict(), n ])
         self.stateNumber = n
-        Trace.write(json.dumps([ 'EXIT DFAState.set_stateNumber', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFAState.set_stateNumber', self.asdict() ])
+
+    def set_configs(self,n):
+        Trace.writej([ 'ENTER DFAState.set_configs', self.asdict(), n.asdict() ])
+        self.configs = n
+        Trace.writej([ 'EXIT DFAState.set_configs', self.asdict() ])
 
     def set_isAcceptState(self,n):
-        Trace.write(json.dumps([ 'ENTER DFAState.set_isAcceptState', self.asdict(), n ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFAState.set_isAcceptState', self.asdict(), n ])
         self.isAcceptState = n
-        Trace.write(json.dumps([ 'EXIT DFAState.set_isAcceptState', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFAState.set_isAcceptState', self.asdict() ])
+
+    def set_requiresFullContext(self,n):
+        Trace.writej([ 'ENTER DFAState.set_requiresFullContext', self.asdict(), n ])
+        self.requiresFullContext = n
+        Trace.writej([ 'EXIT DFAState.set_requiresFullContext', self.asdict() ])
 
     def set_prediction(self,n):
-        Trace.write(json.dumps([ 'ENTER DFAState.set_prediction', self.asdict(), n ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'ENTER DFAState.set_prediction', self.asdict(), n ])
         self.prediction = n
-        Trace.write(json.dumps([ 'EXIT DFAState.set_prediction', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFAState.set_prediction', self.asdict() ])
+
+    def set_predicates(self,n):
+        Trace.writej([ 'ENTER DFAState.set_predicates',
+                       self.asdict(),
+                      None if n is None else [p.asdict() for p in n]])
+        self.predicates = n
+        Trace.writej([ 'EXIT DFAState.set_predicates', self.asdict() ])
 
     def set_lexerActionExecutor(self,n):
-        Trace.write(json.dumps([ 'ENTER DFAState.set_lexerActionExecutor',
+        Trace.writej([ 'ENTER DFAState.set_lexerActionExecutor',
                                  self.asdict(),
-                                 (None if n is None else n.asdict()) ],
-                               sort_keys=True, indent=4))
+                                 (None if n is None else n.asdict()) ])
         self.lexerActionExecutor = n
-        Trace.write(json.dumps([ 'EXIT DFAState.set_lexerActionExecutor', self.asdict() ],
-                               sort_keys=True, indent=4))
+        Trace.writej([ 'EXIT DFAState.set_lexerActionExecutor', self.asdict() ])
 
     # Get the set of all alts mentioned by all ATN configurations in this
     #  DFA state.
