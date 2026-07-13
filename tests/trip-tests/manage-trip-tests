@@ -7,7 +7,7 @@ use File::Basename;
 
 our $verbose ;
 our $noexecute ;
-our @genargs = ("--template-dir=fixtures/antlrtest.2") ;
+our @genargs = ("--template-dir=fixtures/antlrtest.3") ;
 
 $ENV{'TOP'} = ".." ;
 
