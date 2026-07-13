@@ -420,9 +420,14 @@ type json_log_t =
 | Lexer_more of lexer_t
                       [@yojson.name "Lexer.more"]
                       [@located_yojson.name "Lexer.more"]
-| ParserATNSimulator_EXIT_init of Atn.t * parser_atn_simulator_t
+
+| ParserATNSimulator_ENTER_init of Atn.t * dfa_t array * prediction_context_cache_t
+                      [@yojson.name "ENTER ParserATNSimulator.__init__"]
+                      [@located_yojson.name "ENTER ParserATNSimulator.__init__"]
+| ParserATNSimulator_EXIT_init of parser_atn_simulator_t
                       [@yojson.name "EXIT ParserATNSimulator.__init__"]
                       [@located_yojson.name "EXIT ParserATNSimulator.__init__"]
+
 | PredictionContext_ENTER_merge of prediction_context_t * prediction_context_t * bool * merge_cache_t option
                       [@yojson.name "ENTER PredictionContext.merge"]
                       [@located_yojson.name "ENTER PredictionContext.merge"]

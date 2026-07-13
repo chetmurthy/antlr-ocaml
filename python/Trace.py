@@ -82,12 +82,15 @@ disabled = {
 #    "ENTER DFAState.set_stateNumber",
 #    "EXIT DFAState.set_stateNumber",
 
-    "ENTER LexerATNSimulator.__init__",
-    "EXIT LexerATNSimulator.__init__",
-    "ENTER LexerATNSimulator.match",
-    "EXIT LexerATNSimulator.match",
-    "ENTER Lexer.nextToken",
-    "EXIT Lexer.nextToken",
+#    "ENTER LexerATNSimulator.__init__",
+#    "EXIT LexerATNSimulator.__init__",
+#    "ENTER LexerATNSimulator.match",
+#    "EXIT LexerATNSimulator.match",
+#    "ENTER Lexer.nextToken",
+#    "EXIT Lexer.nextToken",
+
+#    'ENTER ParserATNSimulator.__init__',
+#    'EXIT ParserATNSimulator.__init__',
 
     'Lexer.__init__',
     'Lexer.reset',
@@ -102,7 +105,6 @@ disabled = {
 
     'END LexerATNSimulator.addDFAEdge',
     'LexerATNSimulator.__add_state__',
-    'EXIT ParserATNSimulator.__init__',
     
 }
 
