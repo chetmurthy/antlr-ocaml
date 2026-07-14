@@ -7,6 +7,11 @@ open Util
 open Atn
 
 
+module Token = struct
+  let _EOF = -1
+end
+
+
 module Counter(M: sig val name : string end) = struct
   let it = ref 0
   let check predicted =
@@ -1435,3 +1440,157 @@ let recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa =
   ; Option.iter (DFASt.recache ~dfast_cache ~acs_cache ~ac_cache) dfa.s0
 
 end
+
+module IS = struct
+type is_t = {
+      id : int
+    ; name : string
+    ; strdata : string
+    ; mutable _index : int
+    ; data : int array
+    ; mutable _size : int
+  }
+[@@deriving show, eq]
+type t = is_t
+[@@deriving show, eq]
+
+module Cache = Cacher(struct
+                   type t  = is_t
+                   let id t = t.id
+                   let equal = equal_is_t
+                   let pp = pp_is_t
+                   let name = "InputStream"
+                 end)
+
+let to_mimick t =
+  M.InputStream {
+      id = t.id
+    ; name = t.name
+    ; strdata = t.strdata
+    ; _index = t._index
+    ; data = t.data
+    ; _size = t._size
+    }
+
+let _of_mimick t =
+  match t with
+    M.InputStream t ->
+    {
+      id = t.id
+    ; name = t.name
+    ; strdata = t.strdata
+    ; _index = t._index
+    ; data = t.data
+    ; _size = t._size
+    }
+
+let of_mimick ~is_cache t =
+  let t = _of_mimick t in
+  match is_cache with
+    None -> t
+  | Some is_cache -> Cache.recache is_cache t
+
+module Counter = Counter(struct let name = "InputStream" end)
+
+
+let _init ?predicted_id strdata () =
+  Counter.check predicted_id ;
+  let id = Counter.get_incr () in
+  let data = Util.array_of_string Ploc.dummy strdata in
+  {
+    id
+  ; name = "<empty>"
+  ; strdata
+  ; data
+  ; _index = 0
+  ; _size = Array.length data
+  }
+
+let init ?predicted_id strdata () =
+  Counter.check predicted_id ;
+  Tracelog.write
+    (InputStream_ENTER_init (Counter.get(), strdata)) ;
+  let rv = _init  ?predicted_id strdata () in
+  Tracelog.write
+    (InputStream_EXIT_init (to_mimick rv)) ;
+  rv
+
+let recache ~is_cache is =
+  Cache.upsert is_cache is ;
+  ()
+
+let _reset is =
+  is._index <- 0
+
+let reset is =
+  Tracelog.write
+    (InputStream_ENTER_reset (to_mimick is)) ;
+  _reset is ;
+  Tracelog.write
+    (InputStream_EXIT_reset (to_mimick is))
+
+let _la is offset =
+  if offset = 0 then
+    0
+  else
+    let offset = if offset < 0 then offset+1 else offset in begin
+        let pos = is._index + offset - 1 in
+        if pos < 0 || pos >= is._size then
+          Token._EOF
+        else
+          is.data.(pos)
+      end
+
+let la is offset =
+  Tracelog.write
+    (InputStream_ENTER_LA (to_mimick is, offset)) ;
+  let rv = _la is offset in
+  Tracelog.write
+    (InputStream_EXIT_LA (to_mimick is, rv)) ;
+  rv
+
+let _consume is =
+  if is._index >= is._size then begin
+    assert (la is 1 = Token._EOF) ;
+    failwith "cannot consume EOF"
+    end ;
+  is._index <- 1 + is._index
+
+let consume is =
+  Tracelog.write
+    (InputStream_ENTER_consume (to_mimick is)) ;
+  _consume is ;
+  Tracelog.write
+    (InputStream_EXIT_consume (to_mimick is))
+
+let _seek is _index =
+  if _index <= is._index then
+    is._index <- _index
+  else
+    is._index <- min _index is._size
+
+let seek is _index =
+  Tracelog.write
+    (InputStream_ENTER_seek (to_mimick is, _index)) ;
+  _seek is _index ;
+  Tracelog.write
+    (InputStream_EXIT_seek (to_mimick is))
+
+let _getText is start stop =
+  let stop = if stop >= is._size then is._size-1 else stop in
+  if start >= is._size then
+    ""
+  else Util.string_of_uchars (List.map Uchar.of_int (Array.to_list (Array.sub is.data start (stop+1 - start))))
+
+let getText is start stop =
+  Tracelog.write
+    (InputStream_ENTER_getText (to_mimick is, start, stop)) ;
+  let rv = _getText is start stop in
+  Tracelog.write
+    (InputStream_EXIT_getText (to_mimick is, rv)) ;
+  rv
+
+
+
+end
+module InputStream = IS

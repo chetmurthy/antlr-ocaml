@@ -6,6 +6,10 @@ open Pa_ppx_utils
 open Pa_ppx_located_yojson
 open Antlr
 
+Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
+(*
+Pa_ppx_runtime_fat.Exceptions.Ploc.pp_loc_verbose := true ;;
+ *)
 (** deserialize the "json.log" files into Atn.json_log_t objects
  *)
 

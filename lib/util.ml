@@ -1,6 +1,8 @@
 (**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson *)
 
 open Pa_ppx_utils
+open Pa_ppx_base
+open Ppxutil
 
 let plisti elem i = 
   let rec plist_rec accum i = parser
@@ -153,4 +155,28 @@ let entry_exit ?start_nth ?stop_nth ~only_outermost_enter names extractor strm =
 
 let entry_exit_yojson ?start_nth ?stop_nth ~only_outermost_enter names strm : 'a Stream.t =
   entry_exit ?start_nth ?stop_nth ~only_outermost_enter names extract_tag strm
+(*
+let array_of_string s =
+  let a = Array.make (String.length s) 0 in
+  String.iteri (fun i c -> a.(i) <- Char.code c) s ;
+  a
+ *)
+let uchars_of_string loc s =
+  let open Uutf in
+  let dec = decoder ~encoding:`UTF_8 (`String s) in
+  let rec derec () =
+    match decode dec with
+      `Uchar uc -> uc::(derec ())
+    | `End  -> []
+    | _ -> Fmt.(raise_failwithf loc "uchars_of_string: malformed UTF-8 string %a"
+                  Dump.string s)
+  in derec ()
 
+let string_of_uchars l =
+  let b = Buffer.create (List.length l) in
+  List.iter (Uutf.Buffer.add_utf_8 b) l ;
+  Buffer.contents b
+
+let array_of_string loc s =
+  let l = uchars_of_string loc s in
+  Array.of_list (List.map Uchar.to_int l)

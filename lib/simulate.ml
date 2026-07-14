@@ -98,12 +98,14 @@ module Caches = struct
     ; acs : ACS.Cache.t
     ; dfast : DFASt.Cache.t
     ; dfa : DFA.Cache.t
+    ; is : IS.Cache.t
     }
   let mk ~recache_ac ~recache_acs () = {
       ac = AC.Cache.mk ~do_recache:recache_ac ()
     ; acs = ACS.Cache.mk ~do_recache:recache_acs ()
     ; dfast = DFASt.Cache.mk ()
     ; dfa = DFA.Cache.mk ()
+    ; is = IS.Cache.mk ()
     }
 end
 
@@ -310,6 +312,28 @@ let sim1 caches atns (i:int) (loc,j) =
          let v = DFASt.of_mimick ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns v in
          let () = DFASt.setEdge st n v in
          ()
+
+      | InputStream_ENTER_init (predicted_id, strdata) ->
+         let rv = IS.init ~predicted_id strdata () in
+         let () = IS.recache ~is_cache:caches.is rv  in
+         ()
+
+      | InputStream_ENTER_LA (is, n) ->
+         let rv = IS.la (IS.of_mimick ~is_cache:(Some caches.is) is) n in
+         ()
+
+      | InputStream_ENTER_consume is ->
+         let rv = IS.consume (IS.of_mimick ~is_cache:(Some caches.is) is) in
+         ()
+
+      | InputStream_ENTER_seek (is, n) ->
+         let rv = IS.seek (IS.of_mimick ~is_cache:(Some caches.is) is) n in
+         ()
+
+      | InputStream_ENTER_getText (is, n, m) ->
+         let rv = IS.getText (IS.of_mimick ~is_cache:(Some caches.is) is) n m in
+         ()
+
 
     end
   with exc ->

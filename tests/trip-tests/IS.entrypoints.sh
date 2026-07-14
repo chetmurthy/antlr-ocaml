@@ -1,0 +1,5 @@
+ARGS+=" -e InputStream.__init__"
+ARGS+=" -e InputStream.consume"
+ARGS+=" -e InputStream.getText"
+ARGS+=" -e InputStream.LA"
+ARGS+=" -e InputStream.seek"

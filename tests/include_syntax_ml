@@ -32,12 +32,6 @@ Atn.debug := true ;;
 open Atn ;;
 open Pa_ppx_located_yojson ;;
 
-#require "cmdliner";;
-
-open Util ;;
-  let entry_exit_string names = Util.entry_exit names (fun x -> Some x) ;;
-  let eelist names l = l |> Stream.of_list |> entry_exit_string names |> Std.list_of_stream ;;
-
 
 
 (*

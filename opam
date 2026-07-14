@@ -1,0 +1,40 @@
+version: "0.01"
+synopsis: "OCaml implementation of ANTLR"
+description:
+"""
+OCaml implementation of ANTLR
+"""
+opam-version: "2.0"
+x-maintenance-intent: [ "(latest)" ]
+maintainer: "Chet Murthy <chetsky@gmail.com>"
+authors: ["Chet Murthy"]
+homepage: "https://github.com/chetmurthy/antlr-ocaml"
+license: "BSD-3-Clause"
+bug-reports: "https://github.com/chetmurthy/antlr-ocaml/issues"
+dev-repo: "git+https://github.com/chetmurthy/antlr-ocaml.git"
+doc: "https://github.com/chetmurthy/antlr-ocaml/doc"
+
+depends: [
+  "ocaml"       { >= "4.10.0" }
+  "camlp5-buildscripts" { >= "0.02" }
+  "camlp5"      { >= "8.05.01" }
+  "pa_ppx"      { >= "8.05.01" }
+  "not-ocamlfind" { >= "0.13" }
+  "ounit" { >= "2.2.7" }
+  "fmt"
+  "mdx" { >= "2.3.0" & with-test}
+  "pp-binary-ints" {with-test}
+  "pa_ppx_regexp" { >= "8.05.01" }
+  "uutf"
+]
+build: [
+  [make "DEBUG=-g" "sys"]
+  [make "test"] {with-test}
+]
+install: [make "install"]
+url {
+  src: ""
+  checksum: [
+    "sha512="
+  ]
+}
