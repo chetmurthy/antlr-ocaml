@@ -1589,8 +1589,5 @@ let getText is start stop =
   Tracelog.write
     (InputStream_EXIT_getText (to_mimick is, rv)) ;
   rv
-
-
-
 end
 module InputStream = IS
