@@ -8,9 +8,10 @@ from antlr4.atn.ATN import ATN
 from antlr4.atn.ATNConfigSet import ATNConfigSet
 from antlr4.dfa.DFAState import DFAState
 
+ASCounter = 0
 
 class ATNSimulator(object):
-    __slots__ = ('atn', 'sharedContextCache', '__dict__')
+    __slots__ = ('atn', 'sharedContextCache', '__dict__', 'id')
 
     # Must distinguish between missing edge and edge we know leads nowhere#/
     ERROR = DFAState(stateNumber=0x7FFFFFFF, configs=ATNConfigSet())
@@ -37,12 +38,16 @@ class ATNSimulator(object):
     #  so it's not worth the complexity.</p>
     #/
     def __init__(self, atn:ATN, sharedContextCache:PredictionContextCache):
+        global ASCounter
+        self.id = ASCounter
+        ASCounter += 1
         self.atn = atn
         self.sharedContextCache = sharedContextCache
 
     def asdict(self):
         d = {
 #            'atn' : self.atn.asdict(),
+            'id' : self.id,
             'sharedContextCache' : self.sharedContextCache.asdict()
         }
         return ["ATNSimulator", d]

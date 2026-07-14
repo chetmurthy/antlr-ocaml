@@ -1,3 +1,4 @@
+
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
 open Pa_ppx_base
@@ -99,6 +100,7 @@ module Caches = struct
     ; dfast : DFASt.Cache.t
     ; dfa : DFA.Cache.t
     ; is : IS.Cache.t
+    ; las : LAS.Cache.t
     }
   let mk ~recache_ac ~recache_acs () = {
       ac = AC.Cache.mk ~do_recache:recache_ac ()
@@ -106,6 +108,7 @@ module Caches = struct
     ; dfast = DFASt.Cache.mk ()
     ; dfa = DFA.Cache.mk ()
     ; is = IS.Cache.mk ()
+    ; las = LAS.Cache.mk ()
     }
 end
 
@@ -195,9 +198,7 @@ let sim1 caches atns (i:int) (loc,j) =
 
       | ATNConfigSet_ENTER_update_HSC (cs, v) ->
          let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
-         Tracelog.write (ATNConfigSet_ENTER_update_HSC (ACS.to_mimick cs, v)) ;
-         cs.ACS.hasSemanticContext <- v ;
-         Tracelog.write (ATNConfigSet_EXIT_update_HSC (ACS.to_mimick cs)) ;
+         ACS.update_HSC cs ;
          ()
 
       | ATNConfigSet_ENTER_setReadonly (cs, v) ->
@@ -226,7 +227,7 @@ let sim1 caches atns (i:int) (loc,j) =
       | DFA_ENTER_init (predicted_id, grammarType, atnStartState, decision) ->
          let atn  = Atns.for_grammar atns grammarType in
          let rv = DFA.init ~predicted_id atn grammarType atnStartState decision in
-         let () = DFA.recache ~dfa_cache:caches.dfa ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv in
+         let _ = DFA.recache ~dfa_cache:caches.dfa ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv in
          ()
 
       | DFA_ENTER_states_get(dfa, st) ->
@@ -259,7 +260,7 @@ let sim1 caches atns (i:int) (loc,j) =
       | DFAState_ENTER_init (predicted_id, stateNumber, configs) ->
          let configs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns configs in
          let rv = DFASt.init ~predicted_id ~stateNumber ~configs () in
-         let () = DFASt.recache ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv  in
+         let _ = DFASt.recache ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv  in
          ()
 
 
@@ -315,7 +316,7 @@ let sim1 caches atns (i:int) (loc,j) =
 
       | InputStream_ENTER_init (predicted_id, strdata) ->
          let rv = IS.init ~predicted_id strdata () in
-         let () = IS.recache ~is_cache:caches.is rv  in
+         let _ = IS.recache ~is_cache:caches.is rv  in
          ()
 
       | InputStream_ENTER_LA (is, n) ->
@@ -332,6 +333,14 @@ let sim1 caches atns (i:int) (loc,j) =
 
       | InputStream_ENTER_getText (is, n, m) ->
          let rv = IS.getText (IS.of_mimick ~is_cache:(Some caches.is) is) n m in
+         ()
+
+      | LexerATNSimulator_ENTER_init (predicted_id, decisionToDFA, sharedContextCache) ->
+         let atn  = Atns.for_grammar atns Atn.LEXER in
+         let decisionToDFA = Array.map (DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns) decisionToDFA in
+         let sharedContextCache = List.map PC.of_mimick sharedContextCache in
+         let rv = LAS.init ~predicted_id atn decisionToDFA sharedContextCache () in
+         let _ = LAS.recache ~las_cache:caches.las rv  in
          ()
 
 

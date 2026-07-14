@@ -125,7 +125,8 @@ and sim_state_t =
 
 and lexer_atn_simulator_t =
   LexerATNSimulator of {
-      sharedContextCache : prediction_context_cache_t
+      id : int
+    ; sharedContextCache : prediction_context_cache_t
 (* don't demarshal this, b/c it's big and never changes
     ; atn : Atn.t
  *)
@@ -137,10 +138,7 @@ and lexer_atn_simulator_t =
     ; startIndex : int
     }
 
-and prediction_context_cache_t =
-  PredictionContextCache of {
-      cache : string strmap
-    }
+and prediction_context_cache_t = prediction_context_t list
 
 and common_token_factory_t =
   CommonTokenFactory of {
@@ -184,7 +182,8 @@ and prediction_mode_t =
 
 and parser_atn_simulator_t =
   ParserATNSimulator of {
-      sharedContextCache : prediction_context_cache_t
+      id : int
+    ; sharedContextCache : prediction_context_cache_t
 (* don't demarshal this, b/c it's big and never changes
     ; atn : Atn.t
  *)
@@ -386,14 +385,21 @@ type json_log_t =
                       [@yojson.name "LexerATNSimulator.__add_state__"]
                       [@located_yojson.name "LexerATNSimulator.__add_state__"]
 
-| LexerATNSimulator_ENTER_addDFAEdge of lexer_atn_simulator_t * int * int * int option * config_set_t option
+| LexerATNSimulator_ENTER_addDFAEdge of lexer_atn_simulator_t * dfa_state_t option * int * dfa_state_t option * config_set_t option
                       [@yojson.name "ENTER LexerATNSimulator.addDFAEdge"]
                       [@located_yojson.name "ENTER LexerATNSimulator.addDFAEdge"]
 | LexerATNSimulator_EXIT_addDFAEdge of lexer_atn_simulator_t * dfa_state_t
                       [@yojson.name "EXIT LexerATNSimulator.addDFAEdge"]
                       [@located_yojson.name "EXIT LexerATNSimulator.addDFAEdge"]
 
-| LexerATNSimulator_ENTER_init of Atn.t * dfa_t array * prediction_context_cache_t
+| LexerATNSimulator_ENTER_addDFAState of lexer_atn_simulator_t * config_set_t
+                      [@yojson.name "ENTER LexerATNSimulator.addDFAState"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.addDFAState"]
+| LexerATNSimulator_EXIT_addDFAState of lexer_atn_simulator_t * dfa_state_t
+                      [@yojson.name "EXIT LexerATNSimulator.addDFAState"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.addDFAState"]
+
+| LexerATNSimulator_ENTER_init of int * dfa_t array * prediction_context_cache_t
                       [@yojson.name "ENTER LexerATNSimulator.__init__"]
                       [@located_yojson.name "ENTER LexerATNSimulator.__init__"]
 | LexerATNSimulator_EXIT_init of lexer_atn_simulator_t
@@ -405,6 +411,44 @@ type json_log_t =
 | LexerATNSimulator_EXIT_match of lexer_atn_simulator_t * int
                       [@yojson.name "EXIT LexerATNSimulator.match"]
                       [@located_yojson.name "EXIT LexerATNSimulator.match"]
+| LexerATNSimulator_ENTER_matchATN of lexer_atn_simulator_t * input_stream_t
+                      [@yojson.name "ENTER LexerATNSimulator.matchATN"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.matchATN"]
+| LexerATNSimulator_EXIT_matchATN of lexer_atn_simulator_t * int
+                      [@yojson.name "EXIT LexerATNSimulator.matchATN"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.matchATN"]
+
+| LexerATNSimulator_ENTER_execATN of lexer_atn_simulator_t * input_stream_t * dfa_state_t
+                      [@yojson.name "ENTER LexerATNSimulator.execATN"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.execATN"]
+| LexerATNSimulator_EXIT_execATN of lexer_atn_simulator_t * int
+                      [@yojson.name "EXIT LexerATNSimulator.execATN"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.execATN"]
+
+| LexerATNSimulator_ENTER_closure of lexer_atn_simulator_t * input_stream_t * config_t * config_set_t * bool * bool * bool
+                      [@yojson.name "ENTER LexerATNSimulator.closure"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.closure"]
+| LexerATNSimulator_EXIT_closure of lexer_atn_simulator_t * bool * config_set_t
+                      [@yojson.name "EXIT LexerATNSimulator.closure"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.closure"]
+
+
+| LexerATNSimulator_ENTER_captureSimState of lexer_atn_simulator_t * sim_state_t * input_stream_t * dfa_state_t
+                      [@yojson.name "ENTER LexerATNSimulator.captureSimState"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.captureSimState"]
+| LexerATNSimulator_EXIT_captureSimState of lexer_atn_simulator_t * sim_state_t
+                      [@yojson.name "EXIT LexerATNSimulator.captureSimState"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.captureSimState"]
+
+
+| LexerATNSimulator_ENTER_computeStartState of lexer_atn_simulator_t * input_stream_t * deser_state_id
+                      [@yojson.name "ENTER LexerATNSimulator.computeStartState"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.computeStartState"]
+| LexerATNSimulator_EXIT_computeStartState of config_set_t
+                      [@yojson.name "EXIT LexerATNSimulator.computeStartState"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.computeStartState"]
+
+
 | Lexer_init of lexer_t
                       [@yojson.name "Lexer.__init__"]
                       [@located_yojson.name "Lexer.__init__"]
@@ -436,7 +480,7 @@ type json_log_t =
                       [@yojson.name "Lexer.more"]
                       [@located_yojson.name "Lexer.more"]
 
-| ParserATNSimulator_ENTER_init of Atn.t * dfa_t array * prediction_context_cache_t
+| ParserATNSimulator_ENTER_init of dfa_t array * prediction_context_cache_t
                       [@yojson.name "ENTER ParserATNSimulator.__init__"]
                       [@located_yojson.name "ENTER ParserATNSimulator.__init__"]
 | ParserATNSimulator_EXIT_init of parser_atn_simulator_t

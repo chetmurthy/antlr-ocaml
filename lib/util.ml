@@ -180,3 +180,11 @@ let string_of_uchars l =
 let array_of_string loc s =
   let l = uchars_of_string loc s in
   Array.of_list (List.map Uchar.to_int l)
+
+let finally f arg finf =
+  let open Std in
+  let rv = try Inl(f arg) with e -> Inr (e, Printexc.get_raw_backtrace ())
+  in (try finf arg (match rv with Inl v -> Some v | Inr _ -> None) with e -> ());
+	match rv with
+		Inl v -> v
+	  | Inr (e, bt) -> Printexc.raise_with_backtrace e bt

@@ -93,13 +93,10 @@ class PredictionContextCache(object):
         self.cache = dict()
 
     def asdict(self):
-        cachedict = {}
+        l = []
         for k,v in self.cache:
-            cachedict[k] = v.asdict()
-        d = {
-            'cache' : cachedict
-        }
-        return ['PredictionContextCache', d]
+            l.append(v.asdict())
+        return l
 
     #  Add a context to the cache and return it. If the context already exists,
     #  return that one instead and do not add a new context to the cache.

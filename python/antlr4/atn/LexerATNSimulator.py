@@ -29,7 +29,7 @@ from antlr4.InputStream import InputStream
 from antlr4.Token import Token
 from antlr4.atn.ATN import ATN
 from antlr4.atn.ATNConfig import LexerATNConfig
-from antlr4.atn.ATNSimulator import ATNSimulator
+from antlr4.atn.ATNSimulator import ATNSimulator, ASCounter
 from antlr4.atn.ATNConfigSet import ATNConfigSet, OrderedATNConfigSet
 from antlr4.atn.ATNState import RuleStopState, ATNState
 from antlr4.atn.LexerActionExecutor import LexerActionExecutor
@@ -77,10 +77,11 @@ class LexerATNSimulator(ATNSimulator):
     ERROR = None
 
     def __init__(self, recog:Lexer, atn:ATN, decisionToDFA:list, sharedContextCache:PredictionContextCache):
-        Trace.writej([ 'ENTER LexerATNSimulator.__init__', atn.asdict(),
-                                 [d.asdict() for d in decisionToDFA],
-                                 sharedContextCache.asdict(),
-                                ])
+        Trace.writej([ 'ENTER LexerATNSimulator.__init__',
+                       ASCounter,
+                       [d.asdict() for d in decisionToDFA],
+                       sharedContextCache.asdict(),
+                      ])
         super().__init__(atn, sharedContextCache)
         self.decisionToDFA = decisionToDFA
         self.recog = recog
@@ -150,6 +151,16 @@ class LexerATNSimulator(ATNSimulator):
         self.mode = self.DEFAULT_MODE
 
     def matchATN(self, input:InputStream):
+        Trace.writej([ 'ENTER LexerATNSimulator.matchATN',
+                       self.asdict(),
+                       input.asdict(),
+                      ])
+        rv = self._matchATN(input)
+        Trace.writej([ 'EXIT LexerATNSimulator.matchATN',
+                       self.asdict(), rv ])
+        return rv
+
+    def _matchATN(self, input:InputStream):
         startState = self.atn.modeToStartState[self.mode]
 
         if LexerATNSimulator.debug:
@@ -172,6 +183,17 @@ class LexerATNSimulator(ATNSimulator):
         return predict
 
     def execATN(self, input:InputStream, ds0:DFAState):
+        Trace.writej([ 'ENTER LexerATNSimulator.execATN',
+                       self.asdict(),
+                       input.asdict(),
+                       ds0.asdict(),
+                      ])
+        rv = self._execATN(input, ds0)
+        Trace.writej([ 'EXIT LexerATNSimulator.execATN',
+                       self.asdict(), rv ])
+        return rv
+
+    def _execATN(self, input:InputStream, ds0:DFAState):
         if LexerATNSimulator.debug:
             print("start state closure=" + str(ds0.configs))
 
@@ -337,7 +359,7 @@ class LexerATNSimulator(ATNSimulator):
         else:
             return None
 
-    def computeStartState(self, input:InputStream, p:ATNState):
+    def _computeStartState(self, input:InputStream, p:ATNState):
         initialContext = PredictionContext.EMPTY
         configs = OrderedATNConfigSet()
         for i in range(0,len(p.transitions)):
@@ -345,6 +367,18 @@ class LexerATNSimulator(ATNSimulator):
             c = LexerATNConfig(state=target, alt=i+1, context=initialContext)
             self.closure(input, c, configs, False, False, False)
         return configs
+
+    def computeStartState(self, input:InputStream, p:ATNState):
+        Trace.writej([ 'ENTER LexerATNSimulator.computeStartState',
+                       self.asdict(),
+                       input.asdict(),
+                       p.stateNumber
+                      ])
+        rv = self._computeStartState(input, p)
+        Trace.writej([ 'EXIT LexerATNSimulator.computeStartState',
+                       rv.asdict()
+                      ])
+        return rv
 
     # Since the alternatives within any lexer decision are ordered by
     # preference, this method stops pursuing the closure as soon as an accept
@@ -355,6 +389,25 @@ class LexerATNSimulator(ATNSimulator):
     # @return {@code true} if an accept state is reached, otherwise
     # {@code false}.
     def closure(self, input:InputStream, config:LexerATNConfig, configs:ATNConfigSet, currentAltReachedAcceptState:bool,
+                speculative:bool, treatEofAsEpsilon:bool):
+        Trace.writej([ 'ENTER LexerATNSimulator.closure',
+                       self.asdict(),
+                       input.asdict(),
+                       config.asdict(),
+                       configs.asdict(),
+                       currentAltReachedAcceptState, speculative, treatEofAsEpsilon,
+                      ])
+        rv = self._closure(input, config, configs, currentAltReachedAcceptState,
+                           speculative, treatEofAsEpsilon)
+        Trace.writej([ 'EXIT LexerATNSimulator.closure',
+                       self.asdict(),
+                       rv,
+                       configs.asdict()
+                      ])
+        return rv
+
+
+    def _closure(self, input:InputStream, config:LexerATNConfig, configs:ATNConfigSet, currentAltReachedAcceptState:bool,
                 speculative:bool, treatEofAsEpsilon:bool):
         if LexerATNSimulator.debug:
             print("closure(" + str(config) + ")")
@@ -508,6 +561,19 @@ class LexerATNSimulator(ATNSimulator):
             input.release(marker)
 
     def captureSimState(self, settings:SimState, input:InputStream, dfaState:DFAState):
+        Trace.writej([ 'ENTER LexerATNSimulator.captureSimState',
+                       self.asdict(),
+                       settings.asdict(),
+                       input.asdict(),
+                       dfaState.asdict()
+                      ])
+        self._captureSimState(settings, input, dfaState)
+        Trace.writej([ 'EXIT LexerATNSimulator.captureSimState',
+                       self.asdict(),
+                       settings.asdict()
+                      ])
+
+    def _captureSimState(self, settings:SimState, input:InputStream, dfaState:DFAState):
         settings.index = input.index
         settings.line = self.line
         settings.column = self.column
@@ -553,9 +619,9 @@ class LexerATNSimulator(ATNSimulator):
     def addDFAEdge(self, from_:DFAState, tk:int, to:DFAState=None, cfgs:ATNConfigSet=None) -> DFAState:
         Trace.writej([ 'ENTER LexerATNSimulator.addDFAEdge',
                        self.asdict(),
-                       from_.stateNumber,
+                       from_.asdict(),
                        tk,
-                       (None if to is None else -1 if to == self.ERROR else to.stateNumber),
+                       (None if to is None else to.asdict()),
                        (None if cfgs is None else cfgs.asdict()),
                       ])
         to = self._addDFAEdge(from_, tk, to, cfgs)
@@ -564,11 +630,23 @@ class LexerATNSimulator(ATNSimulator):
 
 
 
+    def addDFAState(self, configs:ATNConfigSet) -> DFAState:
+        Trace.writej([ 'ENTER LexerATNSimulator.addDFAState',
+                       self.asdict(),
+                       configs.asdict(),
+                      ])
+        rv = self._addDFAState(configs)
+        Trace.writej([ 'EXIT LexerATNSimulator.addDFAState',
+                       self.asdict(),
+                       rv.asdict()
+                      ])
+        return rv
+
     # Add a new DFA state if there isn't one with this set of
     # configurations already. This method also detects the first
     # configuration containing an ATN rule stop state. Later, when
     # traversing the DFA, we will know which rule to accept.
-    def addDFAState(self, configs:ATNConfigSet) -> DFAState:
+    def _addDFAState(self, configs:ATNConfigSet) -> DFAState:
 
         proposed = DFAState(configs=configs)
         firstConfigWithRuleStopState = next((cfg for cfg in configs if isinstance(cfg.state, RuleStopState)), None)

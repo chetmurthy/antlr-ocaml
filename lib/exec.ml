@@ -8,7 +8,12 @@ open Atn
 
 
 module Token = struct
+  let _INVALID_TYPE = 0
+  let  _EPSILON = -2
+  let _MIN_USER_TOKEN_TYPE = 1
   let _EOF = -1
+  let _DEFAULT_CHANNEL = 0
+  let _HIDDEN_CHANNEL = 1
 end
 
 
@@ -1026,8 +1031,13 @@ let add ?mergeCache t c =
   rv
 
 let recache ~acs_cache ~ac_cache cs =
-  Cache.upsert acs_cache cs ;
-  !(cs.configs) |> List.iter (fun c -> AC.recache ~ac_cache c ; ())
+  !(cs.configs) |> List.iter (fun c -> AC.recache ~ac_cache c ; ()) ;
+  Cache.upsert acs_cache cs
+
+let update_HSC cs v =
+  Tracelog.write (ATNConfigSet_ENTER_update_HSC (to_mimick cs, v)) ;
+  cs.hasSemanticContext <- v ;
+  Tracelog.write (ATNConfigSet_EXIT_update_HSC (to_mimick cs))
 
 end
 module ATNConfigSet = ACS
@@ -1214,8 +1224,8 @@ let setEdge st n v =
   Tracelog.write(DFAState_EXIT_setEdge (to_mimick st))
 
 let recache ~dfast_cache ~acs_cache ~ac_cache st =
-  Cache.upsert dfast_cache st ;
-  ACS.recache ~acs_cache ~ac_cache st.configset
+  ACS.recache ~acs_cache ~ac_cache st.configset ;
+  Cache.upsert dfast_cache st
 
 end
 
@@ -1433,11 +1443,13 @@ let setPrecedenceStartState dfa precedence st =
   ()
 
 let recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa =
-  Cache.upsert dfa_cache dfa
-  ; ACSMap.iter (fun k v ->
-        ACS.recache ~acs_cache ~ac_cache k ;
-        DFASt.recache ~dfast_cache ~acs_cache ~ac_cache v) dfa._states
-  ; Option.iter (DFASt.recache ~dfast_cache ~acs_cache ~ac_cache) dfa.s0
+  ACSMap.iter (fun k v ->
+      ACS.recache ~acs_cache ~ac_cache k ;
+      DFASt.recache ~dfast_cache ~acs_cache ~ac_cache v ;
+      ()
+    ) dfa._states
+  ; Option.iter (fun st -> DFASt.recache ~dfast_cache ~acs_cache ~ac_cache st ; ()) dfa.s0
+  ; Cache.upsert dfa_cache dfa
 
 end
 
@@ -1492,7 +1504,6 @@ let of_mimick ~is_cache t =
 
 module Counter = Counter(struct let name = "InputStream" end)
 
-
 let _init ?predicted_id strdata () =
   Counter.check predicted_id ;
   let id = Counter.get_incr () in
@@ -1516,8 +1527,7 @@ let init ?predicted_id strdata () =
   rv
 
 let recache ~is_cache is =
-  Cache.upsert is_cache is ;
-  ()
+  Cache.upsert is_cache is
 
 let _reset is =
   is._index <- 0
@@ -1589,5 +1599,286 @@ let getText is start stop =
   Tracelog.write
     (InputStream_EXIT_getText (to_mimick is, rv)) ;
   rv
+
+let index (is : t) = is._index
+let mark (is : t) = -1
+let release (is : t) (marker : int) = ()
 end
 module InputStream = IS
+
+module SS = struct
+  type ss_t = {
+      mutable index : int
+    ; mutable line : int
+    ; mutable column : int
+    ; mutable dfaState : DFASt.t option
+    }
+[@@deriving show, eq]
+  type t = ss_t
+[@@deriving show, eq]
+
+  let init () =
+    {
+      index = -1
+    ; line = 0
+    ; column = -1
+    ; dfaState = None
+    }
+
+  let of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t =
+    match t with
+      M.SimState t ->
+          {
+            index = t.index
+          ; line = t.line
+          ; column = t.column
+          ; dfaState = Option.map (DFASt.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns) t.dfaState
+          }
+
+  let to_mimick t =
+    M.SimState {
+      index = t.index
+    ; line = t.line
+    ; column = t.column
+    ; dfaState = Option.map DFASt.to_mimick t.dfaState
+    }
+
+  let reset self =
+    self.index <- -1
+    ; self.line <- 0
+    ; self.column <- -1
+    ; self.dfaState <- None
+
+let recache ~dfast_cache ~acs_cache ~ac_cache ss =
+  Option.map (fun st -> DFASt.recache ~dfast_cache ~acs_cache ~ac_cache st ; ()) ss.dfaState ;
+  ss
+
+end
+module SimState = SS
+
+module L = struct
+  let _DEFAULT_MODE = 0
+  let _MORE = -2
+  let _SKIP = -3
+  let _DEFAULT_TOKEN_CHANNEL = Token._DEFAULT_CHANNEL
+  let _HIDDEN = Token._HIDDEN_CHANNEL
+  let _MIN_CHAR_VALUE = 0x0000
+  let _MAX_CHAR_VALUE = 0x10FFFF
+
+end
+module Lexer = L
+
+module AS = struct
+module Counter = Counter(struct let name = "ATNSimulator" end)
+end
+module ATNSimulator = AS
+
+module LAS = struct
+  let mhs_equal x y =
+    let x = x |> MHS.toList |> List.stable_sort Stdlib.compare in
+    let y = y |> MHS.toList |> List.stable_sort Stdlib.compare in
+    List.length x = List.length y
+    && List.for_all2 PC.equal x y
+
+type las_t = {
+    id : int
+  ; atn : Atn.t
+    [@printer (fun pps x -> Fmt.(pf pps "<atn 0x%08x>" (Hashtbl.hash x)))]
+    [@equal (fun x y -> x==y)]
+  ; sharedContextCache : (PC.t MHS.t
+                           [@equal mhs_equal]
+                                 [@printer (fun pps _ -> Fmt.(pf pps "_"))])
+  ; decisionToDFA : DFA.t array
+  ; column : int
+  ; line : int
+  ; mutable mode : int
+  ; prevAccept : SS.t
+  ; mutable startIndex : int
+  }
+[@@deriving show, eq]
+type t = las_t
+[@@deriving show, eq]
+
+let _init ?predicted_id atn decisionToDFA sharedContextCache () =
+  AS.Counter.check predicted_id ;
+  let id = AS.Counter.get_incr () in
+  {
+    id
+  ; atn
+  ; sharedContextCache = MHS.ofList sharedContextCache 23
+  ; decisionToDFA
+  ; startIndex = -1
+  ; line = 1
+  ; column = 0
+  ; mode = Lexer._DEFAULT_MODE
+  ; prevAccept = SS.init ()
+  }
+
+let to_mimick t =
+  M.LexerATNSimulator {
+    id = t.id
+  ; sharedContextCache = t.sharedContextCache |> MHS.toList |> List.map PC.to_mimick
+  ; decisionToDFA = t.decisionToDFA |> Array.map DFA.to_mimick
+  ; startIndex = t.startIndex
+  ; line = t.line
+  ; column = t.column
+  ; mode = t.mode
+  ; prevAccept = t.prevAccept |> SS.to_mimick
+  }
+
+let init ?predicted_id atn decisionToDFA sharedContextCache () =
+  AS.Counter.check predicted_id ;
+  Tracelog.write
+    (LexerATNSimulator_ENTER_init (AS.Counter.get(), Array.map DFA.to_mimick decisionToDFA, List.map PC.to_mimick sharedContextCache)) ;
+  let rv = _init ?predicted_id atn decisionToDFA sharedContextCache () in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_init (to_mimick rv)) ;
+  rv
+
+let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t =
+  let atn  = Atns.for_grammar atns Atn.LEXER in
+  match t with
+    M.LexerATNSimulator t ->
+    {
+      id = t.id
+      ; atn
+      ; sharedContextCache =
+          t.sharedContextCache
+          |> List.map PC.of_mimick
+          |> (fun l -> MHS.ofList l 23)
+      ; decisionToDFA = t.decisionToDFA |> Array.map (DFA.of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns)
+      ; startIndex = t.startIndex
+      ; line = t.line
+      ; column = t.column
+      ; mode = t.mode
+      ; prevAccept = SS.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t.prevAccept
+    }
+
+module Cache = Cacher(struct
+                   type t  = las_t
+                   let id t = t.id
+                   let equal = equal_las_t
+                   let pp = pp_las_t
+                   let name = "LexerATNSimulator"
+                 end)
+
+
+let of_mimick ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t =
+  let t = _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t in
+  match las_cache with
+    None -> t
+  | Some las_cache -> Cache.recache las_cache t
+
+let recache ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache las =
+  Array.iter (fun dfa -> DFA.recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa ; ()) las.decisionToDFA
+  ; SS.recache ~dfast_cache ~acs_cache ~ac_cache las.prevAccept
+  ; Cache.upsert las_cache las
+
+let execATN self input dfaSt = assert false
+
+let _closure self input config configs ~currentAltReachedAcceptState
+      ~speculative ~treatEofAsEpsilon =
+  assert false
+
+let closure self is config configs ~currentAltReachedAcceptState
+      ~speculative ~treatEofAsEpsilon =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_closure (to_mimick self, IS.to_mimick is,
+                                      AC.to_mimick config, ACS.to_mimick configs,
+                                      currentAltReachedAcceptState, speculative, treatEofAsEpsilon
+    )) ;
+  let rv = _closure self is config configs ~currentAltReachedAcceptState
+      ~speculative ~treatEofAsEpsilon in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_closure (to_mimick self, rv, ACS.to_mimick configs)) ;
+  rv
+
+let _computeStartState self is p =
+  let p_state = Atn.State.get_state self.atn.Atn.states p in
+  let initialContext = PC.EMPTY in
+  let configs = ACS.init() in
+  p_state.Atn.State.transitions
+  |> List.iteri (fun i t ->
+         let target = Edge.target t in
+         let c = AC.init_LexerATNConfig self.atn (Some target) (Some (i+1)) (Some initialContext) None None None in
+         closure self is c configs ~currentAltReachedAcceptState:false ~speculative:false ~treatEofAsEpsilon:false) ;
+  configs
+
+let computeStartState self is p =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_computeStartState (to_mimick self, IS.to_mimick is, p)) ;
+  let rv = _computeStartState self is p in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_computeStartState (ACS.to_mimick rv)) ;
+  rv
+
+let _addDFAEdge self from_ tk to_ cs = assert false
+
+let addDFAEdge self from_ tk to_ cs =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_addDFAEdge (to_mimick self, Option.map DFASt.to_mimick from_,
+                                         tk,
+                                         Option.map DFASt.to_mimick to_,
+                                         Option.map ACS.to_mimick cs)) ;
+  let rv = _addDFAEdge self from_ tk to_ cs in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv)) ;
+  rv
+
+let _addDFAState self cs = assert false
+
+let addDFAState self cs =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_addDFAState (to_mimick self, ACS.to_mimick cs)) ;
+  let rv = _addDFAState self cs in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_addDFAState (to_mimick self, DFASt.to_mimick rv)) ;
+  rv
+
+let _matchATN self is =
+  let startState = self.atn.Atn.modeToStartState.(self.mode) in
+  let old_mode = self.mode in
+  let s0_closure = computeStartState self is startState in
+  let suppressEdge = s0_closure.ACS.hasSemanticContext in
+  ACS.update_HSC s0_closure false ;
+  let next = addDFAState self s0_closure in
+  if not suppressEdge then
+    DFA.set_s0 self.decisionToDFA.(self.mode) next ;
+  let predict = execATN self is next in
+  predict
+
+
+let matchATN self is =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_matchATN (to_mimick self, IS.to_mimick is)) ;
+  let rv = _matchATN self is in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_matchATN (to_mimick self, rv)) ;
+  rv
+
+let __match self is mode =
+  self. mode <- mode
+  ; let mark = IS.mark is in
+    Util.finally (fun () -> 
+        self.startIndex <- IS.index is
+      ; SS.reset self.prevAccept
+      ; let dfa = self.decisionToDFA.(mode) in
+        match dfa.s0 with
+          None -> matchATN self is
+        | Some s0 -> execATN self is s0
+      )
+      ()
+      (fun _ _ -> IS.release is mark)
+
+
+let _match self is mode =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_match (to_mimick self, IS.to_mimick is, mode)) ;
+  let rv = __match self is mode in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_match (to_mimick self, rv)) ;
+  rv
+
+end
+module LexerATNSimulator = LAS
+

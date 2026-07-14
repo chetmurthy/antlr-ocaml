@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+ARGS=""
+source trip-tests/ACS.entrypoints.sh
+source trip-tests/DFA.entrypoints.sh
+source trip-tests/IS.entrypoints.sh
+source trip-tests/LAS.entrypoints.sh
+
+for f in _generated/*/*/json.log
+do
+    echo $f
+
+ATNARGS=""
+DIR=`dirname $f`
+if [ -r $DIR/Lexer.interp ]; then ATNARGS+=" --lexer-atn $DIR/Lexer.interp"; fi
+if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; fi
+
+
+    ./replay_test.opt entry-exit $ARGS $f | jq -s 'length | "\(.) lines"'
+    diff -Bwiu <( ./replay_test.opt entry-exit $ARGS $f | jq -S . ) <( ./replay_test.opt acs $REPLAYARGS $ATNARGS --ooe $ARGS $f | jq -S . )
+done
