@@ -203,18 +203,12 @@ let sim1 caches atns (i:int) (loc,j) =
 
       | ATNConfigSet_ENTER_setReadonly (cs, v) ->
          let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
-         Tracelog.write (ATNConfigSet_ENTER_setReadonly (ACS.to_mimick cs, v)) ;
-         assert (v) ;
-         cs.ACS.readonly <- v ;
-         cs.ACS.configHT <- None ;
-         Tracelog.write (ATNConfigSet_EXIT_setReadonly (ACS.to_mimick cs)) ;
+         ACS.setReadonly cs v ;
          ()
 
       | ATNConfigSet_ENTER_set_UA (cs, v) ->
          let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
-         Tracelog.write (ATNConfigSet_ENTER_set_UA (ACS.to_mimick cs, v)) ;
-         cs.ACS.uniqueAlt <- v ;
-         Tracelog.write (ATNConfigSet_EXIT_set_UA (ACS.to_mimick cs)) ;
+         ACS.set_UA cs v ;
          ()
 
       | ATNConfigSet_ENTER_set_CA (cs, v) ->

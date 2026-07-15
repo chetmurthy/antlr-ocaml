@@ -1064,6 +1064,20 @@ let update_HSC cs v =
   cs.hasSemanticContext <- v ;
   Tracelog.write (ATNConfigSet_EXIT_update_HSC (to_mimick cs))
 
+let setReadonly cs v =
+  Tracelog.write (ATNConfigSet_ENTER_setReadonly (to_mimick cs, v)) ;
+  assert (v) ;
+  cs.readonly <- v ;
+  cs.configHT <- None ;
+  Tracelog.write (ATNConfigSet_EXIT_setReadonly (to_mimick cs)) ;
+  ()
+
+let set_UA cs v =
+  Tracelog.write (ATNConfigSet_ENTER_set_UA (to_mimick cs, v)) ;
+  cs.uniqueAlt <- v ;
+  Tracelog.write (ATNConfigSet_EXIT_set_UA (to_mimick cs)) ;
+  ()
+
 end
 module ATNConfigSet = ACS
 
@@ -1929,7 +1943,6 @@ let computeStartState self is p =
   rv
 
 let _addDFAState self cs =
-(*
   let exception EarlyExit of DFASt.t  in
   try
     let proposed = DFASt.init ~configs:cs () in
@@ -1945,23 +1958,25 @@ let _addDFAState self cs =
           | Some ext -> ext in
         DFASt.set_isAcceptState proposed true ;
         DFASt.set_lexerActionExecutor proposed firstConfigWithRuleStopState_lexer_ext.lexerActionExecutor ;
-        DFASt.set_prediction proposed self.atn.ruleToTokenType.(firstConfigWithRuleStopState.state.ruleIndex)) ;
-    let dfa = self.decisionToDfa.(self.mode) in
-    let existing = DFA.states_get proposed in
+        let ruleToTokenType = match self.atn.ruleToTokenType with
+            None -> failwith "LAS.addDFAState: ruleToTokenType was None!"
+          | Some a -> a in
+        let fc_st = Atn.State.get_state self.atn.Atn.states firstConfigWithRuleStopState.state in
+        DFASt.set_prediction proposed ruleToTokenType.(fc_st.ruleIndex)) ;
+    let dfa = self.decisionToDFA.(self.mode) in
+    let existing = DFA.states_get dfa proposed in
     (match existing with
        None -> ()
      | Some existing ->
         raise (EarlyExit existing)) ;
 
-    let newstate = proposed in
+    let newState = proposed in
     DFASt.set_stateNumber newState (DFA.states_len dfa) ;
-    ACS.setReadonly configs true ;
-    newState.DFASt.configs <- configs ;
+    ACS.setReadonly cs true ;
+    newState.DFASt.configset <- cs ;
     DFA.states_add dfa newState ;
     newState
   with (EarlyExit st) -> st
- *)
-assert false
 
 let addDFAState self cs =
   Tracelog.write
