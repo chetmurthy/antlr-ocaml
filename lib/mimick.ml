@@ -463,6 +463,12 @@ type json_log_t =
 | LexerATNSimulator_EXIT_computeStartState of config_set_t
                       [@yojson.name "EXIT LexerATNSimulator.computeStartState"]
                       [@located_yojson.name "EXIT LexerATNSimulator.computeStartState"]
+| LexerATNSimulator_ENTER_failOrAccept of lexer_atn_simulator_t * sim_state_t * input_stream_t * config_set_t * int
+                      [@yojson.name "ENTER LexerATNSimulator.failOrAccept"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.failOrAccept"]
+| LexerATNSimulator_EXIT_failOrAccept of lexer_atn_simulator_t * int
+                      [@yojson.name "EXIT LexerATNSimulator.failOrAccept"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.failOrAccept"]
 
 
 | Lexer_init of lexer_t

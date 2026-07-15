@@ -302,6 +302,19 @@ class LexerATNSimulator(ATNSimulator):
         return self.addDFAEdge(s, t, cfgs=reach)
 
     def failOrAccept(self, prevAccept:SimState , input:InputStream, reach:ATNConfigSet, t:int):
+        Trace.writej([ 'ENTER LexerATNSimulator.failOrAccept',
+                       self.asdict(),
+                       prevAccept.asdict(),
+                       input.asdict(),
+                       reach.asdict(),
+                       t,
+                      ])
+        rv = self._failOrAccept(prevAccept , input, reach, t)
+        Trace.writej([ 'EXIT LexerATNSimulator.failOrAccept',
+                       self.asdict(), rv ])
+        return rv
+
+    def _failOrAccept(self, prevAccept:SimState , input:InputStream, reach:ATNConfigSet, t:int):
         if self.prevAccept.dfaState is not None:
             lexerActionExecutor = prevAccept.dfaState.lexerActionExecutor
             self.accept(input, lexerActionExecutor, self.startIndex, prevAccept.index, prevAccept.line, prevAccept.column)
