@@ -14,6 +14,37 @@ module Token = struct
   let _EOF = -1
   let _DEFAULT_CHANNEL = 0
   let _HIDDEN_CHANNEL = 1
+
+type token_t = {
+    type_ : int option
+  ; channel : int option
+  ; start : int option
+  ; stop : int option
+  ; tokenIndex : int option
+  ; line : int option
+  ; column : int option
+  ; _text : string option
+  }
+
+type t = token_t
+
+let init_CommonToken ?source ?type_ ?channel ?start ?stop ?text () =
+  let (line, column) =
+    match source with
+      Some (Some (line, column), _) -> (Some line, Some column)
+    | _ -> (None, Some (-1)) in
+  let tokenIndex = Some (-1) in
+  {
+    type_
+  ; channel
+  ; start
+  ; stop
+  ; tokenIndex
+  ; line
+  ; column
+  ; _text = text
+  }
+
 end
 
 
@@ -107,6 +138,159 @@ let upsert cache t =
 end
 
 module M = Mimick
+
+module IS = struct
+type is_t = {
+      id : int
+    ; name : string
+    ; strdata : string
+    ; mutable _index : int
+    ; data : int array
+    ; mutable _size : int
+  }
+[@@deriving show, eq]
+type t = is_t
+[@@deriving show, eq]
+
+module Cache = Cacher(struct
+                   type t  = is_t
+                   let id t = t.id
+                   let equal = equal_is_t
+                   let pp = pp_is_t
+                   let name = "InputStream"
+                 end)
+
+let to_mimick t =
+  M.InputStream {
+      id = t.id
+    ; name = t.name
+    ; strdata = t.strdata
+    ; _index = t._index
+    ; data = t.data
+    ; _size = t._size
+    }
+
+let _of_mimick t =
+  match t with
+    M.InputStream t ->
+    {
+      id = t.id
+    ; name = t.name
+    ; strdata = t.strdata
+    ; _index = t._index
+    ; data = t.data
+    ; _size = t._size
+    }
+
+let of_mimick ~is_cache t =
+  let t = _of_mimick t in
+  match is_cache with
+    None -> t
+  | Some is_cache -> Cache.recache is_cache t
+
+module Counter = Counter(struct let name = "InputStream" end)
+
+let _init ?predicted_id strdata () =
+  Counter.check predicted_id ;
+  let id = Counter.get_incr () in
+  let data = Util.array_of_string Ploc.dummy strdata in
+  {
+    id
+  ; name = "<empty>"
+  ; strdata
+  ; data
+  ; _index = 0
+  ; _size = Array.length data
+  }
+
+let init ?predicted_id strdata () =
+  Counter.check predicted_id ;
+  Tracelog.write
+    (InputStream_ENTER_init (Counter.get(), strdata)) ;
+  let rv = _init  ?predicted_id strdata () in
+  Tracelog.write
+    (InputStream_EXIT_init (to_mimick rv)) ;
+  rv
+
+let recache ~is_cache is =
+  Cache.upsert is_cache is
+
+let _reset is =
+  is._index <- 0
+
+let reset is =
+  Tracelog.write
+    (InputStream_ENTER_reset (to_mimick is)) ;
+  _reset is ;
+  Tracelog.write
+    (InputStream_EXIT_reset (to_mimick is))
+
+let _la is offset =
+  if offset = 0 then
+    0
+  else
+    let offset = if offset < 0 then offset+1 else offset in begin
+        let pos = is._index + offset - 1 in
+        if pos < 0 || pos >= is._size then
+          Token._EOF
+        else
+          is.data.(pos)
+      end
+
+let la is offset =
+  Tracelog.write
+    (InputStream_ENTER_LA (to_mimick is, offset)) ;
+  let rv = _la is offset in
+  Tracelog.write
+    (InputStream_EXIT_LA (to_mimick is, rv)) ;
+  rv
+
+let _consume is =
+  if is._index >= is._size then begin
+    assert (la is 1 = Token._EOF) ;
+    failwith "cannot consume EOF"
+    end ;
+  is._index <- 1 + is._index
+
+let consume is =
+  Tracelog.write
+    (InputStream_ENTER_consume (to_mimick is)) ;
+  _consume is ;
+  Tracelog.write
+    (InputStream_EXIT_consume (to_mimick is))
+
+let _seek is _index =
+  if _index <= is._index then
+    is._index <- _index
+  else
+    is._index <- min _index is._size
+
+let seek is _index =
+  Tracelog.write
+    (InputStream_ENTER_seek (to_mimick is, _index)) ;
+  _seek is _index ;
+  Tracelog.write
+    (InputStream_EXIT_seek (to_mimick is))
+
+let _getText is start stop =
+  let stop = if stop >= is._size then is._size-1 else stop in
+  if start >= is._size then
+    ""
+  else Util.string_of_uchars (List.map Uchar.of_int (Array.to_list (Array.sub is.data start (stop+1 - start))))
+
+let getText is start stop =
+  Tracelog.write
+    (InputStream_ENTER_getText (to_mimick is, start, stop)) ;
+  let rv = _getText is start stop in
+  Tracelog.write
+    (InputStream_EXIT_getText (to_mimick is, rv)) ;
+  rv
+
+let index (is : t) = is._index
+let mark (is : t) = -1
+let release (is : t) (marker : int) = ()
+end
+module InputStream = IS
 
 module Atns = struct
 type t = { lexer : Atn.t ; _parser : Atn.t option }
@@ -575,6 +759,99 @@ let toString sc =
 end
 module SemanticContext = SC
 
+module RC = struct
+type rc_t = Atn.state_id * Atn.state_id list
+
+type t = rc_t
+
+let init ?parent ?(invokingState = Atn.State.mk_id (-1)) () =
+  (invokingState, match parent with None -> [] | Some l -> l)
+
+end
+module RuleContext = RC
+
+module L = struct
+  let _DEFAULT_MODE = 0
+  let _MORE = -2
+  let _SKIP = -3
+  let _DEFAULT_TOKEN_CHANNEL = Token._DEFAULT_CHANNEL
+  let _HIDDEN = Token._HIDDEN_CHANNEL
+  let _MIN_CHAR_VALUE = 0x0000
+  let _MAX_CHAR_VALUE = 0x10FFFF
+
+type action_t = lexer_t -> RC.t option -> int -> int -> unit
+
+and lexer_t =
+  {
+    mutable _stateNumber : Atn.state_id
+  ; _input : IS.t
+  ; _output : out_channel
+  ; mutable _token : Token.t option
+  ; mutable _tokenStartCharIndex : int
+  ; mutable _tokenStartLine : int
+  ; mutable _tokenStartColumn : int
+  ; mutable _hitEOF : bool
+  ; mutable _channel : int
+  ; mutable _type : int
+  ; mutable _modeStack : int list
+  ; mutable _mode : int
+  ; mutable _text : string option
+  ; _actions : (int, action_t) MHM.t
+  }
+
+type t = lexer_t
+
+let init input ?(output = stdout) ?(actions=[]) () =
+  let self = {
+    _stateNumber = Atn.State.mk_id (-1)
+  ; _input = input
+  ; _output = output
+  ; _token = None
+  ; _tokenStartCharIndex = -1
+  ; _tokenStartLine = -1
+  ; _tokenStartColumn = -1
+  ; _hitEOF = false
+  ; _channel = Token._DEFAULT_CHANNEL
+  ; _type = Token._INVALID_TYPE
+  ; _modeStack = []
+  ; _mode = _DEFAULT_MODE
+  ; _text = None
+  ; _actions = MHM.mk 23
+  } in
+  let actions =
+    if actions = [] then
+      [(0,(fun (self : lexer_t) localCtx ruleIndex actionIndex ->
+          output_string self._output "I\n"))]
+    else actions in
+  List.iter (fun (k,v) -> MHM.add self._actions (k,v)) actions ;
+  self
+
+let set_channel l n =
+  l._channel <- n
+
+let action l localCtx ruleIndex actionIndex =
+  match MHM.map l._actions ruleIndex with
+    f -> f l localCtx ruleIndex actionIndex
+  | exception Not_found -> ()
+
+let mode l m = l._mode <- m
+let more l = l._type <- _MORE
+let popMode l =
+  match l._modeStack with
+    [] -> failwith "Empty Stack"
+  | h::t ->
+     l._modeStack <- t ;
+     l._mode <- h ;
+     h
+let pushMode l m =
+  l._modeStack <- m::l._modeStack ;
+  l._mode <- m
+
+let skip l = l._type <- _SKIP
+let set_type l t = l._type <- t
+end
+module Lexer = L
+
 module LA = struct
   type t = [%import: Types.lexer_action_t
             [@with lexer_action_t := t]
@@ -582,14 +859,52 @@ module LA = struct
 [@@deriving yojson,located_yojson, show, eq]
 
 let pp_hum pps t = Fmt.(pf pps "%s" (Atn.LexerAction.toString t))
+
+let isPositionIndependent = function
+    (LexerChannelAction {isPositionDependent}
+     | LexerCustomAction {isPositionDependent}
+    | LexerIndexedCustomAction {isPositionDependent}
+    | LexerModeAction {isPositionDependent}
+    | LexerMoreAction {isPositionDependent}
+    | LexerPopModeAction {isPositionDependent}
+    | LexerPushModeAction {isPositionDependent}
+    | LexerSkipAction {isPositionDependent}
+    | LexerTypeAction {isPositionDependent}) -> isPositionDependent
+
+let rec execute la recog =
+  match la with
+    LexerChannelAction { channel } -> L.set_channel recog channel
+
+  | LexerCustomAction { ruleIndex ; actionIndex } ->
+     L.action recog None ruleIndex actionIndex
+
+  | LexerIndexedCustomAction { action } ->
+     execute action recog
+
+  | LexerModeAction { mode } -> L.mode recog mode
+
+  | LexerMoreAction _ -> L.more recog
+
+  | LexerPopModeAction _ -> ignore (L.popMode recog)
+
+  | LexerPushModeAction { mode } -> L.pushMode recog mode
+
+  | LexerSkipAction _ -> L.skip recog
+
+  | LexerTypeAction { type_ } -> L.set_type recog type_
 end
 module LexerAction = LA
 
 module LAE = struct
-  type t = [%import: Mimick.lexer_action_executor_t
+  type lae_t = [%import: Mimick.lexer_action_executor_t
             [@with Atn.LexerAction.t := LA.t]
            ]
 [@@deriving yojson,located_yojson, show, eq]
+type t = lae_t
+[@@deriving yojson,located_yojson, show, eq]
+
+let of_mimick t = t
+let to_mimick t = t
 
 let pp_hum pps t = Fmt.(pf pps "%a" (list ~sep:(const string ":") LA.pp_hum) t.lexerActions)
 let toString t = Fmt.(str "%a" pp_hum t)
@@ -598,6 +913,29 @@ let append lae_opt la =
   match lae_opt with
     None -> { lexerActions = [la] }
   | Some lae -> {(lae) with lexerActions = lae.lexerActions @ [la] }
+
+let execute self recog input startIndex =
+  let requiresSeek = ref false in
+  let stopIndex = IS.index input in
+  Util.finally (fun () ->
+      self.lexerActions
+      |> List.iter
+                (fun lexerAction ->
+                  (match lexerAction with
+                    LA.LexerIndexedCustomAction t ->
+                     let offset = t.offset in
+                     IS.seek input (startIndex + offset) ;
+                     requiresSeek := (startIndex + offset) <> stopIndex
+
+                  | _ when LA.isPositionIndependent lexerAction ->
+                     IS.seek input stopIndex ;
+                     requiresSeek := false) ;
+                  LA.execute lexerAction recog)
+    ) ()
+    (fun _ _ ->
+      if !requiresSeek then
+        IS.seek input stopIndex
+    )
 
 end
 module LexerActionExecutor = LAE
@@ -1492,159 +1830,6 @@ let recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa =
 
 end
 
-module IS = struct
-type is_t = {
-      id : int
-    ; name : string
-    ; strdata : string
-    ; mutable _index : int
-    ; data : int array
-    ; mutable _size : int
-  }
-[@@deriving show, eq]
-type t = is_t
-[@@deriving show, eq]
-
-module Cache = Cacher(struct
-                   type t  = is_t
-                   let id t = t.id
-                   let equal = equal_is_t
-                   let pp = pp_is_t
-                   let name = "InputStream"
-                 end)
-
-let to_mimick t =
-  M.InputStream {
-      id = t.id
-    ; name = t.name
-    ; strdata = t.strdata
-    ; _index = t._index
-    ; data = t.data
-    ; _size = t._size
-    }
-
-let _of_mimick t =
-  match t with
-    M.InputStream t ->
-    {
-      id = t.id
-    ; name = t.name
-    ; strdata = t.strdata
-    ; _index = t._index
-    ; data = t.data
-    ; _size = t._size
-    }
-
-let of_mimick ~is_cache t =
-  let t = _of_mimick t in
-  match is_cache with
-    None -> t
-  | Some is_cache -> Cache.recache is_cache t
-
-module Counter = Counter(struct let name = "InputStream" end)
-
-let _init ?predicted_id strdata () =
-  Counter.check predicted_id ;
-  let id = Counter.get_incr () in
-  let data = Util.array_of_string Ploc.dummy strdata in
-  {
-    id
-  ; name = "<empty>"
-  ; strdata
-  ; data
-  ; _index = 0
-  ; _size = Array.length data
-  }
-
-let init ?predicted_id strdata () =
-  Counter.check predicted_id ;
-  Tracelog.write
-    (InputStream_ENTER_init (Counter.get(), strdata)) ;
-  let rv = _init  ?predicted_id strdata () in
-  Tracelog.write
-    (InputStream_EXIT_init (to_mimick rv)) ;
-  rv
-
-let recache ~is_cache is =
-  Cache.upsert is_cache is
-
-let _reset is =
-  is._index <- 0
-
-let reset is =
-  Tracelog.write
-    (InputStream_ENTER_reset (to_mimick is)) ;
-  _reset is ;
-  Tracelog.write
-    (InputStream_EXIT_reset (to_mimick is))
-
-let _la is offset =
-  if offset = 0 then
-    0
-  else
-    let offset = if offset < 0 then offset+1 else offset in begin
-        let pos = is._index + offset - 1 in
-        if pos < 0 || pos >= is._size then
-          Token._EOF
-        else
-          is.data.(pos)
-      end
-
-let la is offset =
-  Tracelog.write
-    (InputStream_ENTER_LA (to_mimick is, offset)) ;
-  let rv = _la is offset in
-  Tracelog.write
-    (InputStream_EXIT_LA (to_mimick is, rv)) ;
-  rv
-
-let _consume is =
-  if is._index >= is._size then begin
-    assert (la is 1 = Token._EOF) ;
-    failwith "cannot consume EOF"
-    end ;
-  is._index <- 1 + is._index
-
-let consume is =
-  Tracelog.write
-    (InputStream_ENTER_consume (to_mimick is)) ;
-  _consume is ;
-  Tracelog.write
-    (InputStream_EXIT_consume (to_mimick is))
-
-let _seek is _index =
-  if _index <= is._index then
-    is._index <- _index
-  else
-    is._index <- min _index is._size
-
-let seek is _index =
-  Tracelog.write
-    (InputStream_ENTER_seek (to_mimick is, _index)) ;
-  _seek is _index ;
-  Tracelog.write
-    (InputStream_EXIT_seek (to_mimick is))
-
-let _getText is start stop =
-  let stop = if stop >= is._size then is._size-1 else stop in
-  if start >= is._size then
-    ""
-  else Util.string_of_uchars (List.map Uchar.of_int (Array.to_list (Array.sub is.data start (stop+1 - start))))
-
-let getText is start stop =
-  Tracelog.write
-    (InputStream_ENTER_getText (to_mimick is, start, stop)) ;
-  let rv = _getText is start stop in
-  Tracelog.write
-    (InputStream_EXIT_getText (to_mimick is, rv)) ;
-  rv
-
-let index (is : t) = is._index
-let mark (is : t) = -1
-let release (is : t) (marker : int) = ()
-end
-module InputStream = IS
-
 module SS = struct
   type ss_t = {
       mutable index : int
@@ -1695,18 +1880,6 @@ let recache ~dfast_cache ~acs_cache ~ac_cache ss =
 end
 module SimState = SS
 
-module L = struct
-  let _DEFAULT_MODE = 0
-  let _MORE = -2
-  let _SKIP = -3
-  let _DEFAULT_TOKEN_CHANNEL = Token._DEFAULT_CHANNEL
-  let _HIDDEN = Token._HIDDEN_CHANNEL
-  let _MIN_CHAR_VALUE = 0x0000
-  let _MAX_CHAR_VALUE = 0x10FFFF
-
-end
-module Lexer = L
-
 module AS = struct
 module Counter = Counter(struct let name = "ATNSimulator" end)
 end
@@ -1730,9 +1903,12 @@ type las_t = {
   ; sharedContextCache : (PC.t MHS.t
                            [@equal mhs_equal]
                                  [@printer (fun pps _ -> Fmt.(pf pps "_"))])
+  ; recog : L.t option
+    [@printer (fun pps _ -> Fmt.(pf pps "<recog>"))]
+    [@equal (fun x y -> x==y)]
   ; decisionToDFA : DFA.t array
-  ; column : int
-  ; line : int
+  ; mutable column : int
+  ; mutable line : int
   ; mutable mode : int
   ; prevAccept : SS.t
   ; mutable startIndex : int
@@ -1741,13 +1917,14 @@ type las_t = {
 type t = las_t
 [@@deriving show, eq]
 
-let _init ?predicted_id atn decisionToDFA sharedContextCache () =
+let _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
   AS.Counter.check predicted_id ;
   let id = AS.Counter.get_incr () in
   {
     id
   ; atn
   ; sharedContextCache = MHS.ofList sharedContextCache 23
+  ; recog = recog
   ; decisionToDFA
   ; startIndex = -1
   ; line = 1
@@ -1777,7 +1954,7 @@ let init ?predicted_id atn decisionToDFA sharedContextCache () =
     (LexerATNSimulator_EXIT_init (to_mimick rv)) ;
   rv
 
-let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t =
+let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns ?recog t =
   let atn  = Atns.for_grammar atns Atn.LEXER in
   match t with
     M.LexerATNSimulator t ->
@@ -1788,6 +1965,7 @@ let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t =
           t.sharedContextCache
           |> List.map PC.of_mimick
           |> (fun l -> MHS.ofList l 23)
+      ; recog = recog
       ; decisionToDFA = t.decisionToDFA |> Array.map (DFA.of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns)
       ; startIndex = t.startIndex
       ; line = t.line
@@ -1815,6 +1993,45 @@ let recache ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache las =
   Array.iter (fun dfa -> DFA.recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa ; ()) las.decisionToDFA
   ; SS.recache ~dfast_cache ~acs_cache ~ac_cache las.prevAccept
   ; Cache.upsert las_cache las
+
+let _accept self input lexerActionExecutor_opt startIndex index line charPos =
+  IS.seek input index ;
+  self.line <- line ;
+  self.column <- charPos ;
+  match (lexerActionExecutor_opt, self.recog) with
+    (Some lae, Some recog) ->
+    LAE.execute lae recog input startIndex
+  | _ -> ()
+
+let accept self input lexerActionExecutor_opt startIndex index line charPos =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_accept (to_mimick self, IS.to_mimick input,
+                                     Option.map LAE.to_mimick lexerActionExecutor_opt,
+                                     startIndex, index, line, charPos)) ;
+  let rv = _accept self input lexerActionExecutor_opt startIndex index line charPos in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_accept (to_mimick self, IS.to_mimick input)) ;
+  rv
+
+
+let _failOrAccept self prevAccept input reach t =
+(*
+  match self.prevAccept.SS.dfaState with
+    None ->
+    let lexerActionExecutor = prevAccept.SS.dfaState.lexerActionExecutor in
+    self.accept(input, lexerActionExecutor, self.startIndex, prevAccept.index, prevAccept.line, prevAccept.column)
+            return prevAccept.dfaState.prediction
+ *)     
+   assert false 
+
+let failOrAccept self prevAccept input reach t = 
+  Tracelog.write
+    (LexerATNSimulator_ENTER_failOrAccept (to_mimick self, SS.to_mimick prevAccept,
+                                           IS.to_mimick input, ACS.to_mimick reach, t)) ;
+  let rv = _failOrAccept self prevAccept input reach t in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_failOrAccept (to_mimick self, rv)) ;
+  rv
 
 let execATN self input dfaSt = assert false
 

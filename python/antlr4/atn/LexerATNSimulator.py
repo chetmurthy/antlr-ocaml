@@ -355,6 +355,17 @@ class LexerATNSimulator(ATNSimulator):
                         skipAlt = cfg.alt
 
     def accept(self, input:InputStream, lexerActionExecutor:LexerActionExecutor, startIndex:int, index:int, line:int, charPos:int):
+        Trace.writej([ 'ENTER LexerATNSimulator.accept',
+                       self.asdict(),
+                       input.asdict(),
+                       (None if lexerActionExecutor is None else lexerActionExecutor.asdict()),
+                       startIndex, index, line, charPos,
+                      ])
+        rv = self._accept(input, lexerActionExecutor, startIndex, index, line, charPos)
+        Trace.writej([ 'EXIT LexerATNSimulator.accept',
+                       self.asdict(), input.asdict() ])
+
+    def _accept(self, input:InputStream, lexerActionExecutor:LexerActionExecutor, startIndex:int, index:int, line:int, charPos:int):
         if LexerATNSimulator.debug:
             print("ACTION", lexerActionExecutor)
 
