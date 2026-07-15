@@ -322,6 +322,13 @@ class ATNDeserializer (object):
     def verifyATN(self, atn:ATN):
         if not self.deserializationOptions.verifyATN:
             return
+
+        self.checkCondition(atn.ruleToStartState is not None)
+        self.checkCondition(atn.ruleToStopState is not None)
+        if atn.grammarType == ATNType.PARSER:
+            self.checkCondition(atn.ruleToTokenType is None)
+        else:
+            self.checkCondition(atn.ruleToTokenType is not None)
         # verify assumptions
         for state in atn.states:
             if state is None:

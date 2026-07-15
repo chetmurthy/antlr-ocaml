@@ -1818,7 +1818,7 @@ let evaluatePredicate self input ruleIndex predIndex speculative =
 let getEpsilonTarget self input config e configs
       ~speculative ~treatEofAsEpsilon =
   let config_lexer_ext = match config.AC.lexer_ext with
-      None -> failwith "LAC.closure: an ATNConfig where we were expecting LexerATNConfig"
+      None -> failwith "LAC.getEpsilonTarget: an ATNConfig where we were expecting LexerATNConfig"
     | Some ext -> ext in
   let c = ref None in
   (match e with
@@ -1928,7 +1928,40 @@ let computeStartState self is p =
     (LexerATNSimulator_EXIT_computeStartState (ACS.to_mimick rv)) ;
   rv
 
-let _addDFAState self cs = assert false
+let _addDFAState self cs =
+(*
+  let exception EarlyExit of DFASt.t  in
+  try
+    let proposed = DFASt.init ~configs:cs () in
+    let firstConfigWithRuleStopState =
+      !(cs.ACS.configs)
+      |> List.find_opt (fun c ->
+             (Atn.State.get_state self.atn.Atn.states c.AC.state).node = RuleStopState) in
+    (match firstConfigWithRuleStopState with
+       None -> ()
+     | Some firstConfigWithRuleStopState ->
+        let firstConfigWithRuleStopState_lexer_ext = match firstConfigWithRuleStopState.AC.lexer_ext with
+            None -> failwith "LAC.addDFAState: an ATNConfig where we were expecting LexerATNConfig"
+          | Some ext -> ext in
+        DFASt.set_isAcceptState proposed true ;
+        DFASt.set_lexerActionExecutor proposed firstConfigWithRuleStopState_lexer_ext.lexerActionExecutor ;
+        DFASt.set_prediction proposed self.atn.ruleToTokenType.(firstConfigWithRuleStopState.state.ruleIndex)) ;
+    let dfa = self.decisionToDfa.(self.mode) in
+    let existing = DFA.states_get proposed in
+    (match existing with
+       None -> ()
+     | Some existing ->
+        raise (EarlyExit existing)) ;
+
+    let newstate = proposed in
+    DFASt.set_stateNumber newState (DFA.states_len dfa) ;
+    ACS.setReadonly configs true ;
+    newState.DFASt.configs <- configs ;
+    DFA.states_add dfa newState ;
+    newState
+  with (EarlyExit st) -> st
+ *)
+assert false
 
 let addDFAState self cs =
   Tracelog.write

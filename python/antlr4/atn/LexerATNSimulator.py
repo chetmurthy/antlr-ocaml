@@ -703,7 +703,6 @@ class LexerATNSimulator(ATNSimulator):
         configs.setReadonly(True)
         newState.configs = configs
         dfa.states_add(newState)
-        Trace.writej([ 'LexerATNSimulator.__add_state__', dfa.id, newState.asdict() ])
         return newState
 
     def getDFA(self, mode:int):

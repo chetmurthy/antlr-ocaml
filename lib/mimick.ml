@@ -383,11 +383,11 @@ type json_log_t =
 | DFA_EXIT_setPrecedenceStartState of dfa_t
                       [@yojson.name "EXIT DFA.setPrecedenceStartState"]
                       [@located_yojson.name "EXIT DFA.setPrecedenceStartState"]
-
+(*
 | LexerATNSimulator_add_state of int * dfa_state_t
                       [@yojson.name "LexerATNSimulator.__add_state__"]
                       [@located_yojson.name "LexerATNSimulator.__add_state__"]
-
+ *)
 | LexerATNSimulator_ENTER_addDFAEdge of lexer_atn_simulator_t * dfa_state_t * int * dfa_state_t option * config_set_t option
                       [@yojson.name "ENTER LexerATNSimulator.addDFAEdge"]
                       [@located_yojson.name "ENTER LexerATNSimulator.addDFAEdge"]

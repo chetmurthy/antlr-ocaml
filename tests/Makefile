@@ -135,7 +135,7 @@ test-python::
 	python3 deserialize_test.py /home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/test/org/antlr/v4/test/runtime/java/api/JavaLexer.interp
 
 test-all-python::
-	find $(ANTLRROOT) -name '*.interp' -print | xargs -n 1 --verbose python3 deserialize_test.py 
+	find $(ANTLRDIRS) -name '*.interp' -print | xargs -n 1 --verbose python3 deserialize_test.py > /dev/null
 
 clean::
 	rm -rf *.cm* _build *.exe _generated/*.log
