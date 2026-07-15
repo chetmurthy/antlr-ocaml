@@ -136,6 +136,7 @@ let for_grammar atns grammarType =
   | (PARSER, { _parser = Some atn }) -> atn
   | _ -> failwith "must supply parser ATN for a parser DFA"
 end
+
 module PC = struct
 let _EMPTY_RETURN_STATE = 0x7FFFFFFF
 
@@ -246,6 +247,19 @@ let of_mimick = mc_of_mimick
 
 end
 module MergeCache = MC
+
+let __len__ = function
+    EMPTY -> 0
+  | SINGLETON _ -> 1
+  | ARRAY l -> List.length l
+
+let getReturnState pc i = match pc with
+  EMPTY -> failwith "PC.getReturnState: illegal"
+| SINGLETON (_,rs) -> rs
+| ARRAY l -> snd (List.nth l i)
+
+let hasEmptyPath pc =
+  (getReturnState pc ((__len__ pc) - 1)) = _EMPTY_RETURN_STATE
 
 type interim_t =
   CacheHit of pc_t
@@ -1776,11 +1790,57 @@ let recache ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache las =
 
 let execATN self input dfaSt = assert false
 
-let _closure self input config configs ~currentAltReachedAcceptState
+let getEpsilonTarget self input config t configs
       ~speculative ~treatEofAsEpsilon =
   assert false
 
-let closure self is config configs ~currentAltReachedAcceptState
+let rec _closure self input (config : AC.t) configs ~currentAltReachedAcceptState
+          ~speculative ~treatEofAsEpsilon =
+  let exception EarlyReturn of bool in
+  let currentAltReachedAcceptState = ref currentAltReachedAcceptState in
+  let config_state = Atn.State.get_state config.atn.Atn.states config.AC.state in
+  let config_lexer_ext = match config.AC.lexer_ext with
+      None -> failwith "LAC.closure: an ATNConfig where we were expecting LexerATNConfig"
+    | Some ext -> ext in
+  try
+    (match config_state with
+      {node=RuleStopState} as st ->
+       if (match config.AC.context with None -> true | Some c -> PC.hasEmptyPath c) then
+         if (match config.AC.context with None -> true | Some PC.EMPTY ->  true) then begin
+             ACS.add configs config ;
+             raise (EarlyReturn true)
+           end
+         else begin
+             ACS.add configs (AC.init_LexerATNConfig config.AC.atn
+                                (Some config.AC.state)
+                                None
+                                (Some PC.EMPTY)
+                                None
+                                (Some config)
+                                None) ;
+             currentAltReachedAcceptState := true
+           end
+      | _ -> ()) ;
+
+    if not config_state.State.epsilonOnlyTransitions then
+      if not !currentAltReachedAcceptState || not config_lexer_ext.AC.passedThroughNonGreedyDecision then
+        ignore (ACS.add configs config)
+      else ()
+    else () ;
+
+    config_state.State.transitions
+    |> List.iter (fun t ->
+           let c = getEpsilonTarget self input config t configs ~speculative ~treatEofAsEpsilon in
+           match c with
+             None -> ()
+           | Some c ->
+              currentAltReachedAcceptState := closure self input c configs ~currentAltReachedAcceptState:!currentAltReachedAcceptState ~speculative ~treatEofAsEpsilon
+         ) ;
+    !currentAltReachedAcceptState
+  with
+    EarlyReturn rv -> rv
+
+and closure self is config configs ~currentAltReachedAcceptState
       ~speculative ~treatEofAsEpsilon =
   Tracelog.write
     (LexerATNSimulator_ENTER_closure (to_mimick self, IS.to_mimick is,
@@ -1801,7 +1861,7 @@ let _computeStartState self is p =
   |> List.iteri (fun i t ->
          let target = Edge.target t in
          let c = AC.init_LexerATNConfig self.atn (Some target) (Some (i+1)) (Some initialContext) None None None in
-         closure self is c configs ~currentAltReachedAcceptState:false ~speculative:false ~treatEofAsEpsilon:false) ;
+         ignore (closure self is c configs ~currentAltReachedAcceptState:false ~speculative:false ~treatEofAsEpsilon:false)) ;
   configs
 
 let computeStartState self is p =

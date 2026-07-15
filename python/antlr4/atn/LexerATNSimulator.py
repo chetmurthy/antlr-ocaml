@@ -451,8 +451,27 @@ class LexerATNSimulator(ATNSimulator):
 
         return currentAltReachedAcceptState
 
-    # side-effect: can alter configs.hasSemanticContext
     def getEpsilonTarget(self, input:InputStream, config:LexerATNConfig, t:Transition, configs:ATNConfigSet,
+                         speculative:bool, treatEofAsEpsilon:bool):
+        Trace.writej([ 'ENTER LexerATNSimulator.getEpsilonTarget',
+                       self.asdict(),
+                       input.asdict(),
+                       config.asdict(),
+                       t.asdict(),
+                       configs.asdict(),
+                       speculative, treatEofAsEpsilon,
+                      ])
+        rv = self._getEpsilonTarget(input, config, t, configs,
+                                    speculative, treatEofAsEpsilon)
+        Trace.writej([ 'EXIT LexerATNSimulator.getEpsilonTarget',
+                       self.asdict(),
+                       (None if rv is None else rv.asdict()),
+                       configs.asdict(),
+                      ])
+        return rv
+
+    # side-effect: can alter configs.hasSemanticContext
+    def _getEpsilonTarget(self, input:InputStream, config:LexerATNConfig, t:Transition, configs:ATNConfigSet,
                                            speculative:bool, treatEofAsEpsilon:bool):
         c = None
         if t.serializationType==Transition.RULE:

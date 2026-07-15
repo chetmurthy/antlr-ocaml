@@ -213,6 +213,84 @@ and input_stream_t =
     ; _size : int
   }
 
+and edge_serialization_type_t =
+  EPSILON
+  | RANGE
+  | RULE
+  | PREDICATE
+  | ATOM
+  | ACTION
+  | SET
+  | NOT_SET
+  | WILDCARD
+  | PRECEDENCE
+and edge_t =
+  EpsilonTransition of {
+    _target : state_id
+    ; label : IntervalSet.t option 
+    ; outermostPrecedenceReturn : int
+    ; serializationType : edge_serialization_type_t
+  }
+| RangeTransition of {
+    _target : state_id
+  ; label : IntervalSet.t
+  ; start : int
+  ; stop : int
+  ; serializationType : edge_serialization_type_t
+  }
+| RuleTransition of {
+    label : IntervalSet.t option 
+  ; ruleStart : state_id
+  ; ruleIndex : int
+  ; precedence : int
+  ; followState : state_id
+  ; serializationType : edge_serialization_type_t
+  }
+| PredicateTransition of {
+    _target : state_id
+  ; ruleIndex : int
+  ; predIndex : int
+  ; isCtxDependent : bool
+  ; label : IntervalSet.t option
+  ; serializationType : edge_serialization_type_t
+  }
+| AtomTransition of {
+    _target : state_id
+  ; label_ : int
+  ; label : IntervalSet.t
+  ; serializationType : edge_serialization_type_t
+  }
+| ActionTransition of {
+    _target : state_id
+  ; ruleIndex : int
+  ; actionIndex : int
+  ; isCtxDependent : bool
+  ; label : IntervalSet.t option
+  ; serializationType : edge_serialization_type_t
+  }
+| SetTransition of {
+    _target : state_id
+  ; set : IntervalSet.t
+  ; serializationType : edge_serialization_type_t
+  }
+| NotSetTransition of {
+    _target : state_id
+  ; set : IntervalSet.t
+  ; serializationType : edge_serialization_type_t
+  }
+| WildcardTransition of {
+    _target : state_id
+  ; serializationType : edge_serialization_type_t
+  ; label : IntervalSet.t option
+  }
+| PrecedencePredicateTransition of {
+    _target : state_id
+  ; precedence : int
+  ; label : IntervalSet.t option
+  ; serializationType : edge_serialization_type_t
+  }
+
+
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
@@ -431,6 +509,13 @@ type json_log_t =
 | LexerATNSimulator_EXIT_closure of lexer_atn_simulator_t * bool * config_set_t
                       [@yojson.name "EXIT LexerATNSimulator.closure"]
                       [@located_yojson.name "EXIT LexerATNSimulator.closure"]
+
+| LexerATNSimulator_ENTER_getEpsilonTarget of lexer_atn_simulator_t * input_stream_t * config_t * edge_t * config_set_t * bool * bool
+                      [@yojson.name "ENTER LexerATNSimulator.getEpsilonTarget"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.getEpsilonTarget"]
+| LexerATNSimulator_EXIT_getEpsilonTarget of lexer_atn_simulator_t * config_t option * config_set_t
+                      [@yojson.name "EXIT LexerATNSimulator.getEpsilonTarget"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.getEpsilonTarget"]
 
 
 | LexerATNSimulator_ENTER_captureSimState of lexer_atn_simulator_t * sim_state_t * input_stream_t * dfa_state_t
