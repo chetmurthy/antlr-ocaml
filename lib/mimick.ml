@@ -213,83 +213,8 @@ and input_stream_t =
     ; _size : int
   }
 
-and edge_serialization_type_t =
-  EPSILON
-  | RANGE
-  | RULE
-  | PREDICATE
-  | ATOM
-  | ACTION
-  | SET
-  | NOT_SET
-  | WILDCARD
-  | PRECEDENCE
-and edge_t =
-  EpsilonTransition of {
-    _target : state_id
-    ; label : IntervalSet.t option 
-    ; outermostPrecedenceReturn : int
-    ; serializationType : edge_serialization_type_t
-  }
-| RangeTransition of {
-    _target : state_id
-  ; label : IntervalSet.t
-  ; start : int
-  ; stop : int
-  ; serializationType : edge_serialization_type_t
-  }
-| RuleTransition of {
-    label : IntervalSet.t option 
-  ; ruleStart : state_id
-  ; ruleIndex : int
-  ; precedence : int
-  ; followState : state_id
-  ; serializationType : edge_serialization_type_t
-  }
-| PredicateTransition of {
-    _target : state_id
-  ; ruleIndex : int
-  ; predIndex : int
-  ; isCtxDependent : bool
-  ; label : IntervalSet.t option
-  ; serializationType : edge_serialization_type_t
-  }
-| AtomTransition of {
-    _target : state_id
-  ; label_ : int
-  ; label : IntervalSet.t
-  ; serializationType : edge_serialization_type_t
-  }
-| ActionTransition of {
-    _target : state_id
-  ; ruleIndex : int
-  ; actionIndex : int
-  ; isCtxDependent : bool
-  ; label : IntervalSet.t option
-  ; serializationType : edge_serialization_type_t
-  }
-| SetTransition of {
-    _target : state_id
-  ; set : IntervalSet.t
-  ; serializationType : edge_serialization_type_t
-  }
-| NotSetTransition of {
-    _target : state_id
-  ; set : IntervalSet.t
-  ; serializationType : edge_serialization_type_t
-  }
-| WildcardTransition of {
-    _target : state_id
-  ; serializationType : edge_serialization_type_t
-  ; label : IntervalSet.t option
-  }
-| PrecedencePredicateTransition of {
-    _target : state_id
-  ; precedence : int
-  ; label : IntervalSet.t option
-  ; serializationType : edge_serialization_type_t
-  }
-
+and edge_serialization_type_t = [%import: Types.edge_serialization_type_t]
+and edge_t = [%import: Types.edge_t]
 
 [@@deriving yojson,located_yojson, show]
 
@@ -463,7 +388,7 @@ type json_log_t =
                       [@yojson.name "LexerATNSimulator.__add_state__"]
                       [@located_yojson.name "LexerATNSimulator.__add_state__"]
 
-| LexerATNSimulator_ENTER_addDFAEdge of lexer_atn_simulator_t * dfa_state_t option * int * dfa_state_t option * config_set_t option
+| LexerATNSimulator_ENTER_addDFAEdge of lexer_atn_simulator_t * dfa_state_t * int * dfa_state_t option * config_set_t option
                       [@yojson.name "ENTER LexerATNSimulator.addDFAEdge"]
                       [@located_yojson.name "ENTER LexerATNSimulator.addDFAEdge"]
 | LexerATNSimulator_EXIT_addDFAEdge of lexer_atn_simulator_t * dfa_state_t
@@ -502,6 +427,12 @@ type json_log_t =
 | LexerATNSimulator_EXIT_execATN of lexer_atn_simulator_t * int
                       [@yojson.name "EXIT LexerATNSimulator.execATN"]
                       [@located_yojson.name "EXIT LexerATNSimulator.execATN"]
+| LexerATNSimulator_ENTER_evaluatePredicate of lexer_atn_simulator_t * input_stream_t * int * int * bool
+                      [@yojson.name "ENTER LexerATNSimulator.evaluatePredicate"]
+                      [@located_yojson.name "ENTER LexerATNSimulator.evaluatePredicate"]
+| LexerATNSimulator_EXIT_evaluatePredicate of lexer_atn_simulator_t * bool
+                      [@yojson.name "EXIT LexerATNSimulator.evaluatePredicate"]
+                      [@located_yojson.name "EXIT LexerATNSimulator.evaluatePredicate"]
 
 | LexerATNSimulator_ENTER_closure of lexer_atn_simulator_t * input_stream_t * config_t * config_set_t * bool * bool * bool
                       [@yojson.name "ENTER LexerATNSimulator.closure"]

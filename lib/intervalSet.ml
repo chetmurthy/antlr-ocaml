@@ -36,3 +36,5 @@ let addOne n t =
   let v = Range.mk ~start:n (n+1) in
   add v t
 
+let contains l n =
+  List.exists (fun r -> Range.contains r n) l.intervals

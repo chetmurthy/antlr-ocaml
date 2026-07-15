@@ -559,6 +559,19 @@ class LexerATNSimulator(ATNSimulator):
     # {@code true}.
     #/
     def evaluatePredicate(self, input:InputStream, ruleIndex:int, predIndex:int, speculative:bool):
+        Trace.writej([ 'ENTER LexerATNSimulator.evaluatePredicate',
+                       self.asdict(),
+                       input.asdict(),
+                       ruleIndex, predIndex, speculative,
+                      ])
+        rv = self._evaluatePredicate(input, ruleIndex, predIndex, speculative)
+        Trace.writej([ 'EXIT LexerATNSimulator.evaluatePredicate',
+                       self.asdict(),
+                       rv,
+                      ])
+        return rv
+
+    def evaluatePredicate(self, input:InputStream, ruleIndex:int, predIndex:int, speculative:bool):
         # assume true if no recognizer was provided
         if self.recog is None:
             return True
@@ -599,6 +612,9 @@ class LexerATNSimulator(ATNSimulator):
         settings.dfaState = dfaState
 
     def _addDFAEdge(self, from_:DFAState, tk:int, to:DFAState=None, cfgs:ATNConfigSet=None) -> DFAState:
+        assert (from_ is not None)
+        assert (not (to is None and cfgs is None))
+        assert (to is None or cfgs is None)
         if to is None and cfgs is not None:
             # leading to this call, ATNConfigSet.hasSemanticContext is used as a
             # marker indicating dynamic predicate evaluation makes this edge
@@ -619,6 +635,7 @@ class LexerATNSimulator(ATNSimulator):
             if suppressEdge:
                 return to
 
+        assert to is not None
         # add the edge
         if tk < self.MIN_DFA_EDGE or tk > self.MAX_DFA_EDGE:
             # Only track edges within the DFA bounds

@@ -478,6 +478,11 @@ and _merge a b rootIsWildcard mergeCache =
             | _ -> b in
           mergeArrays a b rootIsWildcard mergeCache
 
+let create_SINGLETON pc rs =
+  if rs = _EMPTY_RETURN_STATE && pc = None then
+     EMPTY
+  else SINGLETON(pc, rs)
+
 end
 module PredictionContext = PC
 
@@ -588,6 +593,12 @@ module LAE = struct
 
 let pp_hum pps t = Fmt.(pf pps "%a" (list ~sep:(const string ":") LA.pp_hum) t.lexerActions)
 let toString t = Fmt.(str "%a" pp_hum t)
+
+let append lae_opt la =
+  match lae_opt with
+    None -> { lexerActions = [la] }
+  | Some lae -> {(lae) with lexerActions = lae.lexerActions @ [la] }
+
 end
 module LexerActionExecutor = LAE
 
@@ -1688,6 +1699,9 @@ end
 module ATNSimulator = AS
 
 module LAS = struct
+  let _MIN_DFA_EDGE = 0
+  let _MAX_DFA_EDGE = 127 (* forces unicode to stay in ATN *)
+
   let mhs_equal x y =
     let x = x |> MHS.toList |> List.stable_sort Stdlib.compare in
     let y = y |> MHS.toList |> List.stable_sort Stdlib.compare in
@@ -1790,9 +1804,51 @@ let recache ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache las =
 
 let execATN self input dfaSt = assert false
 
-let getEpsilonTarget self input config t configs
+let _evaluatePredicate self input ruleIndex predIndex speculative = assert false
+let evaluatePredicate self input ruleIndex predIndex speculative =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_evaluatePredicate (to_mimick self, IS.to_mimick input,
+                                            ruleIndex, predIndex, speculative
+    )) ;
+  let rv = _evaluatePredicate self input ruleIndex predIndex speculative in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_evaluatePredicate (to_mimick self, rv)) ;
+  rv
+
+let getEpsilonTarget self input config e configs
       ~speculative ~treatEofAsEpsilon =
-  assert false
+  let config_lexer_ext = match config.AC.lexer_ext with
+      None -> failwith "LAC.closure: an ATNConfig where we were expecting LexerATNConfig"
+    | Some ext -> ext in
+  let c = ref None in
+  (match e with
+    Atn.Edge.RuleTransition {followState} ->
+     let newContext = PC.create_SINGLETON config.AC.context (Atn.State.int_of_id followState) in
+     c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None (Some newContext) None (Some config) None)
+  | PrecedencePredicateTransition _ ->
+     failwith "getEpsilonTarget: Precedence predicates are not supported in lexers."
+  | PredicateTransition t ->
+     ACS.update_HSC configs true ;
+     if evaluatePredicate self input t.ruleIndex t.predIndex speculative then
+       c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)
+  | ActionTransition t ->
+     if (match config.context with None -> true | Some c -> PC.hasEmptyPath c) then
+       let lexerActionExecutor =
+         match self.atn.Atn.lexerActions with
+           Some actions ->
+           LAE.append config_lexer_ext.lexerActionExecutor actions.(t.actionIndex)
+         | None -> failwith "getEpsilonTarget: no lexerActions, but an ActionTransition"
+       in
+       c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) (Some lexerActionExecutor))
+     else
+       c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)
+
+  | EpsilonTransition t ->
+     c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)
+  | (AtomTransition _ | RangeTransition _ | SetTransition _) ->
+     if Atn.Edge.matches e Token._EOF 0 Lexer._MAX_CHAR_VALUE then
+       c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)) ;
+  !c
 
 let rec _closure self input (config : AC.t) configs ~currentAltReachedAcceptState
           ~speculative ~treatEofAsEpsilon =
@@ -1872,19 +1928,6 @@ let computeStartState self is p =
     (LexerATNSimulator_EXIT_computeStartState (ACS.to_mimick rv)) ;
   rv
 
-let _addDFAEdge self from_ tk to_ cs = assert false
-
-let addDFAEdge self from_ tk to_ cs =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_addDFAEdge (to_mimick self, Option.map DFASt.to_mimick from_,
-                                         tk,
-                                         Option.map DFASt.to_mimick to_,
-                                         Option.map ACS.to_mimick cs)) ;
-  let rv = _addDFAEdge self from_ tk to_ cs in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv)) ;
-  rv
-
 let _addDFAState self cs = assert false
 
 let addDFAState self cs =
@@ -1893,6 +1936,43 @@ let addDFAState self cs =
   let rv = _addDFAState self cs in
   Tracelog.write
     (LexerATNSimulator_EXIT_addDFAState (to_mimick self, DFASt.to_mimick rv)) ;
+  rv
+
+let _addDFAEdge self from_ tk to_ cs =
+  let exception EarlyExit of DFASt.t in
+  let to_ = ref to_ in
+  try
+    (match (!to_, cs) with
+       (None, Some cs) ->
+        let suppressEdge = cs.ACS.hasSemanticContext in
+        ACS.update_HSC cs false ;
+        let newto = addDFAState self cs in
+        to_ := Some newto ;
+        if suppressEdge then raise (EarlyExit newto)
+       | _ -> ()) ;
+    
+    assert (!to_ <> None) ;
+    let to_= Std.outSome !to_ in
+    if tk < _MIN_DFA_EDGE || tk > _MAX_DFA_EDGE then
+      raise (EarlyExit to_) ;
+
+    if Array.length from_.DFASt.edges = 0 then
+      DFASt.makeEdges from_ (Array.make (_MAX_DFA_EDGE - _MIN_DFA_EDGE + 1) None) ;
+
+    DFASt.setEdge from_ (tk - _MIN_DFA_EDGE) to_ ;
+    to_
+  with (EarlyExit st) ->
+        st
+
+let addDFAEdge self from_ tk to_ cs =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_addDFAEdge (to_mimick self, DFASt.to_mimick from_,
+                                         tk,
+                                         Option.map DFASt.to_mimick to_,
+                                         Option.map ACS.to_mimick cs)) ;
+  let rv = _addDFAEdge self from_ tk to_ cs in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv)) ;
   rv
 
 let _matchATN self is =

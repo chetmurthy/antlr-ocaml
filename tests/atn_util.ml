@@ -31,7 +31,7 @@ let check_rule_separation atn =
                          (MHM.map state2rule st.stateNumber)
                          dump_state_id t
                          (MHM.map state2rule t)
-                         (Edge.serialization_type e))
+                         (Edge.serialization_type_string e))
        ))
 
 let dump ~json ~debug ~disable_verify ~check_rule_separation:check file =
@@ -108,7 +108,7 @@ let graph ~xdot ~with_rule_index ~ruleIndex file =
     | SetTransition {set} -> Fmt.(str "<set %a>" IntervalSet.dump set)
     | RangeTransition {label} -> Fmt.(str "<range %a>" IntervalSet.dump label)
     | AtomTransition {label} -> Fmt.(str "<atom %a>" IntervalSet.dump label)
-    | t -> Edge.serialization_type t in
+    | t -> Edge.serialization_type_string t in
   let edges =
   states
   |> List.concat_map

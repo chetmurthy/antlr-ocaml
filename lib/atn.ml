@@ -141,7 +141,36 @@ let isEpsilon = function
     | NotSetTransition _
     | WildcardTransition _) -> false
 
+let matches e symbol minVocabSymbol maxVocabSymbol =
+  match e with
+    EpsilonTransition _ -> false
+  | RangeTransition t -> t.start <= symbol && symbol <= t.stop
+  | RuleTransition _ -> false
+  | PredicateTransition _ -> false
+  | AtomTransition t -> t.label_ = symbol
+  | ActionTransition _ -> false
+  | SetTransition t -> IntervalSet.contains t.set symbol
+  | NotSetTransition t ->
+     symbol >= minVocabSymbol
+     && symbol <= maxVocabSymbol
+     && not (IntervalSet.contains t.set symbol)
+
+  | WildcardTransition _ ->  symbol >= minVocabSymbol && symbol <= maxVocabSymbol
+  | PrecedencePredicateTransition _ -> false
+
 let serialization_type e = match e with
+    EpsilonTransition _ -> EPSILON
+  | RangeTransition _ -> RANGE
+  | RuleTransition _ -> RULE
+  | PredicateTransition _ -> PREDICATE
+  | AtomTransition _ -> ATOM
+  | ActionTransition _ -> ACTION
+  | SetTransition _ -> SET
+  | NotSetTransition _ -> NOT_SET
+  | WildcardTransition _ -> WILDCARD
+  | PrecedencePredicateTransition _ -> PRECEDENCE
+
+let serialization_type_string e = match e with
     EpsilonTransition _ -> "EPSILON"
   | RangeTransition _ -> "RANGE"
   | RuleTransition _ -> "RULE"
@@ -302,7 +331,7 @@ end
 
 module State = struct
   let mk_id n = Types.STID n
-
+  let int_of_id (Types.STID n) = n
   type t = [%import: Types.state_t
             [@with node_t := Node.t]
             [@with edge_t := Edge.t]
