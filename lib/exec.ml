@@ -6,7 +6,6 @@ open Pa_ppx_utils
 open Util
 open Atn
 
-
 module Token = struct
   let _INVALID_TYPE = 0
   let  _EPSILON = -2
@@ -2070,14 +2069,19 @@ let accept self input lexerActionExecutor_opt startIndex index line charPos =
 
 
 let _failOrAccept self prevAccept input reach t =
-(*
   match self.prevAccept.SS.dfaState with
-    None ->
-    let lexerActionExecutor = prevAccept.SS.dfaState.lexerActionExecutor in
-    self.accept(input, lexerActionExecutor, self.startIndex, prevAccept.index, prevAccept.line, prevAccept.column)
-            return prevAccept.dfaState.prediction
- *)     
+    Some st ->
+    let lexerActionExecutor = st.lexerActionExecutor in
+    accept self input lexerActionExecutor self.startIndex prevAccept.SS.index prevAccept.line prevAccept.column ;
+    st.prediction
+  | None ->
+     if t = Token._EOF && IS.index input = self.startIndex then
+       Token._EOF
+     else failwith "failOrAccept: no viable alt"
+
+(*
    assert false 
+ *)     
 
 let failOrAccept self prevAccept input reach t = 
   Tracelog.write
