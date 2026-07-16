@@ -1604,6 +1604,10 @@ let recache ~dfast_cache ~acs_cache ~ac_cache st =
   ACS.recache ~acs_cache ~ac_cache st.configset ;
   Cache.upsert dfast_cache st
 
+let __eq__ st1 st2 =
+  st1 == st2
+  || ACS.__eq__ st1.configset st2.configset
+
 end
 
 
@@ -1912,10 +1916,15 @@ type las_t = {
   ; mutable mode : int
   ; prevAccept : SS.t
   ; mutable startIndex : int
+  ; _ERROR : DFASt.t
   }
 [@@deriving show, eq]
 type t = las_t
 [@@deriving show, eq]
+
+let make_ERROR() =
+  Tracelog.with_disabled
+    (DFASt.init ~stateNumber:0x7FFFFFFF ~configs:(ACS.init())) ()
 
 let _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
   AS.Counter.check predicted_id ;
@@ -1931,6 +1940,7 @@ let _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
   ; column = 0
   ; mode = Lexer._DEFAULT_MODE
   ; prevAccept = SS.init ()
+  ; _ERROR = make_ERROR()
   }
 
 let to_mimick t =
@@ -1972,6 +1982,7 @@ let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns ?recog t =
       ; column = t.column
       ; mode = t.mode
       ; prevAccept = SS.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t.prevAccept
+      ; _ERROR = make_ERROR()
     }
 
 module Cache = Cacher(struct
@@ -2033,7 +2044,63 @@ let failOrAccept self prevAccept input reach t =
     (LexerATNSimulator_EXIT_failOrAccept (to_mimick self, rv)) ;
   rv
 
-let execATN self input dfaSt = assert false
+let _captureSimState self settings input dfaState =
+  settings.SS.index <- IS.index input
+  ; settings.SS.line <- self.line
+  ; settings.SS.column <- self.column
+  ; settings.SS.dfaState <- Some dfaState
+
+let captureSimState self settings input dfast =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_captureSimState (to_mimick self, SS.to_mimick settings,
+                                           IS.to_mimick input, DFASt.to_mimick dfast)) ;
+  let rv = _captureSimState self settings input dfast in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_captureSimState (to_mimick self, SS.to_mimick settings)) ;
+  rv
+
+let getExistingTargetState self dfa s t =
+  if Array.length s.DFASt.edges = 0 || t < _MIN_DFA_EDGE || t > _MAX_DFA_EDGE then
+    None
+  else
+    let target = s.DFASt.edges.(t - _MIN_DFA_EDGE) in
+    Some target
+
+let _execATN self input ds0 =
+(*
+  if ds0.DFASt.isAcceptState then
+    captureSimState self self.prevAccept input ds0 ;
+  let t = ref (IS.la input 1) in
+  let s = ref ds0 in
+  let exception Break in
+  (try
+     while true do
+       let target = getExistingTargetState self !s !t in
+       if DFASt.__eq__ target self._ERROR then
+         raise Break ;
+       if !t <> Token._EOF then
+         consume self input ;
+       if target.DFASt.isAcceptState then begin
+           capturSimState self self.prevAccept input target ;
+           if !t = Token._EOF then
+             raise Break
+         end ;
+       t := IS.la input 1 ;
+       s := target
+     done ;
+   with Break -> ());
+  failOrAccept self self.prevAccept input !(s).configs !t
+ *)
+ assert false
+
+
+let execATN self input dfast =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_execATN (to_mimick self, IS.to_mimick input, DFASt.to_mimick dfast)) ;
+  let rv = _execATN self input dfast in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_execATN (to_mimick self, rv)) ;
+  rv
 
 let _evaluatePredicate self input ruleIndex predIndex speculative = assert false
 let evaluatePredicate self input ruleIndex predIndex speculative =
