@@ -341,6 +341,18 @@ class LexerATNSimulator(ATNSimulator):
     #  we can reach upon input {@code t}. Parameter {@code reach} is a return
     #  parameter.
     def getReachableConfigSet(self, input:InputStream, closure:ATNConfigSet, reach:ATNConfigSet, t:int):
+        Trace.writej([ 'ENTER LexerATNSimulator.getReachableConfigSet',
+                       self.asdict(),
+                       input.asdict(),
+                       closure.asdict(),
+                       reach.asdict(),
+                       t,
+                      ])
+        self._getReachableConfigSet(input, closure, reach, t)
+        Trace.writej([ 'EXIT LexerATNSimulator.getReachableConfigSet',
+                       self.asdict(), reach.asdict() ])
+
+    def _getReachableConfigSet(self, input:InputStream, closure:ATNConfigSet, reach:ATNConfigSet, t:int):
         # this is used to skip processing for configs which have a lower priority
         # than a config that already reached an accept state for the same rule
         skipAlt = ATN.INVALID_ALT_NUMBER

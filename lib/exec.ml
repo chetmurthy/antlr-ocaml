@@ -860,7 +860,7 @@ module LA = struct
 
 let pp_hum pps t = Fmt.(pf pps "%s" (Atn.LexerAction.toString t))
 
-let isPositionIndependent = function
+let isPositionDependent = function
     (LexerChannelAction {isPositionDependent}
      | LexerCustomAction {isPositionDependent}
     | LexerIndexedCustomAction {isPositionDependent}
@@ -870,6 +870,17 @@ let isPositionIndependent = function
     | LexerPushModeAction {isPositionDependent}
     | LexerSkipAction {isPositionDependent}
     | LexerTypeAction {isPositionDependent}) -> isPositionDependent
+
+let actionType = function
+    (LexerChannelAction {actionType}
+     | LexerCustomAction {actionType}
+    | LexerIndexedCustomAction {actionType}
+    | LexerModeAction {actionType}
+    | LexerMoreAction {actionType}
+    | LexerPopModeAction {actionType}
+    | LexerPushModeAction {actionType}
+    | LexerSkipAction {actionType}
+    | LexerTypeAction {actionType}) -> actionType
 
 let rec execute la recog =
   match la with
@@ -892,6 +903,15 @@ let rec execute la recog =
   | LexerSkipAction _ -> L.skip recog
 
   | LexerTypeAction { type_ } -> L.set_type recog type_
+
+let init_LexerIndexedCustomAction offset action =
+  LexerIndexedCustomAction {
+      actionType = actionType action
+    ; isPositionDependent = true
+    ; offset
+    ; action
+  }
+
 end
 module LexerAction = LA
 
@@ -927,7 +947,7 @@ let execute self recog input startIndex =
                      IS.seek input (startIndex + offset) ;
                      requiresSeek := (startIndex + offset) <> stopIndex
 
-                  | _ when LA.isPositionIndependent lexerAction ->
+                  | _ when LA.isPositionDependent lexerAction ->
                      IS.seek input stopIndex ;
                      requiresSeek := false) ;
                   LA.execute lexerAction recog)
@@ -936,6 +956,14 @@ let execute self recog input startIndex =
       if !requiresSeek then
         IS.seek input stopIndex
     )
+
+let fixOffsetBeforeMatch self offset =
+  let lexerActions =
+    List.map (fun la ->
+        if LA.isPositionDependent la && not (match la with LexerIndexedCustomAction _ -> true | _ -> false) then
+          LA.init_LexerIndexedCustomAction  offset la
+        else la) self.lexerActions in
+  { lexerActions }
 
 end
 module LexerActionExecutor = LAE
@@ -1415,6 +1443,8 @@ let set_UA cs v =
   cs.uniqueAlt <- v ;
   Tracelog.write (ATNConfigSet_EXIT_set_UA (to_mimick cs)) ;
   ()
+
+let __len__ cs = List.length !(cs.configs)
 
 end
 module ATNConfigSet = ACS
@@ -2078,45 +2108,86 @@ let getExistingTargetState self dfa s t =
     let target = DFA.num2state dfa target in
     Some target
 
-let _execATN self dfa input ds0 =
-(*
-  if ds0.DFASt.isAcceptState then
-    captureSimState self self.prevAccept input ds0 ;
-  let t = ref (IS.la input 1) in
-  let s = ref ds0 in
-  let exception Break in
-  (try
-     while true do
-       let target = getExistingTargetState self dfa !s !t in
-       let target =
-         match target with
-           Some t -> t
-         | None ->
-            computeTargetState self input !s !t in
-       if DFASt.__eq__ target self._ERROR then
-         raise Break ;
-       if !t <> Token._EOF then
-         consume self input ;
-       if target.DFASt.isAcceptState then begin
-           capturSimState self self.prevAccept input target ;
-           if !t = Token._EOF then
-             raise Break
-         end ;
-       t := IS.la input 1 ;
-       s := target
-     done ;
-   with Break -> ());
-  failOrAccept self self.prevAccept input !(s).configs !t
- *)
- assert false
+let _addDFAState self dfa cs =
+  let exception EarlyExit of DFASt.t  in
+  try
+    let proposed = DFASt.init ~configs:cs () in
+    let firstConfigWithRuleStopState =
+      !(cs.ACS.configs)
+      |> List.find_opt (fun c ->
+             (Atn.State.get_state self.atn.Atn.states c.AC.state).node = RuleStopState) in
+    (match firstConfigWithRuleStopState with
+       None -> ()
+     | Some firstConfigWithRuleStopState ->
+        let firstConfigWithRuleStopState_lexer_ext = match firstConfigWithRuleStopState.AC.lexer_ext with
+            None -> failwith "LAC.addDFAState: an ATNConfig where we were expecting LexerATNConfig"
+          | Some ext -> ext in
+        DFASt.set_isAcceptState proposed true ;
+        DFASt.set_lexerActionExecutor proposed firstConfigWithRuleStopState_lexer_ext.lexerActionExecutor ;
+        let ruleToTokenType = match self.atn.ruleToTokenType with
+            None -> failwith "LAS.addDFAState: ruleToTokenType was None!"
+          | Some a -> a in
+        let fc_st = Atn.State.get_state self.atn.Atn.states firstConfigWithRuleStopState.state in
+        DFASt.set_prediction proposed ruleToTokenType.(fc_st.ruleIndex)) ;
+    let dfa' = self.decisionToDFA.(self.mode) in
+    assert (dfa.DFA.id = dfa'.DFA.id) ;
+    let existing = DFA.states_get dfa proposed in
+    (match existing with
+       None -> ()
+     | Some existing ->
+        raise (EarlyExit existing)) ;
 
+    let newState = proposed in
+    DFASt.set_stateNumber newState (DFA.states_len dfa) ;
+    ACS.setReadonly cs true ;
+    newState.DFASt.configset <- cs ;
+    DFA.states_add dfa newState ;
+    newState
+  with (EarlyExit st) -> st
 
-let execATN self dfa input dfast =
+let addDFAState self dfa cs =
   Tracelog.write
-    (LexerATNSimulator_ENTER_execATN (to_mimick self, IS.to_mimick input, DFASt.to_mimick dfast)) ;
-  let rv = _execATN self dfa input dfast in
+    (LexerATNSimulator_ENTER_addDFAState (to_mimick self, ACS.to_mimick cs)) ;
+  let rv = _addDFAState self dfa cs in
   Tracelog.write
-    (LexerATNSimulator_EXIT_execATN (to_mimick self, rv)) ;
+    (LexerATNSimulator_EXIT_addDFAState (to_mimick self, DFASt.to_mimick rv)) ;
+  rv
+
+let _addDFAEdge self dfa from_ tk to_ cs =
+  let exception EarlyExit of DFASt.t in
+  let to_ = ref to_ in
+  try
+    (match (!to_, cs) with
+       (None, Some cs) ->
+        let suppressEdge = cs.ACS.hasSemanticContext in
+        ACS.update_HSC cs false ;
+        let newto = addDFAState self dfa cs in
+        to_ := Some newto ;
+        if suppressEdge then raise (EarlyExit newto)
+       | _ -> ()) ;
+    
+    assert (!to_ <> None) ;
+    let to_= Std.outSome !to_ in
+    if tk < _MIN_DFA_EDGE || tk > _MAX_DFA_EDGE then
+      raise (EarlyExit to_) ;
+
+    if Array.length from_.DFASt.edges = 0 then
+      DFASt.makeEdges from_ (Array.make (_MAX_DFA_EDGE - _MIN_DFA_EDGE + 1) None) ;
+
+    DFASt.setEdge from_ (tk - _MIN_DFA_EDGE) to_ ;
+    to_
+  with (EarlyExit st) ->
+        st
+
+let addDFAEdge self dfa from_ tk to_ cs =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_addDFAEdge (to_mimick self, DFASt.to_mimick from_,
+                                         tk,
+                                         Option.map DFASt.to_mimick to_,
+                                         Option.map ACS.to_mimick cs)) ;
+  let rv = _addDFAEdge self dfa from_ tk to_ cs in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv)) ;
   rv
 
 let _evaluatePredicate self input ruleIndex predIndex speculative = assert false
@@ -2224,6 +2295,116 @@ and closure self is config configs ~currentAltReachedAcceptState
     (LexerATNSimulator_EXIT_closure (to_mimick self, rv, ACS.to_mimick configs)) ;
   rv
 
+let getReachableTarget self trans t =
+  if Edge.matches trans t 0 Lexer._MAX_CHAR_VALUE then
+    Some (Edge.target trans)
+  else None
+
+let _getReachableConfigSet self input closure_ reach t =
+  let skipAlt = ref Atn._INVALID_ALT_NUMBER in
+  !(closure_.ACS.configs)
+  |> List.iter (fun cfg ->
+     let cfg_lexer_ext =
+       match cfg.AC.lexer_ext with
+         None -> failwith "LAE.getReachableConfigSet: must be LexerATNConfig, but was ATNConfig"
+       | Some ext -> ext in
+     let currentAltReachedAcceptState = ( cfg.AC.alt = !skipAlt ) in
+         if currentAltReachedAcceptState || cfg_lexer_ext.AC.passedThroughNonGreedyDecision then
+           ()
+         else
+           let st = Atn.State.get_state cfg.AC.atn.states cfg.state in
+           st.transitions
+           |> List.iter (fun trans ->
+           match getReachableTarget self trans t with
+             None -> ()
+           | Some target ->
+              let lexerActionExecutor =
+                match cfg_lexer_ext.AC.lexerActionExecutor with
+                  None -> None
+                | Some lexerActionExecutor ->
+                   Some (LAE.fixOffsetBeforeMatch lexerActionExecutor (IS.index input - self.startIndex)) in
+              let treatEofAsEpsilon = (t = Token._EOF) in
+              let config = AC.init_LexerATNConfig cfg.atn (Some target) None None None (Some cfg) lexerActionExecutor in
+              if closure self input config reach currentAltReachedAcceptState true treatEofAsEpsilon then
+                skipAlt := cfg.alt
+                )
+       )
+
+let getReachableConfigSet self input closure_ reach t =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_getReachableConfigSet (to_mimick self, IS.to_mimick input, ACS.to_mimick closure_, ACS.to_mimick reach, t)) ;
+  let rv = _getReachableConfigSet self input closure_ reach t in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_getReachableConfigSet (to_mimick self, ACS.to_mimick reach)) ;
+  rv
+
+let _computeTargetState self dfa input s t =
+  let reach = ACS.init () in
+  getReachableConfigSet self input s.DFASt.configset reach t ;
+  if ACS.__len__ reach = 0 then begin
+    if not reach.ACS.hasSemanticContext then
+      ignore(addDFAEdge self dfa s t (Some (Std.outSome !_ERROR)) None) ;
+    (Std.outSome !_ERROR)
+    end
+  else
+    addDFAEdge self dfa s t None (Some reach)
+
+let computeTargetState self dfa input s t =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_computeTargetState (to_mimick self, IS.to_mimick input, DFASt.to_mimick s, t)) ;
+  let rv = _computeTargetState self dfa input s t in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_computeTargetState (to_mimick self, DFASt.to_mimick rv)) ;
+  rv
+
+let consume self input =
+  let curChar = IS.la input 1 in
+  if curChar = Char.code '\n' then begin
+    self.line <- self.line + 1 ;
+    self.column <- 0
+    end
+  else
+    self.column <- self.column + 1 ;
+  IS.consume input
+
+let _execATN self dfa input ds0 =
+
+  if ds0.DFASt.isAcceptState then
+    captureSimState self self.prevAccept input ds0 ;
+  let t = ref (IS.la input 1) in
+  let s = ref ds0 in
+  let exception Break in
+  (try
+     while true do
+       let target = getExistingTargetState self dfa !s !t in
+       let target =
+         match target with
+           Some t -> t
+         | None ->
+            computeTargetState self dfa input !s !t in
+       if DFASt.__eq__ target (Std.outSome !_ERROR) then
+         raise Break ;
+       if !t <> Token._EOF then
+         consume self input ;
+       if target.DFASt.isAcceptState then begin
+           captureSimState self self.prevAccept input target ;
+           if !t = Token._EOF then
+             raise Break
+         end ;
+       t := IS.la input 1 ;
+       s := target
+     done ;
+   with Break -> ());
+  failOrAccept self self.prevAccept input !(s).configset !t
+
+let execATN self dfa input dfast =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_execATN (to_mimick self, IS.to_mimick input, DFASt.to_mimick dfast)) ;
+  let rv = _execATN self dfa input dfast in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_execATN (to_mimick self, rv)) ;
+  rv
+
 let _computeStartState self is p =
   let p_state = Atn.State.get_state self.atn.Atn.states p in
   let initialContext = PC.EMPTY in
@@ -2241,88 +2422,6 @@ let computeStartState self is p =
   let rv = _computeStartState self is p in
   Tracelog.write
     (LexerATNSimulator_EXIT_computeStartState (ACS.to_mimick rv)) ;
-  rv
-
-let _addDFAState self dfa cs =
-  let exception EarlyExit of DFASt.t  in
-  try
-    let proposed = DFASt.init ~configs:cs () in
-    let firstConfigWithRuleStopState =
-      !(cs.ACS.configs)
-      |> List.find_opt (fun c ->
-             (Atn.State.get_state self.atn.Atn.states c.AC.state).node = RuleStopState) in
-    (match firstConfigWithRuleStopState with
-       None -> ()
-     | Some firstConfigWithRuleStopState ->
-        let firstConfigWithRuleStopState_lexer_ext = match firstConfigWithRuleStopState.AC.lexer_ext with
-            None -> failwith "LAC.addDFAState: an ATNConfig where we were expecting LexerATNConfig"
-          | Some ext -> ext in
-        DFASt.set_isAcceptState proposed true ;
-        DFASt.set_lexerActionExecutor proposed firstConfigWithRuleStopState_lexer_ext.lexerActionExecutor ;
-        let ruleToTokenType = match self.atn.ruleToTokenType with
-            None -> failwith "LAS.addDFAState: ruleToTokenType was None!"
-          | Some a -> a in
-        let fc_st = Atn.State.get_state self.atn.Atn.states firstConfigWithRuleStopState.state in
-        DFASt.set_prediction proposed ruleToTokenType.(fc_st.ruleIndex)) ;
-    let dfa' = self.decisionToDFA.(self.mode) in
-    assert (dfa.DFA.id = dfa'.DFA.id) ;
-    let existing = DFA.states_get dfa proposed in
-    (match existing with
-       None -> ()
-     | Some existing ->
-        raise (EarlyExit existing)) ;
-
-    let newState = proposed in
-    DFASt.set_stateNumber newState (DFA.states_len dfa) ;
-    ACS.setReadonly cs true ;
-    newState.DFASt.configset <- cs ;
-    DFA.states_add dfa newState ;
-    newState
-  with (EarlyExit st) -> st
-
-let addDFAState self dfa cs =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_addDFAState (to_mimick self, ACS.to_mimick cs)) ;
-  let rv = _addDFAState self dfa cs in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_addDFAState (to_mimick self, DFASt.to_mimick rv)) ;
-  rv
-
-let _addDFAEdge self dfa from_ tk to_ cs =
-  let exception EarlyExit of DFASt.t in
-  let to_ = ref to_ in
-  try
-    (match (!to_, cs) with
-       (None, Some cs) ->
-        let suppressEdge = cs.ACS.hasSemanticContext in
-        ACS.update_HSC cs false ;
-        let newto = addDFAState self dfa cs in
-        to_ := Some newto ;
-        if suppressEdge then raise (EarlyExit newto)
-       | _ -> ()) ;
-    
-    assert (!to_ <> None) ;
-    let to_= Std.outSome !to_ in
-    if tk < _MIN_DFA_EDGE || tk > _MAX_DFA_EDGE then
-      raise (EarlyExit to_) ;
-
-    if Array.length from_.DFASt.edges = 0 then
-      DFASt.makeEdges from_ (Array.make (_MAX_DFA_EDGE - _MIN_DFA_EDGE + 1) None) ;
-
-    DFASt.setEdge from_ (tk - _MIN_DFA_EDGE) to_ ;
-    to_
-  with (EarlyExit st) ->
-        st
-
-let addDFAEdge self dfa from_ tk to_ cs =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_addDFAEdge (to_mimick self, DFASt.to_mimick from_,
-                                         tk,
-                                         Option.map DFASt.to_mimick to_,
-                                         Option.map ACS.to_mimick cs)) ;
-  let rv = _addDFAEdge self dfa from_ tk to_ cs in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv)) ;
   rv
 
 let _matchATN self dfa is =

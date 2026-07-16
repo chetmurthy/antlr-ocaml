@@ -12,6 +12,7 @@ let readInt = parser [< 'n >] -> n
 
 let readBool = parser [< 'n >] -> n<>0
 
+let _INVALID_ALT_NUMBER = 0
 let _SERIALIZED_VERSION = 4
 
 type state_id = [%import: Types.state_id]

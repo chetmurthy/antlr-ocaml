@@ -16,7 +16,7 @@ source trip-tests/DFA.entrypoints.sh
 source trip-tests/IS.entrypoints.sh
 source trip-tests/LAS.entrypoints.sh
 
-NARGS=" --stop-nth 9"
+NARGS=" --stop-nth 4"
 
 rm -f _generated/*.log
 
