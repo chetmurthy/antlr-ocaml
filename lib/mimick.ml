@@ -677,6 +677,13 @@ type json_log_t =
                                     [@yojson.name "EXIT InputStream.getText"]
                                     [@located_yojson.name "EXIT InputStream.getText"]
 
+| LexerActionExecutor_ENTER_execute of lexer_action_executor_t * input_stream_t * int
+                                    [@yojson.name "ENTER LexerActionExecutor.execute"]
+                                    [@located_yojson.name "ENTER LexerActionExecutor.execute"]
+| LexerActionExecutor_EXIT_execute of lexer_action_executor_t * input_stream_t
+                                    [@yojson.name "EXIT LexerActionExecutor.execute"]
+                                    [@located_yojson.name "EXIT LexerActionExecutor.execute"]
+
 | Msg of string * json_t
                                     [@yojson.name "msg"]
                                     [@located_yojson.name "msg"]

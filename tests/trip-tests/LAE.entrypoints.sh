@@ -1,0 +1,1 @@
+ARGS+=" -e LexerActionExecutor.execute"

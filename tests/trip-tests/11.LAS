@@ -15,6 +15,7 @@ source trip-tests/ACS.entrypoints.sh
 source trip-tests/DFA.entrypoints.sh
 source trip-tests/IS.entrypoints.sh
 source trip-tests/LAS.entrypoints.sh
+source trip-tests/LAE.entrypoints.sh
 
 NARGS=" --stop-nth 4"
 

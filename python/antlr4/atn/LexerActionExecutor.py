@@ -123,6 +123,19 @@ class LexerActionExecutor(object):
     # of the token.
     #/
     def execute(self, lexer:Lexer, input:InputStream, startIndex:int):
+        Trace.writej([ 'ENTER LexerActionExecutor.execute',
+                       self.asdict(),
+                       input.asdict(),
+                       startIndex,
+                      ])
+        rv = self._execute(lexer, input, startIndex)
+        Trace.writej([ 'EXIT LexerActionExecutor.execute',
+                       self.asdict(),
+                       input.asdict(),
+                      ])
+        return rv
+
+    def _execute(self, lexer:Lexer, input:InputStream, startIndex:int):
         requiresSeek = False
         stopIndex = input.index
         try:

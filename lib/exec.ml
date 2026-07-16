@@ -817,6 +817,7 @@ let init input ?(output = stdout) ?(actions=[]) () =
   ; _text = None
   ; _actions = MHM.mk 23
   } in
+
   let actions =
     if actions = [] then
       [(0,(fun (self : lexer_t) localCtx ruleIndex actionIndex ->
@@ -933,7 +934,7 @@ let append lae_opt la =
     None -> { lexerActions = [la] }
   | Some lae -> {(lae) with lexerActions = lae.lexerActions @ [la] }
 
-let execute self recog input startIndex =
+let _execute self recog input startIndex =
   let requiresSeek = ref false in
   let stopIndex = IS.index input in
   Util.finally (fun () ->
@@ -955,6 +956,12 @@ let execute self recog input startIndex =
       if !requiresSeek then
         IS.seek input stopIndex
     )
+
+let execute self recog input startIndex =
+  Tracelog.write (LexerActionExecutor_ENTER_execute (to_mimick self, IS.to_mimick input, startIndex)) ;
+  let rv = _execute self recog input startIndex in
+  Tracelog.write (LexerActionExecutor_EXIT_execute (to_mimick self, IS.to_mimick input)) ;
+  rv
 
 let fixOffsetBeforeMatch self offset =
   let lexerActions =
