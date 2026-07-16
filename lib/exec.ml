@@ -1832,6 +1832,13 @@ let recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa =
   ; Option.iter (fun st -> DFASt.recache ~dfast_cache ~acs_cache ~ac_cache st ; ()) dfa.s0
   ; Cache.upsert dfa_cache dfa
 
+let num2state dfa n =
+  match MHM.map dfa.num2state n with
+    st -> st
+  | exception Not_found ->
+     Fmt.(failwithf "DFA.num2state: DFA.id=%d, stateNumber=%d (0x%08x) Not_found"
+            dfa.id n n)
+
 end
 
 module SS = struct
@@ -2068,9 +2075,10 @@ let getExistingTargetState self dfa s t =
     None
   else
     let target = s.DFASt.edges.(t - _MIN_DFA_EDGE) in
+    let target = DFA.num2state dfa target in
     Some target
 
-let _execATN self input ds0 =
+let _execATN self dfa input ds0 =
 (*
   if ds0.DFASt.isAcceptState then
     captureSimState self self.prevAccept input ds0 ;
@@ -2079,7 +2087,12 @@ let _execATN self input ds0 =
   let exception Break in
   (try
      while true do
-       let target = getExistingTargetState self !s !t in
+       let target = getExistingTargetState self dfa !s !t in
+       let target =
+         match target with
+           Some t -> t
+         | None ->
+            computeTargetState self input !s !t in
        if DFASt.__eq__ target self._ERROR then
          raise Break ;
        if !t <> Token._EOF then
@@ -2098,10 +2111,10 @@ let _execATN self input ds0 =
  assert false
 
 
-let execATN self input dfast =
+let execATN self dfa input dfast =
   Tracelog.write
     (LexerATNSimulator_ENTER_execATN (to_mimick self, IS.to_mimick input, DFASt.to_mimick dfast)) ;
-  let rv = _execATN self input dfast in
+  let rv = _execATN self dfa input dfast in
   Tracelog.write
     (LexerATNSimulator_EXIT_execATN (to_mimick self, rv)) ;
   rv
@@ -2230,7 +2243,7 @@ let computeStartState self is p =
     (LexerATNSimulator_EXIT_computeStartState (ACS.to_mimick rv)) ;
   rv
 
-let _addDFAState self cs =
+let _addDFAState self dfa cs =
   let exception EarlyExit of DFASt.t  in
   try
     let proposed = DFASt.init ~configs:cs () in
@@ -2251,7 +2264,8 @@ let _addDFAState self cs =
           | Some a -> a in
         let fc_st = Atn.State.get_state self.atn.Atn.states firstConfigWithRuleStopState.state in
         DFASt.set_prediction proposed ruleToTokenType.(fc_st.ruleIndex)) ;
-    let dfa = self.decisionToDFA.(self.mode) in
+    let dfa' = self.decisionToDFA.(self.mode) in
+    assert (dfa.DFA.id = dfa'.DFA.id) ;
     let existing = DFA.states_get dfa proposed in
     (match existing with
        None -> ()
@@ -2266,15 +2280,15 @@ let _addDFAState self cs =
     newState
   with (EarlyExit st) -> st
 
-let addDFAState self cs =
+let addDFAState self dfa cs =
   Tracelog.write
     (LexerATNSimulator_ENTER_addDFAState (to_mimick self, ACS.to_mimick cs)) ;
-  let rv = _addDFAState self cs in
+  let rv = _addDFAState self dfa cs in
   Tracelog.write
     (LexerATNSimulator_EXIT_addDFAState (to_mimick self, DFASt.to_mimick rv)) ;
   rv
 
-let _addDFAEdge self from_ tk to_ cs =
+let _addDFAEdge self dfa from_ tk to_ cs =
   let exception EarlyExit of DFASt.t in
   let to_ = ref to_ in
   try
@@ -2282,7 +2296,7 @@ let _addDFAEdge self from_ tk to_ cs =
        (None, Some cs) ->
         let suppressEdge = cs.ACS.hasSemanticContext in
         ACS.update_HSC cs false ;
-        let newto = addDFAState self cs in
+        let newto = addDFAState self dfa cs in
         to_ := Some newto ;
         if suppressEdge then raise (EarlyExit newto)
        | _ -> ()) ;
@@ -2300,34 +2314,37 @@ let _addDFAEdge self from_ tk to_ cs =
   with (EarlyExit st) ->
         st
 
-let addDFAEdge self from_ tk to_ cs =
+let addDFAEdge self dfa from_ tk to_ cs =
   Tracelog.write
     (LexerATNSimulator_ENTER_addDFAEdge (to_mimick self, DFASt.to_mimick from_,
                                          tk,
                                          Option.map DFASt.to_mimick to_,
                                          Option.map ACS.to_mimick cs)) ;
-  let rv = _addDFAEdge self from_ tk to_ cs in
+  let rv = _addDFAEdge self dfa from_ tk to_ cs in
   Tracelog.write
     (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv)) ;
   rv
 
-let _matchATN self is =
+let _matchATN self dfa is =
   let startState = self.atn.Atn.modeToStartState.(self.mode) in
   let old_mode = self.mode in
   let s0_closure = computeStartState self is startState in
   let suppressEdge = s0_closure.ACS.hasSemanticContext in
   ACS.update_HSC s0_closure false ;
-  let next = addDFAState self s0_closure in
-  if not suppressEdge then
-    DFA.set_s0 self.decisionToDFA.(self.mode) next ;
-  let predict = execATN self is next in
+  let next = addDFAState self dfa s0_closure in
+  if not suppressEdge then begin
+      let dfa' = self.decisionToDFA.(self.mode) in
+      assert (dfa.DFA.id = dfa'.DFA.id) ;
+      DFA.set_s0 dfa' next
+    end ;
+  let predict = execATN self dfa is next in
   predict
 
 
-let matchATN self is =
+let matchATN self dfa is =
   Tracelog.write
     (LexerATNSimulator_ENTER_matchATN (to_mimick self, IS.to_mimick is)) ;
-  let rv = _matchATN self is in
+  let rv = _matchATN self dfa is in
   Tracelog.write
     (LexerATNSimulator_EXIT_matchATN (to_mimick self, rv)) ;
   rv
@@ -2340,8 +2357,8 @@ let __match self is mode =
       ; SS.reset self.prevAccept
       ; let dfa = self.decisionToDFA.(mode) in
         match dfa.s0 with
-          None -> matchATN self is
-        | Some s0 -> execATN self is s0
+          None -> matchATN self dfa is
+        | Some s0 -> execATN self dfa is s0
       )
       ()
       (fun _ _ -> IS.release is mark)

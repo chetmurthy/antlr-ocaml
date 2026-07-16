@@ -283,6 +283,18 @@ class LexerATNSimulator(ATNSimulator):
     # {@code t}. If {@code t} does not lead to a valid DFA state, this method
     # returns {@link #ERROR}.
     def computeTargetState(self, input:InputStream, s:DFAState, t:int):
+        Trace.writej([ 'ENTER LexerATNSimulator.computeTargetState',
+                       self.asdict(),
+                       input.asdict(),
+                       s.asdict(),
+                       t
+                      ])
+        rv = self._computeTargetState(input, s, t)
+        Trace.writej([ 'EXIT LexerATNSimulator.computeTargetState',
+                       self.asdict(), rv.asdict() ])
+        return rv
+
+    def _computeTargetState(self, input:InputStream, s:DFAState, t:int):
         reach = OrderedATNConfigSet()
 
         # if we don't find an existing DFA state
