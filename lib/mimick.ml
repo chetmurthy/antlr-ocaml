@@ -492,10 +492,13 @@ type json_log_t =
                       [@yojson.name "EXIT LexerATNSimulator.accept"]
                       [@located_yojson.name "EXIT LexerATNSimulator.accept"]
 
+| Lexer_ENTER_init of input_stream_t
+                      [@yojson.name "ENTER Lexer.__init__"]
+                      [@located_yojson.name "ENTER Lexer.__init__"]
+| Lexer_EXIT_init
+                      [@yojson.name "EXIT Lexer.__init__"]
+                      [@located_yojson.name "EXIT Lexer.__init__"]
 
-| Lexer_init of lexer_t
-                      [@yojson.name "Lexer.__init__"]
-                      [@located_yojson.name "Lexer.__init__"]
 | Lexer_ENTER_nextToken of lexer_t
                       [@yojson.name "ENTER Lexer.nextToken"]
                       [@located_yojson.name "ENTER Lexer.nextToken"]

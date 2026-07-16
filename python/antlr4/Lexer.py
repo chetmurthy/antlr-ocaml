@@ -48,6 +48,9 @@ class Lexer(Recognizer, TokenSource):
     MAX_CHAR_VALUE = 0x10FFFF
 
     def __init__(self, input:InputStream, output:TextIO = sys.stdout):
+        Trace.writej([ 'ENTER Lexer.__init__',
+                       input.asdict(),
+                      ])
         super().__init__()
         self._input = input
         self._output = output
@@ -93,8 +96,7 @@ class Lexer(Recognizer, TokenSource):
         #  the input char buffer.  Use setText() or can set self instance var.
         #/
         self._text = None
-        Trace.writej([ 'Lexer.__init__',
-                                 self.asdict() ])
+        Trace.writej([ 'EXIT Lexer.__init__' ])
 
     def asdict(self):
         d = {

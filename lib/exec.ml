@@ -1962,9 +1962,9 @@ type las_t = {
   ; sharedContextCache : (PC.t MHS.t
                            [@equal mhs_equal]
                                  [@printer (fun pps _ -> Fmt.(pf pps "_"))])
-  ; recog : L.t option
+  ; recog : (L.t
     [@printer (fun pps _ -> Fmt.(pf pps "<recog>"))]
-    [@equal (fun x y -> x==y)]
+    [@equal (fun x y -> x==y)]) option
   ; decisionToDFA : DFA.t array
   ; mutable column : int
   ; mutable line : int
@@ -2006,16 +2006,16 @@ let to_mimick t =
   ; prevAccept = t.prevAccept |> SS.to_mimick
   }
 
-let init ?predicted_id atn decisionToDFA sharedContextCache () =
+let init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
   AS.Counter.check predicted_id ;
   Tracelog.write
     (LexerATNSimulator_ENTER_init (AS.Counter.get(), Array.map DFA.to_mimick decisionToDFA, List.map PC.to_mimick sharedContextCache)) ;
-  let rv = _init ?predicted_id atn decisionToDFA sharedContextCache () in
+  let rv = _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () in
   Tracelog.write
     (LexerATNSimulator_EXIT_init (to_mimick rv)) ;
   rv
 
-let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns ?recog t =
+let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns ~recog t =
   let atn  = Atns.for_grammar atns Atn.LEXER in
   match t with
     M.LexerATNSimulator t ->
@@ -2044,8 +2044,8 @@ module Cache = Cacher(struct
                  end)
 
 
-let of_mimick ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t =
-  let t = _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t in
+let of_mimick ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache ~recog atns t =
+  let t = _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache ~recog atns t in
   match las_cache with
     None -> t
   | Some las_cache -> Cache.recache las_cache t

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-F=_generated/CompositeLexers/LexerDelegatorInvokesDelegateRule/json.log
+F=_generated/LexerExec/CharSet/json.log
 
 echo $F
 
@@ -16,6 +16,7 @@ source trip-tests/DFA.entrypoints.sh
 source trip-tests/IS.entrypoints.sh
 source trip-tests/LAS.entrypoints.sh
 source trip-tests/LAE.entrypoints.sh
+source trip-tests/L.entrypoints.sh
 
 NARGS=" --stop-nth 4"
 
