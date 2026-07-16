@@ -64,7 +64,8 @@ class DFAState(object):
         'id'
     )
 
-    def __init__(self, stateNumber:int=-1, configs:ATNConfigSet=ATNConfigSet()):
+    def __init__(self, stateNumber:int=-1, configs:ATNConfigSet=None):
+        if configs is None: configs = ATNConfigSet()
         global dfaStateCounter
         Trace.writej([ 'ENTER DFAState.__init__',
                                  dfaStateCounter,

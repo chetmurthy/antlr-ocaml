@@ -1,3 +1,7 @@
+import sys
+import json
+import Trace
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -14,7 +18,7 @@ class ATNSimulator(object):
     __slots__ = ('atn', 'sharedContextCache', '__dict__', 'id')
 
     # Must distinguish between missing edge and edge we know leads nowhere#/
-    ERROR = DFAState(stateNumber=0x7FFFFFFF, configs=ATNConfigSet())
+    ERROR = Trace.with_disabled(lambda: DFAState(stateNumber=0x7FFFFFFF, configs=ATNConfigSet()))
 #    ERROR.stateNumber = 0x7FFFFFFF
 
     # The context cache maps all PredictionContext objects that are ==

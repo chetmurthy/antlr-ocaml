@@ -14,7 +14,7 @@ ARGS=""
 source trip-tests/ACS.entrypoints.sh
 source trip-tests/DFA.entrypoints.sh
 
-NARGS=" --stop-nth 1"
+#NARGS=" --stop-nth 1"
 
 rm -f _generated/*.log
 

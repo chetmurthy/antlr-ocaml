@@ -131,3 +131,19 @@ def writej(j):
 
 def nowritej(j):
     pass
+
+def disable():
+    global _enabled
+    orig = _enabled
+    _enabled = False
+    return orig
+
+def restore(orig):
+    global _enabled
+    _enabled = orig
+
+def with_disabled(f):
+    orig = disable()
+    rv = f()
+    restore(orig)
+    return rv

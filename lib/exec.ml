@@ -1886,6 +1886,15 @@ module SimState = SS
 
 module AS = struct
 module Counter = Counter(struct let name = "ATNSimulator" end)
+let make_ERROR ~dfast_cache ~acs_cache ~ac_cache () =
+  Tracelog.with_disabled
+    (fun () -> DFASt.recache ~dfast_cache ~acs_cache ~ac_cache (DFASt.init ~stateNumber:0x7FFFFFFF ~configs:(ACS.init()) ())) ()
+
+let _ERROR = ref None
+
+let module_init ~dfast_cache ~acs_cache ~ac_cache () = begin
+    _ERROR := Some (make_ERROR ~dfast_cache ~acs_cache ~ac_cache ())
+  end
 end
 module ATNSimulator = AS
 
@@ -1916,15 +1925,12 @@ type las_t = {
   ; mutable mode : int
   ; prevAccept : SS.t
   ; mutable startIndex : int
-  ; _ERROR : DFASt.t
   }
 [@@deriving show, eq]
 type t = las_t
 [@@deriving show, eq]
 
-let make_ERROR() =
-  Tracelog.with_disabled
-    (DFASt.init ~stateNumber:0x7FFFFFFF ~configs:(ACS.init())) ()
+let _ERROR = ref None
 
 let _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
   AS.Counter.check predicted_id ;
@@ -1940,7 +1946,6 @@ let _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
   ; column = 0
   ; mode = Lexer._DEFAULT_MODE
   ; prevAccept = SS.init ()
-  ; _ERROR = make_ERROR()
   }
 
 let to_mimick t =
@@ -1982,7 +1987,6 @@ let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns ?recog t =
       ; column = t.column
       ; mode = t.mode
       ; prevAccept = SS.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t.prevAccept
-      ; _ERROR = make_ERROR()
     }
 
 module Cache = Cacher(struct
@@ -2351,6 +2355,14 @@ let _match self is mode =
     (LexerATNSimulator_EXIT_match (to_mimick self, rv)) ;
   rv
 
+let module_init ~dfast_cache ~acs_cache ~ac_cache () = begin
+    _ERROR := Some (AS.make_ERROR ~dfast_cache ~acs_cache ~ac_cache ())
+  end
+
 end
 module LexerATNSimulator = LAS
 
+let file_init  ~dfast_cache ~acs_cache ~ac_cache () = begin
+    AS.module_init ~dfast_cache ~acs_cache ~ac_cache () ;
+    LAS.module_init ~dfast_cache ~acs_cache ~ac_cache ()
+  end

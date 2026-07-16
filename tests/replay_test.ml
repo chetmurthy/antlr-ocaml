@@ -242,7 +242,9 @@ let simulate_json caches atns stream =
   |> Util.stream_iter_i (Simulate.ACS.sim1 caches atns)
 
 let simulate1_entry_exit caches ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file =
+  let open Simulate.Caches in
   Tracelog._enabled := true ;
+  Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;
   EntryExit.filter1_then  ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json caches atns) file
 
 let simulate ~lexer_atn ~parser_atn ~verbose ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =

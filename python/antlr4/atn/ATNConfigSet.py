@@ -1,5 +1,7 @@
 import Trace
+import sys
 import json
+import traceback
 
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.

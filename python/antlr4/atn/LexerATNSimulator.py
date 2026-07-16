@@ -753,6 +753,6 @@ class LexerATNSimulator(ATNSimulator):
             return "'" + chr(t) + "'"
 
 
-LexerATNSimulator.ERROR = DFAState(0x7FFFFFFF, ATNConfigSet())
+LexerATNSimulator.ERROR = Trace.with_disabled(lambda: DFAState(0x7FFFFFFF, ATNConfigSet()))
 
 del Lexer

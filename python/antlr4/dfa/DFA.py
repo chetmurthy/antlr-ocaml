@@ -157,11 +157,11 @@ class DFA(object):
     def states_get(self, x, y):
         assert(y is None)
         Trace.writej([ 'ENTER DFA.states_get', self.asdict(), x.asdict() ])
-        Trace._enabled = False
+        orig = Trace.disable()
         rv = self._states.get(x.configs,y)
-        Trace._enabled = True
+        Trace.restore(orig)
         Trace.writej([ 'EXIT DFA.states_get', self.id,
-                                 (None if rv is None else rv.asdict()) ])
+                       (None if rv is None else rv.asdict()) ])
         return rv
 
     def set_s0(self, x):
@@ -171,9 +171,9 @@ class DFA(object):
 
     def states_add(self, x):
         Trace.writej([ 'ENTER DFA.states_add', self.asdict(), x.asdict() ])
-        Trace._enabled = False
+        orig = Trace.disable()
         self._states[x.configs] = x
-        Trace._enabled = True
+        Trace.restore(orig)
         Trace.writej([ 'EXIT DFA.states_add', self.id, self.asdict() ])
 
     def states_len(self):
