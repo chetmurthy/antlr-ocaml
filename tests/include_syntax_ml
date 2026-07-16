@@ -26,13 +26,60 @@ open Pa_ppx_utils ;;
 
 #require "antlr";;
 #require "antlrtest" ;;
-open Antlr ;;
-Atn.debug := true ;;
+#require "cmdliner" ;;
+#load "replay_test.cmo";;
 
-open Atn ;;
-open Pa_ppx_located_yojson ;;
+#trace Antlr.Simulate.ACS.sim1  ;;
+#trace Antlr.Exec.LAS.init ;;
 
-
+Replay_test.ACS.simulate
+ ~lexer_atn:(Some "_generated/CompositeLexers/LexerDelegatorInvokesDelegateRule/Lexer.interp")
+ ~parser_atn:None
+ ~verbose:false
+ ~stop_nth:8 ~only_outermost_enter:true
+ ~entry_exit_name:["ATNConfigSet.add"
+;"ATNConfigSet.__init__"
+;"ATNConfigSet.__eq__"
+;"ATNConfigSet.set_DIOC"
+;"ATNConfigSet.setReadonly"
+;"ATNConfigSet.update_HSC"
+;"ATNConfigSet.set_UA"
+;"ATNConfigSet.set_CA"
+;"ATNConfig.__init__"
+;"ATNConfig.__eq__"
+;"ATNConfig.equalsForConfigSet"
+;"ATNConfig.incrementRIOC"
+;"ATNConfig.update_RIOC"
+;"ATNConfig.set_PFS"
+;"LexerATNConfig.__init__"
+;"LexerATNConfig.__eq__"
+;"DFA.__init__"
+;"DFA.setPrecedenceStartState"
+;"DFA.set_s0"
+;"DFA.states_add"
+;"DFA.states_get"
+;"DFA.states_len"
+;"DFAState.__init__"
+;"DFAState.makeEdges"
+;"DFAState.set_configs"
+;"DFAState.setEdge"
+;"DFAState.set_isAcceptState"
+;"DFAState.set_lexerActionExecutor"
+;"DFAState.set_predicates"
+;"DFAState.set_prediction"
+;"DFAState.set_requiresFullContext"
+;"DFAState.set_stateNumber"
+;"InputStream.__init__"
+;"InputStream.consume"
+;"InputStream.getText"
+;"InputStream.LA"
+;"InputStream.seek"
+;"LexerATNSimulator.addDFAEdge"
+;"LexerATNSimulator.__init__"
+;"LexerATNSimulator.match"
+]
+ "_generated/CompositeLexers/LexerDelegatorInvokesDelegateRule/json.log"
+;;
 
 (*
 ;;; Local Variables: ***

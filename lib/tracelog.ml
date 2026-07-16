@@ -90,14 +90,14 @@ let disabled =
     "EXIT DFAState.set_prediction";
     "ENTER DFAState.set_stateNumber";
     "EXIT DFAState.set_stateNumber";
- *)
+
     "ENTER LexerATNSimulator.__init__";
     "EXIT LexerATNSimulator.__init__";
     "ENTER LexerATNSimulator.match";
     "EXIT LexerATNSimulator.match";
     "ENTER Lexer.nextToken";
     "EXIT Lexer.nextToken";
-
+ *)
     "Lexer.__init__";
     "Lexer.reset";
     "Lexer.skip";
@@ -109,8 +109,6 @@ let disabled =
     "Lexer.emit";
     "Lexer.emitEOF";
 
-    "END LexerATNSimulator.addDFAEdge";
-    "LexerATNSimulator.__add_state__";
     "EXIT ParserATNSimulator.__init__"
     ] 23
 

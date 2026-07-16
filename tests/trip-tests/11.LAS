@@ -11,11 +11,12 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 
 
 ARGS=""
-#REPLAYARGS=" --recache-acs=false --recache-ac=false"
 source trip-tests/ACS.entrypoints.sh
 source trip-tests/DFA.entrypoints.sh
+source trip-tests/IS.entrypoints.sh
+source trip-tests/LAS.entrypoints.sh
 
-#NARGS=" --stop-nth 102"
+NARGS=" --stop-nth 9"
 
 rm -f _generated/*.log
 

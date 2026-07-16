@@ -102,9 +102,9 @@ module Caches = struct
     ; is : IS.Cache.t
     ; las : LAS.Cache.t
     }
-  let mk ~recache_ac ~recache_acs () = {
-      ac = AC.Cache.mk ~do_recache:recache_ac ()
-    ; acs = ACS.Cache.mk ~do_recache:recache_acs ()
+  let mk () = {
+      ac = AC.Cache.mk ()
+    ; acs = ACS.Cache.mk ()
     ; dfast = DFASt.Cache.mk ()
     ; dfa = DFA.Cache.mk ()
     ; is = IS.Cache.mk ()
@@ -198,7 +198,7 @@ let sim1 caches atns (i:int) (loc,j) =
 
       | ATNConfigSet_ENTER_update_HSC (cs, v) ->
          let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
-         ACS.update_HSC cs ;
+         ACS.update_HSC cs v ;
          ()
 
       | ATNConfigSet_ENTER_setReadonly (cs, v) ->
@@ -333,8 +333,14 @@ let sim1 caches atns (i:int) (loc,j) =
          let atn  = Atns.for_grammar atns Atn.LEXER in
          let decisionToDFA = Array.map (DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns) decisionToDFA in
          let sharedContextCache = List.map PC.of_mimick sharedContextCache in
-         let rv = LAS.init ~predicted_id atn decisionToDFA sharedContextCache () in
-         let _ = LAS.recache ~las_cache:caches.las rv  in
+         let rv : LAS.t = LAS.init ~predicted_id atn decisionToDFA sharedContextCache () in
+         let _ : LAS.t = LAS.recache ~las_cache:caches.las ~dfa_cache:caches.dfa ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv  in
+         ()
+
+      | LexerATNSimulator_ENTER_match (las, is, n) ->
+         let las = LAS.of_mimick ~las_cache:(Some caches.las) ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns las in
+         let is = IS.of_mimick ~is_cache:(Some caches.is) is in
+         let rv = LAS._match las is n in
          ()
 
 
