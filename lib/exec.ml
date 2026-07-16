@@ -1156,11 +1156,11 @@ let eq_for_config_set t1 t2 =
  *)
   rv
 
-module ConfigCounter = Counter(struct let name = "ATNConfig" end)
+module Counter = Counter(struct let name = "ATNConfig" end)
 
 let _ATNConfig_init ?predicted_id atn state_opt alt_opt context_opt semantic_opt config_opt =
-  ConfigCounter.check predicted_id;
-  let id = ConfigCounter.get_incr() in
+  Counter.check predicted_id;
+  let id = Counter.get_incr() in
   let state = match (state_opt, config_opt) with
       (Some st, _) -> st
     | (None, Some c) -> c.state
@@ -1198,9 +1198,9 @@ let checkNonGreedyDecision atn lexer_ext target =
 
 
 let init_ATNConfig ?predicted_id atn state_opt alt_opt context_opt semantic_opt config_opt : t =
-  ConfigCounter.check predicted_id ;
+  Counter.check predicted_id ;
   Tracelog.write
-    (ATNConfig_ENTER_init (ConfigCounter.get(), state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
+    (ATNConfig_ENTER_init (Counter.get(), state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
   let rv = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
   Tracelog.write (ATNConfig_EXIT_init (to_mimick rv)) ;
   rv
@@ -1341,11 +1341,11 @@ let __eq__ t1 t2 =
   Tracelog.write(ATNConfigSet_EXIT_eq rv) ;
   rv
 
-module ConfigSetCounter = Counter(struct let name = "ATNConfigSet" end)
+module Counter = Counter(struct let name = "ATNConfigSet" end)
 
 let _init ?id fullCtx =
-  ConfigSetCounter.check id ;
-  let id = ConfigSetCounter.get_incr () in
+  Counter.check id ;
+  let id = Counter.get_incr () in
   {
     id
   ; configs = ref []
@@ -1359,8 +1359,8 @@ let _init ?id fullCtx =
   }
 
 let init ?id ?(fullCtx = true) () =
-  ConfigSetCounter.check id ;
-  Tracelog.write (ATNConfigSet_ENTER_init (ConfigSetCounter.get (), fullCtx));
+  Counter.check id ;
+  Tracelog.write (ATNConfigSet_ENTER_init (Counter.get (), fullCtx));
   let rv = _init ?id fullCtx in
   Tracelog.write (ATNConfigSet_EXIT_init (to_mimick rv));
   rv
@@ -1541,11 +1541,11 @@ let of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t =
     None -> t
   | Some dfast_cache -> Cache.recache dfast_cache t
 
-module DFAStCounter = Counter(struct let name = "DFAState" end)
+module Counter = Counter(struct let name = "DFAState" end)
 
 let _init ?predicted_id stateNumber configs =
-  DFAStCounter.check predicted_id ;
-  let id = DFAStCounter.get_incr () in
+  Counter.check predicted_id ;
+  let id = Counter.get_incr () in
   {
     id
   ; stateNumber
@@ -1559,9 +1559,9 @@ let _init ?predicted_id stateNumber configs =
   }
 
 let init ?predicted_id ?(stateNumber = -1) ?(configs = ACS.init()) () =
-  DFAStCounter.check predicted_id ;
+  Counter.check predicted_id ;
   Tracelog.write
-    (DFAState_ENTER_init (DFAStCounter.get(), stateNumber, ACS.to_mimick configs)) ;
+    (DFAState_ENTER_init (Counter.get(), stateNumber, ACS.to_mimick configs)) ;
   let rv = _init ?predicted_id stateNumber configs in
   Tracelog.write(DFAState_EXIT_init (to_mimick rv)) ;
   rv
@@ -1759,11 +1759,11 @@ let of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns t =
     None -> t
   | Some dfa_cache -> Cache.recache dfa_cache t
 
-module DFACounter = Counter(struct let name = "DFA" end)
+module Counter = Counter(struct let name = "DFA" end)
 
 let _init ?predicted_id atn grammarType atnStartState decision =
-  DFACounter.check predicted_id ;
-  let id = DFACounter.get_incr () in
+  Counter.check predicted_id ;
+  let id = Counter.get_incr () in
   let rv = {
       disable_builtin_equality
     ; id
@@ -1790,9 +1790,9 @@ let _init ?predicted_id atn grammarType atnStartState decision =
   rv
 
 let init ?predicted_id atn grammarType atnStartState decision =
-  DFACounter.check predicted_id ;
+  Counter.check predicted_id ;
   Tracelog.write
-    (DFA_ENTER_init (DFACounter.get(), grammarType, atnStartState, decision)) ;
+    (DFA_ENTER_init (Counter.get(), grammarType, atnStartState, decision)) ;
   let rv = _init  ?predicted_id atn grammarType atnStartState decision in
   Tracelog.write
     (DFA_EXIT_init (rv.id, to_mimick rv)) ;
