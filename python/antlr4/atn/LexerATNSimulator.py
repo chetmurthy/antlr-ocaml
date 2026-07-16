@@ -295,7 +295,7 @@ class LexerATNSimulator(ATNSimulator):
         return rv
 
     def _computeTargetState(self, input:InputStream, s:DFAState, t:int):
-        reach = OrderedATNConfigSet()
+        reach = ATNConfigSet()
 
         # if we don't find an existing DFA state
         # Fill reach starting from closure, following t transitions
@@ -409,7 +409,7 @@ class LexerATNSimulator(ATNSimulator):
 
     def _computeStartState(self, input:InputStream, p:ATNState):
         initialContext = PredictionContext.EMPTY
-        configs = OrderedATNConfigSet()
+        configs = ATNConfigSet()
         for i in range(0,len(p.transitions)):
             target = p.transitions[i].target
             c = LexerATNConfig(state=target, alt=i+1, context=initialContext)
@@ -459,7 +459,9 @@ class LexerATNSimulator(ATNSimulator):
                 speculative:bool, treatEofAsEpsilon:bool):
         if LexerATNSimulator.debug:
             print("closure(" + str(config) + ")")
-
+        Trace.writej([ 'msg', 'config.state',
+                       config.state.asdict(),
+                      ])
         if isinstance( config.state, RuleStopState ):
             if LexerATNSimulator.debug:
                 if self.recog is not None:

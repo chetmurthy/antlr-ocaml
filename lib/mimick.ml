@@ -677,4 +677,9 @@ type json_log_t =
                                     [@yojson.name "EXIT InputStream.getText"]
                                     [@located_yojson.name "EXIT InputStream.getText"]
 
+| Msg of string * json_t
+                                    [@yojson.name "msg"]
+                                    [@located_yojson.name "msg"]
+
+and json_t = Pa_ppx_located_yojson.Json.t
 [@@deriving yojson,located_yojson, show]

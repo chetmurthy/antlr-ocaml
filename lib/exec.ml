@@ -437,8 +437,8 @@ let __len__ = function
   | SINGLETON _ -> 1
   | ARRAY l -> List.length l
 
-let getReturnState pc i = match pc with
-  EMPTY -> failwith "PC.getReturnState: illegal"
+let rec getReturnState pc i = match pc with
+  EMPTY -> getReturnState (SINGLETON(None, _EMPTY_RETURN_STATE)) i
 | SINGLETON (_,rs) -> rs
 | ARRAY l -> snd (List.nth l i)
 
@@ -1221,6 +1221,9 @@ let _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_o
   }
 
 let init_LexerATNConfig atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt : t =
+  let semantic_opt = match semantic_opt with
+      Some x -> Some x
+    | None -> Some SC.EMPTY in
   Tracelog.write
     (LexerATNConfig_ENTER_init (state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), lexerActionExecutor_opt, (Option.map to_mimick config_opt))) ;
   let rv = _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt in
@@ -2201,7 +2204,7 @@ let evaluatePredicate self input ruleIndex predIndex speculative =
     (LexerATNSimulator_EXIT_evaluatePredicate (to_mimick self, rv)) ;
   rv
 
-let getEpsilonTarget self input config e configs
+let _getEpsilonTarget self input config e configs
       ~speculative ~treatEofAsEpsilon =
   let config_lexer_ext = match config.AC.lexer_ext with
       None -> failwith "LAC.getEpsilonTarget: an ATNConfig where we were expecting LexerATNConfig"
@@ -2236,11 +2239,25 @@ let getEpsilonTarget self input config e configs
        c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)) ;
   !c
 
+let getEpsilonTarget self input config e configs
+      ~speculative ~treatEofAsEpsilon =
+  Tracelog.write
+    (LexerATNSimulator_ENTER_getEpsilonTarget (to_mimick self, IS.to_mimick input, AC.to_mimick config,
+                                            e, ACS.to_mimick configs, speculative, treatEofAsEpsilon
+    )) ;
+  let rv = _getEpsilonTarget self input config e configs
+             ~speculative ~treatEofAsEpsilon in
+  Tracelog.write
+    (LexerATNSimulator_EXIT_getEpsilonTarget (to_mimick self, Option.map AC.to_mimick rv, ACS.to_mimick configs)) ;
+  rv
+
+
 let rec _closure self input (config : AC.t) configs ~currentAltReachedAcceptState
           ~speculative ~treatEofAsEpsilon =
   let exception EarlyReturn of bool in
   let currentAltReachedAcceptState = ref currentAltReachedAcceptState in
   let config_state = Atn.State.get_state config.atn.Atn.states config.AC.state in
+  Tracelog.write (Msg ("config.state", Atn.State.to_located_yojson config_state)) ;
   let config_lexer_ext = match config.AC.lexer_ext with
       None -> failwith "LAC.closure: an ATNConfig where we were expecting LexerATNConfig"
     | Some ext -> ext in
@@ -2263,7 +2280,6 @@ let rec _closure self input (config : AC.t) configs ~currentAltReachedAcceptStat
              currentAltReachedAcceptState := true
            end
       | _ -> ()) ;
-
     if not config_state.State.epsilonOnlyTransitions then
       if not !currentAltReachedAcceptState || not config_lexer_ext.AC.passedThroughNonGreedyDecision then
         ignore (ACS.add configs config)
