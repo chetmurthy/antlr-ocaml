@@ -1,6 +1,9 @@
 
 ML=l.ml test.ml
 
+PACKAGES := $(PACKAGES),antlr,cmdliner,yojson,pa_ppx.located_yojson,pa_ppx.runtime
+
+
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
