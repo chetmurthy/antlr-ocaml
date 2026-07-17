@@ -349,6 +349,10 @@ let sim1 caches atns (i:int) (loc,j) =
          ()
 
       | Lexer_ENTER_init is ->
+         let interp = match LAS.Cache.get caches.las 0 with
+             las -> las
+           | exception Not_found ->
+              failwith "No LexerATNSimulator inited before Lexer.__init__" in
          let is = IS.of_mimick ~is_cache:(Some caches.is) is in
          let l : Lexer.t = Lexer.init is () in
          assert (!(caches.lexer) = None) ;

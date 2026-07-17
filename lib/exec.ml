@@ -60,6 +60,27 @@ let init_CommonToken ?source ?type_ ?channel ?start ?stop ?text () =
   ; _text = text
   }
 
+let __str__ self =
+  let fmt_int pps n = Fmt.(pf pps "%d" n) in
+  let fmt_option ppsub pps nopt =
+    match nopt with
+      None -> Fmt.(pf pps "None")
+    | Some n -> Fmt.(pf pps "%a" ppsub n) in
+  let fmt_channel pps c =
+    if c > 0 then Fmt.(pf pps ",channel=%d" c) else Fmt.(pf pps "") in
+  Fmt.(str "[%@%a,%a:%a='%s',<%a>,%a,%a:%a]"
+         (fmt_option fmt_int) self.tokenIndex
+         (fmt_option fmt_int) self.start
+         (fmt_option fmt_int) self.stop
+         (match self._text with
+            None -> "<no text>"
+          | Some txt ->
+             String.escaped txt)
+         (fmt_option fmt_int) self.type_
+         (fmt_option fmt_channel) self.channel
+         (fmt_option fmt_int) self.line
+         (fmt_option fmt_int) self.column)
+
 end
 
 
@@ -857,44 +878,6 @@ let skip l = l._type <- C._SKIP
 let set_type l t = l._type <- t
 end
 module Recognizer = R
-
-module L = struct
-
-type lexer_t =
-  {
-    mutable _stateNumber : Atn.state_id
-  ; mutable _token : Token.t option
-  ; mutable _tokenStartCharIndex : int
-  ; mutable _tokenStartLine : int
-  ; mutable _tokenStartColumn : int
-  ; mutable _hitEOF : bool
-  ; mutable _text : string option
-  ; recog : R.t
-  }
-
-type t = lexer_t
-
-let _init input ?(output = stdout) ?(actions=[]) () =
-  let recog = R.init input ~output ~actions () in
-  let self = {
-    _stateNumber = Atn.State.mk_id (-1)
-  ; _token = None
-  ; _tokenStartCharIndex = -1
-  ; _tokenStartLine = -1
-  ; _tokenStartColumn = -1
-  ; _hitEOF = false
-  ; _text = None
-  ; recog
-  } in
-  self
-
-let init input ?(output = stdout) ?(actions=[]) () =
-  Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
-  let rv = _init input ~output ~actions () in
-  Tracelog.write (Lexer_EXIT_init) ;
-  rv
-end
-module Lexer = L
 
 module LA = struct
   type t = [%import: Types.lexer_action_t
@@ -2553,6 +2536,72 @@ let module_init ~dfast_cache ~acs_cache ~ac_cache () = begin
 
 end
 module LexerATNSimulator = LAS
+module L = struct
+
+type lexer_t =
+  {
+    mutable _stateNumber : Atn.state_id
+  ; mutable _token : Token.t option
+  ; mutable _tokenStartCharIndex : int
+  ; mutable _tokenStartLine : int
+  ; mutable _tokenStartColumn : int
+  ; mutable _hitEOF : bool
+  ; mutable _text : string option
+  ; recog : R.t
+(*
+  ; _interp : LAE.t
+ *)
+  }
+
+type t = lexer_t
+
+let _init input (* ~interp *) ?(output = stdout) ?(actions=[]) () =
+  let recog = R.init input ~output ~actions () in
+  let self = {
+    _stateNumber = Atn.State.mk_id (-1)
+  ; _token = None
+  ; _tokenStartCharIndex = -1
+  ; _tokenStartLine = -1
+  ; _tokenStartColumn = -1
+  ; _hitEOF = false
+  ; _text = None
+  ; recog
+(*
+  ; _interp = interp
+ *)
+  } in
+  self
+
+let init input (* ~interp *) ?(output = stdout) ?(actions=[]) () =
+  Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
+  let rv = _init input (* ~interp *) ~output ~actions () in
+  Tracelog.write (Lexer_EXIT_init) ;
+  rv
+(*
+let nextToken self =
+  let exception EarlyExit of Token.t option in
+  try
+  let tokenStartMarker = IS.mark self.recog._input in
+  Util.finally (fun () ->
+      while true do
+        if self._hitEOF then
+          raise (EarlyExit self._token) ;
+        self._token <- None ;
+        self.recog._channel <- Some Token.DEFAULT_CHANNEL ;
+        self._tokenStartCharIndex <- IS.index self._input ;
+        self._tokenStartColumn <- self._interp.column ;
+        self._tokenStartLine <- self._interp.line ;
+        self._text <- None ;
+        let continueOuter  = ref false in
+      done
+    )
+    ()
+    (fun _ _ ->
+      IS.release self.recog._input tokenStartMarker)
+  with (EarlyExit topt) -> topt
+ *)
+end
+module Lexer = L
 
 let file_init  ~dfast_cache ~acs_cache ~ac_cache () = begin
     AS.module_init ~dfast_cache ~acs_cache ~ac_cache () ;
