@@ -800,7 +800,7 @@ and lexer_t =
 
 type t = lexer_t
 
-let init input ?(output = stdout) ?(actions=[]) () =
+let _init input ?(output = stdout) ?(actions=[]) () =
   let self = {
     _stateNumber = Atn.State.mk_id (-1)
   ; _input = input
@@ -825,6 +825,12 @@ let init input ?(output = stdout) ?(actions=[]) () =
     else actions in
   List.iter (fun (k,v) -> MHM.add self._actions (k,v)) actions ;
   self
+
+let init input ?(output = stdout) ?(actions=[]) () =
+  Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
+  let rv = _init input ~output ~actions () in
+  Tracelog.write (Lexer_EXIT_init) ;
+  rv
 
 let set_channel l n =
   l._channel <- n
@@ -2119,8 +2125,15 @@ let getExistingTargetState self dfa s t =
     None
   else
     let target = s.DFASt.edges.(t - _MIN_DFA_EDGE) in
-    let target = DFA.num2state dfa target in
-    Some target
+(*
+    Tracelog.write(Msg (Fmt.(str "getExistingTargetState: t = %d" t), (Ploc.dummy, `Null))) ;
+    Tracelog.write(Msg ("getExistingTargetState: s", s |> DFASt.to_mimick |> M.dfa_state_t_to_located_yojson)) ;
+    Tracelog.write(Msg (Fmt.(str "target.stateNumber = %d" target), (Ploc.dummy, `Null))) ;
+ *)
+    if target = Int.min_int then None
+    else 
+      let target = DFA.num2state dfa target in
+      Some target
 
 let _addDFAState self dfa cs =
   let exception EarlyExit of DFASt.t  in
