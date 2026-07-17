@@ -769,77 +769,67 @@ let init ?parent ?(invokingState = Atn.State.mk_id (-1)) () =
 end
 module RuleContext = RC
 
-module L = struct
+
+module R = struct
   let _DEFAULT_MODE = 0
   let _MORE = -2
   let _SKIP = -3
   let _DEFAULT_TOKEN_CHANNEL = Token._DEFAULT_CHANNEL
   let _HIDDEN = Token._HIDDEN_CHANNEL
-  let _MIN_CHAR_VALUE = 0x0000
-  let _MAX_CHAR_VALUE = 0x10FFFF
 
-type action_t = lexer_t -> RC.t option -> int -> int -> unit
+type action_t = recognizer_t -> RC.t option -> int -> int -> unit
 
-and lexer_t =
+and recognizer_t =
   {
     mutable _stateNumber : Atn.state_id
   ; _input : IS.t
   ; _output : out_channel
-  ; mutable _token : Token.t option
-  ; mutable _tokenStartCharIndex : int
-  ; mutable _tokenStartLine : int
-  ; mutable _tokenStartColumn : int
-  ; mutable _hitEOF : bool
   ; mutable _channel : int
   ; mutable _type : int
   ; mutable _modeStack : int list
   ; mutable _mode : int
-  ; mutable _text : string option
   ; _actions : (int, action_t) MHM.t
   }
 
-type t = lexer_t
+type t = recognizer_t
 
 let _init input ?(output = stdout) ?(actions=[]) () =
   let self = {
     _stateNumber = Atn.State.mk_id (-1)
   ; _input = input
   ; _output = output
-  ; _token = None
-  ; _tokenStartCharIndex = -1
-  ; _tokenStartLine = -1
-  ; _tokenStartColumn = -1
-  ; _hitEOF = false
   ; _channel = Token._DEFAULT_CHANNEL
   ; _type = Token._INVALID_TYPE
   ; _modeStack = []
   ; _mode = _DEFAULT_MODE
-  ; _text = None
   ; _actions = MHM.mk 23
   } in
 
   let actions =
     if actions = [] then
-      [(0,(fun (self : lexer_t) localCtx ruleIndex actionIndex ->
+      [(0,(fun (self : recognizer_t) localCtx ruleIndex actionIndex ->
           output_string self._output "I\n"))]
     else actions in
   List.iter (fun (k,v) -> MHM.add self._actions (k,v)) actions ;
   self
 
 let init input ?(output = stdout) ?(actions=[]) () =
+(*
   Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
+ *)
   let rv = _init input ~output ~actions () in
+(*
   Tracelog.write (Lexer_EXIT_init) ;
+ *)
   rv
-
-let set_channel l n =
-  l._channel <- n
 
 let action l localCtx ruleIndex actionIndex =
   match MHM.map l._actions ruleIndex with
     f -> f l localCtx ruleIndex actionIndex
   | exception Not_found -> ()
 
+let set_channel l n =
+  l._channel <- n
 let mode l m = l._mode <- m
 let more l = l._type <- _MORE
 let popMode l =
@@ -855,6 +845,46 @@ let pushMode l m =
 
 let skip l = l._type <- _SKIP
 let set_type l t = l._type <- t
+end
+module Recognizer = R
+
+module L = struct
+  let _MIN_CHAR_VALUE = 0x0000
+  let _MAX_CHAR_VALUE = 0x10FFFF
+
+type lexer_t =
+  {
+    mutable _stateNumber : Atn.state_id
+  ; mutable _token : Token.t option
+  ; mutable _tokenStartCharIndex : int
+  ; mutable _tokenStartLine : int
+  ; mutable _tokenStartColumn : int
+  ; mutable _hitEOF : bool
+  ; mutable _text : string option
+  ; recog : R.t
+  }
+
+type t = lexer_t
+
+let _init input ?(output = stdout) ?(actions=[]) () =
+  let recog = R.init input ~output ~actions () in
+  let self = {
+    _stateNumber = Atn.State.mk_id (-1)
+  ; _token = None
+  ; _tokenStartCharIndex = -1
+  ; _tokenStartLine = -1
+  ; _tokenStartColumn = -1
+  ; _hitEOF = false
+  ; _text = None
+  ; recog
+  } in
+  self
+
+let init input ?(output = stdout) ?(actions=[]) () =
+  Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
+  let rv = _init input ~output ~actions () in
+  Tracelog.write (Lexer_EXIT_init) ;
+  rv
 end
 module Lexer = L
 
@@ -890,25 +920,25 @@ let actionType = function
 
 let rec execute la recog =
   match la with
-    LexerChannelAction { channel } -> L.set_channel recog channel
+    LexerChannelAction { channel } -> R.set_channel recog channel
 
   | LexerCustomAction { ruleIndex ; actionIndex } ->
-     L.action recog None ruleIndex actionIndex
+     R.action recog None ruleIndex actionIndex
 
   | LexerIndexedCustomAction { action } ->
      execute action recog
 
-  | LexerModeAction { mode } -> L.mode recog mode
+  | LexerModeAction { mode } -> R.mode recog mode
 
-  | LexerMoreAction _ -> L.more recog
+  | LexerMoreAction _ -> R.more recog
 
-  | LexerPopModeAction _ -> ignore (L.popMode recog)
+  | LexerPopModeAction _ -> ignore (R.popMode recog)
 
-  | LexerPushModeAction { mode } -> L.pushMode recog mode
+  | LexerPushModeAction { mode } -> R.pushMode recog mode
 
-  | LexerSkipAction _ -> L.skip recog
+  | LexerSkipAction _ -> R.skip recog
 
-  | LexerTypeAction { type_ } -> L.set_type recog type_
+  | LexerTypeAction { type_ } -> R.set_type recog type_
 
 let init_LexerIndexedCustomAction offset action =
   LexerIndexedCustomAction {
@@ -1968,7 +1998,7 @@ type las_t = {
   ; sharedContextCache : (PC.t MHS.t
                            [@equal mhs_equal]
                                  [@printer (fun pps _ -> Fmt.(pf pps "_"))])
-  ; recog : (L.t
+  ; recog : (R.t
     [@printer (fun pps _ -> Fmt.(pf pps "<recog>"))]
     [@equal (fun x y -> x==y)]) option
   ; decisionToDFA : DFA.t array
@@ -1996,7 +2026,7 @@ let _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
   ; startIndex = -1
   ; line = 1
   ; column = 0
-  ; mode = Lexer._DEFAULT_MODE
+  ; mode = Recognizer._DEFAULT_MODE
   ; prevAccept = SS.init ()
   }
 

@@ -337,13 +337,13 @@ let sim1 caches atns (i:int) (loc,j) =
          let sharedContextCache = List.map PC.of_mimick sharedContextCache in
          let recog = match !(caches.lexer) with
              None -> failwith "internal error in simulation: exer not initialized"
-           | Some l -> l in
+           | Some l -> l.recog in
          let rv : LAS.t = LAS.init ~predicted_id atn decisionToDFA sharedContextCache ~recog () in
          let _ : LAS.t = LAS.recache ~las_cache:caches.las ~dfa_cache:caches.dfa ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv  in
          ()
 
       | LexerATNSimulator_ENTER_match (las, is, n) ->
-         let las = LAS.of_mimick ~las_cache:(Some caches.las) ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) ~recog:!(caches.lexer) atns las in
+         let las = LAS.of_mimick ~las_cache:(Some caches.las) ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) ~recog:(Some (Std.outSome !(caches.lexer)).recog) atns las in
          let is = IS.of_mimick ~is_cache:(Some caches.is) is in
          let rv = LAS._match las is n in
          ()
