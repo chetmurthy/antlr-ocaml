@@ -44,6 +44,10 @@ let entry_exit_name =
   let doc = "entry-exit-name: extract events with tag '{ENTER,EXIT} name'." in
   Arg.(value & opt_all string [] & info ["e";"entry-exit-name"] ~doc)
 
+let json_log_file =
+  let doc = "json-log-file: file destination for JSON log, instead of stdout." in
+  Arg.(value & opt (some string) None & info ["json-log-file"] ~doc)
+
 let start_nth =
   let doc = "start-nth: start (inclusive) of range of accepted event-tree with tag '{ENTER,EXIT} name'." in
   Arg.(value & opt (some int) None & info ["start-nth"] ~doc)
@@ -241,20 +245,21 @@ let simulate_json caches atns stream =
   |> Std.stream_map Json.raise_failwith_error_msg
   |> Util.stream_iter_i (Simulate.ACS.sim1 caches atns)
 
-let simulate1_entry_exit caches ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file =
+let simulate1_entry_exit caches ~json_log_file ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file =
   let open Simulate.Caches in
   Tracelog._enabled := true ;
+  json_log_file |> Option.iter Tracelog.set_log_file ;
   Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;
   EntryExit.filter1_then  ?start_nth ?stop_nth ~only_outermost_enter ~verbose entry_exit_name (simulate_json caches atns) file
 
-let simulate ~lexer_atn ~parser_atn ~verbose ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =
+let simulate ~json_log_file ~lexer_atn ~parser_atn ~verbose ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file =
   let open Exec in
   let lexer_atn = match lexer_atn with
       None -> failwith "simulate: must provide lexer-atn"
     | Some x -> x in
   let caches = Simulate.Caches.mk () in
   let atns = Atns.load ~lexer_atn ~parser_atn in
-  simulate1_entry_exit caches ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file
+  simulate1_entry_exit caches ~json_log_file ~atns ?start_nth ?stop_nth ~verbose ~entry_exit_name ~only_outermost_enter file
 
 let cmd =
   let doc = "simulate json.log files for AtnConfigSet." in
@@ -263,9 +268,9 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "acs" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ parser_atn and+ lexer_atn and+ verbose
+  let+ json_log_file and+ file and+ parser_atn and+ lexer_atn and+ verbose
      and+ entry_exit_name and+ start_nth and+ stop_nth and+ only_outermost_enter in
-  simulate ~lexer_atn ~parser_atn ~verbose ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file ;
+  simulate ~json_log_file ~lexer_atn ~parser_atn ~verbose ~entry_exit_name ?start_nth ?stop_nth ~only_outermost_enter file ;
   Cmdliner.Cmd.Exit.ok
 end
 

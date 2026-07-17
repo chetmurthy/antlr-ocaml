@@ -112,6 +112,11 @@ let disabled =
     "EXIT ParserATNSimulator.__init__"
     ] 23
 
+let set_log_file fname =
+  Fmt.(pf stderr "[json log file set to << %s >>]@." fname) ;
+  let chan = open_out fname in
+  _oc := chan
+
 let is_disabled j =
     match j with
       (_, `List ((_, `String s) :: _)) -> MHS.mem s disabled

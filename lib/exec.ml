@@ -132,7 +132,7 @@ let upsert cache t =
   if MHM.in_dom cache.cache tid then
     recache cache t
   else
-    (MHM.add cache.cache (tid, t) ; t)
+    (add cache t ; t)
 
 end
 

@@ -18,7 +18,7 @@ source trip-tests/LAS.entrypoints.sh
 source trip-tests/LAE.entrypoints.sh
 source trip-tests/L.entrypoints.sh
 
-NARGS=" --stop-nth 6"
+NARGS=" --stop-nth 8"
 
 rm -f _generated/*.log
 
@@ -33,7 +33,8 @@ rm -f _generated/*.log
 ./replay_test.opt entry-exit $NARGS $ARGS $F | jq -S . > _generated/1.log
 ./replay_test.opt entry-exit $NARGS --ooe $ARGS $F | jq -S . > _generated/2in.log
 echo "==== replay acs ===="
-./replay_test.opt acs $REPLAYARGS $NARGS $ATNARGS --ooe $ARGS $F | jq -S . > _generated/2out.log
-./replay_test.opt acs $REPLAYARGS $NARGS $ATNARGS --ooe $ARGS $F > _generated/2out-no-jq.log
+JSONLOGARGS="--json-log-file=_generated/2out-no-jq.log"
+./replay_test.opt acs $JSONLOGARGS $REPLAYARGS $NARGS $ATNARGS --ooe $ARGS $F
+jq -S . < _generated/2out-no-jq.log > _generated/2out.log
 
 diff -Bwiu _generated/1.log _generated/2out.log
