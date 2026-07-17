@@ -7,7 +7,7 @@ use File::Basename;
 
 our $verbose ;
 our $noexecute ;
-our @genargs = ("--template-dir=fixtures/antlrtest.3") ;
+our @genargs = ("--template-dir=fixtures/antlrtest.4") ;
 
 $ENV{'TOP'} = ".." ;
 
@@ -39,6 +39,9 @@ $ENV{'TOP'} = ".." ;
       $subcommand = shift @ARGV ;
     }
     elsif ($ARGV[0] eq 'prepare') {
+      $subcommand = shift @ARGV ;
+    }
+    elsif ($ARGV[0] eq 'depend') {
       $subcommand = shift @ARGV ;
     }
     elsif ($ARGV[0] eq 'test') {
@@ -89,7 +92,7 @@ $ENV{'TOP'} = ".." ;
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
       v_systemx([0], ["$ENV{'TOP'}/tests/antlrtest_util.opt", "generate", @genargs,
-		      "-d", "_generated/$p",
+		      "-d", "_generated", "-n", $p,
 		      $tf]) ;
     }
   }
@@ -107,6 +110,14 @@ $ENV{'TOP'} = ".." ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["make", "-C", $dir, "prepare"]) ;
+    }
+  }
+  elsif ($subcommand eq 'depend') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_generated/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], ["make", "-C", $dir, "depend"]) ;
     }
   }
   elsif ($subcommand eq 'test') {

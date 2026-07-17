@@ -56,6 +56,7 @@ type t = {
   ; slaveGrammars : string list
   ; stanzas : (string * string) list
   ; filename : string
+  ; testname : string
   ; flags : flags_t
   ; startRule : string option
   }
@@ -77,7 +78,7 @@ let grammar_name ~file txt =
     Some n -> n
   | None -> Fmt.(failwithf "%s: no grammar-name found in grammar" file)
 
-let _mk ~file stanzas =
+let _mk ~testname ~file stanzas =
   let (is_lexer, is_composite) = match List.assoc "type" stanzas with
       "Lexer" -> (true, false)
     | "CompositeLexer" -> (true, true)
@@ -118,17 +119,21 @@ let _mk ~file stanzas =
   ; slaveGrammars
   ; stanzas
   ; filename = file
+  ; testname
   ; flags
   ; startRule
   }
 
-let load file =
+let load ~testname file =
   let txt = file |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok in
   let stanzas = parse txt in
-  _mk ~file stanzas
+  _mk ~testname ~file stanzas
 
 let to_env d =
-  let attributes = [("grammarName",d.grammar_name);("python3","")] in
+  let attributes = [
+      ("testName",d.testname)
+     ;("grammarName",d.grammar_name)
+     ;("python3","")] in
   let attributes =
     if d.is_lexer then
       let lexerName = d.grammar_name in

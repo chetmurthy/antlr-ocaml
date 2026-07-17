@@ -38,7 +38,7 @@ walker.walk(TParser.LeafListener(self._output), $ctx.r)|}
 ] |> List.iter
 Antlrtest.Stg.Template.add_include_hack ;;
 
-let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
+let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file =
   let open Antlrtest in
   if templatedir = "" then
     failwith "must specify --template-dir|-t" ;
@@ -46,14 +46,17 @@ let generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file =
   if helperfile = "" then
     failwith "must specify --helper-file|-h" ;
   let helperfile = Fpath.v helperfile in
-  if destdir = "" then
-    failwith "must specify --dest-dir|-d" ;
-  let destdir = Fpath.v destdir in
+  if destroot = "" then
+    failwith "must specify --dest-root|-d" ;
+  if testname = "" then
+    failwith "must specify --test-name|-t" ;
+  let destroot = Fpath.v destroot in
+  let destdir = Fpath.(append destroot (v testname)) in
   if destdir |> Bos.OS.Dir.exists |> Result.get_ok then
     Fmt.(failwithf "destdir %s must not already exist!" (Fpath.to_string destdir));
 
   let module D = Descriptor in
-  let d = D.load file in
+  let d = D.load ~testname file in
   let env = D.to_env d in
   let includes = Stg.Group.load helperfile in
   let env = {(env) with includes = includes } in
@@ -123,9 +126,13 @@ let helperfile =
   let docv = "The helper file (for include definitions)." in
   Arg.(value & opt file "fixtures/Python3.test.stg" & info ["h"; "helper-file"] ~docv)
 
-let destdir =
-  let docv = "The generated destination directory." in
-  Arg.(value & opt string "" & info ["d"; "dest-dir"] ~docv)
+let destroot =
+  let docv = "The generated destination root directory." in
+  Arg.(value & opt string "" & info ["d"; "dest-root"] ~docv)
+
+let testname =
+  let docv = "The name of the test (e.g. LexerExec/CharSet)." in
+  Arg.(value & opt string "" & info ["n"; "test-name"] ~docv)
 
 let debug =
   let doc = "enable debugging." in
@@ -138,8 +145,8 @@ let generate_cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "generate" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ templatedir and+ destdir and+ helperfile in
-  generate_antlrtest ~debug ~helperfile ~destdir ~templatedir file ;
+  let+ file and+ debug and+ templatedir and+ destroot and+ testname and+ helperfile in
+  generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file ;
   Cmdliner.Cmd.Exit.ok
 
 let cmd =

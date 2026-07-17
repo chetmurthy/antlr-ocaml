@@ -40,49 +40,55 @@ simulate-all:: replay_test.opt
 #	./replay_test.opt simulate -it "ENTER PredictionContext.mergeRoot" _generated/*/*/json.log
 
 generate-all:: antlrtest_util.opt
-	mkdir -p _build && $(MANAGETRIP) generate -v
+	mkdir -p _generated && $(MANAGETRIP) generate -v
 
 prepare-all:: antlrtest_util.opt
-	mkdir -p _build && $(MANAGETRIP) prepare -v
+	$(MANAGETRIP) prepare -v
+
+depend-all:: antlrtest_util.opt
+	$(MANAGETRIP) depend -v
 
 test-all:: antlrtest_util.opt
-	mkdir -p _build && $(MANAGETRIP) test -v
+	$(MANAGETRIP) test -v
 
 compare-all:: antlrtest_util.opt
-	mkdir -p _build && $(MANAGETRIP) compare-atns -v
+	$(MANAGETRIP) compare-atns -v
 
 save-json-log-all:: antlrtest_util.opt
-	mkdir -p _build && $(MANAGETRIP) save-json-log -v
+	$(MANAGETRIP) save-json-log -v
 
 compare-json-log-all:: antlrtest_util.opt
-	mkdir -p _build && $(MANAGETRIP) compare-json-log -v
+	$(MANAGETRIP) compare-json-log -v
 
 clean-all:: antlrtest_util.opt
-	mkdir -p _build && $(MANAGETRIP) clean -v
+	$(MANAGETRIP) clean -v
 
 realclean-all:: antlrtest_util.opt
-	mkdir -p _build && $(MANAGETRIP) realclean -v
+	$(MANAGETRIP) realclean -v
 
 DTEST=$(shell ls fixtures/descriptors/LexerExec/*)
 #CTEST=$(shell ls fixtures/custom-descriptors/*/*)
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
-	mkdir -p _build && $(MANAGETRIP) generate -v $(SELECTED)
+	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)
 
 prepare-selected:: antlrtest_test.exe
-	mkdir -p _build && $(MANAGETRIP) prepare -v $(SELECTED)
+	$(MANAGETRIP) prepare -v $(SELECTED)
+
+depend-selected:: antlrtest_test.exe
+	$(MANAGETRIP) depend -v $(SELECTED)
 
 test-selected:: antlrtest_test.exe
-	mkdir -p _build && $(MANAGETRIP) test -v $(SELECTED)
+	$(MANAGETRIP) test -v $(SELECTED)
 
 clean-selected:: antlrtest_test.exe
-	mkdir -p _build && $(MANAGETRIP) clean -v $(SELECTED)
+	$(MANAGETRIP) clean -v $(SELECTED)
 
 realclean-selected:: antlrtest_test.exe
-	mkdir -p _build && $(MANAGETRIP) realclean -v $(SELECTED)
+	$(MANAGETRIP) realclean -v $(SELECTED)
 
 compare-selected:: antlrtest_test.exe
-	mkdir -p _build && $(MANAGETRIP) compare-atns -v $(SELECTED)
+	$(MANAGETRIP) compare-atns -v $(SELECTED)
 
 #ONE=LexerExec/CharSet
 ONE=ParserExec/Basic
