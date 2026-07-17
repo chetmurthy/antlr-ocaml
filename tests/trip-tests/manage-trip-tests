@@ -44,6 +44,9 @@ $ENV{'TOP'} = ".." ;
     elsif ($ARGV[0] eq 'depend') {
       $subcommand = shift @ARGV ;
     }
+    elsif ($ARGV[0] eq 'compile') {
+      $subcommand = shift @ARGV ;
+    }
     elsif ($ARGV[0] eq 'test') {
       $subcommand = shift @ARGV ;
     }
@@ -118,6 +121,14 @@ $ENV{'TOP'} = ".." ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], ["make", "-C", $dir, "depend"]) ;
+    }
+  }
+  elsif ($subcommand eq 'compile') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_generated/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], ["make", "-C", $dir, "compile"]) ;
     }
   }
   elsif ($subcommand eq 'test') {

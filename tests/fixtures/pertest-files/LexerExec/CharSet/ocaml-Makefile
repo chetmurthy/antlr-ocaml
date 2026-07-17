@@ -8,7 +8,7 @@ TESTS=test.exe
 
 TESTSOPT=$(TESTS:.exe=.opt)
 
-all: $(TESTS) $(TESTSOPT)
+compile:: $(TESTS) $(TESTSOPT)
 
 test.exe: l.cmo test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<

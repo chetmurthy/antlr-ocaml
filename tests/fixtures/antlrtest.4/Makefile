@@ -12,7 +12,9 @@ PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/<testName>
 
 all: compare
 
-prepare:: <lexerName>.py
+compile::
+
+prepare:: <lexerName>.py update-pertest
 <if(parserName)>
 	$(ADJUST) <grammarName>Lexer.py
 	$(ADJUST) <grammarName>Parser.py
@@ -22,6 +24,8 @@ prepare:: <lexerName>.py
 	$(ADJUST) <lexerName>.py
 	cp <grammarName>.interp Lexer.interp
 <endif>
+
+update-pertest::
 	if [ -d $(PERTESTDIR) ]; then cp $(PERTESTDIR)/* .; fi
 
 compare:: output.NEW errors.NEW

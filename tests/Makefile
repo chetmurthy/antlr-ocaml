@@ -48,6 +48,9 @@ prepare-all:: antlrtest_util.opt
 depend-all:: antlrtest_util.opt
 	$(MANAGETRIP) depend -v
 
+compile-all:: antlrtest_util.opt
+	$(MANAGETRIP) compile -v
+
 test-all:: antlrtest_util.opt
 	$(MANAGETRIP) test -v
 
@@ -77,6 +80,9 @@ prepare-selected:: antlrtest_test.exe
 
 depend-selected:: antlrtest_test.exe
 	$(MANAGETRIP) depend -v $(SELECTED)
+
+compile-selected:: antlrtest_test.exe
+	$(MANAGETRIP) compile -v $(SELECTED)
 
 test-selected:: antlrtest_test.exe
 	$(MANAGETRIP) test -v $(SELECTED)
