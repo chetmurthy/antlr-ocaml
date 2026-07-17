@@ -6,13 +6,29 @@ open Pa_ppx_utils
 open Util
 open Atn
 
-module Token = struct
+module C = struct
   let _INVALID_TYPE = 0
   let  _EPSILON = -2
   let _MIN_USER_TOKEN_TYPE = 1
   let _EOF = -1
   let _DEFAULT_CHANNEL = 0
   let _HIDDEN_CHANNEL = 1
+let _EMPTY_RETURN_STATE = 0x7FFFFFFF
+
+  let _DEFAULT_MODE = 0
+  let _MORE = -2
+  let _SKIP = -3
+  let _DEFAULT_TOKEN_CHANNEL = _DEFAULT_CHANNEL
+  let _HIDDEN = _HIDDEN_CHANNEL
+  let _MIN_CHAR_VALUE = 0x0000
+  let _MAX_CHAR_VALUE = 0x10FFFF
+  let _MIN_DFA_EDGE = 0
+  let _MAX_DFA_EDGE = 127 (* forces unicode to stay in ATN *)
+
+end
+module Constants = C
+
+module Token = struct
 
 type token_t = {
     type_ : int option
@@ -231,7 +247,7 @@ let _la is offset =
     let offset = if offset < 0 then offset+1 else offset in begin
         let pos = is._index + offset - 1 in
         if pos < 0 || pos >= is._size then
-          Token._EOF
+          C._EOF
         else
           is.data.(pos)
       end
@@ -246,7 +262,7 @@ let la is offset =
 
 let _consume is =
   if is._index >= is._size then begin
-    assert (la is 1 = Token._EOF) ;
+    assert (la is 1 = C._EOF) ;
     failwith "cannot consume EOF"
     end ;
   is._index <- 1 + is._index
@@ -321,7 +337,6 @@ let for_grammar atns grammarType =
 end
 
 module PC = struct
-let _EMPTY_RETURN_STATE = 0x7FFFFFFF
 
 open Coll
 
@@ -335,11 +350,11 @@ type t = pc_t
 
 let rec toString = function
     EMPTY -> "$"
-  | ARRAY[(_,rs)] when rs = _EMPTY_RETURN_STATE -> "[]"
+  | ARRAY[(_,rs)] when rs = C._EMPTY_RETURN_STATE -> "[]"
   | SINGLETON(p, rs) -> 
      let up = match p with None -> "" | Some x -> toString x in
      if up = "" then
-       if rs = _EMPTY_RETURN_STATE then "$"
+       if rs = C._EMPTY_RETURN_STATE then "$"
        else string_of_int rs
      else Fmt.(str "%d %s" rs up)
   | ARRAY [] -> "[]"
@@ -437,12 +452,12 @@ let __len__ = function
   | ARRAY l -> List.length l
 
 let rec getReturnState pc i = match pc with
-  EMPTY -> getReturnState (SINGLETON(None, _EMPTY_RETURN_STATE)) i
+  EMPTY -> getReturnState (SINGLETON(None, C._EMPTY_RETURN_STATE)) i
 | SINGLETON (_,rs) -> rs
 | ARRAY l -> snd (List.nth l i)
 
 let hasEmptyPath pc =
-  (getReturnState pc ((__len__ pc) - 1)) = _EMPTY_RETURN_STATE
+  (getReturnState pc ((__len__ pc) - 1)) = C._EMPTY_RETURN_STATE
 
 type interim_t =
   CacheHit of pc_t
@@ -459,9 +474,9 @@ let _mergeRoot a b rootIsWildcard =
     match (a,b) with
       (EMPTY, EMPTY) -> Some EMPTY
     | (EMPTY,SINGLETON(pc_opt, rs)) ->
-       Some (ARRAY [(pc_opt,rs); (None, _EMPTY_RETURN_STATE)])
+       Some (ARRAY [(pc_opt,rs); (None, C._EMPTY_RETURN_STATE)])
     | (SINGLETON(pc_opt, rs),EMPTY) ->
-       Some (ARRAY [(pc_opt,rs); (None, _EMPTY_RETURN_STATE)])
+       Some (ARRAY [(pc_opt,rs); (None, C._EMPTY_RETURN_STATE)])
     | ((ARRAY _,_)|(_,ARRAY _)) -> assert false       
     | _ -> None
 
@@ -478,7 +493,7 @@ let mergeRoot a b rootIsWildcard =
 
 let unpack_SINGLETON = function
     SINGLETON(a,b) -> Some (a,b)
-  | EMPTY -> Some(None, _EMPTY_RETURN_STATE)
+  | EMPTY -> Some(None, C._EMPTY_RETURN_STATE)
   | _ -> None
 
 let rec _mergeSingletons a b rootIsWildcard mergeCache =
@@ -561,7 +576,7 @@ and do_mergeArrays al bl rootIsWildcard mergeCache =
          if a_returnState = b_returnState then
            let payload = a_returnState in
            let bothDollars =
-             payload = _EMPTY_RETURN_STATE &&
+             payload = C._EMPTY_RETURN_STATE &&
                a_parent = None && b_parent = None in
            let ax_ax = a_parent <> None && b_parent <> None && a_parent = b_parent in
            if bothDollars || ax_ax then
@@ -662,7 +677,7 @@ and _merge a b rootIsWildcard mergeCache =
           mergeArrays a b rootIsWildcard mergeCache
 
 let create_SINGLETON pc rs =
-  if rs = _EMPTY_RETURN_STATE && pc = None then
+  if rs = C._EMPTY_RETURN_STATE && pc = None then
      EMPTY
   else SINGLETON(pc, rs)
 
@@ -771,11 +786,6 @@ module RuleContext = RC
 
 
 module R = struct
-  let _DEFAULT_MODE = 0
-  let _MORE = -2
-  let _SKIP = -3
-  let _DEFAULT_TOKEN_CHANNEL = Token._DEFAULT_CHANNEL
-  let _HIDDEN = Token._HIDDEN_CHANNEL
 
 type action_t = recognizer_t -> RC.t option -> int -> int -> unit
 
@@ -798,10 +808,10 @@ let _init input ?(output = stdout) ?(actions=[]) () =
     _stateNumber = Atn.State.mk_id (-1)
   ; _input = input
   ; _output = output
-  ; _channel = Token._DEFAULT_CHANNEL
-  ; _type = Token._INVALID_TYPE
+  ; _channel = C._DEFAULT_CHANNEL
+  ; _type = C._INVALID_TYPE
   ; _modeStack = []
-  ; _mode = _DEFAULT_MODE
+  ; _mode = C._DEFAULT_MODE
   ; _actions = MHM.mk 23
   } in
 
@@ -831,7 +841,7 @@ let action l localCtx ruleIndex actionIndex =
 let set_channel l n =
   l._channel <- n
 let mode l m = l._mode <- m
-let more l = l._type <- _MORE
+let more l = l._type <- C._MORE
 let popMode l =
   match l._modeStack with
     [] -> failwith "Empty Stack"
@@ -843,14 +853,12 @@ let pushMode l m =
   l._modeStack <- m::l._modeStack ;
   l._mode <- m
 
-let skip l = l._type <- _SKIP
+let skip l = l._type <- C._SKIP
 let set_type l t = l._type <- t
 end
 module Recognizer = R
 
 module L = struct
-  let _MIN_CHAR_VALUE = 0x0000
-  let _MAX_CHAR_VALUE = 0x10FFFF
 
 type lexer_t =
   {
@@ -1981,8 +1989,6 @@ end
 module ATNSimulator = AS
 
 module LAS = struct
-  let _MIN_DFA_EDGE = 0
-  let _MAX_DFA_EDGE = 127 (* forces unicode to stay in ATN *)
 
   let mhs_equal x y =
     let x = x |> MHS.toList |> List.stable_sort Stdlib.compare in
@@ -2026,7 +2032,7 @@ let _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
   ; startIndex = -1
   ; line = 1
   ; column = 0
-  ; mode = Recognizer._DEFAULT_MODE
+  ; mode = C._DEFAULT_MODE
   ; prevAccept = SS.init ()
   }
 
@@ -2118,8 +2124,8 @@ let _failOrAccept self prevAccept input reach t =
     accept self input lexerActionExecutor self.startIndex prevAccept.SS.index prevAccept.line prevAccept.column ;
     st.prediction
   | None ->
-     if t = Token._EOF && IS.index input = self.startIndex then
-       Token._EOF
+     if t = C._EOF && IS.index input = self.startIndex then
+       C._EOF
      else failwith "failOrAccept: no viable alt"
 
 (*
@@ -2151,10 +2157,10 @@ let captureSimState self settings input dfast =
   rv
 
 let getExistingTargetState self dfa s t =
-  if Array.length s.DFASt.edges = 0 || t < _MIN_DFA_EDGE || t > _MAX_DFA_EDGE then
+  if Array.length s.DFASt.edges = 0 || t < C._MIN_DFA_EDGE || t > C._MAX_DFA_EDGE then
     None
   else
-    let target = s.DFASt.edges.(t - _MIN_DFA_EDGE) in
+    let target = s.DFASt.edges.(t - C._MIN_DFA_EDGE) in
 (*
     Tracelog.write(Msg (Fmt.(str "getExistingTargetState: t = %d" t), (Ploc.dummy, `Null))) ;
     Tracelog.write(Msg ("getExistingTargetState: s", s |> DFASt.to_mimick |> M.dfa_state_t_to_located_yojson)) ;
@@ -2225,13 +2231,13 @@ let _addDFAEdge self dfa from_ tk to_ cs =
     
     assert (!to_ <> None) ;
     let to_= Std.outSome !to_ in
-    if tk < _MIN_DFA_EDGE || tk > _MAX_DFA_EDGE then
+    if tk < C._MIN_DFA_EDGE || tk > C._MAX_DFA_EDGE then
       raise (EarlyExit to_) ;
 
     if Array.length from_.DFASt.edges = 0 then
-      DFASt.makeEdges from_ (Array.make (_MAX_DFA_EDGE - _MIN_DFA_EDGE + 1) None) ;
+      DFASt.makeEdges from_ (Array.make (C._MAX_DFA_EDGE - C._MIN_DFA_EDGE + 1) None) ;
 
-    DFASt.setEdge from_ (tk - _MIN_DFA_EDGE) to_ ;
+    DFASt.setEdge from_ (tk - C._MIN_DFA_EDGE) to_ ;
     to_
   with (EarlyExit st) ->
         st
@@ -2289,7 +2295,7 @@ let _getEpsilonTarget self input config e configs
   | EpsilonTransition t ->
      c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)
   | (AtomTransition _ | RangeTransition _ | SetTransition _) ->
-     if Atn.Edge.matches e Token._EOF 0 Lexer._MAX_CHAR_VALUE then
+     if Atn.Edge.matches e C._EOF 0 C._MAX_CHAR_VALUE then
        c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)) ;
   !c
 
@@ -2366,7 +2372,7 @@ and closure self is config configs ~currentAltReachedAcceptState
   rv
 
 let getReachableTarget self trans t =
-  if Edge.matches trans t 0 Lexer._MAX_CHAR_VALUE then
+  if Edge.matches trans t 0 C._MAX_CHAR_VALUE then
     Some (Edge.target trans)
   else None
 
@@ -2393,7 +2399,7 @@ let _getReachableConfigSet self input closure_ reach t =
                   None -> None
                 | Some lexerActionExecutor ->
                    Some (LAE.fixOffsetBeforeMatch lexerActionExecutor (IS.index input - self.startIndex)) in
-              let treatEofAsEpsilon = (t = Token._EOF) in
+              let treatEofAsEpsilon = (t = C._EOF) in
               let config = AC.init_LexerATNConfig cfg.atn (Some target) None None None (Some cfg) lexerActionExecutor in
               if closure self input config reach currentAltReachedAcceptState true treatEofAsEpsilon then
                 skipAlt := cfg.alt
@@ -2454,11 +2460,11 @@ let _execATN self dfa input ds0 =
             computeTargetState self dfa input !s !t in
        if DFASt.__eq__ target (Std.outSome !_ERROR) then
          raise Break ;
-       if !t <> Token._EOF then
+       if !t <> C._EOF then
          consume self input ;
        if target.DFASt.isAcceptState then begin
            captureSimState self self.prevAccept input target ;
-           if !t = Token._EOF then
+           if !t = C._EOF then
              raise Break
          end ;
        t := IS.la input 1 ;
