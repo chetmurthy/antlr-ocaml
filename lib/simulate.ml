@@ -330,7 +330,7 @@ let sim1 caches atns (i:int) (loc,j) =
       | InputStream_ENTER_getText (is, n, m) ->
          let rv = IS.getText (IS.of_mimick ~is_cache:(Some caches.is) is) n m in
          ()
-
+(*
       | LexerATNSimulator_ENTER_init (predicted_id, decisionToDFA, sharedContextCache) ->
          let atn  = Atns.for_grammar atns Atn.LEXER in
          let decisionToDFA = Array.map (DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns) decisionToDFA in
@@ -358,7 +358,7 @@ let sim1 caches atns (i:int) (loc,j) =
          assert (!(caches.lexer) = None) ;
          caches.lexer := Some l ;
          ()
-         
+ *)         
 
     end
   with exc ->

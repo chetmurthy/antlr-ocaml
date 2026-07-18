@@ -28,7 +28,7 @@ let _EMPTY_RETURN_STATE = 0x7FFFFFFF
 end
 module Constants = C
 
-module Token = struct
+module T = struct
 
 type token_t = {
     type_ : int option
@@ -36,9 +36,9 @@ type token_t = {
   ; start : int option
   ; stop : int option
   ; tokenIndex : int option
-  ; line : int option
-  ; column : int option
-  ; _text : string option
+  ; mutable line : int option
+  ; mutable column : int option
+  ; mutable _text : string option
   }
 
 type t = token_t
@@ -82,7 +82,19 @@ let __str__ self =
          (fmt_option fmt_int) self.column)
 
 end
+module Token = T
 
+module CTF = struct
+
+  let create ~source ~type_ ~text ~channel ~start ~stop ~line ~column () =
+    let t = Token.init_CommonToken ~source ~type_ ~channel ~start ~stop () in
+    t.line <- line ;
+    t.column <- column ;
+    text |> Option.iter (fun (txt: string) -> t._text <- Some txt) ;
+    t
+
+end
+module CommonTokenFactor = CTF
 
 module Counter(M: sig val name : string end) = struct
   let it = ref 0
@@ -805,8 +817,66 @@ let init ?parent ?(invokingState = Atn.State.mk_id (-1)) () =
 end
 module RuleContext = RC
 
+module rec EL :   sig
+    type el_t = {
+      syntaxError :
+        R.t -> Token.t option -> int -> int -> string -> exn -> unit;
+    }
+    type t = el_t
+    val mt : el_t
+    val syntaxError :
+      el_t -> R.t -> Token.t option -> int -> int -> string -> exn -> unit
+  end
+ = struct
+type el_t = {
+    syntaxError : R.t -> Token.t option -> int -> int -> string -> exn -> unit
+  }
+type t = el_t
 
-module R = struct
+let mt = {
+    syntaxError = (fun recog offending line column msg exn -> ())
+  }
+
+let syntaxError el recog offending line column msg exn =
+  let () = el.syntaxError recog offending line column msg exn in
+  ()
+
+end
+
+and R  :
+  sig
+    type action_t = recognizer_t -> RC.t option -> int -> int -> unit
+    and recognizer_t = {
+      mutable _stateNumber : Atn.state_id;
+      _input : IS.t;
+      _output : out_channel;
+      mutable _channel : int;
+      mutable _type : int;
+      mutable _modeStack : int list;
+      mutable _mode : int;
+      _actions : (int, action_t) Pa_ppx_utils.Coll.MHM.t;
+      _listeners : EL.t list;
+    }
+    type t = recognizer_t
+    val _init :
+      IS.t ->
+      ?output:out_channel ->
+      ?actions:(int * action_t) list ->
+      ?listeners:EL.t list -> unit -> recognizer_t
+    val init :
+      IS.t ->
+      ?output:out_channel ->
+      ?actions:(int * action_t) list ->
+      ?listeners:EL.t list -> unit -> recognizer_t
+    val action : recognizer_t -> RC.t option -> int -> int -> unit
+    val set_channel : recognizer_t -> int -> unit
+    val mode : recognizer_t -> int -> unit
+    val more : recognizer_t -> unit
+    val popMode : recognizer_t -> int
+    val pushMode : recognizer_t -> int -> unit
+    val skip : recognizer_t -> unit
+    val set_type : recognizer_t -> int -> unit
+  end = struct
 
 type action_t = recognizer_t -> RC.t option -> int -> int -> unit
 
@@ -820,11 +890,12 @@ and recognizer_t =
   ; mutable _modeStack : int list
   ; mutable _mode : int
   ; _actions : (int, action_t) MHM.t
+  ; _listeners : EL.t list
   }
 
 type t = recognizer_t
 
-let _init input ?(output = stdout) ?(actions=[]) () =
+let _init input ?(output = stdout) ?(actions=[]) ? (listeners=[]) () =
   let self = {
     _stateNumber = Atn.State.mk_id (-1)
   ; _input = input
@@ -834,6 +905,7 @@ let _init input ?(output = stdout) ?(actions=[]) () =
   ; _modeStack = []
   ; _mode = C._DEFAULT_MODE
   ; _actions = MHM.mk 23
+  ; _listeners = listeners
   } in
 
   let actions =
@@ -844,11 +916,11 @@ let _init input ?(output = stdout) ?(actions=[]) () =
   List.iter (fun (k,v) -> MHM.add self._actions (k,v)) actions ;
   self
 
-let init input ?(output = stdout) ?(actions=[]) () =
+let init input ?(output = stdout) ?(actions=[]) ?(listeners=[]) () =
 (*
   Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
  *)
-  let rv = _init input ~output ~actions () in
+  let rv = _init input ~output ~actions ~listeners () in
 (*
   Tracelog.write (Lexer_EXIT_init) ;
  *)
@@ -878,6 +950,7 @@ let skip l = l._type <- C._SKIP
 let set_type l t = l._type <- t
 end
 module Recognizer = R
+module ErrorListener = EL
 
 module LA = struct
   type t = [%import: Types.lexer_action_t
@@ -1987,9 +2060,9 @@ type las_t = {
   ; sharedContextCache : (PC.t MHS.t
                            [@equal mhs_equal]
                                  [@printer (fun pps _ -> Fmt.(pf pps "_"))])
-  ; recog : (R.t
-    [@printer (fun pps _ -> Fmt.(pf pps "<recog>"))]
-    [@equal (fun x y -> x==y)]) option
+  ; recog : R.t
+              [@printer (fun pps _ -> Fmt.(pf pps "<recog>"))]
+              [@equal (fun x y -> x==y)]
   ; decisionToDFA : DFA.t array
   ; mutable column : int
   ; mutable line : int
@@ -2003,7 +2076,7 @@ type t = las_t
 
 let _ERROR = ref None
 
-let _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
+let _init ?predicted_id atn decisionToDFA sharedContextCache ~recog () =
   AS.Counter.check predicted_id ;
   let id = AS.Counter.get_incr () in
   {
@@ -2031,11 +2104,11 @@ let to_mimick t =
   ; prevAccept = t.prevAccept |> SS.to_mimick
   }
 
-let init ?predicted_id atn decisionToDFA sharedContextCache ?recog () =
+let init ?predicted_id atn decisionToDFA sharedContextCache ~recog () =
   AS.Counter.check predicted_id ;
   Tracelog.write
     (LexerATNSimulator_ENTER_init (AS.Counter.get(), Array.map DFA.to_mimick decisionToDFA, List.map PC.to_mimick sharedContextCache)) ;
-  let rv = _init ?predicted_id atn decisionToDFA sharedContextCache ?recog () in
+  let rv = _init ?predicted_id atn decisionToDFA sharedContextCache ~recog () in
   Tracelog.write
     (LexerATNSimulator_EXIT_init (to_mimick rv)) ;
   rv
@@ -2084,9 +2157,9 @@ let _accept self input lexerActionExecutor_opt startIndex index line charPos =
   IS.seek input index ;
   self.line <- line ;
   self.column <- charPos ;
-  match (lexerActionExecutor_opt, self.recog) with
-    (Some lae, Some recog) ->
-    LAE.execute lae recog input startIndex
+  match lexerActionExecutor_opt with
+    Some lae ->
+    LAE.execute lae self.recog input startIndex
   | _ -> ()
 
 let accept self input lexerActionExecutor_opt startIndex index line charPos =
@@ -2099,6 +2172,7 @@ let accept self input lexerActionExecutor_opt startIndex index line charPos =
     (LexerATNSimulator_EXIT_accept (to_mimick self, IS.to_mimick input)) ;
   rv
 
+exception LexerNoViableAltException of R.t * IS.t * int * ACS.t
 
 let _failOrAccept self prevAccept input reach t =
   match self.prevAccept.SS.dfaState with
@@ -2109,7 +2183,7 @@ let _failOrAccept self prevAccept input reach t =
   | None ->
      if t = C._EOF && IS.index input = self.startIndex then
        C._EOF
-     else failwith "failOrAccept: no viable alt"
+     else raise (LexerNoViableAltException(self.recog, input, self.startIndex, reach))
 
 (*
    assert false 
@@ -2535,6 +2609,7 @@ let module_init ~dfast_cache ~acs_cache ~ac_cache () = begin
   end
 
 end
+
 module LexerATNSimulator = LAS
 module L = struct
 
@@ -2548,15 +2623,12 @@ type lexer_t =
   ; mutable _hitEOF : bool
   ; mutable _text : string option
   ; recog : R.t
-(*
-  ; _interp : LAE.t
- *)
+  ; _interp : LAS.t
   }
 
 type t = lexer_t
 
-let _init input (* ~interp *) ?(output = stdout) ?(actions=[]) () =
-  let recog = R.init input ~output ~actions () in
+let _init ~interp ~recog () =
   let self = {
     _stateNumber = Atn.State.mk_id (-1)
   ; _token = None
@@ -2566,19 +2638,52 @@ let _init input (* ~interp *) ?(output = stdout) ?(actions=[]) () =
   ; _hitEOF = false
   ; _text = None
   ; recog
-(*
   ; _interp = interp
- *)
   } in
   self
 
-let init input (* ~interp *) ?(output = stdout) ?(actions=[]) () =
-  Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
-  let rv = _init input (* ~interp *) ~output ~actions () in
+let init ~interp ~recog () =
+  Tracelog.write (Lexer_ENTER_init (IS.to_mimick recog.R._input)) ;
+  let rv = _init ~interp ~recog () in
   Tracelog.write (Lexer_EXIT_init) ;
   rv
-(*
-let nextToken self =
+
+let getErrorDisplay self text = String.escaped text
+  
+let getErrorListenerDispatch self = self.recog.R._listeners
+
+let notifyListeners self e =
+  let start = self._tokenStartCharIndex in
+  let stop = IS.index self.recog.R._input in
+  let text_ = IS.getText self.recog.R._input start stop in
+  let msg = Fmt.(str "token recognition error at: '%s'" (getErrorDisplay self text_)) in
+  let listeners = getErrorListenerDispatch self in
+  listeners
+  |> List.iter (fun l -> l.EL.syntaxError self.recog None self._tokenStartLine self._tokenStartColumn msg e)
+
+let recover self e =
+  if IS.la self.recog.R._input 1 <> C._EOF then
+    match e with
+      LAS.LexerNoViableAltException _ ->
+       LAS.consume self._interp self.recog.R._input
+    | _ ->
+       IS.consume self.recog.R._input
+
+
+let emit self =
+  let line = self._interp.LAS.line in
+  let column = self._interp.LAS.column in
+  let t = CTF.create ~source:(Some (line, column), self.recog.R._input)
+            ~type_:self.recog.R._type
+            ~text:self._text
+            ~channel:self.recog.R._channel
+            ~start:self._tokenStartCharIndex
+            ~stop:((getCharIndex self) - 1)
+            ~line:self._tokenStartLine
+            ~column:self._tokenStartColumn in
+  t
+
+let _nextToken self =
   let exception EarlyExit of Token.t option in
   try
   let tokenStartMarker = IS.mark self.recog._input in
@@ -2587,19 +2692,51 @@ let nextToken self =
         if self._hitEOF then
           raise (EarlyExit self._token) ;
         self._token <- None ;
-        self.recog._channel <- Some Token.DEFAULT_CHANNEL ;
-        self._tokenStartCharIndex <- IS.index self._input ;
+        self.recog._channel <- C._DEFAULT_CHANNEL ;
+        self._tokenStartCharIndex <- IS.index self.recog.R._input ;
         self._tokenStartColumn <- self._interp.column ;
         self._tokenStartLine <- self._interp.line ;
         self._text <- None ;
         let continueOuter  = ref false in
+        let exception Break in
+        try begin
+            while true do
+              self.recog.R._type <- C._INVALID_TYPE ;
+              let ttype = ref C._SKIP in
+              begin
+                try
+                  ttype := LAS._match self._interp self.recog.R._input self.recog.R._mode
+                with (LAS.LexerNoViableAltException _) as e ->
+                  notifyListeners self e ;
+                  recover self e
+              end ;
+              if IS.la self.recog.R._input 1 = C._EOF then
+                self._hitEOF <- true ;
+              if self.recog.R._type = C._INVALID_TYPE then
+                self.recog.R._type <- !ttype ;
+              if self.recog.R._type = C._SKIP then begin
+                continueOuter := true ;
+                raise Break
+                end ;
+              if self.recog.R._type <> C._MORE then
+                raise Break
+            done
+          end;
+            if not !continueOuter then begin
+                if self._token = None then
+(*TODO
+                  emit self ;
+ *)
+                raise (EarlyExit self._token)
+              end
+        with Break -> ()
       done
     )
     ()
     (fun _ _ ->
       IS.release self.recog._input tokenStartMarker)
   with (EarlyExit topt) -> topt
- *)
+
 end
 module Lexer = L
 
