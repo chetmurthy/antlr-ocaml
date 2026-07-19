@@ -71,7 +71,12 @@ realclean-all:: antlrtest_util.opt
 
 #DTEST=$(shell ls fixtures/descriptors/LexerExec/*)
 #CTEST=$(shell ls fixtures/custom-descriptors/*/*)
-DTEST=fixtures/descriptors/LexerExec/CharSet.txt fixtures/descriptors/LexerExec/CharSetRange.txt
+DTEST=\
+	fixtures/descriptors/LexerExec/CharSet.txt \
+	fixtures/descriptors/LexerExec/CharSetRange.txt \
+	fixtures/descriptors/LexerExec/CharSetInSet.txt \
+
+
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)
