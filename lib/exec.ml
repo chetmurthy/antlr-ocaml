@@ -30,88 +30,6 @@ let _EMPTY_RETURN_STATE = 0x7FFFFFFF
 end
 module Constants = C
 
-module T = struct
-
-type token_t = {
-    type_ : int option
-  ; channel : int option
-  ; start : int option
-  ; stop : int option
-  ; mutable tokenIndex : int option
-  ; mutable line : int option
-  ; mutable column : int option
-  ; mutable _text : string option
-  }
-
-let to_mimick t =
-  M.Token {
-      _text = t._text
-    ; _type = t.type_
-    ; channel = t.channel
-    ; column = t.column
-    ; line = t.line
-    ; start = t.start
-    ; stop = t.stop
-    ; tokenIndex = t.tokenIndex
-    }
-
-type t = token_t
-
-let is_eof t = (t.type_ = Some C._EOF)
-
-let init_CommonToken ?source ?type_ ?channel ?start ?stop ?text () =
-  let (line, column) =
-    match source with
-      Some (Some (line, column), _) -> (Some line, Some column)
-    | _ -> (None, Some (-1)) in
-  let tokenIndex = Some (-1) in
-  {
-    type_
-  ; channel
-  ; start
-  ; stop
-  ; tokenIndex
-  ; line
-  ; column
-  ; _text = text
-  }
-
-let __str__ self =
-  let fmt_int pps n = Fmt.(pf pps "%d" n) in
-  let fmt_option ppsub pps nopt =
-    match nopt with
-      None -> Fmt.(pf pps "None")
-    | Some n -> Fmt.(pf pps "%a" ppsub n) in
-  let fmt_channel pps c =
-    if c > 0 then Fmt.(pf pps ",channel=%d" c) else Fmt.(pf pps "") in
-  Fmt.(str "[%@%a,%a:%a='%s',<%a>,%a,%a:%a]"
-         (fmt_option fmt_int) self.tokenIndex
-         (fmt_option fmt_int) self.start
-         (fmt_option fmt_int) self.stop
-         (match self._text with
-            None -> "<no text>"
-          | Some txt ->
-             String.escaped txt)
-         (fmt_option fmt_int) self.type_
-         (fmt_option fmt_channel) self.channel
-         (fmt_option fmt_int) self.line
-         (fmt_option fmt_int) self.column)
-
-end
-module Token = T
-
-module CTF = struct
-
-  let create ~source ~type_ ~text ~channel ~start ~stop ~line ~column () =
-    let t = Token.init_CommonToken ~source ~type_ ~channel ~start ~stop () in
-    t.line <- line ;
-    t.column <- column ;
-    text |> Option.iter (fun (txt: string) -> t._text <- Some txt) ;
-    t
-
-end
-module CommonTokenFactor = CTF
-
 module Counter(M: sig val name : string end) = struct
   let it = ref 0
   let check predicted =
@@ -351,8 +269,102 @@ let getText is start stop =
 let index (is : t) = is._index
 let mark (is : t) = -1
 let release (is : t) (marker : int) = ()
+let size (is : t) = is._size
+
 end
 module InputStream = IS
+
+module T = struct
+
+type token_t = {
+    _input : IS.t
+  ; type_ : int option
+  ; channel : int option
+  ; start : int option
+  ; stop : int option
+  ; mutable tokenIndex : int option
+  ; mutable line : int option
+  ; mutable column : int option
+  ; mutable _text : string option
+  }
+
+let to_mimick t =
+  M.Token {
+      _text = t._text
+    ; _type = t.type_
+    ; channel = t.channel
+    ; column = t.column
+    ; line = t.line
+    ; start = t.start
+    ; stop = t.stop
+    ; tokenIndex = t.tokenIndex
+    }
+
+type t = token_t
+
+let is_eof t = (t.type_ = Some C._EOF)
+
+let init_CommonToken ~input ?source ?type_ ?channel ?start ?stop ?text () =
+  let (line, column) =
+    match source with
+      Some (Some (line, column), _) -> (Some line, Some column)
+    | _ -> (None, Some (-1)) in
+  let tokenIndex = Some (-1) in
+  {
+    _input = input
+  ; type_
+  ; channel
+  ; start
+  ; stop
+  ; tokenIndex
+  ; line
+  ; column
+  ; _text = text
+  }
+
+let __str__ self =
+  let fmt_int pps n = Fmt.(pf pps "%d" n) in
+  let fmt_option ppsub pps nopt =
+    match nopt with
+      None -> Fmt.(pf pps "None")
+    | Some n -> Fmt.(pf pps "%a" ppsub n) in
+  let fmt_channel pps c =
+    if c > 0 then Fmt.(pf pps ",channel=%d" c) else Fmt.(pf pps "") in
+  Fmt.(str "[%@%a,%a:%a='%s',<%a>%a,%a:%a]"
+         (fmt_option fmt_int) self.tokenIndex
+         (fmt_option fmt_int) self.start
+         (fmt_option fmt_int) self.stop
+         (match self._text with
+            Some txt -> String.escaped txt
+          | None ->
+             assert (Std.isSome self.start) ;
+             assert (Std.isSome self.stop) ;
+             let start = Std.outSome self.start in
+             let stop = Std.outSome self.stop in
+             let n = IS.size self._input in
+             if start < n && stop < n then
+               IS.getText self._input start stop
+             else "<EOF>"
+         )
+         (fmt_option fmt_int) self.type_
+         (fmt_option fmt_channel) self.channel
+         (fmt_option fmt_int) self.line
+         (fmt_option fmt_int) self.column)
+
+end
+module Token = T
+
+module CTF = struct
+
+  let create ~input ~source ~type_ ~text ~channel ~start ~stop ~line ~column () =
+    let t = Token.init_CommonToken ~input ~source ~type_ ~channel ~start ~stop () in
+    t.line <- line ;
+    t.column <- column ;
+    text |> Option.iter (fun (txt: string) -> t._text <- Some txt) ;
+    t
+
+end
+module CommonTokenFactor = CTF
 
 module Atns = struct
 type t = { lexer : Atn.t ; _parser : Atn.t option }
@@ -2712,7 +2724,7 @@ let emitToken self t =
 let _emit self =
   let line = self._interp.LAS.line in
   let column = self._interp.LAS.column in
-  let t : T.t = CTF.create ~source:(Some (line, column), self.recog.R._input)
+  let t : T.t = CTF.create ~input:self.recog.R._input ~source:(Some (line, column), self.recog.R._input)
             ~type_:self.recog.R._type
             ~text:self._text
             ~channel:self.recog.R._channel
@@ -2732,7 +2744,7 @@ let emit self =
 let _emitEOF self =
   let cpos = column self in
   let lpos = line self in
-  let eof = CTF.create ~source:(Some (lpos, cpos), self.recog.R._input)
+  let eof = CTF.create ~input:self.recog.R._input ~source:(Some (lpos, cpos), self.recog.R._input)
               ~type_:C._EOF
               ~text:None
               ~channel:C._DEFAULT_CHANNEL
