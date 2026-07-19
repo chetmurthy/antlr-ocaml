@@ -15,7 +15,7 @@ module C = struct
   let _EOF = -1
   let _DEFAULT_CHANNEL = 0
   let _HIDDEN_CHANNEL = 1
-let _EMPTY_RETURN_STATE = 0x7FFFFFFF
+  let _EMPTY_RETURN_STATE = 0x7FFFFFFF
 
   let _DEFAULT_MODE = 0
   let _MORE = -2
@@ -2007,6 +2007,10 @@ let num2state dfa n =
      Fmt.(failwithf "DFA.num2state: DFA.id=%d, stateNumber=%d (0x%08x) Not_found"
             dfa.id n n)
 
+let add_ERROR self st =
+  assert (st.DFASt.stateNumber = C._EMPTY_RETURN_STATE) ;
+  MHM.add self.num2state (st.DFASt.stateNumber, st)
+
 end
 
 module SS = struct
@@ -2063,7 +2067,7 @@ module AS = struct
 module Counter = Counter(struct let name = "ATNSimulator" end)
 let make_ERROR ~dfast_cache ~acs_cache ~ac_cache () =
   Tracelog.with_disabled
-    (fun () -> DFASt.recache ~dfast_cache ~acs_cache ~ac_cache (DFASt.init ~stateNumber:0x7FFFFFFF ~configs:(ACS.init()) ())) ()
+    (fun () -> DFASt.recache ~dfast_cache ~acs_cache ~ac_cache (DFASt.init ~stateNumber:C._EMPTY_RETURN_STATE ~configs:(ACS.init()) ())) ()
 
 let _ERROR = ref None
 
@@ -2107,6 +2111,9 @@ let _ERROR = ref None
 
 let _init ?predicted_id atn decisionToDFA sharedContextCache ~recog () =
   AS.Counter.check predicted_id ;
+  decisionToDFA
+  |> Array.iter
+       (fun dfa -> DFA.add_ERROR dfa (Std.outSome !_ERROR)) ;
   let id = AS.Counter.get_incr () in
   {
     id
