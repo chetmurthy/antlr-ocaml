@@ -18,7 +18,7 @@ source trip-tests/LAS.entrypoints.sh
 source trip-tests/LAE.entrypoints.sh
 source trip-tests/L.entrypoints.sh
 
-NARGS=" --stop-nth 8"
+#NARGS=" --stop-nth 8"
 
 rm -f _generated/*.log
 

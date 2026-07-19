@@ -46,6 +46,7 @@ VISITOR=-visitor
 
 output.NEW errors.NEW json.log:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 Test.py input > output.NEW 2> errors.NEW
+	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log
 
 <if(parserName)>
 GENPAFILES=<grammarName>Parser.py <grammarName>Listener.py <grammarName>Visitor.py
@@ -101,4 +102,4 @@ realclean:: clean
 	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES)
 
 clean::
-	rm -rf output.NEW errors.NEW json.log
+	rm -rf output.NEW errors.NEW json.log *.BAK *.RAW

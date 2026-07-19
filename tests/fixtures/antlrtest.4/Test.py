@@ -1,5 +1,5 @@
 import Trace
-Trace.start("json.log")
+Trace.start("json.log.RAW")
 import Util
 <if(!python3)>from __future__ import print_function<endif>
 import sys

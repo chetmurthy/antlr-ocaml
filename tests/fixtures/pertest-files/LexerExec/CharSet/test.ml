@@ -8,11 +8,16 @@ open Cmdliner.Term.Syntax
 let test ~json_log_file file =
   Tracelog._enabled := true ;
   json_log_file |> Option.iter Tracelog.set_log_file ;
-  let input : Exec.IS.t = Exec.IS.init (file |> Fpath.v |> Bos.OS.File.read |> Result.get_ok) () in
+  let caches = Simulate.Caches.mk () in
+  Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;
+  let input : Exec.IS.t =
+    Tracelog.with_disabled (fun () ->
+        Exec.IS.init (file |> Fpath.v |> Bos.OS.File.read |> Result.get_ok) ()
+      ) ()
+  in
   let l = L.init ~input ~output:stdout in
   let strm : Exec.T.t Stream.t = Util.stream_of_function_until (fun () -> Exec.L.nextToken l) Exec.T.is_eof in
-  strm 
-
+  strm |> Stream.iter (fun t -> Fmt.(pf stdout "%s\n" (Exec.T.__str__ t)))
 
 module Test = struct
 

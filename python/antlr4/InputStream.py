@@ -19,6 +19,7 @@ class InputStream (object):
 
     def __init__(self, data: str):
         global inputStreamCounter
+        orig = Trace.disable()
         Trace.writej([ 'ENTER InputStream.__init__', inputStreamCounter, data ])
         self.id = inputStreamCounter
         inputStreamCounter += 1
@@ -26,6 +27,7 @@ class InputStream (object):
         self.strdata = data
         self._loadString()
         Trace.writej([ 'EXIT InputStream.__init__', self.asdict() ])
+        Trace.restore(orig)
 
     def asdict(self):
         return ["InputStream", {
