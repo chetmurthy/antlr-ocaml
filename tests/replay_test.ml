@@ -181,6 +181,50 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
+module Depth = struct
+
+let filter1_then ~verbose consumer file =
+  if verbose then
+    Fmt.(pf stderr "[READ %s]@." file) ;
+  let doit stream =
+    stream
+    |> Util.entry_exit_decorate_depth
+    |> consumer in
+  Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
+
+let pp1 ~indent oc (depth, (j : Pa_ppx_located_yojson.Json.t)) = match (depth, j) with
+    (depth, (_,`List((_,`String name)::_))) ->
+     let indent =
+       let indent1 =
+         if indent < 2 then ""
+         else "|"^(String.make (indent-1) ' ') in
+       depth |> Std.range |> List.map (fun _ -> indent1) |> String.concat "" in
+    Printf.fprintf oc "%s%s\n" indent name
+  | _ -> ()
+
+let filter ~indent ~verbose ~with_line_numbers files =
+  List.iter (filter1_then ~verbose (Stream.iter (pp1 ~indent stdout))) files
+
+let with_line_numbers =
+  let doc = "with file/line numbers." in
+  Arg.(value & flag & info ["n"; "with-line-numbers"] ~doc)
+
+let indent =
+  let doc = "indent: indentation width." in
+  Arg.(value & opt (some int) (Some 2) & info ["i"; "indent"] ~doc)
+
+let cmd =
+  let doc = "Print ENTRY/EXIT events indented by depth." in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "entry-exit-depth" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ files and+ verbose and+ with_line_numbers and+ indent in
+     filter ~indent:(Std.outSome indent) ~verbose ~with_line_numbers files ;
+  Cmdliner.Cmd.Exit.ok
+end
+
 module Entrypoints = struct
 
 let simulate_json atns stream =
@@ -280,6 +324,7 @@ let cmd =
   [Deserialize.cmd
   ; Filter.cmd
   ; EntryExit.cmd
+  ; Depth.cmd
   ; Entrypoints.cmd
   ; ACS.cmd
 ]

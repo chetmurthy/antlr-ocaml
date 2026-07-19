@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx_regexp *)
 
 open Pa_ppx_utils
 open Pa_ppx_base
@@ -155,12 +155,25 @@ let entry_exit ?start_nth ?stop_nth ~only_outermost_enter names extractor strm =
 
 let entry_exit_yojson ?start_nth ?stop_nth ~only_outermost_enter names strm : 'a Stream.t =
   entry_exit ?start_nth ?stop_nth ~only_outermost_enter names extract_tag strm
-(*
-let array_of_string s =
-  let a = Array.make (String.length s) 0 in
-  String.iteri (fun i c -> a.(i) <- Char.code c) s ;
-  a
- *)
+
+let entry_exit_decorate_depth strm : (int * Pa_ppx_located_yojson.Json.t) Stream.t =
+  let rec eerec depth stk = parser
+    [< '((_, `List ((_, `String name)::_)) as j) ; strm >] ->
+      if [%match {|^ENTER \S+$|} / pcre2 pred] name then
+        let proc = [%match {|^ENTER (\S+)$|} / pcre2 strings !1] name in
+        [< '(depth, j) ; eerec (depth+1) (proc::stk) strm >]
+      else if [%match {|^EXIT \S+$|} / pcre2 pred] name then
+        let proc = [%match {|^EXIT (\S+)$|} / pcre2 strings !1] name in
+        match stk with
+          (proc'::stk) when proc = proc' ->
+          [< '(depth-1, j) ; eerec (depth-1) stk strm >]
+        | _ -> [< '(depth, j); eerec depth stk strm >]
+      else
+        [< '(depth, j) ; eerec depth stk strm >]
+    | [< 'j ; strm >] -> [< '(depth, j) ; eerec depth stk strm >]
+    | [< >] -> [< >]
+in eerec 0 [] strm
+
 let uchars_of_string loc s =
   let open Uutf in
   let dec = decoder ~encoding:`UTF_8 (`String s) in
