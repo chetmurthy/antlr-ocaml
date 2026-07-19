@@ -71,7 +71,7 @@ realclean-all:: antlrtest_util.opt
 
 #DTEST=$(shell ls fixtures/descriptors/LexerExec/*)
 #CTEST=$(shell ls fixtures/custom-descriptors/*/*)
-DTEST=fixtures/descriptors/LexerExec/CharSet.txt
+DTEST=fixtures/descriptors/LexerExec/CharSet.txt fixtures/descriptors/LexerExec/CharSetRange.txt
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)
@@ -96,6 +96,18 @@ realclean-selected:: antlrtest_test.exe
 
 compare-selected:: antlrtest_test.exe
 	$(MANAGETRIP) compare-atns -v $(SELECTED)
+
+update-pertest-selected:: antlrtest_test.exe
+	$(MANAGETRIP) update-pertest -v $(SELECTED)
+
+ocaml-compile-selected:: antlrtest_test.exe
+	$(MANAGETRIP) ocaml-compile -v $(SELECTED)
+
+ocaml-test-selected:: antlrtest_test.exe
+	$(MANAGETRIP) ocaml-test -v $(SELECTED)
+
+ocaml-compare-selected:: antlrtest_test.exe
+	$(MANAGETRIP) ocaml-compare -v $(SELECTED)
 
 #ONE=LexerExec/CharSet
 ONE=ParserExec/Basic
