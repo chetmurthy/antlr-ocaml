@@ -37,7 +37,7 @@ type token_t = {
   ; channel : int option
   ; start : int option
   ; stop : int option
-  ; tokenIndex : int option
+  ; mutable tokenIndex : int option
   ; mutable line : int option
   ; mutable column : int option
   ; mutable _text : string option
@@ -1061,9 +1061,12 @@ let _execute self recog input startIndex =
                      IS.seek input (startIndex + offset) ;
                      requiresSeek := (startIndex + offset) <> stopIndex
 
-                  | _ when LA.isPositionDependent lexerAction ->
-                     IS.seek input stopIndex ;
-                     requiresSeek := false) ;
+                  | _ ->
+                     if LA.isPositionDependent lexerAction then begin
+                         IS.seek input stopIndex ;
+                         requiresSeek := false
+                       end
+                  ) ;
                   LA.execute lexerAction recog)
     ) ()
     (fun _ _ ->
@@ -2706,7 +2709,7 @@ let column self = self._interp.LAS.column
 let emitToken self t =
   self._token <- Some t
 
-let emit self =
+let _emit self =
   let line = self._interp.LAS.line in
   let column = self._interp.LAS.column in
   let t : T.t = CTF.create ~source:(Some (line, column), self.recog.R._input)
@@ -2720,7 +2723,13 @@ let emit self =
   emitToken self t ;
   t
 
-let emitEOF self =
+let emit self =
+  Tracelog.write (Lexer_ENTER_emit (to_mimick self)) ;
+  let rv = _emit self in
+  Tracelog.write (Lexer_EXIT_emit (to_mimick self, Token.to_mimick rv)) ;
+  rv
+
+let _emitEOF self =
   let cpos = column self in
   let lpos = line self in
   let eof = CTF.create ~source:(Some (lpos, cpos), self.recog.R._input)
@@ -2734,6 +2743,12 @@ let emitEOF self =
   emitToken self eof ;
   eof
 
+let emitEOF self =
+  Tracelog.write (Lexer_ENTER_emitEOF (to_mimick self)) ;
+  let rv = _emitEOF self in
+  Tracelog.write (Lexer_EXIT_emitEOF (to_mimick self, Token.to_mimick rv)) ;
+  rv
+
 let _nextToken self : T.t =
   let exception EarlyExit of Token.t in
   try
@@ -2741,7 +2756,7 @@ let _nextToken self : T.t =
   Util.finally (fun () ->
       while true do
         if self._hitEOF then begin
-            assert (self._token <> None) ;
+            emitEOF self ;
             raise (EarlyExit (Std.outSome self._token))
           end ;
         self._token <- None ;
@@ -2752,7 +2767,8 @@ let _nextToken self : T.t =
         self._text <- None ;
         let continueOuter  = ref false in
         let exception Break in
-        try begin
+        begin
+          try
             while true do
               self.recog.R._type <- C._INVALID_TYPE ;
               let ttype = ref C._SKIP in
@@ -2763,24 +2779,25 @@ let _nextToken self : T.t =
                   notifyListeners self e ;
                   recover self e
               end ;
+              Tracelog.write(Lexer_EVENT1_nextToken (to_mimick self, LAS.to_mimick self._interp)) ;
               if IS.la self.recog.R._input 1 = C._EOF then
                 self._hitEOF <- true ;
               if self.recog.R._type = C._INVALID_TYPE then
                 self.recog.R._type <- !ttype ;
               if self.recog.R._type = C._SKIP then begin
-                continueOuter := true ;
-                raise Break
+                  continueOuter := true ;
+                  raise Break
                 end ;
               if self.recog.R._type <> C._MORE then
                 raise Break
             done
-          end;
-            if not !continueOuter then begin
-                if self._token = None then
-                  ignore(emit self) ;
-                raise (EarlyExit (Std.outSome self._token))
-              end
-        with Break -> ()
+          with Break -> ()
+        end ;
+        if not !continueOuter then begin
+            if self._token = None then
+              ignore(emit self) ;
+            raise (EarlyExit (Std.outSome self._token))
+          end
       done
     )
     ()
@@ -2798,8 +2815,18 @@ let nextToken self : T.t =
 end
 module Lexer = L
 
+module TS = struct
+  let init (l : Lexer.t) =
+    let next i =
+      let t = L.nextToken l in
+      t.T.tokenIndex <- Some i ;
+      t
+    in
+    Util.stream_of_function_until_i next T.is_eof
+end
+module TokenStream = TS
+
 let file_init  ~dfast_cache ~acs_cache ~ac_cache () = begin
     AS.module_init ~dfast_cache ~acs_cache ~ac_cache () ;
     LAS.module_init ~dfast_cache ~acs_cache ~ac_cache ()
   end
-

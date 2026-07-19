@@ -500,9 +500,32 @@ type json_log_t =
 | Lexer_ENTER_nextToken of lexer_t
                       [@yojson.name "ENTER Lexer.nextToken"]
                       [@located_yojson.name "ENTER Lexer.nextToken"]
+| Lexer_EVENT1_nextToken of lexer_t * lexer_atn_simulator_t
+                      [@yojson.name "EVENT[1] Lexer.nextToken"]
+                      [@located_yojson.name "EVENT[1] Lexer.nextToken"]
+
 | Lexer_EXIT_nextToken of lexer_t * token_t
                       [@yojson.name "EXIT Lexer.nextToken"]
                       [@located_yojson.name "EXIT Lexer.nextToken"]
+
+| Lexer_ENTER_emit of lexer_t
+                      [@yojson.name "ENTER Lexer.emit"]
+                      [@located_yojson.name "ENTER Lexer.emit"]
+
+| Lexer_EXIT_emit of lexer_t * token_t
+                      [@yojson.name "EXIT Lexer.emit"]
+                      [@located_yojson.name "EXIT Lexer.emit"]
+
+
+| Lexer_ENTER_emitEOF of lexer_t
+                      [@yojson.name "ENTER Lexer.emitEOF"]
+                      [@located_yojson.name "ENTER Lexer.emitEOF"]
+
+| Lexer_EXIT_emitEOF of lexer_t * token_t
+                      [@yojson.name "EXIT Lexer.emitEOF"]
+                      [@located_yojson.name "EXIT Lexer.emitEOF"]
+
+
 | Lexer_emit of lexer_t * token_t
                       [@yojson.name "Lexer.emit"]
                       [@located_yojson.name "Lexer.emit"]

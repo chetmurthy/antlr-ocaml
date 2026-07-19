@@ -126,12 +126,14 @@ let write jlog =
   if enabled() then
     let j = [%to_located_yojson: M.json_log_t] jlog in
     if not (is_disabled j) then
-      Json.pp_hum_to_channel ~std:true (oc()) j
+      Json.pp_hum_to_channel ~std:true (oc()) j ;
+  flush (oc())
 
 let writemsg txt =
   if enabled() then
   let j = (Ploc.dummy, `List [(Ploc.dummy, `String txt)]) in
-    Json.pp_hum_to_channel ~std:true (oc()) j
+  Json.pp_hum_to_channel ~std:true (oc()) j ;
+  flush (oc())
 
 let with_disabled f () =
   let old_enabled = !_enabled in

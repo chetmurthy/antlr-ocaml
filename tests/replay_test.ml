@@ -192,8 +192,10 @@ let filter1_then ~verbose consumer file =
     |> consumer in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let pp1 ~with_line_numbers ~indent oc (depth, (j : Pa_ppx_located_yojson.Json.t)) = match (depth, j) with
-    (depth, (_,`List((loc,`String name)::_))) ->
+let pp1 ~with_line_numbers ~indent ~max_depth oc (depth, (j : Pa_ppx_located_yojson.Json.t)) =
+ match (max_depth, (depth, j)) with
+   (Some max_depth, (depth, _)) when depth > max_depth -> ()
+ | (_, (depth, (_,`List((loc,`String name)::_)))) ->
      let locstring =
        if not with_line_numbers then ""
        else
@@ -213,8 +215,10 @@ let pp1 ~with_line_numbers ~indent oc (depth, (j : Pa_ppx_located_yojson.Json.t)
     Printf.fprintf oc "%s%s%s\n" locstring indent name
   | _ -> ()
 
-let filter ~indent ~verbose ~with_line_numbers files =
-  List.iter (filter1_then ~verbose (Stream.iter (pp1 ~with_line_numbers ~indent stdout))) files
+let filter ~indent ~verbose ~with_line_numbers ~max_depth files =
+  if with_line_numbers then
+    output_string stdout "-*- mode: compilation; -*-\n" ;
+  List.iter (filter1_then ~verbose (Stream.iter (pp1 ~with_line_numbers ~indent ~max_depth stdout))) files
 
 let with_line_numbers =
   let doc = "with file/line numbers." in
@@ -224,6 +228,10 @@ let indent =
   let doc = "indent: indentation width." in
   Arg.(value & opt (some int) (Some 2) & info ["i"; "indent"] ~doc)
 
+let max_depth =
+  let doc = "max-depth: maximum depth to print." in
+  Arg.(value & opt (some int) None & info ["m"; "max-depth"] ~doc)
+
 let cmd =
   let doc = "Print ENTRY/EXIT events indented by depth." in
   let man = [
@@ -231,8 +239,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "entry-exit-depth" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ files and+ verbose and+ with_line_numbers and+ indent in
-     filter ~indent:(Std.outSome indent) ~verbose ~with_line_numbers files ;
+  let+ files and+ verbose and+ with_line_numbers and+ indent and+ max_depth in
+     filter ~indent:(Std.outSome indent) ~verbose ~with_line_numbers ~max_depth files ;
   Cmdliner.Cmd.Exit.ok
 end
 

@@ -1,5 +1,6 @@
 
 
+open Pa_ppx_utils
 open Antlr
 open Cmdliner
 open Cmdliner.Term.Syntax
@@ -16,8 +17,9 @@ let test ~json_log_file file =
       ) ()
   in
   let l = L.init ~input ~output:stdout in
-  let strm : Exec.T.t Stream.t = Util.stream_of_function_until (fun () -> Exec.L.nextToken l) Exec.T.is_eof in
-  strm |> Stream.iter (fun t -> Fmt.(pf stdout "%s\n" (Exec.T.__str__ t)))
+  let strm : Exec.T.t Stream.t = Exec.TS.init l in
+  let l = Std.list_of_stream strm in
+  l |> List.iter (fun t -> Fmt.(pf stdout "%s\n" (Exec.T.__str__ t)))
 
 module Test = struct
 

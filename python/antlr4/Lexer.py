@@ -175,6 +175,11 @@ class Lexer(Recognizer, TokenSource):
                     except LexerNoViableAltException as e:
                         self.notifyListeners(e)		# report error
                         self.recover(e)
+                    Trace.writej([ 'EVENT[1] Lexer.nextToken',
+                                   self.asdict(),
+                                   self._interp.asdict(),
+                                  ])
+
                     if self._input.LA(1)==Token.EOF:
                         self._hitEOF = True
                     if self._type == Token.INVALID_TYPE:
@@ -269,6 +274,17 @@ class Lexer(Recognizer, TokenSource):
     #  custom Token objects or provide a new factory.
     #/
     def emit(self):
+        Trace.writej([ 'ENTER Lexer.emit',
+                       self.asdict(),
+                      ])
+        rv = self._emit()
+        Trace.writej([ 'EXIT Lexer.emit',
+                       self.asdict(),
+                       rv.asdict()
+                      ])
+        return rv
+
+    def _emit(self):
         t = self._factory.create(self._tokenFactorySourcePair, self._type, self._text, self._channel, self._tokenStartCharIndex,
                                  self.getCharIndex()-1, self._tokenStartLine, self._tokenStartColumn)
         self.emitToken(t)
@@ -279,6 +295,17 @@ class Lexer(Recognizer, TokenSource):
         return t
 
     def emitEOF(self):
+        Trace.writej([ 'ENTER Lexer.emitEOF',
+                       self.asdict(),
+                      ])
+        rv = self._emitEOF()
+        Trace.writej([ 'EXIT Lexer.emitEOF',
+                       self.asdict(),
+                       rv.asdict()
+                      ])
+        return rv
+
+    def _emitEOF(self):
         cpos = self.column
         lpos = self.line
         eof = self._factory.create(self._tokenFactorySourcePair, Token.EOF, None, Token.DEFAULT_CHANNEL, self._input.index,
