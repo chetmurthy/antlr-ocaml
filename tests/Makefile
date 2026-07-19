@@ -77,6 +77,7 @@ DTEST=\
 	fixtures/descriptors/LexerExec/CharSetInSet.txt \
 	fixtures/descriptors/LexerExec/CharSetNot.txt \
 	fixtures/descriptors/LexerExec/CharSetPlus.txt \
+	fixtures/descriptors/LexerExec/CharSetWithEscapedChar.txt \
 
 
 SELECTED=$(DTEST) $(CTEST)
