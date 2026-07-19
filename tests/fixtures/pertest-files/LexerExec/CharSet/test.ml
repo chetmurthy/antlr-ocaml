@@ -10,7 +10,8 @@ let test ~json_log_file file =
   json_log_file |> Option.iter Tracelog.set_log_file ;
   let input : Exec.IS.t = Exec.IS.init (file |> Fpath.v |> Bos.OS.File.read |> Result.get_ok) () in
   let l = L.init ~input ~output:stdout in
- ()
+  let strm : Exec.T.t Stream.t = Util.stream_of_function_until (fun () -> Exec.L.nextToken l) Exec.T.is_eof in
+  strm 
 
 
 module Test = struct

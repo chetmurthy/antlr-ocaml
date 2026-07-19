@@ -100,7 +100,7 @@ class Lexer(Recognizer, TokenSource):
 
     def asdict(self):
         d = {
-            '_factory' : self._factory.asdict(),
+#            '_factory' : self._factory.asdict(),
             '_interp' : None if self._interp is None else self._interp.asdict(),
             '_token': None if self._token is None else self._token.asdict(),
             '_tokenStartCharIndex' : self._tokenStartCharIndex,
@@ -139,6 +139,7 @@ class Lexer(Recognizer, TokenSource):
         Trace.writej([ 'ENTER Lexer.nextToken',
                                  self.asdict() ])
         rv = self._nextToken()
+        assert (rv is not None)
         Trace.writej([ 'EXIT Lexer.nextToken',
                                  self.asdict(), rv.asdict() ])
         return rv

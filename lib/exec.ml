@@ -6,6 +6,8 @@ open Pa_ppx_utils
 open Util
 open Atn
 
+module M = Mimick
+
 module C = struct
   let _INVALID_TYPE = 0
   let  _EPSILON = -2
@@ -41,7 +43,21 @@ type token_t = {
   ; mutable _text : string option
   }
 
+let to_mimick t =
+  M.Token {
+      _text = t._text
+    ; _type = t.type_
+    ; channel = t.channel
+    ; column = t.column
+    ; line = t.line
+    ; start = t.start
+    ; stop = t.stop
+    ; tokenIndex = t.tokenIndex
+    }
+
 type t = token_t
+
+let is_eof t = (t.type_ = Some C._EOF)
 
 let init_CommonToken ?source ?type_ ?channel ?start ?stop ?text () =
   let (line, column) =
@@ -184,8 +200,6 @@ let upsert cache t =
     (add cache t ; t)
 
 end
-
-module M = Mimick
 
 module IS = struct
 type is_t = {
@@ -2628,6 +2642,21 @@ type lexer_t =
 
 type t = lexer_t
 
+let to_mimick t =
+  M.Lexer {
+      _channel = t.recog.R._channel
+    ; _interp = Some (LAS.to_mimick t._interp)
+    ; _hitEOF = t._hitEOF
+    ; _mode = t.recog.R._mode
+    ; _modeStack = t.recog.R._modeStack
+    ; _text = t._text
+    ; _token = Option.map Token.to_mimick t._token
+    ; _tokenStartCharIndex = t._tokenStartCharIndex
+    ; _tokenStartColumn = t._tokenStartColumn
+    ; _tokenStartLine = t._tokenStartLine
+    ; _type = t.recog.R._type
+  }
+
 let _init ~interp ~recog () =
   let self = {
     _stateNumber = Atn.State.mk_id (-1)
@@ -2645,7 +2674,7 @@ let _init ~interp ~recog () =
 let init ~interp ~recog () =
   Tracelog.write (Lexer_ENTER_init (IS.to_mimick recog.R._input)) ;
   let rv = _init ~interp ~recog () in
-  Tracelog.write (Lexer_EXIT_init) ;
+  Tracelog.write (Lexer_EXIT_init (to_mimick rv)) ;
   rv
 
 let getErrorDisplay self text = String.escaped text
@@ -2670,27 +2699,51 @@ let recover self e =
        IS.consume self.recog.R._input
 
 
+let getCharIndex self = IS.index self.recog.R._input
+let line self = self._interp.LAS.line
+let column self = self._interp.LAS.column
+
+let emitToken self t =
+  self._token <- Some t
+
 let emit self =
   let line = self._interp.LAS.line in
   let column = self._interp.LAS.column in
-  let t = CTF.create ~source:(Some (line, column), self.recog.R._input)
+  let t : T.t = CTF.create ~source:(Some (line, column), self.recog.R._input)
             ~type_:self.recog.R._type
             ~text:self._text
             ~channel:self.recog.R._channel
             ~start:self._tokenStartCharIndex
             ~stop:((getCharIndex self) - 1)
-            ~line:self._tokenStartLine
-            ~column:self._tokenStartColumn in
+            ~line:(Some self._tokenStartLine)
+            ~column:(Some self._tokenStartColumn) () in
+  emitToken self t ;
   t
 
-let _nextToken self =
-  let exception EarlyExit of Token.t option in
+let emitEOF self =
+  let cpos = column self in
+  let lpos = line self in
+  let eof = CTF.create ~source:(Some (lpos, cpos), self.recog.R._input)
+              ~type_:C._EOF
+              ~text:None
+              ~channel:C._DEFAULT_CHANNEL
+              ~start:(IS.index self.recog.R._input)
+              ~stop:((IS.index self.recog.R._input)-1)
+              ~line:(Some lpos)
+              ~column:(Some cpos) () in
+  emitToken self eof ;
+  eof
+
+let _nextToken self : T.t =
+  let exception EarlyExit of Token.t in
   try
   let tokenStartMarker = IS.mark self.recog._input in
   Util.finally (fun () ->
       while true do
-        if self._hitEOF then
-          raise (EarlyExit self._token) ;
+        if self._hitEOF then begin
+            assert (self._token <> None) ;
+            raise (EarlyExit (Std.outSome self._token))
+          end ;
         self._token <- None ;
         self.recog._channel <- C._DEFAULT_CHANNEL ;
         self._tokenStartCharIndex <- IS.index self.recog.R._input ;
@@ -2724,10 +2777,8 @@ let _nextToken self =
           end;
             if not !continueOuter then begin
                 if self._token = None then
-(*TODO
-                  emit self ;
- *)
-                raise (EarlyExit self._token)
+                  ignore(emit self) ;
+                raise (EarlyExit (Std.outSome self._token))
               end
         with Break -> ()
       done
@@ -2736,6 +2787,13 @@ let _nextToken self =
     (fun _ _ ->
       IS.release self.recog._input tokenStartMarker)
   with (EarlyExit topt) -> topt
+
+let nextToken self : T.t =
+  Tracelog.write (Lexer_ENTER_nextToken (to_mimick self)) ;
+  let rv = _nextToken self in
+  Tracelog.write (Lexer_EXIT_nextToken (to_mimick self, Token.to_mimick rv)) ;
+  rv
+
 
 end
 module Lexer = L

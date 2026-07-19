@@ -188,3 +188,10 @@ let finally f arg finf =
 	match rv with
 		Inl v -> v
 	  | Inr (e, bt) -> Printexc.raise_with_backtrace e bt
+
+let stream_of_function_until f pred =
+  let rec strec () =
+    let v = f() in
+    if pred v then [< >]
+    else [< 'v ; strec () >]
+  in [< strec () >]

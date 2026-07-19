@@ -147,19 +147,17 @@ and common_token_factory_t =
 and token_t =
   Token of {
       _text : string option
-    ; _type : int
-    ; channel : int
-    ; column : int
-    ; line : int
-    ; source : string * string
-    ; start : int
-    ; stop : int
-    ; tokenIndex : int
+    ; _type : int option
+    ; channel : int option
+    ; column : int option
+    ; line : int option
+    ; start : int option
+    ; stop : int option
+    ; tokenIndex : int option
     }
 and lexer_t = 
   Lexer of {
       _channel : int
-    ; _factory : common_token_factory_t
     ; _interp : lexer_atn_simulator_t option
     ; _hitEOF : bool
     ; _mode : int
@@ -495,7 +493,7 @@ type json_log_t =
 | Lexer_ENTER_init of input_stream_t
                       [@yojson.name "ENTER Lexer.__init__"]
                       [@located_yojson.name "ENTER Lexer.__init__"]
-| Lexer_EXIT_init
+| Lexer_EXIT_init of lexer_t
                       [@yojson.name "EXIT Lexer.__init__"]
                       [@located_yojson.name "EXIT Lexer.__init__"]
 
