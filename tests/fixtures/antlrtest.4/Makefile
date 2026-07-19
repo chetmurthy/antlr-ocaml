@@ -9,6 +9,7 @@ PYTHONPATH:=$(TOP)/python:$(PYTHONPATH)
 SHELL := /bin/bash
 ADJUST=$(TOP)/tests/trip-tests/adjust-dfa
 PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/<testName>
+REPLAYTEST=$(TOP)/tests/replay_test.opt
 
 all: compare
 
@@ -102,4 +103,4 @@ realclean:: clean
 	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES)
 
 clean::
-	rm -rf output.NEW errors.NEW json.log *.BAK *.RAW
+	rm -rf output.NEW errors.NEW *.log *.BAK *.RAW

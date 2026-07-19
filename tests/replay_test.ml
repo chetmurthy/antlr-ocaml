@@ -192,18 +192,29 @@ let filter1_then ~verbose consumer file =
     |> consumer in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable doit ~file
 
-let pp1 ~indent oc (depth, (j : Pa_ppx_located_yojson.Json.t)) = match (depth, j) with
-    (depth, (_,`List((_,`String name)::_))) ->
+let pp1 ~with_line_numbers ~indent oc (depth, (j : Pa_ppx_located_yojson.Json.t)) = match (depth, j) with
+    (depth, (_,`List((loc,`String name)::_))) ->
+     let locstring =
+       if not with_line_numbers then ""
+       else
+         let fname = Ploc.file_name loc in
+         let linen = Ploc.line_nb loc in
+         let s = Printf.sprintf "%s:%d: " fname linen in
+         let slen = (String.length s) in
+         let width = Util.roundup 8 slen in
+         let pad = if slen = width then ""
+                   else String.make (width-slen) ' ' in
+         Printf.sprintf "%s%s" s pad in
      let indent =
        let indent1 =
          if indent < 2 then ""
          else "|"^(String.make (indent-1) ' ') in
        depth |> Std.range |> List.map (fun _ -> indent1) |> String.concat "" in
-    Printf.fprintf oc "%s%s\n" indent name
+    Printf.fprintf oc "%s%s%s\n" locstring indent name
   | _ -> ()
 
 let filter ~indent ~verbose ~with_line_numbers files =
-  List.iter (filter1_then ~verbose (Stream.iter (pp1 ~indent stdout))) files
+  List.iter (filter1_then ~verbose (Stream.iter (pp1 ~with_line_numbers ~indent stdout))) files
 
 let with_line_numbers =
   let doc = "with file/line numbers." in

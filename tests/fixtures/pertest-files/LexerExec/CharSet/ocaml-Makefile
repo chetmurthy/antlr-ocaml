@@ -8,13 +8,14 @@ ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
 TESTS=test.exe
-
 TESTSOPT=$(TESTS:.exe=.opt)
 
 ocaml-compare:: output.NEW errors.NEW
 	diff -Bwiu output output.NEW
 	diff -Bwiu errors errors.NEW
 	jq -S . ocaml-json.log.RAW > ocaml-json.log.NEW && mv ocaml-json.log.NEW ocaml-json.log
+	$(REPLAYTEST) entry-exit-depth ocaml-json.log > ocaml-json.ee.log
+	$(REPLAYTEST) entry-exit-depth json.log > json.ee.log
 	diff -Bwiu json.log ocaml-json.log
 
 ocaml-test:: ocaml-compile

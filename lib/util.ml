@@ -208,3 +208,10 @@ let stream_of_function_until f pred =
     if pred v then [< >]
     else [< 'v ; strec () >]
   in [< strec () >]
+
+let roundup grain n =
+  let div_grain = n / grain in
+  let mod_grain = n mod grain in
+  if 0 <> mod_grain then
+    n+(grain-mod_grain)
+  else n
