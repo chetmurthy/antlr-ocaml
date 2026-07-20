@@ -2476,15 +2476,19 @@ let _getReachableConfigSet self input closure_ reach t =
   let skipAlt = ref Atn._INVALID_ALT_NUMBER in
   !(closure_.ACS.configs)
   |> List.iter (fun cfg ->
+     Tracelog.write
+       (LexerATNSimulator_EVENT2_getReachableConfigSet (AC.to_mimick cfg, !skipAlt, cfg.alt)) ;
      let cfg_lexer_ext =
        match cfg.AC.lexer_ext with
-         None -> failwith "LAE.getReachableConfigSet: must be LexerATNConfig, but was ATNConfig"
+         None -> failwith "LAS.getReachableConfigSet: must be LexerATNConfig, but was ATNConfig"
        | Some ext -> ext in
      let currentAltReachedAcceptState = ( cfg.AC.alt = !skipAlt ) in
-         if currentAltReachedAcceptState || cfg_lexer_ext.AC.passedThroughNonGreedyDecision then
+         if currentAltReachedAcceptState && cfg_lexer_ext.AC.passedThroughNonGreedyDecision then
            ()
          else
            let st = Atn.State.get_state cfg.AC.atn.states cfg.state in
+           Tracelog.write
+             (LexerATNSimulator_EVENT1_getReachableConfigSet (to_mimick self, cfg.state, st.transitions)) ;
            st.transitions
            |> List.iter (fun trans ->
            match getReachableTarget self trans t with

@@ -476,6 +476,14 @@ type json_log_t =
                       [@yojson.name "EXIT LexerATNSimulator.getReachableConfigSet"]
                       [@located_yojson.name "EXIT LexerATNSimulator.getReachableConfigSet"]
 
+| LexerATNSimulator_EVENT1_getReachableConfigSet of lexer_atn_simulator_t * deser_state_id * edge_t list
+                      [@yojson.name "EVENT[1] LexerATNSimulator.getReachableConfigSet"]
+                      [@located_yojson.name "EVENT[1] LexerATNSimulator.getReachableConfigSet"]
+| LexerATNSimulator_EVENT2_getReachableConfigSet of config_t * int * int
+                      [@yojson.name "EVENT[2] LexerATNSimulator.getReachableConfigSet"]
+                      [@located_yojson.name "EVENT[2] LexerATNSimulator.getReachableConfigSet"]
+
+
 | LexerATNSimulator_ENTER_failOrAccept of lexer_atn_simulator_t * sim_state_t * input_stream_t * config_set_t * int
                       [@yojson.name "ENTER LexerATNSimulator.failOrAccept"]
                       [@located_yojson.name "ENTER LexerATNSimulator.failOrAccept"]

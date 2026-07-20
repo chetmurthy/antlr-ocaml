@@ -359,6 +359,10 @@ class LexerATNSimulator(ATNSimulator):
         # than a config that already reached an accept state for the same rule
         skipAlt = ATN.INVALID_ALT_NUMBER
         for cfg in closure:
+            Trace.writej([ 'EVENT[2] LexerATNSimulator.getReachableConfigSet',
+                           cfg.asdict(),
+                           skipAlt, cfg.alt,
+                      ])
             currentAltReachedAcceptState = ( cfg.alt == skipAlt )
             if currentAltReachedAcceptState and cfg.passedThroughNonGreedyDecision:
                 continue
@@ -366,6 +370,12 @@ class LexerATNSimulator(ATNSimulator):
             if LexerATNSimulator.debug:
                 print("testing", self.getTokenName(t), "at",  str(cfg))
 
+            
+            Trace.writej([ 'EVENT[1] LexerATNSimulator.getReachableConfigSet',
+                       self.asdict(),
+                        cfg.state.stateNumber,
+                       [t.asdict() for t in cfg.state.transitions],
+                      ])
             for trans in cfg.state.transitions:          # for each transition
                 target = self.getReachableTarget(trans, t)
                 if target is not None:
