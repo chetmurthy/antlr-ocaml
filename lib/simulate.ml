@@ -100,8 +100,6 @@ module Caches = struct
     ; dfast : DFASt.Cache.t
     ; dfa : DFA.Cache.t
     ; is : IS.Cache.t
-    ; las : LAS.Cache.t
-    ; lexer : Lexer.t option ref
     }
   let mk () = {
       ac = AC.Cache.mk ()
@@ -109,8 +107,6 @@ module Caches = struct
     ; dfast = DFASt.Cache.mk ()
     ; dfa = DFA.Cache.mk ()
     ; is = IS.Cache.mk ()
-    ; las = LAS.Cache.mk ()
-    ; lexer = ref None
     }
 end
 
@@ -330,35 +326,6 @@ let sim1 caches atns (i:int) (loc,j) =
       | InputStream_ENTER_getText (is, n, m) ->
          let rv = IS.getText (IS.of_mimick ~is_cache:(Some caches.is) is) n m in
          ()
-(*
-      | LexerATNSimulator_ENTER_init (predicted_id, decisionToDFA, sharedContextCache) ->
-         let atn  = Atns.for_grammar atns Atn.LEXER in
-         let decisionToDFA = Array.map (DFA.of_mimick ~dfa_cache:(Some caches.dfa)  ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns) decisionToDFA in
-         let sharedContextCache = List.map PC.of_mimick sharedContextCache in
-         let recog = match !(caches.lexer) with
-             None -> failwith "internal error in simulation: exer not initialized"
-           | Some l -> l.recog in
-         let rv : LAS.t = LAS.init ~predicted_id atn decisionToDFA sharedContextCache ~recog () in
-         let _ : LAS.t = LAS.recache ~las_cache:caches.las ~dfa_cache:caches.dfa ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac rv  in
-         ()
-
-      | LexerATNSimulator_ENTER_match (las, is, n) ->
-         let las = LAS.of_mimick ~las_cache:(Some caches.las) ~dfa_cache:(Some caches.dfa) ~dfast_cache:(Some caches.dfast) ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) ~recog:(Some (Std.outSome !(caches.lexer)).recog) atns las in
-         let is = IS.of_mimick ~is_cache:(Some caches.is) is in
-         let rv = LAS._match las is n in
-         ()
-
-      | Lexer_ENTER_init is ->
-         let interp = match LAS.Cache.get caches.las 0 with
-             las -> las
-           | exception Not_found ->
-              failwith "No LexerATNSimulator inited before Lexer.__init__" in
-         let is = IS.of_mimick ~is_cache:(Some caches.is) is in
-         let l : Lexer.t = Lexer.init is () in
-         assert (!(caches.lexer) = None) ;
-         caches.lexer := Some l ;
-         ()
- *)         
 
     end
   with exc ->

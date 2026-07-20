@@ -855,6 +855,31 @@ let init ?parent ?(invokingState = Atn.State.mk_id (-1)) () =
 end
 module RuleContext = RC
 
+module LASC = struct
+type lasc_t = {
+    mutable column : int
+  ; mutable line : int
+  ; mutable mode : int
+  ; mutable startIndex : int
+  }
+[@@deriving show, eq]
+type t = lasc_t
+[@@deriving show, eq]
+
+let init () =
+  {
+    startIndex = -1
+  ; line = 1
+  ; column = 0
+  ; mode = C._DEFAULT_MODE
+  }
+
+
+let getText cu input =
+  IS.getText input cu.startIndex ((IS.index input) - 1)
+end
+module LASCursor = LASC
+
 module rec EL :   sig
     type el_t = {
       syntaxError :
@@ -883,7 +908,7 @@ end
 
 and R  :
   sig
-    type action_t = recognizer_t -> RC.t option -> int -> int -> unit
+    type action_t = recognizer_t -> LASC.t -> RC.t option -> int -> unit
     and recognizer_t = {
       mutable _stateNumber : Atn.state_id;
       _input : IS.t;
@@ -892,6 +917,7 @@ and R  :
       mutable _type : int;
       mutable _modeStack : int list;
       mutable _mode : int;
+      mutable _text : string option ;
       _actions : (int, action_t) Pa_ppx_utils.Coll.MHM.t;
       _listeners : EL.t list;
     }
@@ -906,7 +932,7 @@ and R  :
       ?output:out_channel ->
       ?actions:(int * action_t) list ->
       ?listeners:EL.t list -> unit -> recognizer_t
-    val action : recognizer_t -> RC.t option -> int -> int -> unit
+    val action : recognizer_t -> LASC.t -> RC.t option -> int -> int -> unit
     val set_channel : recognizer_t -> int -> unit
     val mode : recognizer_t -> int -> unit
     val more : recognizer_t -> unit
@@ -914,9 +940,10 @@ and R  :
     val pushMode : recognizer_t -> int -> unit
     val skip : recognizer_t -> unit
     val set_type : recognizer_t -> int -> unit
+    val text : recognizer_t -> LASC.t -> string
   end = struct
 
-type action_t = recognizer_t -> RC.t option -> int -> int -> unit
+type action_t = recognizer_t -> LASC.t -> RC.t option -> int -> unit
 
 and recognizer_t =
   {
@@ -927,6 +954,7 @@ and recognizer_t =
   ; mutable _type : int
   ; mutable _modeStack : int list
   ; mutable _mode : int
+  ; mutable _text : string option
   ; _actions : (int, action_t) MHM.t
   ; _listeners : EL.t list
   }
@@ -942,15 +970,11 @@ let _init input ?(output = stdout) ?(actions=[]) ? (listeners=[]) () =
   ; _type = C._INVALID_TYPE
   ; _modeStack = []
   ; _mode = C._DEFAULT_MODE
+  ; _text = None
   ; _actions = MHM.mk 23
   ; _listeners = listeners
   } in
 
-  let actions =
-    if actions = [] then
-      [(0,(fun (self : recognizer_t) localCtx ruleIndex actionIndex ->
-          output_string self._output "I\n"))]
-    else actions in
   List.iter (fun (k,v) -> MHM.add self._actions (k,v)) actions ;
   self
 
@@ -964,9 +988,9 @@ let init input ?(output = stdout) ?(actions=[]) ?(listeners=[]) () =
  *)
   rv
 
-let action l localCtx ruleIndex actionIndex =
+let action l c localCtx ruleIndex actionIndex =
   match MHM.map l._actions ruleIndex with
-    f -> f l localCtx ruleIndex actionIndex
+    f -> f l c localCtx actionIndex
   | exception Not_found -> ()
 
 let set_channel l n =
@@ -986,6 +1010,11 @@ let pushMode l m =
 
 let skip l = l._type <- C._SKIP
 let set_type l t = l._type <- t
+let text l cu =
+  match l._text with
+    Some s -> s
+  | None ->
+     LASC.getText cu l._input
 end
 module Recognizer = R
 module ErrorListener = EL
@@ -1020,15 +1049,15 @@ let actionType = function
     | LexerSkipAction {actionType}
     | LexerTypeAction {actionType}) -> actionType
 
-let rec execute la recog =
+let rec execute la recog c =
   match la with
     LexerChannelAction { channel } -> R.set_channel recog channel
 
   | LexerCustomAction { ruleIndex ; actionIndex } ->
-     R.action recog None ruleIndex actionIndex
+     R.action recog c None ruleIndex actionIndex
 
   | LexerIndexedCustomAction { action } ->
-     execute action recog
+     execute action recog c
 
   | LexerModeAction { mode } -> R.mode recog mode
 
@@ -1072,7 +1101,7 @@ let append lae_opt la =
     None -> { lexerActions = [la] }
   | Some lae -> {(lae) with lexerActions = lae.lexerActions @ [la] }
 
-let _execute self recog input startIndex =
+let _execute self recog c input startIndex =
   let requiresSeek = ref false in
   let stopIndex = IS.index input in
   Util.finally (fun () ->
@@ -1091,16 +1120,16 @@ let _execute self recog input startIndex =
                          requiresSeek := false
                        end
                   ) ;
-                  LA.execute lexerAction recog)
+                  LA.execute lexerAction recog c)
     ) ()
     (fun _ _ ->
       if !requiresSeek then
         IS.seek input stopIndex
     )
 
-let execute self recog input startIndex =
+let execute self recog c input startIndex =
   Tracelog.write (LexerActionExecutor_ENTER_execute (to_mimick self, IS.to_mimick input, startIndex)) ;
-  let rv = _execute self recog input startIndex in
+  let rv = _execute self recog c input startIndex in
   Tracelog.write (LexerActionExecutor_EXIT_execute (to_mimick self, IS.to_mimick input)) ;
   rv
 
@@ -2091,6 +2120,7 @@ module ATNSimulator = AS
 
 module LAS = struct
 
+
   let mhs_equal x y =
     let x = x |> MHS.toList |> List.stable_sort Stdlib.compare in
     let y = y |> MHS.toList |> List.stable_sort Stdlib.compare in
@@ -2109,11 +2139,8 @@ type las_t = {
               [@printer (fun pps _ -> Fmt.(pf pps "<recog>"))]
               [@equal (fun x y -> x==y)]
   ; decisionToDFA : DFA.t array
-  ; mutable column : int
-  ; mutable line : int
-  ; mutable mode : int
+  ; cursor : LASC.t
   ; prevAccept : SS.t
-  ; mutable startIndex : int
   }
 [@@deriving show, eq]
 type t = las_t
@@ -2133,10 +2160,7 @@ let _init ?predicted_id atn decisionToDFA sharedContextCache ~recog () =
   ; sharedContextCache = MHS.ofList sharedContextCache 23
   ; recog = recog
   ; decisionToDFA
-  ; startIndex = -1
-  ; line = 1
-  ; column = 0
-  ; mode = C._DEFAULT_MODE
+  ; cursor = LASC.init()
   ; prevAccept = SS.init ()
   }
 
@@ -2145,10 +2169,10 @@ let to_mimick t =
     id = t.id
   ; sharedContextCache = t.sharedContextCache |> MHS.toList |> List.map PC.to_mimick
   ; decisionToDFA = t.decisionToDFA |> Array.map DFA.to_mimick
-  ; startIndex = t.startIndex
-  ; line = t.line
-  ; column = t.column
-  ; mode = t.mode
+  ; startIndex = t.cursor.LASC.startIndex
+  ; line = t.cursor.LASC.line
+  ; column = t.cursor.LASC.column
+  ; mode = t.cursor.LASC.mode
   ; prevAccept = t.prevAccept |> SS.to_mimick
   }
 
@@ -2161,53 +2185,13 @@ let init ?predicted_id atn decisionToDFA sharedContextCache ~recog () =
     (LexerATNSimulator_EXIT_init (to_mimick rv)) ;
   rv
 
-let _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns ~recog t =
-  let atn  = Atns.for_grammar atns Atn.LEXER in
-  match t with
-    M.LexerATNSimulator t ->
-    {
-      id = t.id
-      ; atn
-      ; sharedContextCache =
-          t.sharedContextCache
-          |> List.map PC.of_mimick
-          |> (fun l -> MHS.ofList l 23)
-      ; recog = recog
-      ; decisionToDFA = t.decisionToDFA |> Array.map (DFA.of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache atns)
-      ; startIndex = t.startIndex
-      ; line = t.line
-      ; column = t.column
-      ; mode = t.mode
-      ; prevAccept = SS.of_mimick ~dfast_cache ~acs_cache ~ac_cache atns t.prevAccept
-    }
-
-module Cache = Cacher(struct
-                   type t  = las_t
-                   let id t = t.id
-                   let equal = equal_las_t
-                   let pp = pp_las_t
-                   let name = "LexerATNSimulator"
-                 end)
-
-
-let of_mimick ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache ~recog atns t =
-  let t = _of_mimick ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache ~recog atns t in
-  match las_cache with
-    None -> t
-  | Some las_cache -> Cache.recache las_cache t
-
-let recache ~las_cache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache las =
-  Array.iter (fun dfa -> DFA.recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa ; ()) las.decisionToDFA
-  ; SS.recache ~dfast_cache ~acs_cache ~ac_cache las.prevAccept
-  ; Cache.upsert las_cache las
-
 let _accept self input lexerActionExecutor_opt startIndex index line charPos =
   IS.seek input index ;
-  self.line <- line ;
-  self.column <- charPos ;
+  self.cursor.LASC.line <- line ;
+  self.cursor.LASC.column <- charPos ;
   match lexerActionExecutor_opt with
     Some lae ->
-    LAE.execute lae self.recog input startIndex
+    LAE.execute lae self.recog self.cursor input startIndex
   | _ -> ()
 
 let accept self input lexerActionExecutor_opt startIndex index line charPos =
@@ -2226,12 +2210,12 @@ let _failOrAccept self prevAccept input reach t =
   match self.prevAccept.SS.dfaState with
     Some st ->
     let lexerActionExecutor = st.lexerActionExecutor in
-    accept self input lexerActionExecutor self.startIndex prevAccept.SS.index prevAccept.line prevAccept.column ;
+    accept self input lexerActionExecutor self.cursor.LASC.startIndex prevAccept.SS.index prevAccept.line prevAccept.column ;
     st.prediction
   | None ->
-     if t = C._EOF && IS.index input = self.startIndex then
+     if t = C._EOF && IS.index input = self.cursor.LASC.startIndex then
        C._EOF
-     else raise (LexerNoViableAltException(self.recog, input, self.startIndex, reach))
+     else raise (LexerNoViableAltException(self.recog, input, self.cursor.LASC.startIndex, reach))
 
 (*
    assert false 
@@ -2248,8 +2232,8 @@ let failOrAccept self prevAccept input reach t =
 
 let _captureSimState self settings input dfaState =
   settings.SS.index <- IS.index input
-  ; settings.SS.line <- self.line
-  ; settings.SS.column <- self.column
+  ; settings.SS.line <- self.cursor.LASC.line
+  ; settings.SS.column <- self.cursor.LASC.column
   ; settings.SS.dfaState <- Some dfaState
 
 let captureSimState self settings input dfast =
@@ -2297,7 +2281,7 @@ let _addDFAState self dfa cs =
           | Some a -> a in
         let fc_st = Atn.State.get_state self.atn.Atn.states firstConfigWithRuleStopState.state in
         DFASt.set_prediction proposed ruleToTokenType.(fc_st.ruleIndex)) ;
-    let dfa' = self.decisionToDFA.(self.mode) in
+    let dfa' = self.decisionToDFA.(self.cursor.LASC.mode) in
     assert (dfa.DFA.id = dfa'.DFA.id) ;
     let existing = DFA.states_get dfa proposed in
     (match existing with
@@ -2529,7 +2513,7 @@ let _getReachableConfigSet self input closure_ reach t =
                 match cfg_lexer_ext.AC.lexerActionExecutor with
                   None -> None
                 | Some lexerActionExecutor ->
-                   Some (LAE.fixOffsetBeforeMatch lexerActionExecutor (IS.index input - self.startIndex)) in
+                   Some (LAE.fixOffsetBeforeMatch lexerActionExecutor (IS.index input - self.cursor.LASC.startIndex)) in
               let treatEofAsEpsilon = (t = C._EOF) in
               let config = AC.init_LexerATNConfig cfg.atn (Some target) None None None (Some cfg) lexerActionExecutor in
               if closure self input config reach currentAltReachedAcceptState true treatEofAsEpsilon then
@@ -2567,11 +2551,11 @@ let computeTargetState self dfa input s t =
 let consume self input =
   let curChar = IS.la input 1 in
   if curChar = Char.code '\n' then begin
-    self.line <- self.line + 1 ;
-    self.column <- 0
+    self.cursor.LASC.line <- self.cursor.LASC.line + 1 ;
+    self.cursor.LASC.column <- 0
     end
   else
-    self.column <- self.column + 1 ;
+    self.cursor.LASC.column <- self.cursor.LASC.column + 1 ;
   IS.consume input
 
 let _execATN self dfa input ds0 =
@@ -2632,14 +2616,14 @@ let computeStartState self is p =
   rv
 
 let _matchATN self dfa is =
-  let startState = self.atn.Atn.modeToStartState.(self.mode) in
-  let old_mode = self.mode in
+  let startState = self.atn.Atn.modeToStartState.(self.cursor.LASC.mode) in
+  let old_mode = self.cursor.LASC.mode in
   let s0_closure = computeStartState self is startState in
   let suppressEdge = s0_closure.ACS.hasSemanticContext in
   ACS.update_HSC s0_closure false ;
   let next = addDFAState self dfa s0_closure in
   if not suppressEdge then begin
-      let dfa' = self.decisionToDFA.(self.mode) in
+      let dfa' = self.decisionToDFA.(self.cursor.LASC.mode) in
       assert (dfa.DFA.id = dfa'.DFA.id) ;
       DFA.set_s0 dfa' next
     end ;
@@ -2656,10 +2640,10 @@ let matchATN self dfa is =
   rv
 
 let __match self is mode =
-  self. mode <- mode
+  self.cursor.LASC.mode <- mode
   ; let mark = IS.mark is in
     Util.finally (fun () -> 
-        self.startIndex <- IS.index is
+        self.cursor.LASC.startIndex <- IS.index is
       ; SS.reset self.prevAccept
       ; let dfa = self.decisionToDFA.(mode) in
         match dfa.s0 with
@@ -2695,7 +2679,6 @@ type lexer_t =
   ; mutable _tokenStartLine : int
   ; mutable _tokenStartColumn : int
   ; mutable _hitEOF : bool
-  ; mutable _text : string option
   ; recog : R.t
   ; _interp : LAS.t
   }
@@ -2709,7 +2692,7 @@ let to_mimick t =
     ; _hitEOF = t._hitEOF
     ; _mode = t.recog.R._mode
     ; _modeStack = t.recog.R._modeStack
-    ; _text = t._text
+    ; _text = t.recog.R._text
     ; _token = Option.map Token.to_mimick t._token
     ; _tokenStartCharIndex = t._tokenStartCharIndex
     ; _tokenStartColumn = t._tokenStartColumn
@@ -2725,7 +2708,6 @@ let _init ~interp ~recog () =
   ; _tokenStartLine = -1
   ; _tokenStartColumn = -1
   ; _hitEOF = false
-  ; _text = None
   ; recog
   ; _interp = interp
   } in
@@ -2760,18 +2742,18 @@ let recover self e =
 
 
 let getCharIndex self = IS.index self.recog.R._input
-let line self = self._interp.LAS.line
-let column self = self._interp.LAS.column
+let line self = self._interp.LAS.cursor.LASC.line
+let column self = self._interp.LAS.cursor.LASC.column
 
 let emitToken self t =
   self._token <- Some t
 
 let _emit self =
-  let line = self._interp.LAS.line in
-  let column = self._interp.LAS.column in
+  let line = self._interp.LAS.cursor.LASC.line in
+  let column = self._interp.LAS.cursor.LASC.column in
   let t : T.t = CTF.create ~input:self.recog.R._input ~source:(Some (line, column), self.recog.R._input)
             ~type_:self.recog.R._type
-            ~text:self._text
+            ~text:self.recog.R._text
             ~channel:self.recog.R._channel
             ~start:self._tokenStartCharIndex
             ~stop:((getCharIndex self) - 1)
@@ -2819,9 +2801,9 @@ let _nextToken self : T.t =
         self._token <- None ;
         self.recog._channel <- C._DEFAULT_CHANNEL ;
         self._tokenStartCharIndex <- IS.index self.recog.R._input ;
-        self._tokenStartColumn <- self._interp.column ;
-        self._tokenStartLine <- self._interp.line ;
-        self._text <- None ;
+        self._tokenStartColumn <- self._interp.cursor.LASC.column ;
+        self._tokenStartLine <- self._interp.cursor.LASC.line ;
+        self.recog.R._text <- None ;
         let continueOuter  = ref false in
         let exception Break in
         begin

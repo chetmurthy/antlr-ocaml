@@ -4,7 +4,8 @@ open Exec
 let atns = Atns.load ~lexer_atn:"Lexer.interp" ~parser_atn:None ;;
 let atn = atns.Atns.lexer ;;
 
-let _DASHBRACK_action (self : R.recognizer_t) localCtx ruleIndex actionIndex =
+let _DASHBRACK_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
+  if actionIndex = 0 then
   output_string stdout "DASHBRACK\n" ;;
 
 let init ~input ~output =

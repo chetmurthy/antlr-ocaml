@@ -4,9 +4,12 @@ open Exec
 let atns = Atns.load ~lexer_atn:"Lexer.interp" ~parser_atn:None ;;
 let atn = atns.Atns.lexer ;;
 
-let _I_action (self : R.recognizer_t) localCtx ruleIndex actionIndex =
+let _I_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
+  if actionIndex = 0 then
   output_string stdout "I\n" ;;
-let _ID_action (self : R.recognizer_t) localCtx ruleIndex actionIndex =
+
+let _ID_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
+  if actionIndex = 1 then
   output_string stdout "ID\n" ;;
 
 let init ~input ~output =
