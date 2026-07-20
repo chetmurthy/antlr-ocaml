@@ -114,6 +114,10 @@ DTEST=\
 	fixtures/descriptors/LexerExec/UnicodeCharSet.txt \
 	fixtures/descriptors/LexerExec/ZeroLengthToken.txt \
 
+
+DTEST := \
+	fixtures/descriptors/LexerErrors/DFAToATNThatFailsBackToDFA.txt \
+
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)
