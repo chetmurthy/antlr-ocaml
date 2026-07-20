@@ -24,8 +24,13 @@ ocaml-compare:: output.NEW errors.NEW
 	jq -S . ocaml-json.log.RAW > ocaml-json.log.NEW && mv ocaml-json.log.NEW ocaml-json.log
 	$(REPLAYTEST) entry-exit-depth $(EEARGS) ocaml-json.log > ocaml-json.ee.log
 	$(REPLAYTEST) entry-exit-depth $(EEARGS) json.log > json.ee.log
+ifdef NONSTOP
 	diff -Bwiu output.NEW ocaml-output.NEW || true
 	diff -Bwiu json.log ocaml-json.log || true
+else
+	diff -Bwiu output.NEW ocaml-output.NEW
+	diff -Bwiu json.log ocaml-json.log
+endif
 
 ocaml-test:: ocaml-compile
 	./test.opt test --json-log-file=ocaml-json.log.RAW input > ocaml-output.NEW 2> ocaml-errors.NEW

@@ -96,6 +96,8 @@ DTEST=\
 	fixtures/descriptors/LexerExec/NonGreedyTermination2.txt \
 	fixtures/descriptors/LexerExec/Parentheses.txt \
 	fixtures/descriptors/LexerExec/QuoteTranslation.txt \
+	fixtures/descriptors/LexerExec/GreedyConfigs.txt \
+	fixtures/descriptors/LexerExec/NonGreedyConfigs.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
