@@ -1,0 +1,42 @@
+
+ML=l.ml test.ml
+
+PACKAGES := $(PACKAGES),antlr,cmdliner,yojson,pa_ppx.located_yojson,pa_ppx.runtime
+
+
+ALLSRC=$(ML)
+ALLPACKAGES=$(PACKAGES)
+
+TESTS=test.exe
+TESTSOPT=$(TESTS:.exe=.opt)
+
+LOCARG=-n
+
+ifdef MAXDEPTH
+  MAXDEPTHARG := -m $(MAXDEPTH)
+endif
+
+EEARGS=$(LOCARG) $(MAXDEPTHARG)
+
+ocaml-compare:: output.NEW errors.NEW
+	diff -Bwiu output output.NEW
+	diff -Bwiu errors errors.NEW
+	jq -S . ocaml-json.log.RAW > ocaml-json.log.NEW && mv ocaml-json.log.NEW ocaml-json.log
+	$(REPLAYTEST) entry-exit-depth $(EEARGS) ocaml-json.log > ocaml-json.ee.log
+	$(REPLAYTEST) entry-exit-depth $(EEARGS) json.log > json.ee.log
+	diff -Bwiu output.NEW ocaml-output.NEW || true
+	diff -Bwiu json.log ocaml-json.log || true
+
+ocaml-test:: ocaml-compile
+	./test.opt test --json-log-file=ocaml-json.log.RAW input > ocaml-output.NEW 2> ocaml-errors.NEW
+
+ocaml-compile:: $(TESTS) $(TESTSOPT)
+
+test.exe: l.cmo test.cmo
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $^
+
+test.opt: l.cmx test.cmx
+	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $^
+
+clean::
+	rm -f *.cm* *.opt *.exe ocaml-errors* ocaml-output* ocaml-json* *.RAW

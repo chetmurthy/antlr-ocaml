@@ -83,7 +83,19 @@ DTEST=\
 	fixtures/descriptors/LexerExec/CharSetWithQuote2.txt \
 	fixtures/descriptors/LexerExec/EOFByItself.txt \
 	fixtures/descriptors/LexerExec/EOFSuffixInFirstRule_1.txt \
-	fixtures/descriptors/LexerExec/EOFSuffixInFirstRule_2.txt \
+	fixtures/descriptors/LexerExec/EscapedCharacters.txt \
+	fixtures/descriptors/LexerExec/EscapeTargetStringLiteral.txt \
+	fixtures/descriptors/LexerExec/GreedyClosure.txt \
+	fixtures/descriptors/LexerExec/GreedyOptional.txt \
+	fixtures/descriptors/LexerExec/HexVsID.txt \
+	fixtures/descriptors/LexerExec/KeywordID.txt \
+	fixtures/descriptors/LexerExec/NonGreedyClosure.txt \
+	fixtures/descriptors/LexerExec/NonGreedyOptional.txt \
+	fixtures/descriptors/LexerExec/NonGreedyPositiveClosure.txt \
+	fixtures/descriptors/LexerExec/NonGreedyTermination1.txt \
+	fixtures/descriptors/LexerExec/NonGreedyTermination2.txt \
+	fixtures/descriptors/LexerExec/Parentheses.txt \
+	fixtures/descriptors/LexerExec/QuoteTranslation.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe

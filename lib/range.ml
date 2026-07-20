@@ -51,3 +51,12 @@ let must_merge r1 r2 =
 
 let contains r n =
   r.start <= n && n < r.stop
+
+let iter f r =
+  let rec itrec i =
+    if i >= r.stop then ()
+    else begin
+        f i ;
+        itrec (i + r.step)
+      end
+  in itrec r.start

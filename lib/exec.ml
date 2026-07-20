@@ -343,7 +343,7 @@ let __str__ self =
              let stop = Std.outSome self.stop in
              let n = IS.size self._input in
              if start < n && stop < n then
-               IS.getText self._input start stop
+               String.escaped (IS.getText self._input start stop)
              else "<EOF>"
          )
          (fmt_option fmt_int) self.type_
@@ -515,8 +515,20 @@ let rec getReturnState pc i = match pc with
 | SINGLETON (_,rs) -> rs
 | ARRAY l -> snd (List.nth l i)
 
+let getParent pc i =
+  match pc with
+    SINGLETON (pc, _) -> pc
+  | ARRAY l -> fst (List.nth l i)
+  | EMPTY -> failwith "PC.getParent: EMPTY context has no parent"
+
 let hasEmptyPath pc =
   (getReturnState pc ((__len__ pc) - 1)) = C._EMPTY_RETURN_STATE
+
+let rec isEmpty = function
+    EMPTY -> true
+  | SINGLETON(None, rs) -> rs = C._EMPTY_RETURN_STATE
+  | SINGLETON(Some _, _) -> false
+  | ARRAY ((_,rs)::_) -> rs = C._EMPTY_RETURN_STATE
 
 type interim_t =
   CacheHit of pc_t
@@ -2434,7 +2446,26 @@ let rec _closure self input (config : AC.t) configs ~currentAltReachedAcceptStat
                                 (Some config)
                                 None) ;
              currentAltReachedAcceptState := true
-           end
+           end ;
+       if Std.isSome config.AC.context && not (PC.isEmpty (Std.outSome config.AC.context)) then
+         let context = (Std.outSome config.AC.context) in
+         let len_context = PC.__len__ context in
+         (Range.mk len_context)
+         |> Range.iter
+              (fun i ->
+                let rs = PC.getReturnState context i in
+                if rs <> C._EMPTY_RETURN_STATE then
+                  let newContext = PC.getParent context i in
+                  let rs_stid = Atn.State.mk_id rs in
+                  let returnState = Atn.State.get_state self.atn.Atn.states rs_stid in
+                  let c : AC.t = AC.init_LexerATNConfig self.atn (Some rs_stid) None newContext None (Some config) None in
+                  currentAltReachedAcceptState :=
+                    closure self input c configs
+                      ~currentAltReachedAcceptState:!currentAltReachedAcceptState
+                      ~speculative ~treatEofAsEpsilon
+              ) ;
+         raise (EarlyReturn !currentAltReachedAcceptState)
+
       | _ -> ()) ;
     if not config_state.State.epsilonOnlyTransitions then
       if not !currentAltReachedAcceptState || not config_lexer_ext.AC.passedThroughNonGreedyDecision then
