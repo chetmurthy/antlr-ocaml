@@ -143,6 +143,8 @@ DTEST += \
 	fixtures/descriptors/SemPredEvalLexer/PredicatedKeywords.txt \
 	fixtures/descriptors/SemPredEvalLexer/RuleSempredFunction.txt \
 
+DTEST := \
+	fixtures/descriptors/ParserExec/Basic.txt
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
