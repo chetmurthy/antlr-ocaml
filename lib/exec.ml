@@ -380,7 +380,9 @@ let read_atn ~grammarType file =
   if atn.Atn.grammarType <> grammarType then
     Fmt.(failwithf "%s: ATN was supposed to be %a but was %a@."
            file Atn.pp_atn_type_t atn.Atn.grammarType Atn.pp_atn_type_t grammarType) ;
+(*
   Fmt.(pf stderr "ATN %s: 0x%08x@." file (Hashtbl.hash atn)) ;
+ *)
   atn
 
 let load ~lexer_atn ~parser_atn =
@@ -889,6 +891,7 @@ module rec EL :   sig
     val mt : el_t
     val syntaxError :
       el_t -> R.t -> Token.t option -> int -> int -> string -> exn -> unit
+    val consoleErrorListener : el_t
   end
  = struct
 type el_t = {
@@ -904,6 +907,11 @@ let syntaxError el recog offending line column msg exn =
   let () = el.syntaxError recog offending line column msg exn in
   ()
 
+let consoleErrorListener = {
+    syntaxError =
+    (fun recog offending line column msg exn ->
+      Fmt.(pf stderr "line %d:%d %s@." line column msg))
+  }
 end
 
 and R  :
@@ -978,7 +986,7 @@ let _init input ?(output = stdout) ?(actions=[]) ? (listeners=[]) () =
   List.iter (fun (k,v) -> MHM.add self._actions (k,v)) actions ;
   self
 
-let init input ?(output = stdout) ?(actions=[]) ?(listeners=[]) () =
+let init input ?(output = stdout) ?(actions=[]) ?(listeners=[ EL.consoleErrorListener ]) () =
 (*
   Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
  *)

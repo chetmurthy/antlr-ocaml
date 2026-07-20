@@ -25,9 +25,11 @@ ocaml-compare:: output.NEW errors.NEW
 	$(REPLAYTEST) entry-exit-depth $(EEARGS) ocaml-json.log > ocaml-json.ee.log
 	$(REPLAYTEST) entry-exit-depth $(EEARGS) json.log > json.ee.log
 ifdef NONSTOP
+	diff -Bwiu errors.NEW ocaml-errors.NEW || true
 	diff -Bwiu output.NEW ocaml-output.NEW || true
 	diff -Bwiu json.log ocaml-json.log || true
 else
+	diff -Bwiu errors.NEW ocaml-errors.NEW
 	diff -Bwiu output.NEW ocaml-output.NEW
 	diff -Bwiu json.log ocaml-json.log
 endif

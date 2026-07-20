@@ -113,7 +113,9 @@ let disabled =
     ] 23
 
 let set_log_file fname =
+(*
   Fmt.(pf stderr "[json log file set to << %s >>]@." fname) ;
+ *)
   let chan = open_out fname in
   _oc := chan
 
