@@ -335,7 +335,7 @@ let __str__ self =
          (fmt_option fmt_int) self.start
          (fmt_option fmt_int) self.stop
          (match self._text with
-            Some txt -> String.escaped txt
+            Some txt -> Util.escape_string txt
           | None ->
              assert (Std.isSome self.start) ;
              assert (Std.isSome self.stop) ;
@@ -343,7 +343,7 @@ let __str__ self =
              let stop = Std.outSome self.stop in
              let n = IS.size self._input in
              if start < n && stop < n then
-               String.escaped (IS.getText self._input start stop)
+               Util.escape_string (IS.getText self._input start stop)
              else "<EOF>"
          )
          (fmt_option fmt_int) self.type_

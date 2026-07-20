@@ -222,3 +222,9 @@ let roundup grain n =
   if 0 <> mod_grain then
     n+(grain-mod_grain)
   else n
+
+let escape_string s =
+  let s = [%subst "\n" / {|\n|} / pcre2 g s] s in
+  let s = [%subst "\r" / {|\r|} / pcre2 g s] s in
+  let s = [%subst "\t" / {|\t|} / pcre2 g s] s in
+  s
