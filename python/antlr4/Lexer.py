@@ -227,7 +227,7 @@ class Lexer(Recognizer, TokenSource):
         self._modeStack.append(self._mode)
         self.mode(m)
         Trace.writej([ 'Lexer.pushMode',
-                                 self.asdict(), m ])
+                                 self._modeStack, m ])
 
     def popMode(self):
         if len(self._modeStack)==0:
@@ -236,7 +236,7 @@ class Lexer(Recognizer, TokenSource):
             print("popMode back to "+ self._modeStack[:-1], file=self._output)
         self.mode( self._modeStack.pop() )
         Trace.writej([ 'Lexer.popMode',
-                                 self.asdict(), self._mode ])
+                                 self._modeStack, self._mode ])
         return self._mode
 
     # Set the char stream and reset the lexer#/

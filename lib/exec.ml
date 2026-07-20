@@ -1004,8 +1004,9 @@ let popMode l =
      l._modeStack <- t ;
      l._mode <- h ;
      h
+
 let pushMode l m =
-  l._modeStack <- m::l._modeStack ;
+  l._modeStack <- l._mode::l._modeStack ;
   l._mode <- m
 
 let skip l = l._type <- C._SKIP

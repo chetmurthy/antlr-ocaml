@@ -204,7 +204,7 @@ type lexer_action_t =
 | LexerTypeAction of {
     actionType : int ;
     isPositionDependent : bool ;
-    mutable type_ : int [@yojson.key "type"] [@located_yojson.key "type"]
+    mutable type_ : int
   }
 [@@deriving yojson,located_yojson, show { with_path = false }, eq]
 

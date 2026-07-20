@@ -83,10 +83,12 @@ DTEST=\
 	fixtures/descriptors/LexerExec/CharSetWithQuote2.txt \
 	fixtures/descriptors/LexerExec/EOFByItself.txt \
 	fixtures/descriptors/LexerExec/EOFSuffixInFirstRule_1.txt \
+	fixtures/descriptors/LexerExec/EOFSuffixInFirstRule_2.txt \
 	fixtures/descriptors/LexerExec/EscapedCharacters.txt \
 	fixtures/descriptors/LexerExec/EscapeTargetStringLiteral.txt \
 	fixtures/descriptors/LexerExec/GreedyClosure.txt \
 	fixtures/descriptors/LexerExec/GreedyOptional.txt \
+	fixtures/descriptors/LexerExec/GreedyPositiveClosure.txt \
 	fixtures/descriptors/LexerExec/HexVsID.txt \
 	fixtures/descriptors/LexerExec/KeywordID.txt \
 	fixtures/descriptors/LexerExec/NonGreedyClosure.txt \
@@ -99,6 +101,18 @@ DTEST=\
 	fixtures/descriptors/LexerExec/GreedyConfigs.txt \
 	fixtures/descriptors/LexerExec/NonGreedyConfigs.txt \
 	fixtures/descriptors/LexerExec/ActionPlacement.txt \
+	fixtures/descriptors/LexerExec/RecursiveLexerRuleRefWithWildcardPlus_1.txt \
+	fixtures/descriptors/LexerExec/RecursiveLexerRuleRefWithWildcardPlus_2.txt \
+	fixtures/descriptors/LexerExec/RecursiveLexerRuleRefWithWildcardStar_1.txt \
+	fixtures/descriptors/LexerExec/RecursiveLexerRuleRefWithWildcardStar_2.txt \
+	fixtures/descriptors/LexerExec/RefToRuleDoesNotSetTokenNorEmitAnother.txt \
+	fixtures/descriptors/LexerExec/ReservedWordsEscaping_NULL.txt \
+	fixtures/descriptors/LexerExec/ReservedWordsEscaping.txt \
+	fixtures/descriptors/LexerExec/Slashes.txt \
+	fixtures/descriptors/LexerExec/StackoverflowDueToNotEscapedHyphen.txt \
+	fixtures/descriptors/LexerExec/TokenType0xFFFF.txt \
+	fixtures/descriptors/LexerExec/UnicodeCharSet.txt \
+	fixtures/descriptors/LexerExec/ZeroLengthToken.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
