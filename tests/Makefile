@@ -82,6 +82,8 @@ DTEST=\
 	fixtures/descriptors/LexerExec/CharSetWithQuote1.txt \
 	fixtures/descriptors/LexerExec/CharSetWithQuote2.txt \
 	fixtures/descriptors/LexerExec/EOFByItself.txt \
+	fixtures/descriptors/LexerExec/EOFSuffixInFirstRule_1.txt \
+	fixtures/descriptors/LexerExec/EOFSuffixInFirstRule_2.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
