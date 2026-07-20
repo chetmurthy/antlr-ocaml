@@ -833,7 +833,7 @@ let rec of_mimick = function
   | SC_AND { opnds } -> AND (List.map of_mimick opnds)
   | SC_OR { opnds } -> OR (List.map of_mimick opnds)
 
-let toString sc =
+let __pp__ pps sc =
   let rec pprec pps = function
     EMPTY -> Fmt.(pf pps "{empty}")
   | PREDICATE { ruleIndex ; predIndex ; isCtxDependent } ->
@@ -841,7 +841,9 @@ let toString sc =
   | PRECEDENCE n -> Fmt.(pf pps "{%d>=prec}?" n)
   | AND l -> Fmt.(pf pps "%a" (list ~sep:(const string "&&") pprec) l)
   | OR l -> Fmt.(pf pps "%a" (list ~sep:(const string "||") pprec) l)
-  in Fmt.(str "%a" pprec sc)
+  in Fmt.(pf pps "%a" pprec sc)
+
+let __str__ sc = Fmt.(str "%a" __pp__ sc)
 
 end
 module SemanticContext = SC
@@ -1200,13 +1202,13 @@ let hashkey c =
     Fmt.(str "%a/%d/%s"
            Atn.dump_state_id c.state
            c.alt
-           (SC.toString c.semanticContext))
+           (SC.__str__ c.semanticContext))
   | Some ext ->
     Fmt.(str "%a/%d/%s/%s/%s/%s"
            Atn.dump_state_id c.state
            c.alt
            (Option.fold ~none:"None" ~some:PC.toString c.context)
-           (SC.toString c.semanticContext)
+           (SC.__str__ c.semanticContext)
            (if ext.passedThroughNonGreedyDecision then "True" else "False")
            (Option.fold ~none:"None" ~some:LAE.toString ext.lexerActionExecutor)
            
@@ -1673,6 +1675,11 @@ let to_mimick (alt, sc) =
 let of_mimick = function
     M.PredPrediction{alt;pred} -> (alt, SC.of_mimick pred)
 
+let __pp__ pps (n,sc) =
+  Fmt.(pf pps "(%s, %d)" (SC.__str__ sc) n)
+
+let __str__ x = Fmt.(str "%a" __pp__ x)
+
 end
 module PredPrediction = PP
 
@@ -2075,6 +2082,72 @@ let num2state dfa n =
 let add_ERROR self st =
   assert (st.DFASt.stateNumber = C._EMPTY_RETURN_STATE) ;
   MHM.add self.num2state (st.DFASt.stateNumber, st)
+
+let sortedStates self =
+  let l = self._states |> acsmap_values in
+  List.stable_sort (fun s1 s2 -> Stdlib.compare s1.DFASt.stateNumber s2.DFASt.stateNumber) l
+
+module LDS = struct
+
+  let str_list ppf pps l =
+    Fmt.(pf pps "%a" (brackets (list ~sep:(const string ", ") ppf)) l)
+
+  let getStateString s =
+    let n = s.DFASt.stateNumber in
+    let baseStateStr = Fmt.(str "%ss%d%s"
+                              (if s.DFASt.isAcceptState then ":" else "")
+                              n
+                              (if s.DFASt.requiresFullContext then "^" else "")) in
+    if s.DFASt.isAcceptState then
+      match s.DFASt.predicates with
+        Some l -> Fmt.(str "%s=>%a" baseStateStr (str_list PP.__pp__) l)
+      | None -> Fmt.(str "%s=>%d" baseStateStr s.DFASt.prediction)
+    else
+      baseStateStr
+
+  let parser_getEdgeLabel ~literalNames ~symbolicNames i =
+    if i=0 then "EOF"
+    else if literalNames <> [] && i <= List.length literalNames then
+      List.nth literalNames (i-1)
+    else if symbolicNames <> [] && i <= List.length symbolicNames then
+      List.nth symbolicNames (i-1)
+    else Fmt.(str "%d" (i-1))
+
+  let lexer_getEdgeLabel ~literalNames ~symbolicNames i =
+    let s = Util.string_of_uchars [Uchar.of_int (i)] in
+    "'"^s^"'"
+
+let __str__ ~lexer ~literalNames ~symbolicNames self =
+  let getEdgeLabel =
+    if lexer then lexer_getEdgeLabel else parser_getEdgeLabel in
+  assert (Std.isSome self.s0) ;
+  let buf = Buffer.create 23 in
+  self
+  |> sortedStates
+  |> List.iter
+       (fun s ->
+         s.edges
+         |> Array.iteri
+              (fun i tnum ->
+                if tnum <> Int.min_int && tnum <> C._EMPTY_RETURN_STATE then begin
+                  let t = num2state self tnum in
+                  Buffer.add_string buf (getStateString s) ;
+                  let label = getEdgeLabel ~literalNames ~symbolicNames i in
+                  Buffer.add_string buf "-" ;
+                  Buffer.add_string buf label ;
+                  Buffer.add_string buf "->" ;
+                  Buffer.add_string buf (getStateString t) ;
+                  Buffer.add_string buf "\n"
+                  end
+              )
+       ) ;
+  Buffer.contents buf
+
+end
+
+let toLexerString ?(literalNames=[]) ?(symbolicNames=[]) self =
+  if self.s0 = None then ""
+  else LDS.__str__ ~lexer:true ~literalNames ~symbolicNames self
 
 end
 
