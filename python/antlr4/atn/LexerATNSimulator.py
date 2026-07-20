@@ -633,7 +633,7 @@ class LexerATNSimulator(ATNSimulator):
                       ])
         return rv
 
-    def evaluatePredicate(self, input:InputStream, ruleIndex:int, predIndex:int, speculative:bool):
+    def _evaluatePredicate(self, input:InputStream, ruleIndex:int, predIndex:int, speculative:bool):
         # assume true if no recognizer was provided
         if self.recog is None:
             return True

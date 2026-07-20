@@ -917,6 +917,7 @@ end
 and R  :
   sig
     type action_t = recognizer_t -> LASC.t -> RC.t option -> int -> unit
+    and sempred_t = recognizer_t -> LASC.t -> RC.t option -> int -> bool
     and recognizer_t = {
       mutable _stateNumber : Atn.state_id;
       _input : IS.t;
@@ -927,6 +928,7 @@ and R  :
       mutable _mode : int;
       mutable _text : string option ;
       _actions : (int, action_t) Pa_ppx_utils.Coll.MHM.t;
+      _sempreds : (int, sempred_t) Pa_ppx_utils.Coll.MHM.t;
       _listeners : EL.t list;
     }
     type t = recognizer_t
@@ -934,13 +936,17 @@ and R  :
       IS.t ->
       ?output:out_channel ->
       ?actions:(int * action_t) list ->
-      ?listeners:EL.t list -> unit -> recognizer_t
+      ?sempreds:(int * sempred_t) list ->
+      ?listeners:EL.t list -> unit ->
+      recognizer_t
     val init :
       IS.t ->
       ?output:out_channel ->
       ?actions:(int * action_t) list ->
+      ?sempreds:(int * sempred_t) list ->
       ?listeners:EL.t list -> unit -> recognizer_t
     val action : recognizer_t -> LASC.t -> RC.t option -> int -> int -> unit
+    val sempred : recognizer_t -> LASC.t -> RC.t option -> int -> int -> bool
     val set_channel : recognizer_t -> int -> unit
     val mode : recognizer_t -> int -> unit
     val more : recognizer_t -> unit
@@ -952,7 +958,7 @@ and R  :
   end = struct
 
 type action_t = recognizer_t -> LASC.t -> RC.t option -> int -> unit
-
+and sempred_t = recognizer_t -> LASC.t -> RC.t option -> int -> bool
 and recognizer_t =
   {
     mutable _stateNumber : Atn.state_id
@@ -964,12 +970,13 @@ and recognizer_t =
   ; mutable _mode : int
   ; mutable _text : string option
   ; _actions : (int, action_t) MHM.t
+  ; _sempreds : (int, sempred_t) Pa_ppx_utils.Coll.MHM.t
   ; _listeners : EL.t list
   }
 
 type t = recognizer_t
 
-let _init input ?(output = stdout) ?(actions=[]) ? (listeners=[]) () =
+let _init input ?(output = stdout) ?(actions=[]) ?(sempreds=[]) ?(listeners=[]) () =
   let self = {
     _stateNumber = Atn.State.mk_id (-1)
   ; _input = input
@@ -980,17 +987,19 @@ let _init input ?(output = stdout) ?(actions=[]) ? (listeners=[]) () =
   ; _mode = C._DEFAULT_MODE
   ; _text = None
   ; _actions = MHM.mk 23
+  ; _sempreds = MHM.mk 23
   ; _listeners = listeners
   } in
 
   List.iter (fun (k,v) -> MHM.add self._actions (k,v)) actions ;
+  List.iter (fun (k,v) -> MHM.add self._sempreds (k,v)) sempreds ;
   self
 
-let init input ?(output = stdout) ?(actions=[]) ?(listeners=[ EL.consoleErrorListener ]) () =
+let init input ?(output = stdout) ?(actions=[]) ?(sempreds=[]) ?(listeners=[ EL.consoleErrorListener ]) () =
 (*
   Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
  *)
-  let rv = _init input ~output ~actions ~listeners () in
+  let rv = _init input ~output ~actions ~sempreds ~listeners () in
 (*
   Tracelog.write (Lexer_EXIT_init) ;
  *)
@@ -1000,6 +1009,12 @@ let action l c localCtx ruleIndex actionIndex =
   match MHM.map l._actions ruleIndex with
     f -> f l c localCtx actionIndex
   | exception Not_found -> ()
+
+let sempred l c localCtx ruleIndex actionIndex =
+  match MHM.map l._sempreds ruleIndex with
+    f -> f l c localCtx actionIndex
+  | exception Not_found ->
+     Fmt.(failwithf "No registered predicate for: %d" ruleIndex)
 
 let set_channel l n =
   l._channel <- n
@@ -2351,7 +2366,36 @@ let addDFAEdge self dfa from_ tk to_ cs =
     (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv)) ;
   rv
 
-let _evaluatePredicate self input ruleIndex predIndex speculative = assert false
+let consume self input =
+  let curChar = IS.la input 1 in
+  if curChar = Char.code '\n' then begin
+    self.cursor.LASC.line <- self.cursor.LASC.line + 1 ;
+    self.cursor.LASC.column <- 0
+    end
+  else
+    self.cursor.LASC.column <- self.cursor.LASC.column + 1 ;
+  IS.consume input
+
+let _evaluatePredicate self input ruleIndex predIndex speculative : bool =
+  if not speculative then
+    R.sempred self.recog self.cursor None ruleIndex predIndex
+  else
+    let savedcolumn = self.cursor.LASC.column in
+    let savedline = self.cursor.LASC.line in
+    let index = IS.index input in
+    let marker = IS.mark input in
+    Util.finally (fun () ->
+        consume self input ;
+        R.sempred self.recog self.cursor None ruleIndex predIndex
+      )
+      ()
+      (fun _ _ ->
+        self.cursor.LASC.column <- savedcolumn ;
+        self.cursor.LASC.line <- savedline ;
+        IS.seek input index ;
+        IS.release input marker
+      )
+
 let evaluatePredicate self input ruleIndex predIndex speculative =
   Tracelog.write
     (LexerATNSimulator_ENTER_evaluatePredicate (to_mimick self, IS.to_mimick input,
@@ -2556,16 +2600,6 @@ let computeTargetState self dfa input s t =
   Tracelog.write
     (LexerATNSimulator_EXIT_computeTargetState (to_mimick self, DFASt.to_mimick rv)) ;
   rv
-
-let consume self input =
-  let curChar = IS.la input 1 in
-  if curChar = Char.code '\n' then begin
-    self.cursor.LASC.line <- self.cursor.LASC.line + 1 ;
-    self.cursor.LASC.column <- 0
-    end
-  else
-    self.cursor.LASC.column <- self.cursor.LASC.column + 1 ;
-  IS.consume input
 
 let _execATN self dfa input ds0 =
 

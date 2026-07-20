@@ -133,6 +133,9 @@ DTEST := \
 	fixtures/descriptors/CompositeLexers/LexerDelegatorInvokesDelegateRule.txt \
 	fixtures/descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.txt \
 
+DTEST := \
+	fixtures/descriptors/SemPredEvalLexer/DisableRule.txt \
+
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)
