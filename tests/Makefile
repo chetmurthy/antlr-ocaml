@@ -78,7 +78,7 @@ DTEST=\
 	fixtures/descriptors/LexerExec/CharSetNot.txt \
 	fixtures/descriptors/LexerExec/CharSetPlus.txt \
 	fixtures/descriptors/LexerExec/CharSetWithEscapedChar.txt \
-
+	fixtures/descriptors/LexerExec/CharSetWithMissingEscapeChar.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
