@@ -6,8 +6,13 @@ open Exec
 let atns = Atns.load ~lexer_atn:"Lexer.interp" ~parser_atn:None ;;
 let atn = atns.Atns.lexer ;;
 
+let _T_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
+  if predIndex = 0 then
+    true
+  else Fmt.(failwithf "T_sempred: bad predIndex %d" predIndex)
+
 let actions = []
-let sempreds = []
+let sempreds = [(0, _T_sempred)]
 
 let init ~input ~output =
   let decisionToDFA : DFA.t array =

@@ -6,8 +6,22 @@ open Exec
 let atns = Atns.load ~lexer_atn:"Lexer.interp" ~parser_atn:None ;;
 let atn = atns.Atns.lexer ;;
 
-let actions = []
-let sempreds = []
+let _ENUM_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
+  if predIndex = 0 then
+    (R.text self cu) = "enum"
+  else Fmt.(failwithf "ENUM_sempred: bad predIndex %d" predIndex)
+
+let _ENUM_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
+  if actionIndex = 0 then
+      output_string stdout "enum!\n"
+
+let _ID_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
+  if actionIndex = 1 then
+      output_string stdout ("ID "^(R.text self cu)^"\n")
+
+
+let actions = [(0, _ENUM_action); (1, _ID_action)]
+let sempreds = [(0, _ENUM_sempred)]
 
 let init ~input ~output =
   let decisionToDFA : DFA.t array =
