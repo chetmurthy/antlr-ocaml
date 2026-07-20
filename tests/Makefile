@@ -98,6 +98,7 @@ DTEST=\
 	fixtures/descriptors/LexerExec/QuoteTranslation.txt \
 	fixtures/descriptors/LexerExec/GreedyConfigs.txt \
 	fixtures/descriptors/LexerExec/NonGreedyConfigs.txt \
+	fixtures/descriptors/LexerExec/ActionPlacement.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
