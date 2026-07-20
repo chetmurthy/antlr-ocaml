@@ -2728,7 +2728,7 @@ let init ~interp ~recog () =
   Tracelog.write (Lexer_EXIT_init (to_mimick rv)) ;
   rv
 
-let getErrorDisplay self text = String.escaped text
+let getErrorDisplay self text = Util.escape_string text
   
 let getErrorListenerDispatch self = self.recog.R._listeners
 

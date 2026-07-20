@@ -117,6 +117,18 @@ DTEST=\
 
 DTEST := \
 	fixtures/descriptors/LexerErrors/DFAToATNThatFailsBackToDFA.txt \
+	fixtures/descriptors/LexerErrors/DFAToATNThatMatchesThenFailsInATN.txt \
+	fixtures/descriptors/LexerErrors/EnforcedGreedyNestedBraces_1.txt \
+	fixtures/descriptors/LexerErrors/EnforcedGreedyNestedBraces_2.txt \
+	fixtures/descriptors/LexerErrors/ErrorInMiddle.txt \
+	fixtures/descriptors/LexerErrors/InvalidCharAtStartAfterDFACache.txt \
+	fixtures/descriptors/LexerErrors/InvalidCharAtStart.txt \
+	fixtures/descriptors/LexerErrors/InvalidCharInTokenAfterDFACache.txt \
+	fixtures/descriptors/LexerErrors/InvalidCharInToken.txt \
+	fixtures/descriptors/LexerErrors/LexerExecDFA.txt \
+	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_1.txt \
+	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_2.txt \
+
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
