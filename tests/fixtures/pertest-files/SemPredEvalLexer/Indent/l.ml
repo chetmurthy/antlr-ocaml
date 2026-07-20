@@ -11,8 +11,12 @@ let _INDENT_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
     self.R._tokenStartColumn = 0
   else Fmt.(failwithf "INDENT_sempred: bad predIndex %d" predIndex)
 
-let actions = []
-let sempreds = [(0, _ENUM_sempred)]
+let _INDENT_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
+  if actionIndex = 0 then
+    output_string stdout "INDENT\n" ;;
+
+let actions = [(1, _INDENT_action)]
+let sempreds = [(1, _INDENT_sempred)]
 
 let init ~input ~output =
   let decisionToDFA : DFA.t array =

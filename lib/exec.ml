@@ -929,6 +929,9 @@ and R  :
       mutable _modeStack : int list;
       mutable _mode : int;
       mutable _text : string option ;
+      mutable _tokenStartCharIndex : int ;
+      mutable _tokenStartLine : int ;
+      mutable _tokenStartColumn : int ;
       _actions : (int, action_t) Pa_ppx_utils.Coll.MHM.t;
       _sempreds : (int, sempred_t) Pa_ppx_utils.Coll.MHM.t;
       _listeners : EL.t list;
@@ -971,6 +974,9 @@ and recognizer_t =
   ; mutable _modeStack : int list
   ; mutable _mode : int
   ; mutable _text : string option
+  ; mutable _tokenStartCharIndex : int
+  ; mutable _tokenStartLine : int
+  ; mutable _tokenStartColumn : int
   ; _actions : (int, action_t) MHM.t
   ; _sempreds : (int, sempred_t) Pa_ppx_utils.Coll.MHM.t
   ; _listeners : EL.t list
@@ -988,6 +994,9 @@ let _init input ?(output = stdout) ?(actions=[]) ?(sempreds=[]) ?(listeners=[]) 
   ; _modeStack = []
   ; _mode = C._DEFAULT_MODE
   ; _text = None
+  ; _tokenStartCharIndex = -1
+  ; _tokenStartLine = -1
+  ; _tokenStartColumn = -1
   ; _actions = MHM.mk 23
   ; _sempreds = MHM.mk 23
   ; _listeners = listeners
@@ -2791,9 +2800,6 @@ type lexer_t =
   {
     mutable _stateNumber : Atn.state_id
   ; mutable _token : Token.t option
-  ; mutable _tokenStartCharIndex : int
-  ; mutable _tokenStartLine : int
-  ; mutable _tokenStartColumn : int
   ; mutable _hitEOF : bool
   ; recog : R.t
   ; _interp : LAS.t
@@ -2810,9 +2816,9 @@ let to_mimick t =
     ; _modeStack = t.recog.R._modeStack
     ; _text = t.recog.R._text
     ; _token = Option.map Token.to_mimick t._token
-    ; _tokenStartCharIndex = t._tokenStartCharIndex
-    ; _tokenStartColumn = t._tokenStartColumn
-    ; _tokenStartLine = t._tokenStartLine
+    ; _tokenStartCharIndex = t.recog.R._tokenStartCharIndex
+    ; _tokenStartColumn = t.recog.R._tokenStartColumn
+    ; _tokenStartLine = t.recog.R._tokenStartLine
     ; _type = t.recog.R._type
   }
 
@@ -2820,9 +2826,6 @@ let _init ~interp ~recog () =
   let self = {
     _stateNumber = Atn.State.mk_id (-1)
   ; _token = None
-  ; _tokenStartCharIndex = -1
-  ; _tokenStartLine = -1
-  ; _tokenStartColumn = -1
   ; _hitEOF = false
   ; recog
   ; _interp = interp
@@ -2840,13 +2843,13 @@ let getErrorDisplay self text = Util.escape_string text
 let getErrorListenerDispatch self = self.recog.R._listeners
 
 let notifyListeners self e =
-  let start = self._tokenStartCharIndex in
+  let start = self.recog.R._tokenStartCharIndex in
   let stop = IS.index self.recog.R._input in
   let text_ = IS.getText self.recog.R._input start stop in
   let msg = Fmt.(str "token recognition error at: '%s'" (getErrorDisplay self text_)) in
   let listeners = getErrorListenerDispatch self in
   listeners
-  |> List.iter (fun l -> l.EL.syntaxError self.recog None self._tokenStartLine self._tokenStartColumn msg e)
+  |> List.iter (fun l -> l.EL.syntaxError self.recog None self.recog.R._tokenStartLine self.recog.R._tokenStartColumn msg e)
 
 let recover self e =
   if IS.la self.recog.R._input 1 <> C._EOF then
@@ -2871,10 +2874,10 @@ let _emit self =
             ~type_:self.recog.R._type
             ~text:self.recog.R._text
             ~channel:self.recog.R._channel
-            ~start:self._tokenStartCharIndex
+            ~start:self.recog.R._tokenStartCharIndex
             ~stop:((getCharIndex self) - 1)
-            ~line:(Some self._tokenStartLine)
-            ~column:(Some self._tokenStartColumn) () in
+            ~line:(Some self.recog.R._tokenStartLine)
+            ~column:(Some self.recog.R._tokenStartColumn) () in
   emitToken self t ;
   t
 
@@ -2916,9 +2919,9 @@ let _nextToken self : T.t =
           end ;
         self._token <- None ;
         self.recog._channel <- C._DEFAULT_CHANNEL ;
-        self._tokenStartCharIndex <- IS.index self.recog.R._input ;
-        self._tokenStartColumn <- self._interp.cursor.LASC.column ;
-        self._tokenStartLine <- self._interp.cursor.LASC.line ;
+        self.recog.R._tokenStartCharIndex <- IS.index self.recog.R._input ;
+        self.recog.R._tokenStartColumn <- self._interp.cursor.LASC.column ;
+        self.recog.R._tokenStartLine <- self._interp.cursor.LASC.line ;
         self.recog.R._text <- None ;
         let continueOuter  = ref false in
         let exception Break in
