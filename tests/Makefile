@@ -135,6 +135,14 @@ DTEST := \
 
 DTEST := \
 	fixtures/descriptors/SemPredEvalLexer/DisableRule.txt \
+	fixtures/descriptors/SemPredEvalLexer/EnumNotID.txt \
+	fixtures/descriptors/SemPredEvalLexer/IDnotEnum.txt \
+	fixtures/descriptors/SemPredEvalLexer/IDvsEnum.txt \
+	fixtures/descriptors/SemPredEvalLexer/Indent.txt \
+	fixtures/descriptors/SemPredEvalLexer/LexerInputPositionSensitivePredicates.txt \
+	fixtures/descriptors/SemPredEvalLexer/PredicatedKeywords.txt \
+	fixtures/descriptors/SemPredEvalLexer/RuleSempredFunction.txt \
+
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
