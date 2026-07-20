@@ -14,8 +14,10 @@ TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
 	range.ml util.ml intervalSet.ml interp.ml interp_syntax.ml token.ml \
-	types.ml atn.ml mimick.ml visualization.ml \
-	tracelog.ml exec.ml simulate.ml
+	types.ml mimick.ml \
+	tracelog.ml \
+	atn.ml visualization.ml \
+	exec.ml simulate.ml
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)

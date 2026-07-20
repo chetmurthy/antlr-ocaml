@@ -1,7 +1,7 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
 open Util
-open Atn
+open Types
 
 open Rresult.R
 let state_id_to_yojson (STID n) = [%to_yojson: int] n
@@ -112,7 +112,7 @@ and pred_prediction_t =
     ; pred : semantic_context_t
     }
 and lexer_action_executor_t = {
-    lexerActions : Atn.LexerAction.t list
+    lexerActions : lexer_action_t list
   }
 
 and sim_state_t =
@@ -707,6 +707,13 @@ type json_log_t =
 | LexerActionExecutor_EXIT_execute of lexer_action_executor_t * input_stream_t
                                     [@yojson.name "EXIT LexerActionExecutor.execute"]
                                     [@located_yojson.name "EXIT LexerActionExecutor.execute"]
+
+| Transition_ENTER_matches of edge_t * int * int * int
+                                    [@yojson.name "ENTER Transition.matches"]
+                                    [@located_yojson.name "ENTER Transition.matches"]
+| Transition_EXIT_matches of bool
+                                    [@yojson.name "EXIT Transition.matches"]
+                                    [@located_yojson.name "EXIT Transition.matches"]
 
 | Msg of string * json_t
                                     [@yojson.name "msg"]

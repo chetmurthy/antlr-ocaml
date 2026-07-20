@@ -1,5 +1,10 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
 
+type atn_type_t =
+    LEXER
+  | PARSER
+[@@deriving yojson,located_yojson, show { with_path = false }, eq]
+
 type state_id = STID of int
   [@@deriving show]
 
@@ -201,6 +206,7 @@ type lexer_action_t =
     isPositionDependent : bool ;
     mutable type_ : int [@yojson.key "type"] [@located_yojson.key "type"]
   }
+[@@deriving yojson,located_yojson, show { with_path = false }, eq]
 
 let isDecisionState st =
   match st.node with

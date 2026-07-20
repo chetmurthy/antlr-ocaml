@@ -1,3 +1,7 @@
+import sys
+import json
+import Trace
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -81,6 +85,18 @@ class Transition (object):
         else:
             print("    label: %s" % self.label)
 
+    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+        Trace.writej([ 'ENTER Transition.matches',
+                       self.asdict(),
+                       symbol, minVocabSymbol,  maxVocabSymbol,
+                      ])
+        rv = self._matches(symbol, minVocabSymbol,  maxVocabSymbol)
+        Trace.writej([ 'EXIT Transition.matches',
+                       rv,
+                      ])
+        return rv
+
+
 # TODO: make all transitions sets? no, should remove set edges
 class AtomTransition(Transition):
     __slots__ = ('label_', 'serializationType')
@@ -107,7 +123,7 @@ class AtomTransition(Transition):
         s.addOne(self.label_)
         return s
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return self.label_ == symbol
 
     def __str__(self):
@@ -141,7 +157,7 @@ class RuleTransition(Transition):
         print("    precedence: %s" % self.precedence)
         print("    followState: %s" % self.followState)
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
 
 
@@ -165,7 +181,7 @@ class EpsilonTransition(Transition):
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
         print("    outermostPrecedenceReturn: %s" % self.outermostPrecedenceReturn)
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
 
     def __str__(self):
@@ -206,7 +222,7 @@ class RangeTransition(Transition):
         s.addRange(range(self.start, self.stop + 1))
         return s
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol >= self.start and symbol <= self.stop
 
     def __str__(self):
@@ -244,7 +260,7 @@ class PredicateTransition(AbstractPredicateTransition):
         print("    predIndex: %s" % self.predIndex)
         print("    isCtxDependent: %s" % self.isCtxDependent)
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
 
     def getPredicate(self):
@@ -279,7 +295,7 @@ class ActionTransition(Transition):
         print("    actionIndex: %s" % self.actionIndex)
         print("    isCtxDependent: %s" % self.isCtxDependent)
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
 
     def __str__(self):
@@ -309,7 +325,7 @@ class SetTransition(Transition):
         super(SetTransition,self).dump()
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol in self.label
 
     def __str__(self):
@@ -326,10 +342,10 @@ class NotSetTransition(SetTransition):
         d['serializationType'] = [ Transition.serializationNames[self.serializationType] ]
         return ["NotSetTransition", d]
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol >= minVocabSymbol \
             and symbol <= maxVocabSymbol \
-            and not super(type(self), self).matches(symbol, minVocabSymbol, maxVocabSymbol)
+            and not super(type(self), self)._matches(symbol, minVocabSymbol, maxVocabSymbol)
 
     def __str__(self):
         return '~' + super(type(self), self).__str__()
@@ -351,7 +367,7 @@ class WildcardTransition(Transition):
         super(WildcardTransition,self).dump()
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return symbol >= minVocabSymbol and symbol <= maxVocabSymbol
 
     def __str__(self):
@@ -378,7 +394,7 @@ class PrecedencePredicateTransition(AbstractPredicateTransition):
         print("    serializationType: %s" % Transition.serializationNames[self.serializationType])
         print("    precedence: %s" % self.precedence)
 
-    def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
+    def _matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
         return False
 
 

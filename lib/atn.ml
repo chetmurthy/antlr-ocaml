@@ -142,7 +142,7 @@ let isEpsilon = function
     | NotSetTransition _
     | WildcardTransition _) -> false
 
-let matches e symbol minVocabSymbol maxVocabSymbol =
+let _matches e symbol minVocabSymbol maxVocabSymbol =
   match e with
     EpsilonTransition _ -> false
   | RangeTransition t -> t.start <= symbol && symbol <= t.stop
@@ -158,6 +158,14 @@ let matches e symbol minVocabSymbol maxVocabSymbol =
 
   | WildcardTransition _ ->  symbol >= minVocabSymbol && symbol <= maxVocabSymbol
   | PrecedencePredicateTransition _ -> false
+
+let matches e symbol minVocabSymbol maxVocabSymbol =
+  Tracelog.write
+    (Transition_ENTER_matches (e, symbol, minVocabSymbol, maxVocabSymbol)) ;
+  let rv = _matches e symbol minVocabSymbol maxVocabSymbol in
+  Tracelog.write
+    (Transition_EXIT_matches rv) ;
+  rv
 
 let serialization_type e = match e with
     EpsilonTransition _ -> EPSILON
@@ -513,9 +521,7 @@ let mkLexerTypeAction ?(actionType = LexerActionType._TYPE) ?(isPositionDependen
 
 end
 
-type atn_type_t =
-    LEXER
-  | PARSER
+type atn_type_t = [%import: Types.atn_type_t]
 [@@deriving yojson,located_yojson, show { with_path = false }, eq]
 
 let dump_atn_type_t pps t =

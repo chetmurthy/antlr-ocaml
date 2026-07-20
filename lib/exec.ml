@@ -2388,8 +2388,9 @@ let _getEpsilonTarget self input config e configs
   | EpsilonTransition t ->
      c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)
   | (AtomTransition _ | RangeTransition _ | SetTransition _) ->
-     if Atn.Edge.matches e C._EOF 0 C._MAX_CHAR_VALUE then
-       c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)
+     if treatEofAsEpsilon then
+       if Atn.Edge.matches e C._EOF 0 C._MAX_CHAR_VALUE then
+         c := Some (AC.init_LexerATNConfig self.atn (Some (Edge.target e)) None None None (Some config) None)
   | _ -> ()
   ) ;
   !c

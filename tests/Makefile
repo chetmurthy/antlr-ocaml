@@ -81,6 +81,7 @@ DTEST=\
 	fixtures/descriptors/LexerExec/CharSetWithMissingEscapeChar.txt \
 	fixtures/descriptors/LexerExec/CharSetWithQuote1.txt \
 	fixtures/descriptors/LexerExec/CharSetWithQuote2.txt \
+	fixtures/descriptors/LexerExec/EOFByItself.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
