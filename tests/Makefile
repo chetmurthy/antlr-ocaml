@@ -129,6 +129,9 @@ DTEST := \
 	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_1.txt \
 	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_2.txt \
 
+DTEST := \
+	fixtures/descriptors/CompositeLexers/LexerDelegatorInvokesDelegateRule.txt \
+	fixtures/descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
