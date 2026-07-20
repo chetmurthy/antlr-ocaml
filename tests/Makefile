@@ -115,7 +115,7 @@ DTEST=\
 	fixtures/descriptors/LexerExec/ZeroLengthToken.txt \
 
 
-DTEST := \
+DTEST += \
 	fixtures/descriptors/LexerErrors/DFAToATNThatFailsBackToDFA.txt \
 	fixtures/descriptors/LexerErrors/DFAToATNThatMatchesThenFailsInATN.txt \
 	fixtures/descriptors/LexerErrors/EnforcedGreedyNestedBraces_1.txt \
@@ -129,11 +129,11 @@ DTEST := \
 	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_1.txt \
 	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_2.txt \
 
-DTEST := \
+DTEST += \
 	fixtures/descriptors/CompositeLexers/LexerDelegatorInvokesDelegateRule.txt \
 	fixtures/descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.txt \
 
-DTEST := \
+DTEST += \
 	fixtures/descriptors/SemPredEvalLexer/DisableRule.txt \
 	fixtures/descriptors/SemPredEvalLexer/EnumNotID.txt \
 	fixtures/descriptors/SemPredEvalLexer/IDnotEnum.txt \
