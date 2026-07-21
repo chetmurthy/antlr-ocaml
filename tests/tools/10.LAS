@@ -3,7 +3,10 @@
 set -e
 
 ARGS=""
-source trip-tests/IS.entrypoints.sh
+source tools/ACS.entrypoints.sh
+source tools/DFA.entrypoints.sh
+source tools/IS.entrypoints.sh
+source tools/LAS.entrypoints.sh
 
 for f in _generated/*/*/json.log
 do

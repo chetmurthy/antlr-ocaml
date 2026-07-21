@@ -1,6 +1,6 @@
 #!/bin/bash
 
-F=_generated/CompositeParsers/DelegatorRuleOverridesLookaheadInDelegate/json.log
+F=_generated/LexerExec/CharSet/json.log
 
 echo $F
 
@@ -10,11 +10,15 @@ if [ -r $DIR/Lexer.interp ]; then ATNARGS+=" --lexer-atn $DIR/Lexer.interp"; fi
 if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; fi
 
 
-source trip-tests/ACS.entrypoints.sh
+ARGS=""
+source tools/ACS.entrypoints.sh
+source tools/DFA.entrypoints.sh
 
-#NARGS=" --stop-nth 26"
+#NARGS=" --stop-nth 1"
 
 rm -f _generated/*.log
+
+./replay_test.opt deserialize $F
 
 ./replay_test.opt entry-exit $ARGS $F | jq -s 'length | "\(.) lines (full entry/exit)"'
 ./replay_test.opt entry-exit --ooe $ARGS $F | jq -s 'length | "\(.) lines (only entry)"'

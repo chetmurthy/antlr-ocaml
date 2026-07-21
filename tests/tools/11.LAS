@@ -1,6 +1,6 @@
 #!/bin/bash
 
-F=_generated/LexerExec/UnicodeCharSet/json.log
+F=_generated/LexerExec/CharSet/json.log
 
 echo $F
 
@@ -11,9 +11,14 @@ if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; 
 
 
 ARGS=""
-source trip-tests/IS.entrypoints.sh
+source tools/ACS.entrypoints.sh
+source tools/DFA.entrypoints.sh
+source tools/IS.entrypoints.sh
+source tools/LAS.entrypoints.sh
+source tools/LAE.entrypoints.sh
+source tools/L.entrypoints.sh
 
-#NARGS=" --stop-nth 4"
+#NARGS=" --stop-nth 8"
 
 rm -f _generated/*.log
 
@@ -27,6 +32,9 @@ rm -f _generated/*.log
 
 ./replay_test.opt entry-exit $NARGS $ARGS $F | jq -S . > _generated/1.log
 ./replay_test.opt entry-exit $NARGS --ooe $ARGS $F | jq -S . > _generated/2in.log
-./replay_test.opt acs $REPLAYARGS $NARGS $ATNARGS --ooe $ARGS $F | jq -S . > _generated/2out.log
+echo "==== replay acs ===="
+JSONLOGARGS="--json-log-file=_generated/2out-no-jq.log"
+./replay_test.opt acs $JSONLOGARGS $REPLAYARGS $NARGS $ATNARGS --ooe $ARGS $F
+jq -S . < _generated/2out-no-jq.log > _generated/2out.log
 
 diff -Bwiu _generated/1.log _generated/2out.log

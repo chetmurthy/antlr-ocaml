@@ -26,7 +26,7 @@ test:: all
 	mkdir -p _build && ./mimick_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
 
-MANAGETRIP=./trip-tests/manage-trip-tests
+MANAGETRIP=./tools/manage-trip-tests
 deserialize-all:: replay_test.opt
 	./replay_test.opt deserialize -v _generated/*/*/json.log
 

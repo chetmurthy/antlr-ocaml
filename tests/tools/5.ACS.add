@@ -1,6 +1,6 @@
 #!/bin/bash
 
-F=_generated/LexerExec/CharSet/json.log
+F=_generated/CompositeParsers/DelegatorRuleOverridesLookaheadInDelegate/json.log
 
 echo $F
 
@@ -10,19 +10,11 @@ if [ -r $DIR/Lexer.interp ]; then ATNARGS+=" --lexer-atn $DIR/Lexer.interp"; fi
 if [ -r $DIR/Parser.interp ]; then ATNARGS+=" --parser-atn $DIR/Parser.interp"; fi
 
 
-ARGS=""
-source trip-tests/ACS.entrypoints.sh
-source trip-tests/DFA.entrypoints.sh
-source trip-tests/IS.entrypoints.sh
-source trip-tests/LAS.entrypoints.sh
-source trip-tests/LAE.entrypoints.sh
-source trip-tests/L.entrypoints.sh
+source tools/ACS.entrypoints.sh
 
-#NARGS=" --stop-nth 8"
+#NARGS=" --stop-nth 26"
 
 rm -f _generated/*.log
-
-./replay_test.opt deserialize $F
 
 ./replay_test.opt entry-exit $ARGS $F | jq -s 'length | "\(.) lines (full entry/exit)"'
 ./replay_test.opt entry-exit --ooe $ARGS $F | jq -s 'length | "\(.) lines (only entry)"'
@@ -32,9 +24,6 @@ rm -f _generated/*.log
 
 ./replay_test.opt entry-exit $NARGS $ARGS $F | jq -S . > _generated/1.log
 ./replay_test.opt entry-exit $NARGS --ooe $ARGS $F | jq -S . > _generated/2in.log
-echo "==== replay acs ===="
-JSONLOGARGS="--json-log-file=_generated/2out-no-jq.log"
-./replay_test.opt acs $JSONLOGARGS $REPLAYARGS $NARGS $ATNARGS --ooe $ARGS $F
-jq -S . < _generated/2out-no-jq.log > _generated/2out.log
+./replay_test.opt acs $NARGS $ATNARGS --ooe $ARGS $F | jq -S . > _generated/2out.log
 
 diff -Bwiu _generated/1.log _generated/2out.log

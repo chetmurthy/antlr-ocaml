@@ -2,7 +2,7 @@ TOP=/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml
 PYTHONPATH:=$(TOP)/python:$(PYTHONPATH)
 #PYTHONPATH:=/home/chet/Hack/Antlr/src/antlr4/runtime/Python3/src:$(PYTHONPATH)
 SHELL := /bin/bash
-ADJUST=$(TOP)/tests/trip-tests/adjust-dfa
+ADJUST=$(TOP)/tests/tools/adjust-dfa
 
 all: compare
 

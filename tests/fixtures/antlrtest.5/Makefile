@@ -5,7 +5,7 @@ include $(TOP)/config/Makefile.sub
 PYTHONPATH:=$(TOP)/python:$(PYTHONPATH)
 #PYTHONPATH:=/home/chet/Hack/Antlr/src/antlr4/runtime/Python3/src:$(PYTHONPATH)
 SHELL := /bin/bash
-ADJUST=$(TOP)/tests/trip-tests/adjust-dfa
+ADJUST=$(TOP)/tests/tools/adjust-dfa
 TESTBASEDIR=$(TOP)/tests/fixtures/test-base-files
 PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/<testName>
 REPLAYTEST=$(TOP)/tests/replay_test.opt
