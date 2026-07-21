@@ -2,8 +2,6 @@ WD=$(shell pwd)
 TOP=/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml
 include $(TOP)/config/Makefile.sub
 
--include ocaml-Makefile
-
 PYTHONPATH:=$(TOP)/python:$(PYTHONPATH)
 #PYTHONPATH:=/home/chet/Hack/Antlr/src/antlr4/runtime/Python3/src:$(PYTHONPATH)
 SHELL := /bin/bash
@@ -15,8 +13,12 @@ LIBDIR=$(TOP)/tests/fixtures/grammar-lib
 LIBARG=-lib $(LIBDIR)
 
 ifndef JSONLOGGING
-export JSONLOGGING=1
+export JSONLOGGING=0
 endif
+
+<if(showDFA)>
+SHOWDFA=1
+<endif>
 
 all: compare
 
@@ -112,3 +114,5 @@ realclean:: clean
 
 clean::
 	rm -rf output.NEW errors.NEW *.log *.BAK *.RAW
+
+-include ocaml-Makefile

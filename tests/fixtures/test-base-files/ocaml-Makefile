@@ -34,8 +34,12 @@ else
 	diff -Bwiu json.log ocaml-json.log
 endif
 
+ifdef SHOWDFA
+SHOWARGS=--show-dfa
+endif
+
 ocaml-test:: ocaml-compile
-	./test.opt test --json-log-file=ocaml-json.log.RAW input > ocaml-output.NEW 2> ocaml-errors.NEW
+	./test.opt test $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input > ocaml-output.NEW 2> ocaml-errors.NEW
 
 ocaml-compile:: $(TESTS) $(TESTSOPT)
 
