@@ -50,7 +50,7 @@ VISITOR=-visitor
 	antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Python3 <grammarName>.g4
 
 output.NEW errors.NEW json.log:: <lexerName>.py
-	env PYTHONPATH=$(PYTHONPATH) python3 Test.py input > output.NEW 2> errors.NEW
+	env PYTHONPATH=$(PYTHONPATH) python3 Test.py $(RUNARGS) input > output.NEW 2> errors.NEW
 	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log
 
 <if(parserName)>
