@@ -1,8 +1,9 @@
+import os
 import sys
 import json
 
 fh = None
-_enabled = True
+_enabled = (True if os.getenv("JSONLOGGING") is None else True if os.getenv("JSONLOGGING") == "1" else False)
 
 disabled = {
     'ENTER mergeCache_add',

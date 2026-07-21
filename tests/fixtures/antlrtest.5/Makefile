@@ -13,6 +13,7 @@ PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/<testName>
 REPLAYTEST=$(TOP)/tests/replay_test.opt
 LIBDIR=$(TOP)/tests/fixtures/grammar-lib
 LIBARG=-lib $(LIBDIR)
+export JSONLOGGING=1
 
 all: compare
 
