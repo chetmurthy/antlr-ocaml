@@ -80,7 +80,10 @@ $ENV{'TOP'} = ".." ;
   my @testfiles = @ARGV ;
 
   unless (int(@testfiles) || int(@patterns)) {
-    @patterns = ("$ENV{'TOP'}/tests/fixtures/descriptors/*/*.txt") ;
+    @patterns = (
+      "$ENV{'TOP'}/tests/fixtures/descriptors/*/*.txt",
+      "$ENV{'TOP'}/tests/fixtures/custom-descriptors/*/*.txt",
+	) ;
     @exclude = ("Performance") unless (int(@exclude)) ;
   }
   if (int(@patterns)) {
