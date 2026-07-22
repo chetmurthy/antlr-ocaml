@@ -54,7 +54,7 @@ class CommonTokenFactory(TokenFactory):
         return ["CommonTokenFactory", d]
 
     def create(self, source, type:int, text:str, channel:int, start:int, stop:int, line:int, column:int):
-#        Trace.writej([ 'ENTER CommonTokenFactory.create',
+#        Trace.writej(lambda:[ 'ENTER CommonTokenFactory.create',
 #                       str(source),
 #                       type,
 #                       text,
@@ -71,7 +71,7 @@ class CommonTokenFactory(TokenFactory):
             t.text = text
         elif self.copyText and source[1] is not None:
             t.text = source[1].getText(start,stop)
-#        Trace.writej([ 'EXIT CommonTokenFactory.create', t.asdict() ])
+#        Trace.writej(lambda:[ 'EXIT CommonTokenFactory.create', t.asdict() ])
         return t
 
     def createThin(self, type:int, text:str):

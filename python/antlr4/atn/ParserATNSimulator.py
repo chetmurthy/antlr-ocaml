@@ -271,7 +271,7 @@ class ParserATNSimulator(ATNSimulator):
 
 
     def __init__(self, parser:Parser, atn:ATN, decisionToDFA:list, sharedContextCache:PredictionContextCache):
-        Trace.writej([ 'ENTER ParserATNSimulator.__init__',
+        Trace.writej(lambda:[ 'ENTER ParserATNSimulator.__init__',
                        [d.asdict() for d in decisionToDFA],
                        sharedContextCache.asdict(),
                       ])
@@ -294,7 +294,7 @@ class ParserATNSimulator(ATNSimulator):
         #  also be examined during cache lookup.
         #
         self.mergeCache = None
-        Trace.writej([ 'EXIT ParserATNSimulator.__init__',
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.__init__',
                                  self.asdict() ])
 
 

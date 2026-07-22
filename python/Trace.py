@@ -49,10 +49,12 @@ def nowrite(s):
 def writej(j):
     global disabled
     global _enabled
-    if _enabled and not (j[0] in disabled):
-        s = json.dumps(j, sort_keys=True, indent=4)
-        fh.write(s)
-        fh.write("\n")
+    if _enabled:
+        j = j()
+        if not (j[0] in disabled):
+            s = json.dumps(j, sort_keys=True, indent=4)
+            fh.write(s)
+            fh.write("\n")
 
 def nowritej(j):
     pass

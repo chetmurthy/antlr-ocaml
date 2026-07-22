@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import,pa_ppx_tracelog *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -160,11 +160,11 @@ let _matches e symbol minVocabSymbol maxVocabSymbol =
   | PrecedencePredicateTransition _ -> false
 
 let matches e symbol minVocabSymbol maxVocabSymbol =
-  Tracelog.write
-    (Transition_ENTER_matches (e, symbol, minVocabSymbol, maxVocabSymbol)) ;
+  [%trace
+    (Transition_ENTER_matches (e, symbol, minVocabSymbol, maxVocabSymbol))] ;
   let rv = _matches e symbol minVocabSymbol maxVocabSymbol in
-  Tracelog.write
-    (Transition_EXIT_matches rv) ;
+  [%trace
+    (Transition_EXIT_matches rv)] ;
   rv
 
 let serialization_type e = match e with

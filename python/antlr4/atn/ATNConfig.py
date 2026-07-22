@@ -36,7 +36,7 @@ class ATNConfig(object):
     def __init__(self, state:ATNState=None, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=None, config:ATNConfig=None):
         global configCounter
         self.id = configCounter
-        Trace.writej([ 'ENTER ATNConfig.__init__', self.id,
+        Trace.writej(lambda:[ 'ENTER ATNConfig.__init__', self.id,
                        (None if state is None else state.stateNumber),
                        (None if alt is None else alt),
                        (None if context is None else context.asdict()),
@@ -79,7 +79,7 @@ class ATNConfig(object):
         # accurate depth since I don't ever decrement. TODO: make it a boolean then
         self.reachesIntoOuterContext = 0 if config is None else config.reachesIntoOuterContext
         self.precedenceFilterSuppressed = False if config is None else config.precedenceFilterSuppressed
-        Trace.writej([ 'EXIT ATNConfig.__init__',
+        Trace.writej(lambda:[ 'EXIT ATNConfig.__init__',
                        ATNConfig.asdict(self)
                       ])
 
@@ -112,10 +112,10 @@ class ATNConfig(object):
                 and self.precedenceFilterSuppressed==other.precedenceFilterSuppressed
 
     def __eq__(self, other):
-        Trace.writej([ 'ENTER ATNConfig.__eq__',
+        Trace.writej(lambda:[ 'ENTER ATNConfig.__eq__',
                      self.asdict(), other.asdict() ])
         rv = self.real__eq__(other)
-        Trace.writej([ 'EXIT ATNConfig.__eq__', rv ])
+        Trace.writej(lambda:[ 'EXIT ATNConfig.__eq__', rv ])
         return rv
 
     def strkey(self):
@@ -170,30 +170,30 @@ class ATNConfig(object):
             return buf.getvalue()
 
     def incrementRIOC(self):
-        Trace.writej([ 'ENTER ATNConfig.incrementRIOC',
+        Trace.writej(lambda:[ 'ENTER ATNConfig.incrementRIOC',
                                  self.asdict()
                                 ])
         self.reachesIntoOuterContext += 1
-        Trace.writej([ 'EXIT ATNConfig.incrementRIOC',
+        Trace.writej(lambda:[ 'EXIT ATNConfig.incrementRIOC',
                                  self.asdict()
                                 ])
 
     def update_RIOC(self, v):
-        Trace.writej([ 'ENTER ATNConfig.update_RIOC',
+        Trace.writej(lambda:[ 'ENTER ATNConfig.update_RIOC',
                                  self.asdict(),
                                  v
                                 ])
         self.reachesIntoOuterContext = v
-        Trace.writej([ 'EXIT ATNConfig.update_RIOC',
+        Trace.writej(lambda:[ 'EXIT ATNConfig.update_RIOC',
                                  self.asdict()
                                 ])
 
     def set_PFS(self):
-        Trace.writej([ 'ENTER ATNConfig.set_PFS',
+        Trace.writej(lambda:[ 'ENTER ATNConfig.set_PFS',
                                  self.asdict(),
                                 ])
         self.precedenceFilterSuppressed = True
-        Trace.writej([ 'EXIT ATNConfig.set_PFS',
+        Trace.writej(lambda:[ 'EXIT ATNConfig.set_PFS',
                                  self.asdict()
                                 ])
 
@@ -206,7 +206,7 @@ class LexerATNConfig(ATNConfig):
 
     def __init__(self, state:ATNState, alt:int=None, context:PredictionContext=None, semantic:SemanticContext=SemanticContext.NONE,
                  lexerActionExecutor:LexerActionExecutor=None, config:LexerATNConfig=None):
-        Trace.writej([ 'ENTER LexerATNConfig.__init__',
+        Trace.writej(lambda:[ 'ENTER LexerATNConfig.__init__',
                                  (None if state is None else state.stateNumber),
                                  (None if alt is None else alt),
                                  (None if context is None else context.asdict()),
@@ -221,7 +221,7 @@ class LexerATNConfig(ATNConfig):
         # This is the backing field for {@link #getLexerActionExecutor}.
         self.lexerActionExecutor = lexerActionExecutor
         self.passedThroughNonGreedyDecision = False if config is None else self.checkNonGreedyDecision(config, state)
-        Trace.writej([ 'EXIT LexerATNConfig.__init__',
+        Trace.writej(lambda:[ 'EXIT LexerATNConfig.__init__',
                                  self.asdict()
                                 ])
 
@@ -245,10 +245,10 @@ class LexerATNConfig(ATNConfig):
         return super().real__eq__(other)
 
     def __eq__(self, other):
-        Trace.writej([ 'ENTER LexerATNConfig.__eq__',
+        Trace.writej(lambda:[ 'ENTER LexerATNConfig.__eq__',
                                  self.asdict(), other.asdict() ])
         rv = self.real__eq__(other)
-        Trace.writej([ 'EXIT LexerATNConfig.__eq__', rv ])
+        Trace.writej(lambda:[ 'EXIT LexerATNConfig.__eq__', rv ])
         return rv
 
     def __hash__(self):

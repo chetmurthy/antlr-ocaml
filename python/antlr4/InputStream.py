@@ -20,13 +20,13 @@ class InputStream (object):
     def __init__(self, data: str):
         global inputStreamCounter
         orig = Trace.disable()
-        Trace.writej([ 'ENTER InputStream.__init__', inputStreamCounter, data ])
+        Trace.writej(lambda:[ 'ENTER InputStream.__init__', inputStreamCounter, data ])
         self.id = inputStreamCounter
         inputStreamCounter += 1
         self.name = "<empty>"
         self.strdata = data
         self._loadString()
-        Trace.writej([ 'EXIT InputStream.__init__', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT InputStream.__init__', self.asdict() ])
         Trace.restore(orig)
 
     def asdict(self):
@@ -57,17 +57,17 @@ class InputStream (object):
     #  touched.
     #
     def reset(self):
-        Trace.writej([ 'ENTER InputStream.reset', self.asdict() ])
+        Trace.writej(lambda:[ 'ENTER InputStream.reset', self.asdict() ])
         self._index = 0
-        Trace.writej([ 'EXIT InputStream.reset', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT InputStream.reset', self.asdict() ])
 
     def consume(self):
-        Trace.writej([ 'ENTER InputStream.consume', self.asdict() ])
+        Trace.writej(lambda:[ 'ENTER InputStream.consume', self.asdict() ])
         if self._index >= self._size:
             assert self.LA(1) == Token.EOF
             raise Exception("cannot consume EOF")
         self._index += 1
-        Trace.writej([ 'EXIT InputStream.consume', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT InputStream.consume', self.asdict() ])
 
     def _LA(self, offset: int):
         if offset==0:
@@ -80,9 +80,9 @@ class InputStream (object):
         return self.data[pos]
 
     def LA(self, offset: int):
-        Trace.writej([ 'ENTER InputStream.LA', self.asdict(), offset ])
+        Trace.writej(lambda:[ 'ENTER InputStream.LA', self.asdict(), offset ])
         rv = self._LA(offset)
-        Trace.writej([ 'EXIT InputStream.LA', self.asdict(),  rv ])
+        Trace.writej(lambda:[ 'EXIT InputStream.LA', self.asdict(),  rv ])
         return rv
 
     def LT(self, offset: int):
@@ -106,9 +106,9 @@ class InputStream (object):
         self._index = min(_index, self._size)
 
     def seek(self, _index: int):
-        Trace.writej([ 'ENTER InputStream.seek', self.asdict(), _index ])
+        Trace.writej(lambda:[ 'ENTER InputStream.seek', self.asdict(), _index ])
         self._seek(_index)
-        Trace.writej([ 'EXIT InputStream.seek', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT InputStream.seek', self.asdict() ])
 
     def _getText(self, start :int, stop: int):
         if stop >= self._size:
@@ -119,9 +119,9 @@ class InputStream (object):
             return self.strdata[start:stop+1]
 
     def getText(self, start :int, stop: int):
-        Trace.writej([ 'ENTER InputStream.getText', self.asdict(), start, stop ])
+        Trace.writej(lambda:[ 'ENTER InputStream.getText', self.asdict(), start, stop ])
         rv = self._getText(start, stop)
-        Trace.writej([ 'EXIT InputStream.getText', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT InputStream.getText', self.asdict(), rv ])
         return rv
 
     def __str__(self):

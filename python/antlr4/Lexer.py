@@ -49,7 +49,7 @@ class Lexer(Recognizer, TokenSource):
 
     def __init__(self, input:InputStream, output:TextIO = sys.stdout):
         orig = Trace.disable()
-        Trace.writej([ 'ENTER Lexer.__init__',
+        Trace.writej(lambda:[ 'ENTER Lexer.__init__',
                        input.asdict(),
                       ])
         super().__init__()
@@ -97,7 +97,7 @@ class Lexer(Recognizer, TokenSource):
         #  the input char buffer.  Use setText() or can set self instance var.
         #/
         self._text = None
-        Trace.writej([ 'EXIT Lexer.__init__', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT Lexer.__init__', self.asdict() ])
         Trace.restore(orig)
 
     def asdict(self):
@@ -134,15 +134,15 @@ class Lexer(Recognizer, TokenSource):
         self._modeStack = []
 
         self._interp.reset()
-        Trace.writej([ 'Lexer.reset',
+        Trace.writej(lambda:[ 'Lexer.reset',
                                  self.asdict() ])
 
     def nextToken(self):
-        Trace.writej([ 'ENTER Lexer.nextToken',
+        Trace.writej(lambda:[ 'ENTER Lexer.nextToken',
                                  self.asdict() ])
         rv = self._nextToken()
         assert (rv is not None)
-        Trace.writej([ 'EXIT Lexer.nextToken',
+        Trace.writej(lambda:[ 'EXIT Lexer.nextToken',
                                  self.asdict(), rv.asdict() ])
         return rv
 
@@ -175,7 +175,7 @@ class Lexer(Recognizer, TokenSource):
                     except LexerNoViableAltException as e:
                         self.notifyListeners(e)		# report error
                         self.recover(e)
-                    Trace.writej([ 'EVENT[1] Lexer.nextToken',
+                    Trace.writej(lambda:[ 'EVENT[1] Lexer.nextToken',
                                    self.asdict(),
                                    self._interp.asdict(),
                                   ])
@@ -207,18 +207,18 @@ class Lexer(Recognizer, TokenSource):
     #/
     def skip(self):
         self._type = self.SKIP
-        Trace.writej([ 'Lexer.skip',
+        Trace.writej(lambda:[ 'Lexer.skip',
                                  self.asdict() ])
 
 
     def more(self):
         self._type = self.MORE
-        Trace.writej([ 'Lexer.more',
+        Trace.writej(lambda:[ 'Lexer.more',
                                  self.asdict() ])
 
     def mode(self, m:int):
         self._mode = m
-        Trace.writej([ 'Lexer.mode',
+        Trace.writej(lambda:[ 'Lexer.mode',
                                  self.asdict(), m ])
 
     def pushMode(self, m:int):
@@ -226,7 +226,7 @@ class Lexer(Recognizer, TokenSource):
             print("pushMode " + str(m), file=self._output)
         self._modeStack.append(self._mode)
         self.mode(m)
-        Trace.writej([ 'Lexer.pushMode',
+        Trace.writej(lambda:[ 'Lexer.pushMode',
                                  self._modeStack, m ])
 
     def popMode(self):
@@ -235,7 +235,7 @@ class Lexer(Recognizer, TokenSource):
         if self._interp.debug:
             print("popMode back to "+ self._modeStack[:-1], file=self._output)
         self.mode( self._modeStack.pop() )
-        Trace.writej([ 'Lexer.popMode',
+        Trace.writej(lambda:[ 'Lexer.popMode',
                                  self._modeStack, self._mode ])
         return self._mode
 
@@ -264,7 +264,7 @@ class Lexer(Recognizer, TokenSource):
     def emitToken(self, token:Token):
         self._token = token
         return
-        Trace.writej([ 'Lexer.emitToken',
+        Trace.writej(lambda:[ 'Lexer.emitToken',
                                  self.asdict(), token.asdict() ])
 
     # The standard method called to automatically emit a token at the
@@ -274,11 +274,11 @@ class Lexer(Recognizer, TokenSource):
     #  custom Token objects or provide a new factory.
     #/
     def emit(self):
-        Trace.writej([ 'ENTER Lexer.emit',
+        Trace.writej(lambda:[ 'ENTER Lexer.emit',
                        self.asdict(),
                       ])
         rv = self._emit()
-        Trace.writej([ 'EXIT Lexer.emit',
+        Trace.writej(lambda:[ 'EXIT Lexer.emit',
                        self.asdict(),
                        rv.asdict()
                       ])
@@ -288,18 +288,18 @@ class Lexer(Recognizer, TokenSource):
         t = self._factory.create(self._tokenFactorySourcePair, self._type, self._text, self._channel, self._tokenStartCharIndex,
                                  self.getCharIndex()-1, self._tokenStartLine, self._tokenStartColumn)
         self.emitToken(t)
-        Trace.writej([ 'Lexer.emit',
+        Trace.writej(lambda:[ 'Lexer.emit',
                                  self.asdict(),
                                  t.asdict()
                                 ])
         return t
 
     def emitEOF(self):
-        Trace.writej([ 'ENTER Lexer.emitEOF',
+        Trace.writej(lambda:[ 'ENTER Lexer.emitEOF',
                        self.asdict(),
                       ])
         rv = self._emitEOF()
-        Trace.writej([ 'EXIT Lexer.emitEOF',
+        Trace.writej(lambda:[ 'EXIT Lexer.emitEOF',
                        self.asdict(),
                        rv.asdict()
                       ])
@@ -311,7 +311,7 @@ class Lexer(Recognizer, TokenSource):
         eof = self._factory.create(self._tokenFactorySourcePair, Token.EOF, None, Token.DEFAULT_CHANNEL, self._input.index,
                                    self._input.index-1, lpos, cpos)
         self.emitToken(eof)
-        Trace.writej([ 'Lexer.emitEOF',
+        Trace.writej(lambda:[ 'Lexer.emitEOF',
                                  self.asdict(), eof.asdict() ])
         return eof
 

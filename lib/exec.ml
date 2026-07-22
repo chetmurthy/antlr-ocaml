@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import,pa_ppx_tracelog *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -185,11 +185,11 @@ let _init ?predicted_id strdata () =
 
 let init ?predicted_id strdata () =
   Counter.check predicted_id ;
-  Tracelog.write
-    (InputStream_ENTER_init (Counter.get(), strdata)) ;
+  [%trace
+    (InputStream_ENTER_init (Counter.get(), strdata))] ;
   let rv = _init  ?predicted_id strdata () in
-  Tracelog.write
-    (InputStream_EXIT_init (to_mimick rv)) ;
+  [%trace 
+    (InputStream_EXIT_init (to_mimick rv))] ;
   rv
 
 let recache ~is_cache is =
@@ -199,11 +199,11 @@ let _reset is =
   is._index <- 0
 
 let reset is =
-  Tracelog.write
-    (InputStream_ENTER_reset (to_mimick is)) ;
+  [%trace
+    (InputStream_ENTER_reset (to_mimick is))] ;
   _reset is ;
-  Tracelog.write
-    (InputStream_EXIT_reset (to_mimick is))
+  [%trace
+    (InputStream_EXIT_reset (to_mimick is))]
 
 let _la is offset =
   if offset = 0 then
@@ -218,11 +218,11 @@ let _la is offset =
       end
 
 let la is offset =
-  Tracelog.write
-    (InputStream_ENTER_LA (to_mimick is, offset)) ;
+  [%trace
+    (InputStream_ENTER_LA (to_mimick is, offset))] ;
   let rv = _la is offset in
-  Tracelog.write
-    (InputStream_EXIT_LA (to_mimick is, rv)) ;
+  [%trace
+    (InputStream_EXIT_LA (to_mimick is, rv))] ;
   rv
 
 let _consume is =
@@ -233,11 +233,11 @@ let _consume is =
   is._index <- 1 + is._index
 
 let consume is =
-  Tracelog.write
-    (InputStream_ENTER_consume (to_mimick is)) ;
+  [%trace
+    (InputStream_ENTER_consume (to_mimick is))] ;
   _consume is ;
-  Tracelog.write
-    (InputStream_EXIT_consume (to_mimick is))
+  [%trace
+    (InputStream_EXIT_consume (to_mimick is))]
 
 let _seek is _index =
   if _index <= is._index then
@@ -246,11 +246,11 @@ let _seek is _index =
     is._index <- min _index is._size
 
 let seek is _index =
-  Tracelog.write
-    (InputStream_ENTER_seek (to_mimick is, _index)) ;
+  [%trace
+    (InputStream_ENTER_seek (to_mimick is, _index))] ;
   _seek is _index ;
-  Tracelog.write
-    (InputStream_EXIT_seek (to_mimick is))
+  [%trace
+    (InputStream_EXIT_seek (to_mimick is))]
 
 let _getText is start stop =
   let stop = if stop >= is._size then is._size-1 else stop in
@@ -259,11 +259,11 @@ let _getText is start stop =
   else Util.string_of_uchars (List.map Uchar.of_int (Array.to_list (Array.sub is.data start (stop+1 - start))))
 
 let getText is start stop =
-  Tracelog.write
-    (InputStream_ENTER_getText (to_mimick is, start, stop)) ;
+  [%trace
+    (InputStream_ENTER_getText (to_mimick is, start, stop))] ;
   let rv = _getText is start stop in
-  Tracelog.write
-    (InputStream_EXIT_getText (to_mimick is, rv)) ;
+  [%trace
+    (InputStream_EXIT_getText (to_mimick is, rv))] ;
   rv
 
 let index (is : t) = is._index
@@ -481,9 +481,9 @@ module MC = struct
       ofList l
 
   let add t (a,b) v =
-    Tracelog.write (MergeCache_ENTER_add (mc_to_mimick t, to_mimick a, to_mimick b, to_mimick v)) ;
+    [%trace (MergeCache_ENTER_add (mc_to_mimick t, to_mimick a, to_mimick b, to_mimick v))] ;
     _add t (a,b) v ;
-    Tracelog.write (MergeCache_EXIT_add (mc_to_mimick t))
+    [%trace (MergeCache_EXIT_add (mc_to_mimick t))]
 
   let maybe_cache mc_opt a b merged =
     match mc_opt with
@@ -554,14 +554,14 @@ let _mergeRoot a b rootIsWildcard =
     | _ -> None
 
 let mergeRoot a b rootIsWildcard =
-  Tracelog.write
+  [%trace
     (PredictionContext_ENTER_mergeRoot
        (to_mimick a,
         to_mimick b,
-        rootIsWildcard)) ;
+        rootIsWildcard))] ;
   let rv = _mergeRoot a b rootIsWildcard in
-  Tracelog.write
-    (PredictionContext_EXIT_mergeRoot (Option.map to_mimick rv)) ;
+  [%trace
+    (PredictionContext_EXIT_mergeRoot (Option.map to_mimick rv))] ;
   rv
 
 let unpack_SINGLETON = function
@@ -625,15 +625,15 @@ let rec _mergeSingletons a b rootIsWildcard mergeCache =
   | _ -> assert false
 
 and mergeSingletons a b rootIsWildcard mergeCache =
-  Tracelog.write
+  [%trace
     (PredictionContext_ENTER_mergeSingletons
        (to_mimick a,
         to_mimick b,
         rootIsWildcard,
-        Option.map MC.to_mimick mergeCache)) ;
+        Option.map MC.to_mimick mergeCache))] ;
   let rv = _mergeSingletons a b rootIsWildcard mergeCache in
-  Tracelog.write
-    (PredictionContext_EXIT_mergeSingletons (to_mimick rv, Option.map MC.to_mimick mergeCache)) ;
+  [%trace
+    (PredictionContext_EXIT_mergeSingletons (to_mimick rv, Option.map MC.to_mimick mergeCache))] ;
   rv
 
 and do_mergeArrays al bl rootIsWildcard mergeCache =
@@ -698,15 +698,15 @@ and _mergeArrays a b rootIsWildcard mergeCache =
   | _ -> assert false
 
 and mergeArrays a b rootIsWildcard mergeCache =
-  Tracelog.write
+  [%trace
     (PredictionContext_ENTER_mergeArrays
        (to_mimick a,
         to_mimick b,
         rootIsWildcard,
-        Option.map MC.to_mimick mergeCache)) ;
+        Option.map MC.to_mimick mergeCache))] ;
   let rv = _mergeArrays a b rootIsWildcard mergeCache in
-  Tracelog.write
-    (PredictionContext_EXIT_mergeArrays (to_mimick rv)) ;
+  [%trace
+    (PredictionContext_EXIT_mergeArrays (to_mimick rv))] ;
   rv
 
 and merge_opt a_opt b_opt rootIsWildcard mergeCache =
@@ -719,15 +719,15 @@ and merge_opt a_opt b_opt rootIsWildcard mergeCache =
   Some (merge a b rootIsWildcard mergeCache)
 
 and merge a b rootIsWildcard mergeCache =
-  Tracelog.write
+  [%trace
     (PredictionContext_ENTER_merge
        (to_mimick a,
         to_mimick b,
         rootIsWildcard,
-        Option.map MC.to_mimick mergeCache)) ;
+        Option.map MC.to_mimick mergeCache))] ;
   let rv = _merge a b rootIsWildcard mergeCache in
-  Tracelog.write
-    (PredictionContext_EXIT_merge (to_mimick rv)) ;
+  [%trace
+    (PredictionContext_EXIT_merge (to_mimick rv))] ;
   rv
 
 and _merge a b rootIsWildcard mergeCache =
@@ -1008,11 +1008,11 @@ let _init input ?(output = stdout) ?(actions=[]) ?(sempreds=[]) ?(listeners=[]) 
 
 let init input ?(output = stdout) ?(actions=[]) ?(sempreds=[]) ?(listeners=[ EL.consoleErrorListener ]) () =
 (*
-  Tracelog.write (Lexer_ENTER_init (IS.to_mimick input)) ;
+  [%trace (Lexer_ENTER_init (IS.to_mimick input))] ;
  *)
   let rv = _init input ~output ~actions ~sempreds ~listeners () in
 (*
-  Tracelog.write (Lexer_EXIT_init) ;
+  [%trace (Lexer_EXIT_init)] ;
  *)
   rv
 
@@ -1163,9 +1163,9 @@ let _execute self recog c input startIndex =
     )
 
 let execute self recog c input startIndex =
-  Tracelog.write (LexerActionExecutor_ENTER_execute (to_mimick self, IS.to_mimick input, startIndex)) ;
+  [%trace (LexerActionExecutor_ENTER_execute (to_mimick self, IS.to_mimick input, startIndex))] ;
   let rv = _execute self recog c input startIndex in
-  Tracelog.write (LexerActionExecutor_EXIT_execute (to_mimick self, IS.to_mimick input)) ;
+  [%trace (LexerActionExecutor_EXIT_execute (to_mimick self, IS.to_mimick input))] ;
   rv
 
 let fixOffsetBeforeMatch self offset =
@@ -1326,15 +1326,15 @@ let rec real_eq t1 t2 =
 let __eq__ t1 t2 =
   (match t1.lexer_ext with
      None ->
-     Tracelog.write (ATNConfig_ENTER_eq (to_mimick t1, to_mimick t2))
+     [%trace (ATNConfig_ENTER_eq (to_mimick t1, to_mimick t2))]
    | Some _ ->
-     Tracelog.write (LexerATNConfig_ENTER_eq (to_mimick t1, to_mimick t2))) ;
+     [%trace (LexerATNConfig_ENTER_eq (to_mimick t1, to_mimick t2))]) ;
   let rv = real_eq t1 t2 in
   (match t1.lexer_ext with
      None ->
-     Tracelog.write (ATNConfig_EXIT_eq (rv))
+     [%trace (ATNConfig_EXIT_eq (rv))]
    | Some _ ->
-     Tracelog.write (LexerATNConfig_EXIT_eq (rv))) ;
+     [%trace (LexerATNConfig_EXIT_eq (rv))]) ;
   rv
 
 let hash_for_config_set t =
@@ -1357,7 +1357,7 @@ let _eq_for_config_set t1 t2 =
 let eq_for_config_set t1 t2 =
   let rv = _eq_for_config_set t1 t2 in
 (*
-  Tracelog.write (ATNConfig_equalsForConfigSet(to_mimick t1, to_mimick t2, rv)) ;
+  [%trace (ATNConfig_equalsForConfigSet(to_mimick t1, to_mimick t2, rv))] ;
  *)
   rv
 
@@ -1404,10 +1404,10 @@ let checkNonGreedyDecision atn lexer_ext target =
 
 let init_ATNConfig ?predicted_id atn state_opt alt_opt context_opt semantic_opt config_opt : t =
   Counter.check predicted_id ;
-  Tracelog.write
-    (ATNConfig_ENTER_init (Counter.get(), state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt))) ;
+  [%trace
+    (ATNConfig_ENTER_init (Counter.get(), state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), (Option.map to_mimick config_opt)))] ;
   let rv = _ATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt in
-  Tracelog.write (ATNConfig_EXIT_init (to_mimick rv)) ;
+  [%trace (ATNConfig_EXIT_init (to_mimick rv))] ;
   rv
 
 let _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt =
@@ -1435,10 +1435,10 @@ let init_LexerATNConfig atn state_opt alt_opt context_opt semantic_opt config_op
   let semantic_opt = match semantic_opt with
       Some x -> Some x
     | None -> Some SC.EMPTY in
-  Tracelog.write
-    (LexerATNConfig_ENTER_init (state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), lexerActionExecutor_opt, (Option.map to_mimick config_opt))) ;
+  [%trace
+    (LexerATNConfig_ENTER_init (state_opt, alt_opt, (Option.map PC.to_mimick context_opt), (Option.map SC.to_mimick semantic_opt), lexerActionExecutor_opt, (Option.map to_mimick config_opt)))] ;
   let rv = _LexerATNConfig_init atn state_opt alt_opt context_opt semantic_opt config_opt lexerActionExecutor_opt in
-  Tracelog.write (LexerATNConfig_EXIT_init (to_mimick rv)) ;
+  [%trace (LexerATNConfig_EXIT_init (to_mimick rv))] ;
   rv
 
 let recache ~ac_cache c =
@@ -1541,9 +1541,9 @@ let to_mimick t =
   }
 
 let __eq__ t1 t2 =
-  Tracelog.write(ATNConfigSet_ENTER_eq(to_mimick t1, to_mimick t2)) ;
+  [%trace(ATNConfigSet_ENTER_eq(to_mimick t1, to_mimick t2))] ;
   let rv = real__eq__ t1 t2 in
-  Tracelog.write(ATNConfigSet_EXIT_eq rv) ;
+  [%trace(ATNConfigSet_EXIT_eq rv)] ;
   rv
 
 module Counter = Counter(struct let name = "ATNConfigSet" end)
@@ -1565,9 +1565,9 @@ let _init ?id fullCtx =
 
 let init ?id ?(fullCtx = true) () =
   Counter.check id ;
-  Tracelog.write (ATNConfigSet_ENTER_init (Counter.get (), fullCtx));
+  [%trace (ATNConfigSet_ENTER_init (Counter.get (), fullCtx))];
   let rv = _init ?id fullCtx in
-  Tracelog.write (ATNConfigSet_EXIT_init (to_mimick rv));
+  [%trace (ATNConfigSet_EXIT_init (to_mimick rv))];
   rv
 
 let in_configs t c =
@@ -1594,11 +1594,11 @@ let _get_or_add t c =
      c
 
 let get_or_add t c =
-  Tracelog.write
-    (ATNConfigSet_ENTER_getOrAdd(to_mimick t,AC.to_mimick c)) ;
+  [%trace
+    (ATNConfigSet_ENTER_getOrAdd(to_mimick t,AC.to_mimick c))] ;
   let rv = _get_or_add t c in
-  Tracelog.write
-    (ATNConfigSet_EXIT_getOrAdd(to_mimick t,AC.to_mimick rv)) ;
+  [%trace
+    (ATNConfigSet_EXIT_getOrAdd(to_mimick t,AC.to_mimick rv))] ;
   assert (rv.id == c.id || in_configs' t rv) ;
   rv
 
@@ -1628,11 +1628,11 @@ let _add ?mergeCache t c =
     end
 
 let add ?mergeCache t c =
-  Tracelog.write
-    (ATNConfigSet_ENTER_add (to_mimick t, AC.to_mimick c, Option.map PC.MC.to_mimick mergeCache)) ;
+  [%trace
+    (ATNConfigSet_ENTER_add (to_mimick t, AC.to_mimick c, Option.map PC.MC.to_mimick mergeCache))] ;
   let rv = _add ?mergeCache t c in
-  Tracelog.write
-    (ATNConfigSet_EXIT_add (to_mimick t, rv)) ;
+  [%trace
+    (ATNConfigSet_EXIT_add (to_mimick t, rv))] ;
   rv
 
 let recache ~acs_cache ~ac_cache cs =
@@ -1640,22 +1640,22 @@ let recache ~acs_cache ~ac_cache cs =
   Cache.upsert acs_cache cs
 
 let update_HSC cs v =
-  Tracelog.write (ATNConfigSet_ENTER_update_HSC (to_mimick cs, v)) ;
+  [%trace (ATNConfigSet_ENTER_update_HSC (to_mimick cs, v))] ;
   cs.hasSemanticContext <- v ;
-  Tracelog.write (ATNConfigSet_EXIT_update_HSC (to_mimick cs))
+  [%trace (ATNConfigSet_EXIT_update_HSC (to_mimick cs))]
 
 let setReadonly cs v =
-  Tracelog.write (ATNConfigSet_ENTER_setReadonly (to_mimick cs, v)) ;
+  [%trace (ATNConfigSet_ENTER_setReadonly (to_mimick cs, v))] ;
   assert (v) ;
   cs.readonly <- v ;
   cs.configHT <- None ;
-  Tracelog.write (ATNConfigSet_EXIT_setReadonly (to_mimick cs)) ;
+  [%trace (ATNConfigSet_EXIT_setReadonly (to_mimick cs))] ;
   ()
 
 let set_UA cs v =
-  Tracelog.write (ATNConfigSet_ENTER_set_UA (to_mimick cs, v)) ;
+  [%trace (ATNConfigSet_ENTER_set_UA (to_mimick cs, v))] ;
   cs.uniqueAlt <- v ;
-  Tracelog.write (ATNConfigSet_EXIT_set_UA (to_mimick cs)) ;
+  [%trace (ATNConfigSet_EXIT_set_UA (to_mimick cs))] ;
   ()
 
 let __len__ cs = List.length !(cs.configs)
@@ -1770,84 +1770,84 @@ let _init ?predicted_id stateNumber configs =
 
 let init ?predicted_id ?(stateNumber = -1) ?(configs = ACS.init()) () =
   Counter.check predicted_id ;
-  Tracelog.write
-    (DFAState_ENTER_init (Counter.get(), stateNumber, ACS.to_mimick configs)) ;
+  [%trace
+    (DFAState_ENTER_init (Counter.get(), stateNumber, ACS.to_mimick configs))] ;
   let rv = _init ?predicted_id stateNumber configs in
-  Tracelog.write(DFAState_EXIT_init (to_mimick rv)) ;
+  [%trace(DFAState_EXIT_init (to_mimick rv))] ;
   rv
 
 let _set_stateNumber st n =
   st.stateNumber <- n
 
 let set_stateNumber st n =
-  Tracelog.write(DFAState_ENTER_set_stateNumber (to_mimick st, n)) ;
+  [%trace(DFAState_ENTER_set_stateNumber (to_mimick st, n))] ;
   _set_stateNumber st n ;
-  Tracelog.write(DFAState_EXIT_set_stateNumber (to_mimick st))
+  [%trace(DFAState_EXIT_set_stateNumber (to_mimick st))]
 
 let _set_configs st n =
   st.configset <- n
 
 let set_configs st n =
-  Tracelog.write(DFAState_ENTER_set_configs (to_mimick st, ACS.to_mimick n)) ;
+  [%trace(DFAState_ENTER_set_configs (to_mimick st, ACS.to_mimick n))] ;
   _set_configs st n ;
-  Tracelog.write(DFAState_EXIT_set_configs (to_mimick st))
+  [%trace(DFAState_EXIT_set_configs (to_mimick st))]
 
 let _set_isAcceptState st n =
   st.isAcceptState <- n
 
 let set_isAcceptState st n =
-  Tracelog.write(DFAState_ENTER_set_isAcceptState (to_mimick st, n)) ;
+  [%trace(DFAState_ENTER_set_isAcceptState (to_mimick st, n))] ;
   _set_isAcceptState st n ;
-  Tracelog.write(DFAState_EXIT_set_isAcceptState (to_mimick st))
+  [%trace(DFAState_EXIT_set_isAcceptState (to_mimick st))]
 
 let _set_requiresFullContext st n =
   st.requiresFullContext <- n
 
 let set_requiresFullContext st n =
-  Tracelog.write(DFAState_ENTER_set_requiresFullContext (to_mimick st, n)) ;
+  [%trace(DFAState_ENTER_set_requiresFullContext (to_mimick st, n))] ;
   _set_requiresFullContext st n ;
-  Tracelog.write(DFAState_EXIT_set_requiresFullContext (to_mimick st))
+  [%trace(DFAState_EXIT_set_requiresFullContext (to_mimick st))]
 
 let _set_prediction st n =
   st.prediction <- n
 
 let set_prediction st n =
-  Tracelog.write(DFAState_ENTER_set_prediction (to_mimick st, n)) ;
+  [%trace(DFAState_ENTER_set_prediction (to_mimick st, n))] ;
   _set_prediction st n ;
-  Tracelog.write(DFAState_EXIT_set_prediction (to_mimick st))
+  [%trace(DFAState_EXIT_set_prediction (to_mimick st))]
 
 let _set_predicates st n =
   st.predicates <- n
 
 let set_predicates st n =
-  Tracelog.write(DFAState_ENTER_set_predicates (to_mimick st, Option.map (List.map PP.to_mimick) n)) ;
+  [%trace(DFAState_ENTER_set_predicates (to_mimick st, Option.map (List.map PP.to_mimick) n))] ;
   _set_predicates st n ;
-  Tracelog.write(DFAState_EXIT_set_predicates (to_mimick st))
+  [%trace(DFAState_EXIT_set_predicates (to_mimick st))]
 
 let _set_lexerActionExecutor st n =
   st.lexerActionExecutor <- n
 
 let set_lexerActionExecutor st n =
-  Tracelog.write(DFAState_ENTER_set_lexerActionExecutor (to_mimick st, n)) ;
+  [%trace(DFAState_ENTER_set_lexerActionExecutor (to_mimick st, n))] ;
   _set_lexerActionExecutor st n ;
-  Tracelog.write(DFAState_EXIT_set_lexerActionExecutor (to_mimick st))
+  [%trace(DFAState_EXIT_set_lexerActionExecutor (to_mimick st))]
 
 let _makeEdges st n =
   st.edges <- n
 
 let makeEdges st n =
-  Tracelog.write(DFAState_ENTER_makeEdges (to_mimick st, n)) ;
+  [%trace(DFAState_ENTER_makeEdges (to_mimick st, n))] ;
   let n = Array.map (function None -> Int.min_int | Some n -> n) n in
   _makeEdges st n ;
-  Tracelog.write(DFAState_EXIT_makeEdges (to_mimick st))
+  [%trace(DFAState_EXIT_makeEdges (to_mimick st))]
 
 let _setEdge st n v =
   st.edges.(n) <- v.stateNumber
 
 let setEdge st n v =
-  Tracelog.write(DFAState_ENTER_setEdge (to_mimick st, n, to_mimick v)) ;
+  [%trace(DFAState_ENTER_setEdge (to_mimick st, n, to_mimick v))] ;
   _setEdge st n v ;
-  Tracelog.write(DFAState_EXIT_setEdge (to_mimick st))
+  [%trace(DFAState_EXIT_setEdge (to_mimick st))]
 
 let recache ~dfast_cache ~acs_cache ~ac_cache st =
   ACS.recache ~acs_cache ~ac_cache st.configset ;
@@ -2001,11 +2001,11 @@ let _init ?predicted_id atn grammarType atnStartState decision =
 
 let init ?predicted_id atn grammarType atnStartState decision =
   Counter.check predicted_id ;
-  Tracelog.write
-    (DFA_ENTER_init (Counter.get(), grammarType, atnStartState, decision)) ;
+  [%trace
+    (DFA_ENTER_init (Counter.get(), grammarType, atnStartState, decision))] ;
   let rv = _init  ?predicted_id atn grammarType atnStartState decision in
-  Tracelog.write
-    (DFA_EXIT_init (rv.id, to_mimick rv)) ;
+  [%trace
+    (DFA_EXIT_init (rv.id, to_mimick rv))] ;
   rv
 
 let _states_get dfa st =
@@ -2013,17 +2013,17 @@ Tracelog.with_disabled
   (fun () -> ACSMap.find_opt dfa._states st.DFASt.configset) ()
 
 let states_get dfa st =
-  Tracelog.write(DFA_ENTER_states_get(to_mimick dfa, DFASt.to_mimick st)) ;
+  [%trace(DFA_ENTER_states_get(to_mimick dfa, DFASt.to_mimick st))] ;
   let rv = _states_get dfa st in
-  Tracelog.write(DFA_EXIT_states_get(dfa.id, Option.map DFASt.to_mimick rv)) ;
+  [%trace(DFA_EXIT_states_get(dfa.id, Option.map DFASt.to_mimick rv))] ;
   rv
 
 let _states_len dfa = ACSMap.length dfa._states
 
 let states_len dfa =
-  Tracelog.write(DFA_ENTER_states_len(to_mimick dfa)) ;
+  [%trace(DFA_ENTER_states_len(to_mimick dfa))] ;
   let rv = _states_len dfa in
-  Tracelog.write(DFA_EXIT_states_len(rv)) ;
+  [%trace(DFA_EXIT_states_len(rv))] ;
   rv
 
 let _states_add dfa st =
@@ -2031,18 +2031,18 @@ let _states_add dfa st =
   MHM.add dfa.num2state (st.stateNumber, st)
 
 let states_add dfa st =
-  Tracelog.write(DFA_ENTER_states_add(to_mimick dfa, DFASt.to_mimick st)) ;
+  [%trace(DFA_ENTER_states_add(to_mimick dfa, DFASt.to_mimick st))] ;
   let rv = _states_add dfa st in
-  Tracelog.write(DFA_EXIT_states_add(dfa.id, to_mimick dfa)) ;
+  [%trace(DFA_EXIT_states_add(dfa.id, to_mimick dfa))] ;
   rv
 
 let _set_s0 dfa st =
   dfa.s0 <- Some st
 
 let set_s0 dfa st =
-  Tracelog.write(DFA_ENTER_set_s0(to_mimick dfa, DFASt.to_mimick st)) ;
+  [%trace(DFA_ENTER_set_s0(to_mimick dfa, DFASt.to_mimick st))] ;
   _set_s0 dfa st ;
-  Tracelog.write(DFA_EXIT_set_s0(dfa.id, to_mimick dfa)) ;
+  [%trace(DFA_EXIT_set_s0(dfa.id, to_mimick dfa))] ;
   ()
 
 let _setPrecedenceStartState dfa precedence st =
@@ -2067,9 +2067,9 @@ let _setPrecedenceStartState dfa precedence st =
 
 
 let setPrecedenceStartState dfa precedence st =
-  Tracelog.write(DFA_ENTER_setPrecedenceStartState(to_mimick dfa, precedence, DFASt.to_mimick st)) ;
+  [%trace(DFA_ENTER_setPrecedenceStartState(to_mimick dfa, precedence, DFASt.to_mimick st))] ;
   _setPrecedenceStartState dfa precedence st ;
-  Tracelog.write(DFA_EXIT_setPrecedenceStartState(to_mimick dfa)) ;
+  [%trace(DFA_EXIT_setPrecedenceStartState(to_mimick dfa))] ;
   ()
 
 let recache ~dfa_cache ~dfast_cache ~acs_cache ~ac_cache dfa =
@@ -2284,11 +2284,11 @@ let to_mimick t =
 
 let init ?predicted_id atn decisionToDFA sharedContextCache ~recog () =
   AS.Counter.check predicted_id ;
-  Tracelog.write
-    (LexerATNSimulator_ENTER_init (AS.Counter.get(), Array.map DFA.to_mimick decisionToDFA, List.map PC.to_mimick sharedContextCache)) ;
+  [%trace
+    (LexerATNSimulator_ENTER_init (AS.Counter.get(), Array.map DFA.to_mimick decisionToDFA, List.map PC.to_mimick sharedContextCache))] ;
   let rv = _init ?predicted_id atn decisionToDFA sharedContextCache ~recog () in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_init (to_mimick rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_init (to_mimick rv))] ;
   rv
 
 let _accept self input lexerActionExecutor_opt startIndex index line charPos =
@@ -2301,13 +2301,13 @@ let _accept self input lexerActionExecutor_opt startIndex index line charPos =
   | _ -> ()
 
 let accept self input lexerActionExecutor_opt startIndex index line charPos =
-  Tracelog.write
+  [%trace
     (LexerATNSimulator_ENTER_accept (to_mimick self, IS.to_mimick input,
                                      Option.map LAE.to_mimick lexerActionExecutor_opt,
-                                     startIndex, index, line, charPos)) ;
+                                     startIndex, index, line, charPos))] ;
   let rv = _accept self input lexerActionExecutor_opt startIndex index line charPos in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_accept (to_mimick self, IS.to_mimick input)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_accept (to_mimick self, IS.to_mimick input))] ;
   rv
 
 exception LexerNoViableAltException of R.t * IS.t * int * ACS.t
@@ -2328,12 +2328,12 @@ let _failOrAccept self prevAccept input reach t =
  *)     
 
 let failOrAccept self prevAccept input reach t = 
-  Tracelog.write
+  [%trace
     (LexerATNSimulator_ENTER_failOrAccept (to_mimick self, SS.to_mimick prevAccept,
-                                           IS.to_mimick input, ACS.to_mimick reach, t)) ;
+                                           IS.to_mimick input, ACS.to_mimick reach, t))] ;
   let rv = _failOrAccept self prevAccept input reach t in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_failOrAccept (to_mimick self, rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_failOrAccept (to_mimick self, rv))] ;
   rv
 
 let _captureSimState self settings input dfaState =
@@ -2343,12 +2343,12 @@ let _captureSimState self settings input dfaState =
   ; settings.SS.dfaState <- Some dfaState
 
 let captureSimState self settings input dfast =
-  Tracelog.write
+  [%trace
     (LexerATNSimulator_ENTER_captureSimState (to_mimick self, SS.to_mimick settings,
-                                           IS.to_mimick input, DFASt.to_mimick dfast)) ;
+                                           IS.to_mimick input, DFASt.to_mimick dfast))] ;
   let rv = _captureSimState self settings input dfast in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_captureSimState (to_mimick self, SS.to_mimick settings)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_captureSimState (to_mimick self, SS.to_mimick settings))] ;
   rv
 
 let getExistingTargetState self dfa s t =
@@ -2357,9 +2357,9 @@ let getExistingTargetState self dfa s t =
   else
     let target = s.DFASt.edges.(t - C._MIN_DFA_EDGE) in
 (*
-    Tracelog.write(Msg (Fmt.(str "getExistingTargetState: t = %d" t), (Ploc.dummy, `Null))) ;
-    Tracelog.write(Msg ("getExistingTargetState: s", s |> DFASt.to_mimick |> M.dfa_state_t_to_located_yojson)) ;
-    Tracelog.write(Msg (Fmt.(str "target.stateNumber = %d" target), (Ploc.dummy, `Null))) ;
+    [%trace(Msg (Fmt.(str "getExistingTargetState: t = %d" t), (Ploc.dummy, `Null)))] ;
+    [%trace(Msg ("getExistingTargetState: s", s |> DFASt.to_mimick |> M.dfa_state_t_to_located_yojson))] ;
+    [%trace(Msg (Fmt.(str "target.stateNumber = %d" target), (Ploc.dummy, `Null)))] ;
  *)
     if target = Int.min_int then None
     else 
@@ -2404,11 +2404,11 @@ let _addDFAState self dfa cs =
   with (EarlyExit st) -> st
 
 let addDFAState self dfa cs =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_addDFAState (to_mimick self, ACS.to_mimick cs)) ;
+  [%trace
+    (LexerATNSimulator_ENTER_addDFAState (to_mimick self, ACS.to_mimick cs))] ;
   let rv = _addDFAState self dfa cs in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_addDFAState (to_mimick self, DFASt.to_mimick rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_addDFAState (to_mimick self, DFASt.to_mimick rv))] ;
   rv
 
 let _addDFAEdge self dfa from_ tk to_ cs =
@@ -2438,14 +2438,14 @@ let _addDFAEdge self dfa from_ tk to_ cs =
         st
 
 let addDFAEdge self dfa from_ tk to_ cs =
-  Tracelog.write
+  [%trace
     (LexerATNSimulator_ENTER_addDFAEdge (to_mimick self, DFASt.to_mimick from_,
                                          tk,
                                          Option.map DFASt.to_mimick to_,
-                                         Option.map ACS.to_mimick cs)) ;
+                                         Option.map ACS.to_mimick cs))] ;
   let rv = _addDFAEdge self dfa from_ tk to_ cs in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_addDFAEdge (to_mimick self, DFASt.to_mimick rv))] ;
   rv
 
 let consume self input =
@@ -2479,13 +2479,13 @@ let _evaluatePredicate self input ruleIndex predIndex speculative : bool =
       )
 
 let evaluatePredicate self input ruleIndex predIndex speculative =
-  Tracelog.write
+  [%trace
     (LexerATNSimulator_ENTER_evaluatePredicate (to_mimick self, IS.to_mimick input,
                                             ruleIndex, predIndex, speculative
-    )) ;
+    ))] ;
   let rv = _evaluatePredicate self input ruleIndex predIndex speculative in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_evaluatePredicate (to_mimick self, rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_evaluatePredicate (to_mimick self, rv))] ;
   rv
 
 let _getEpsilonTarget self input config e configs
@@ -2528,14 +2528,14 @@ let _getEpsilonTarget self input config e configs
 
 let getEpsilonTarget self input config e configs
       ~speculative ~treatEofAsEpsilon =
-  Tracelog.write
+  [%trace
     (LexerATNSimulator_ENTER_getEpsilonTarget (to_mimick self, IS.to_mimick input, AC.to_mimick config,
                                             e, ACS.to_mimick configs, speculative, treatEofAsEpsilon
-    )) ;
+    ))] ;
   let rv = _getEpsilonTarget self input config e configs
              ~speculative ~treatEofAsEpsilon in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_getEpsilonTarget (to_mimick self, Option.map AC.to_mimick rv, ACS.to_mimick configs)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_getEpsilonTarget (to_mimick self, Option.map AC.to_mimick rv, ACS.to_mimick configs))] ;
   rv
 
 
@@ -2544,7 +2544,7 @@ let rec _closure self input (config : AC.t) configs ~currentAltReachedAcceptStat
   let exception EarlyReturn of bool in
   let currentAltReachedAcceptState = ref currentAltReachedAcceptState in
   let config_state = Atn.State.get_state config.atn.Atn.states config.AC.state in
-  Tracelog.write (Msg ("config.state", Atn.State.to_located_yojson config_state)) ;
+  [%trace (Msg ("config.state", Atn.State.to_located_yojson config_state))] ;
   let config_lexer_ext = match config.AC.lexer_ext with
       None -> failwith "LAC.closure: an ATNConfig where we were expecting LexerATNConfig"
     | Some ext -> ext in
@@ -2606,15 +2606,15 @@ let rec _closure self input (config : AC.t) configs ~currentAltReachedAcceptStat
 
 and closure self is config configs ~currentAltReachedAcceptState
       ~speculative ~treatEofAsEpsilon =
-  Tracelog.write
+  [%trace
     (LexerATNSimulator_ENTER_closure (to_mimick self, IS.to_mimick is,
                                       AC.to_mimick config, ACS.to_mimick configs,
                                       currentAltReachedAcceptState, speculative, treatEofAsEpsilon
-    )) ;
+    ))] ;
   let rv = _closure self is config configs ~currentAltReachedAcceptState
       ~speculative ~treatEofAsEpsilon in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_closure (to_mimick self, rv, ACS.to_mimick configs)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_closure (to_mimick self, rv, ACS.to_mimick configs))] ;
   rv
 
 let getReachableTarget self trans t =
@@ -2626,8 +2626,8 @@ let _getReachableConfigSet self input closure_ reach t =
   let skipAlt = ref Atn._INVALID_ALT_NUMBER in
   !(closure_.ACS.configs)
   |> List.iter (fun cfg ->
-     Tracelog.write
-       (LexerATNSimulator_EVENT2_getReachableConfigSet (AC.to_mimick cfg, !skipAlt, cfg.alt)) ;
+     [%trace
+       (LexerATNSimulator_EVENT2_getReachableConfigSet (AC.to_mimick cfg, !skipAlt, cfg.alt))] ;
      let cfg_lexer_ext =
        match cfg.AC.lexer_ext with
          None -> failwith "LAS.getReachableConfigSet: must be LexerATNConfig, but was ATNConfig"
@@ -2637,8 +2637,8 @@ let _getReachableConfigSet self input closure_ reach t =
            ()
          else
            let st = Atn.State.get_state cfg.AC.atn.states cfg.state in
-           Tracelog.write
-             (LexerATNSimulator_EVENT1_getReachableConfigSet (to_mimick self, cfg.state, st.transitions)) ;
+           [%trace
+             (LexerATNSimulator_EVENT1_getReachableConfigSet (to_mimick self, cfg.state, st.transitions))] ;
            st.transitions
            |> List.iter (fun trans ->
            match getReachableTarget self trans t with
@@ -2657,11 +2657,11 @@ let _getReachableConfigSet self input closure_ reach t =
        )
 
 let getReachableConfigSet self input closure_ reach t =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_getReachableConfigSet (to_mimick self, IS.to_mimick input, ACS.to_mimick closure_, ACS.to_mimick reach, t)) ;
+  [%trace
+    (LexerATNSimulator_ENTER_getReachableConfigSet (to_mimick self, IS.to_mimick input, ACS.to_mimick closure_, ACS.to_mimick reach, t))] ;
   let rv = _getReachableConfigSet self input closure_ reach t in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_getReachableConfigSet (to_mimick self, ACS.to_mimick reach)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_getReachableConfigSet (to_mimick self, ACS.to_mimick reach))] ;
   rv
 
 let _computeTargetState self dfa input s t =
@@ -2676,11 +2676,11 @@ let _computeTargetState self dfa input s t =
     addDFAEdge self dfa s t None (Some reach)
 
 let computeTargetState self dfa input s t =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_computeTargetState (to_mimick self, IS.to_mimick input, DFASt.to_mimick s, t)) ;
+  [%trace
+    (LexerATNSimulator_ENTER_computeTargetState (to_mimick self, IS.to_mimick input, DFASt.to_mimick s, t))] ;
   let rv = _computeTargetState self dfa input s t in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_computeTargetState (to_mimick self, DFASt.to_mimick rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_computeTargetState (to_mimick self, DFASt.to_mimick rv))] ;
   rv
 
 let _execATN self dfa input ds0 =
@@ -2714,11 +2714,11 @@ let _execATN self dfa input ds0 =
   failOrAccept self self.prevAccept input !(s).configset !t
 
 let execATN self dfa input dfast =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_execATN (to_mimick self, IS.to_mimick input, DFASt.to_mimick dfast)) ;
+  [%trace
+    (LexerATNSimulator_ENTER_execATN (to_mimick self, IS.to_mimick input, DFASt.to_mimick dfast))] ;
   let rv = _execATN self dfa input dfast in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_execATN (to_mimick self, rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_execATN (to_mimick self, rv))] ;
   rv
 
 let _computeStartState self is p =
@@ -2733,11 +2733,11 @@ let _computeStartState self is p =
   configs
 
 let computeStartState self is p =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_computeStartState (to_mimick self, IS.to_mimick is, p)) ;
+  [%trace
+    (LexerATNSimulator_ENTER_computeStartState (to_mimick self, IS.to_mimick is, p))] ;
   let rv = _computeStartState self is p in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_computeStartState (ACS.to_mimick rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_computeStartState (ACS.to_mimick rv))] ;
   rv
 
 let _matchATN self dfa is =
@@ -2757,11 +2757,11 @@ let _matchATN self dfa is =
 
 
 let matchATN self dfa is =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_matchATN (to_mimick self, IS.to_mimick is)) ;
+  [%trace
+    (LexerATNSimulator_ENTER_matchATN (to_mimick self, IS.to_mimick is))] ;
   let rv = _matchATN self dfa is in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_matchATN (to_mimick self, rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_matchATN (to_mimick self, rv))] ;
   rv
 
 let __match self is mode =
@@ -2780,11 +2780,11 @@ let __match self is mode =
 
 
 let _match self is mode =
-  Tracelog.write
-    (LexerATNSimulator_ENTER_match (to_mimick self, IS.to_mimick is, mode)) ;
+  [%trace
+    (LexerATNSimulator_ENTER_match (to_mimick self, IS.to_mimick is, mode))] ;
   let rv = __match self is mode in
-  Tracelog.write
-    (LexerATNSimulator_EXIT_match (to_mimick self, rv)) ;
+  [%trace
+    (LexerATNSimulator_EXIT_match (to_mimick self, rv))] ;
   rv
 
 let module_init ~dfast_cache ~acs_cache ~ac_cache () = begin
@@ -2833,9 +2833,9 @@ let _init ~interp ~recog () =
   self
 
 let init ~interp ~recog () =
-  Tracelog.write (Lexer_ENTER_init (IS.to_mimick recog.R._input)) ;
+  [%trace (Lexer_ENTER_init (IS.to_mimick recog.R._input))] ;
   let rv = _init ~interp ~recog () in
-  Tracelog.write (Lexer_EXIT_init (to_mimick rv)) ;
+  [%trace (Lexer_EXIT_init (to_mimick rv))] ;
   rv
 
 let getErrorDisplay self text = Util.escape_string text
@@ -2882,9 +2882,9 @@ let _emit self =
   t
 
 let emit self =
-  Tracelog.write (Lexer_ENTER_emit (to_mimick self)) ;
+  [%trace (Lexer_ENTER_emit (to_mimick self))] ;
   let rv = _emit self in
-  Tracelog.write (Lexer_EXIT_emit (to_mimick self, Token.to_mimick rv)) ;
+  [%trace (Lexer_EXIT_emit (to_mimick self, Token.to_mimick rv))] ;
   rv
 
 let _emitEOF self =
@@ -2902,9 +2902,9 @@ let _emitEOF self =
   eof
 
 let emitEOF self =
-  Tracelog.write (Lexer_ENTER_emitEOF (to_mimick self)) ;
+  [%trace (Lexer_ENTER_emitEOF (to_mimick self))] ;
   let rv = _emitEOF self in
-  Tracelog.write (Lexer_EXIT_emitEOF (to_mimick self, Token.to_mimick rv)) ;
+  [%trace (Lexer_EXIT_emitEOF (to_mimick self, Token.to_mimick rv))] ;
   rv
 
 let _nextToken self : T.t =
@@ -2937,7 +2937,7 @@ let _nextToken self : T.t =
                   notifyListeners self e ;
                   recover self e
               end ;
-              Tracelog.write(Lexer_EVENT1_nextToken (to_mimick self, LAS.to_mimick self._interp)) ;
+              [%trace(Lexer_EVENT1_nextToken (to_mimick self, LAS.to_mimick self._interp))] ;
               if IS.la self.recog.R._input 1 = C._EOF then
                 self._hitEOF <- true ;
               if self.recog.R._type = C._INVALID_TYPE then
@@ -2964,9 +2964,9 @@ let _nextToken self : T.t =
   with (EarlyExit topt) -> topt
 
 let nextToken self : T.t =
-  Tracelog.write (Lexer_ENTER_nextToken (to_mimick self)) ;
+  [%trace (Lexer_ENTER_nextToken (to_mimick self))] ;
   let rv = _nextToken self in
-  Tracelog.write (Lexer_EXIT_nextToken (to_mimick self, Token.to_mimick rv)) ;
+  [%trace (Lexer_EXIT_nextToken (to_mimick self, Token.to_mimick rv))] ;
   rv
 
 

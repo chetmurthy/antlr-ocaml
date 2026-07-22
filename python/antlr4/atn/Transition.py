@@ -86,12 +86,12 @@ class Transition (object):
             print("    label: %s" % self.label)
 
     def matches( self, symbol:int, minVocabSymbol:int,  maxVocabSymbol:int):
-        Trace.writej([ 'ENTER Transition.matches',
+        Trace.writej(lambda:[ 'ENTER Transition.matches',
                        self.asdict(),
                        symbol, minVocabSymbol,  maxVocabSymbol,
                       ])
         rv = self._matches(symbol, minVocabSymbol,  maxVocabSymbol)
-        Trace.writej([ 'EXIT Transition.matches',
+        Trace.writej(lambda:[ 'EXIT Transition.matches',
                        rv,
                       ])
         return rv

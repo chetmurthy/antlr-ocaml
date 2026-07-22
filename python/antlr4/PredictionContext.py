@@ -295,26 +295,26 @@ def mergeCache_asdict(mergeCache):
     return ["MergeCache", l]
 
 def mergeCache_add(mergeCache, a,b,merged):
-    Trace.writej([ 'ENTER mergeCache_add',
+    Trace.writej(lambda:lambda:[ 'ENTER mergeCache_add',
                              mergeCache_asdict(mergeCache),
                              a.asdict(),
                              b.asdict(),
                              merged.asdict(),
                             ])
     mergeCache[(a,b)] = merged
-    Trace.writej([ 'EXIT mergeCache_add',
+    Trace.writej(lambda:lambda:[ 'EXIT mergeCache_add',
                              mergeCache_asdict(mergeCache),
                             ])
 
 def merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCache:dict):
-    Trace.writej([ 'ENTER PredictionContext.merge',
+    Trace.writej(lambda:lambda:[ 'ENTER PredictionContext.merge',
                              a.asdict(),
                              b.asdict(),
                              rootIsWildcard,
                              (None if mergeCache is None else mergeCache_asdict(mergeCache))
                             ])
     rv = _merge(a, b, rootIsWildcard, mergeCache)
-    Trace.writej([ 'EXIT PredictionContext.merge',
+    Trace.writej(lambda:lambda:[ 'EXIT PredictionContext.merge',
                              rv.asdict()
                             ])
     return rv
@@ -437,14 +437,14 @@ def _mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext,
         return merged
 
 def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool, mergeCache:dict):
-    Trace.writej([ 'ENTER PredictionContext.mergeSingletons',
+    Trace.writej(lambda:lambda:[ 'ENTER PredictionContext.mergeSingletons',
                              a.asdict(),
                              b.asdict(),
                              rootIsWildcard,
                              (None if mergeCache is None else mergeCache_asdict(mergeCache))
                             ])
     rv = _mergeSingletons(a, b, rootIsWildcard, mergeCache)
-    Trace.writej([ 'EXIT PredictionContext.mergeSingletons',
+    Trace.writej(lambda:lambda:[ 'EXIT PredictionContext.mergeSingletons',
                              rv.asdict(),
                              (None if mergeCache is None else mergeCache_asdict(mergeCache))
                             ])
@@ -509,13 +509,13 @@ def _mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootI
 
 
 def mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool):
-    Trace.writej([ 'ENTER PredictionContext.mergeRoot',
+    Trace.writej(lambda:lambda:[ 'ENTER PredictionContext.mergeRoot',
                              a.asdict(),
                              b.asdict(),
                              rootIsWildcard
                             ])
     rv = _mergeRoot(a, b, rootIsWildcard)
-    Trace.writej([ 'EXIT PredictionContext.mergeRoot',
+    Trace.writej(lambda:lambda:[ 'EXIT PredictionContext.mergeRoot',
                              (None if rv is None else rv.asdict())
                             ])
     return rv
@@ -637,14 +637,14 @@ def _mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildc
     return merged
 
 def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildcard:bool, mergeCache:dict):
-    Trace.writej([ 'ENTER PredictionContext.mergeArrays',
+    Trace.writej(lambda:lambda:[ 'ENTER PredictionContext.mergeArrays',
                              a.asdict(),
                              b.asdict(),
                              rootIsWildcard,
                              (None if mergeCache is None else mergeCache_asdict(mergeCache))
                             ])
     rv = _mergeArrays(a, b, rootIsWildcard, mergeCache)
-    Trace.writej([ 'EXIT PredictionContext.mergeArrays',
+    Trace.writej(lambda:lambda:[ 'EXIT PredictionContext.mergeArrays',
                              rv.asdict()
                             ])
     return rv

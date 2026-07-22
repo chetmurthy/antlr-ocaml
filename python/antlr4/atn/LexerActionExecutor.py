@@ -123,13 +123,13 @@ class LexerActionExecutor(object):
     # of the token.
     #/
     def execute(self, lexer:Lexer, input:InputStream, startIndex:int):
-        Trace.writej([ 'ENTER LexerActionExecutor.execute',
+        Trace.writej(lambda:[ 'ENTER LexerActionExecutor.execute',
                        self.asdict(),
                        input.asdict(),
                        startIndex,
                       ])
         rv = self._execute(lexer, input, startIndex)
-        Trace.writej([ 'EXIT LexerActionExecutor.execute',
+        Trace.writej(lambda:[ 'EXIT LexerActionExecutor.execute',
                        self.asdict(),
                        input.asdict(),
                       ])

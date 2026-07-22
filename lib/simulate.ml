@@ -1,5 +1,4 @@
-
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.utils,pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.import,pa_ppx_tracelog *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -168,30 +167,30 @@ let sim1 caches atns (i:int) (loc,j) =
 
       | ATNConfig_ENTER_incrementRIOC c ->
          let c = AC.of_mimick ~ac_cache:(Some caches.ac) atns c in
-         Tracelog.write (ATNConfig_ENTER_incrementRIOC (AC.to_mimick c)) ;
+         [%trace (ATNConfig_ENTER_incrementRIOC (AC.to_mimick c))] ;
          c.AC.reachesIntoOuterContext <- c.AC.reachesIntoOuterContext + 1 ;
-         Tracelog.write (ATNConfig_EXIT_incrementRIOC (AC.to_mimick c)) ;
+         [%trace (ATNConfig_EXIT_incrementRIOC (AC.to_mimick c))] ;
          ()
 
       | ATNConfig_ENTER_update_RIOC (c, v) ->
          let c = AC.of_mimick ~ac_cache:(Some caches.ac) atns c in
-         Tracelog.write (ATNConfig_ENTER_update_RIOC (AC.to_mimick c, v)) ;
+         [%trace (ATNConfig_ENTER_update_RIOC (AC.to_mimick c, v))] ;
          c.AC.reachesIntoOuterContext <- v ;
-         Tracelog.write (ATNConfig_EXIT_update_RIOC (AC.to_mimick c)) ;
+         [%trace (ATNConfig_EXIT_update_RIOC (AC.to_mimick c))] ;
          ()
 
       | ATNConfig_ENTER_set_PFS (c) ->
          let c = AC.of_mimick ~ac_cache:(Some caches.ac) atns c in
-         Tracelog.write (ATNConfig_ENTER_set_PFS (AC.to_mimick c)) ;
+         [%trace (ATNConfig_ENTER_set_PFS (AC.to_mimick c))] ;
          c.AC.precedenceFilterSuppressed <- true ;
-         Tracelog.write (ATNConfig_EXIT_set_PFS (AC.to_mimick c)) ;
+         [%trace (ATNConfig_EXIT_set_PFS (AC.to_mimick c))] ;
          ()
 
       | ATNConfigSet_ENTER_set_DIOC cs ->
          let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
-         Tracelog.write (ATNConfigSet_ENTER_set_DIOC (ACS.to_mimick cs)) ;
+         [%trace (ATNConfigSet_ENTER_set_DIOC (ACS.to_mimick cs))] ;
          cs.ACS.dipsIntoOuterContext <- true ;
-         Tracelog.write (ATNConfigSet_EXIT_set_DIOC (ACS.to_mimick cs)) ;
+         [%trace (ATNConfigSet_EXIT_set_DIOC (ACS.to_mimick cs))] ;
          ()
 
       | ATNConfigSet_ENTER_update_HSC (cs, v) ->
@@ -211,9 +210,9 @@ let sim1 caches atns (i:int) (loc,j) =
 
       | ATNConfigSet_ENTER_set_CA (cs, v) ->
          let cs = ACS.of_mimick ~acs_cache:(Some caches.acs) ~ac_cache:(Some caches.ac) atns cs in
-         Tracelog.write (ATNConfigSet_ENTER_set_CA (ACS.to_mimick cs, v)) ;
+         [%trace (ATNConfigSet_ENTER_set_CA (ACS.to_mimick cs, v))] ;
          cs.ACS.conflictingAlts <- v ;
-         Tracelog.write (ATNConfigSet_EXIT_set_CA (ACS.to_mimick cs)) ;
+         [%trace (ATNConfigSet_EXIT_set_CA (ACS.to_mimick cs))] ;
          ()
 
       | DFA_ENTER_init (predicted_id, grammarType, atnStartState, decision) ->

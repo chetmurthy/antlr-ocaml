@@ -23,7 +23,7 @@ class DFA(object):
 
     def __init__(self, grammarType:ATNType, atnStartState:DecisionState, decision:int=0):
         global dfaCounter
-        Trace.writej([ 'ENTER DFA.__init__', 
+        Trace.writej(lambda:[ 'ENTER DFA.__init__', 
                                  dfaCounter,
                                  [ grammarType.asdict() ],
                                  atnStartState.stateNumber,
@@ -52,7 +52,7 @@ class DFA(object):
                 precedenceState.isAcceptState = False
                 precedenceState.requiresFullContext = False
                 self.s0 = precedenceState
-        Trace.writej([ 'EXIT DFA.__init__', self.id, self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT DFA.__init__', self.id, self.asdict() ])
 
     def asdict(self):
         states = {}
@@ -112,12 +112,12 @@ class DFA(object):
         self.s0.edges[precedence] = startState
 
     def setPrecedenceStartState(self, precedence:int, startState:DFAState):
-        Trace.writej([ 'ENTER DFA.setPrecedenceStartState', self.asdict(),
+        Trace.writej(lambda:[ 'ENTER DFA.setPrecedenceStartState', self.asdict(),
                        precedence,
                        startState.asdict(),
                       ])
         rv = self._setPrecedenceStartState(precedence, startState)
-        Trace.writej([ 'EXIT DFA.setPrecedenceStartState', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT DFA.setPrecedenceStartState', self.asdict() ])
         return rv
 
     #
@@ -156,30 +156,30 @@ class DFA(object):
 
     def states_get(self, x, y):
         assert(y is None)
-        Trace.writej([ 'ENTER DFA.states_get', self.asdict(), x.asdict() ])
+        Trace.writej(lambda:[ 'ENTER DFA.states_get', self.asdict(), x.asdict() ])
         orig = Trace.disable()
         rv = self._states.get(x.configs,y)
         Trace.restore(orig)
-        Trace.writej([ 'EXIT DFA.states_get', self.id,
+        Trace.writej(lambda:[ 'EXIT DFA.states_get', self.id,
                        (None if rv is None else rv.asdict()) ])
         return rv
 
     def set_s0(self, x):
-        Trace.writej([ 'ENTER DFA.set_s0', self.asdict(), x.asdict() ])
+        Trace.writej(lambda:[ 'ENTER DFA.set_s0', self.asdict(), x.asdict() ])
         self.s0 = x
-        Trace.writej([ 'EXIT DFA.set_s0', self.id, self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT DFA.set_s0', self.id, self.asdict() ])
 
     def states_add(self, x):
-        Trace.writej([ 'ENTER DFA.states_add', self.asdict(), x.asdict() ])
+        Trace.writej(lambda:[ 'ENTER DFA.states_add', self.asdict(), x.asdict() ])
         orig = Trace.disable()
         self._states[x.configs] = x
         Trace.restore(orig)
-        Trace.writej([ 'EXIT DFA.states_add', self.id, self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT DFA.states_add', self.id, self.asdict() ])
 
     def states_len(self):
-        Trace.writej([ 'ENTER DFA.states_len', self.asdict() ])
+        Trace.writej(lambda:[ 'ENTER DFA.states_len', self.asdict() ])
         rv = len(self._states)
-        Trace.writej([ 'EXIT DFA.states_len', rv ])
+        Trace.writej(lambda:[ 'EXIT DFA.states_len', rv ])
         return rv
 
     # Return a list of all states in this DFA, ordered by state number.

@@ -43,7 +43,7 @@ class ATNConfigSet(object):
     def __init__(self, fullCtx:bool=True):
         global configSetCounter
         self.id = configSetCounter
-        Trace.writej([ 'ENTER ATNConfigSet.__init__', self.id, fullCtx ])
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.__init__', self.id, fullCtx ])
         configSetCounter += 1
         # All configs but hashed by (s, i, _, pi) not including context. Wiped out
         # when we go readonly as this set becomes a DFA state.
@@ -72,7 +72,7 @@ class ATNConfigSet(object):
         self.dipsIntoOuterContext = False
 
         self.cachedHashCode = -1
-        Trace.writej([ 'EXIT ATNConfigSet.__init__', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.__init__', self.asdict() ])
 
     def asdict(self):
         configs = []
@@ -98,21 +98,21 @@ class ATNConfigSet(object):
         return self.configs.__iter__()
 
     def set_DIOC(self):
-        Trace.writej([ 'ENTER ATNConfigSet.set_DIOC',
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.set_DIOC',
                                  self.asdict()
                                 ])
         self.dipsIntoOuterContext = True
-        Trace.writej([ 'EXIT ATNConfigSet.set_DIOC',
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.set_DIOC',
                                  self.asdict()
                                 ])
 
     def update_HSC(self, v):
-        Trace.writej([ 'ENTER ATNConfigSet.update_HSC',
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.update_HSC',
                                  self.asdict(),
                                  v
                                 ])
         self.hasSemanticContext = v
-        Trace.writej([ 'EXIT ATNConfigSet.update_HSC',
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.update_HSC',
                                  self.asdict()
                                 ])
 
@@ -160,13 +160,13 @@ class ATNConfigSet(object):
         return True
 
     def add(self, config:ATNConfig, mergeCache=None):
-        Trace.writej([ 'ENTER ATNConfigSet.add',
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.add',
                                  self.asdict(),
                                  config.asdict(),
                                  (None if mergeCache is None else mergeCache_asdict(mergeCache))
                                 ])
         rv = self._add(config, mergeCache)
-        Trace.writej([ 'EXIT ATNConfigSet.add',
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.add',
                                  self.asdict(),
                                  rv
                                 ])
@@ -189,9 +189,9 @@ class ATNConfigSet(object):
         return config
 
     def getOrAdd(self, config:ATNConfig):
-        Trace.writej([ 'ENTER ATNConfigSet.getOrAdd', self.asdict(), config.asdict() ])
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.getOrAdd', self.asdict(), config.asdict() ])
         rv = self._getOrAdd(config)
-        Trace.writej([ 'EXIT ATNConfigSet.getOrAdd', self.asdict(), rv.asdict() ])
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.getOrAdd', self.asdict(), rv.asdict() ])
         assert (rv is config or self.in_configs(rv))
         return rv
 
@@ -211,7 +211,7 @@ class ATNConfigSet(object):
             return
         for config in self.configs:
             config.context = interpreter.getCachedContext(config.context)
-        Trace.writej([ 'ATNConfigSet.optimizeConfigs', self.asdict() ])
+        Trace.writej(lambda:[ 'ATNConfigSet.optimizeConfigs', self.asdict() ])
 
     def addAll(self, coll:list):
         for c in coll:
@@ -235,9 +235,9 @@ class ATNConfigSet(object):
         return same
 
     def __eq__(self, other):
-        Trace.writej([ 'ENTER ATNConfigSet.__eq__', self.asdict(), other.asdict() ])
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.__eq__', self.asdict(), other.asdict() ])
         rv = self.real__eq__(other)
-        Trace.writej([ 'EXIT ATNConfigSet.__eq__', rv ])
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.__eq__', rv ])
         return rv
 
     def __hash__(self):
@@ -276,33 +276,33 @@ class ATNConfigSet(object):
 
     def setReadonly(self, readonly:bool):
         assert (readonly)
-        Trace.writej([ 'ENTER ATNConfigSet.setReadonly',
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.setReadonly',
                                  self.asdict(),
                                  readonly
                                 ])
         self.readonly = readonly
         self.configLookup = None # can't mod, no need for lookup cache
-        Trace.writej([ 'EXIT ATNConfigSet.setReadonly',
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.setReadonly',
                                  self.asdict(),
                                 ])
 
     def set_UA(self, v):
-        Trace.writej([ 'ENTER ATNConfigSet.set_UA',
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.set_UA',
                                  self.asdict(),
                                  v
                                 ])
         self.uniqueAlt = v
-        Trace.writej([ 'EXIT ATNConfigSet.set_UA',
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.set_UA',
                                  self.asdict(),
                                 ])
 
     def set_CA(self, v):
-        Trace.writej([ 'ENTER ATNConfigSet.set_CA',
+        Trace.writej(lambda:[ 'ENTER ATNConfigSet.set_CA',
                                  self.asdict(),
                                  None if v is None else [c for c in v],
                                 ])
         self.conflictingAlts = v
-        Trace.writej([ 'EXIT ATNConfigSet.set_CA',
+        Trace.writej(lambda:[ 'EXIT ATNConfigSet.set_CA',
                                  self.asdict(),
                                 ])
 
@@ -326,6 +326,6 @@ class ATNConfigSet(object):
 class OrderedATNConfigSet(ATNConfigSet):
 
     def __init__(self):
-        Trace.writej([ 'ENTER OrderedATNConfigSet.__init__' ])
+        Trace.writej(lambda:[ 'ENTER OrderedATNConfigSet.__init__' ])
         super().__init__()
-        Trace.writej([ 'EXIT OrderedATNConfigSet.__init__', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT OrderedATNConfigSet.__init__', self.asdict() ])
