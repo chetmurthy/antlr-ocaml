@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+
+use strict ;
+use IPC::System::Simple qw(systemx runx capturex $EXITVAL);
+use String::ShellQuote ;
+
+our $verbose ;
+our $alexer ;
+our $blexer ;
+our @files ;
+
+while(@ARGV) {
+  if ($ARGV[0] eq '-v') {
+    shift @ARGV ;
+    $verbose = 1 ;
+  }
+  elsif ($ARGV[0] eq '--a-lexer') {
+    shift @ARGV ;
+    $alexer = shift @ARGV ;
+  }
+  elsif ($ARGV[0] eq '--b-lexer') {
+    shift @ARGV ;
+    $blexer = shift @ARGV ;
+  }
+  else { last ; }
+}
+@files = @ARGV ;
+
+{
+  foreach my $f (@files) {
+    compare1($alexer, $blexer, $f) ;
+  }
+}
+
+sub compare1 {
+  my $alexer = shift ;
+  my $blexer = shift ;
+  my $f = shift ;
+
+  my $acmd = "$alexer $f" ;
+  my $bcmd = "$blexer $f" ;
+
+  v_system("$acmd > a-output 2> a-errors") ;
+  v_system("$bcmd > b-output 2> b-errors") ;
+  v_system("diff -Bwiu a-output b-output") ;
+  v_system("diff -Bwiu a-errors b-errors") ;
+}
+
+sub v_system {
+  my $cmd = shift;
+  print STDERR "<<$cmd>>\n" if ($main::verbose);
+  system $cmd;
+}

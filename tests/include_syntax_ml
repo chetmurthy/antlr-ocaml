@@ -28,11 +28,9 @@ open Pa_ppx_utils ;;
 #require "antlrtest" ;;
 #require "cmdliner" ;;
 
-#load "replay_test.cmo";;
+#load "antlrtest_util.cmo";;
 
 #trace Ploc.string_of_location ;;
-
-Replay_test.Depth.filter ~indent:4 ~verbose:true ~with_line_numbers:true ["_generated/LexerExec/CharSet/json.log"] ;;
 
 (*
 ;;; Local Variables: ***

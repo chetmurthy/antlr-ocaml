@@ -141,7 +141,7 @@ UNTERMINATED_STRING_LITERAL
 // to a rule invocation, or input parameters to a rule specification
 // are contained within square brackets.
 BEGIN_ARGUMENT
-    : '[' { this.handleBeginArgument(); }
+    : '[' { self.handleBeginArgument(); }
     ;
 
 // Many language targets use {} as block delimiters and so we
@@ -379,7 +379,7 @@ ARGUMENT_CHAR_LITERAL
     ;
 
 END_ARGUMENT
-    : ']' { this.handleEndArgument(); }
+    : ']' { self.handleEndArgument(); }
     ;
 
 // added this to return non-EOF token type here. EOF does something weird
