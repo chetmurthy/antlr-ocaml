@@ -149,6 +149,7 @@ DTEST += \
 DTEST := \
 	fixtures/descriptors/SemPredEvalLexer/DisableRule.txt \
 	fixtures/custom-descriptors/antlr4/ANTLRv4Lexer.txt \
+	fixtures/custom-descriptors/antlr4/A2.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe

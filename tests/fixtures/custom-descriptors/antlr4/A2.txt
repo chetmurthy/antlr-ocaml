@@ -1,0 +1,36 @@
+[type]
+CompositeLexer
+
+[grammar]
+lexer grammar M;
+
+@lexer::members {
+
+def handleBeginArgument(self):
+    if self.inLexerRule():
+        self.pushMode(2)
+        self.more()
+    else:
+        self.pushMode(1)
+
+def handleEndArgument(self):
+    self.popMode()
+    assert(len(self._modeStack) == 0)
+
+def inLexerRule(self):
+    return True
+}
+
+import ANTLRv4Lexer;
+
+[slaveGrammar]
+lexer grammar S;
+A : 'a' {<writeln("\"S.A\"")>};
+C : 'c' ;
+
+[input]
+[\r\n]
+[output]
+[@0,0:5='[\r\n]',<5>,1:0]
+[@1,6:6='\n',<12>,channel=2,1:6]
+[@2,7:6='<EOF>',<-1>,2:0]
