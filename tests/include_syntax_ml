@@ -25,12 +25,13 @@ let pp_char_stream strm =
 open Pa_ppx_utils ;;
 
 #require "antlr";;
-#require "antlrtest" ;;
 #require "cmdliner" ;;
 
-#load "antlrtest_util.cmo";;
+Sys.getenv"JSONLOGGING";;
+Antlr.Tracelog._enabled ;;
+#load "l.cmo";; #load "test.cmo";; 
 
-#trace Ploc.string_of_location ;;
+Test.test ~show_dfa:false ~disable_logging:false ~json_log_file:(Some "ocaml-json.old.RAW") "input";;
 
 (*
 ;;; Local Variables: ***

@@ -5,11 +5,13 @@ open Coll
 open Pa_ppx_located_yojson
 module M = Mimick
 
-let _enabled = ref
-  (match Sys.getenv "JSONLOGGING" with
-     "1" -> true
-   | _ -> false
-   | exception Not_found -> false)
+let init_enabled () =
+  match Sys.getenv "JSONLOGGING" with
+    "1" -> true
+  | _ -> false
+  | exception Not_found -> false
+
+let _enabled = ref (init_enabled())
 let _oc = ref stdout
 
 let enabled () = !_enabled
