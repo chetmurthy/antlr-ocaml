@@ -116,7 +116,7 @@ let sim1 caches atns (i:int) (loc,j) =
     begin
       match j with
         M.LexerATNConfig_ENTER_init (state_opt, alt_opt, context_opt, semantic_opt, lexerActionExecutor_opt, config_opt) ->
-         let atn = atns.Atns.lexer in
+         let atn = snd atns.Atns.lexer in
          let context_opt = Option.map PC.of_mimick context_opt in
          let semantic_opt = Option.map SC.of_mimick semantic_opt in
          let config_opt = Option.map (AC.of_mimick ~ac_cache:(Some caches.ac) atns) config_opt in
@@ -129,7 +129,7 @@ let sim1 caches atns (i:int) (loc,j) =
              None ->
              Fmt.(failwith "%s: sim1[%d]: in ATNConfig_ENTER_init, parser ATN was None" 
                     (Ploc.string_of_location loc) i)
-           | Some atn -> atn in
+           | Some atn -> snd atn in
          let context_opt = Option.map PC.of_mimick context_opt in
          let semantic_opt = Option.map SC.of_mimick semantic_opt in
          let config_opt = Option.map (AC.of_mimick ~ac_cache:(Some caches.ac) atns) config_opt in

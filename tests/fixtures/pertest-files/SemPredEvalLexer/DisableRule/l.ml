@@ -4,7 +4,7 @@ open Antlr
 open Exec
 
 let atns = Atns.load ~lexer_atn:"Lexer.interp" ~parser_atn:None ;;
-let atn = atns.Atns.lexer ;;
+let atn = snd atns.Atns.lexer ;;
 
 let _E1_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
   if predIndex = 0 then

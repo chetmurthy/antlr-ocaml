@@ -50,19 +50,4 @@ test.opt: l.cmx test.cmx
 	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $^
 
 clean::
-	rm -f *.cm* *.opt *.exe ocaml-errors* ocaml-output* ocaml-json* *.RAW a-* b-*
-
-A="env PYTHONPATH=/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/python: python3 Test.py "
-B="./test.opt test  --json-log-file=ocaml-json.log.RAW "
-GRAMDIRS= ../tests ~/Hack/Antlr/src/grammars-v4
-
-compare-all-grammars::
-	set -e ;\
-	for f in `find $(GRAMDIRS) -name '*.g4' -print`; \
-	do \
-	echo "==== $$f ====" ; \
-	../tests/tools/compare-lexers --a-lexer $A --b-lexer $B $$f ; \
-	done
-
-
-#	find $(GRAMDIRS) -name '*.g4' -print | xargs -n 1 --verbose ../tests/tools/compare-lexers -v --a-lexer "\"$A\"" --b-lexer "\"$B\"" 
+	rm -f *.cm* *.opt *.exe ocaml-errors* ocaml-output* ocaml-json* *.RAW

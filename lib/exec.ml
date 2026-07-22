@@ -367,15 +367,18 @@ end
 module CommonTokenFactor = CTF
 
 module Atns = struct
-type t = { lexer : Atn.t ; _parser : Atn.t option }
+type t = { lexer : (Interp.Raw.t * Atn.t)
+         ; _parser : (Interp.Raw.t * Atn.t) option }
 
 let read_atn ~grammarType file =
-  let atn = 
+  let raw = 
     file
     |> Fpath.v
     |>  Bos.OS.File.read
     |> Result.get_ok
-    |> Interp_syntax.read_raw
+    |> Interp_syntax.read_raw in
+  let atn = 
+    raw
     |> Atn.deser ~verify:true in
   if atn.Atn.grammarType <> grammarType then
     Fmt.(failwithf "%s: ATN was supposed to be %a but was %a@."
@@ -383,7 +386,7 @@ let read_atn ~grammarType file =
 (*
   Fmt.(pf stderr "ATN %s: 0x%08x@." file (Hashtbl.hash atn)) ;
  *)
-  atn
+  (raw, atn)
 
 let load ~lexer_atn ~parser_atn =
   { lexer = read_atn ~grammarType:Atn.LEXER lexer_atn
@@ -392,8 +395,8 @@ let load ~lexer_atn ~parser_atn =
 
 let for_grammar atns grammarType =
   match (grammarType, atns) with
-    (LEXER, { lexer }) -> lexer
-  | (PARSER, { _parser = Some atn }) -> atn
+    (LEXER, { lexer }) -> snd lexer
+  | (PARSER, { _parser = Some atn }) -> snd atn
   | _ -> failwith "must supply parser ATN for a parser DFA"
 end
 
@@ -1258,7 +1261,7 @@ let to_mimick t =
       }
 
 let _of_mimick atns t = match (atns,t) with
-    (Atns.{_parser=Some atn}, M.ATNConfig t) ->
+    (Atns.{_parser=Some (_, atn)}, M.ATNConfig t) ->
      {
        disable_builtin_equality
      ; atn
@@ -1271,7 +1274,7 @@ let _of_mimick atns t = match (atns,t) with
      ; precedenceFilterSuppressed = t.precedenceFilterSuppressed
      ; lexer_ext = None
      }
-  | ({lexer=atn}, M.LexerATNConfig t) ->
+  | ({lexer=(_, atn)}, M.LexerATNConfig t) ->
      {
        disable_builtin_equality
      ; atn

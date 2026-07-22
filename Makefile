@@ -7,7 +7,7 @@ include $(TOP)/config/Makefile.top
 WD=$(shell pwd)
 DESTDIR=
 
-SYSDIRS= pa_tracelog lib antlrtest
+SYSDIRS= pa_tracelog lib antlr4 antlrtest
 
 TESTDIRS= tests tests-mdx
 

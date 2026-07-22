@@ -33,12 +33,12 @@ let read_raw txt =
     List.map [%match {|^([^:]+):\n(.*)$|}  / pcre2 exc s strings (!1, !2)]  stanzas in
   let token_literal_names =
     let lines = [%split {|\n|}] (find_stanza "token literal names" stanzas) in
-    List.map (conv_null conv_squote) lines in
+    Array.of_list (List.map (conv_null conv_squote) lines) in
   let token_symbolic_names =
     let lines = [%split {|\n|}] (find_stanza "token symbolic names" stanzas) in
-    List.map (conv_null (fun x -> x)) lines in
+    Array.of_list (List.map (conv_null (fun x -> x)) lines) in
   let rule_names =
-    [%split {|\n|}] (find_stanza "rule names" stanzas) in
+    Array.of_list ([%split {|\n|}] (find_stanza "rule names" stanzas)) in
   let channel_names =
     (find_stanza_opt "channel names" stanzas)
   |> Option.map [%split {|\n|}] in
