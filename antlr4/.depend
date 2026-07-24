@@ -1,0 +1,13 @@
+l.cmo camlp5_adapter.cmo test.cmo l.cmi camlp5_adapter.cmi test.cmi l.cmx camlp5_adapter.cmx test.cmx: /home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/local-install/lib/antlr/META
+l.cmo :
+l.cmx :
+camlp5_adapter.cmo : \
+    l.cmo
+camlp5_adapter.cmx : \
+    l.cmx
+test.cmo : \
+    l.cmo \
+    camlp5_adapter.cmo
+test.cmx : \
+    l.cmx \
+    camlp5_adapter.cmx
