@@ -1,5 +1,5 @@
 
-ML=l.ml test.ml
+ML=l.ml camlp5_adapter.ml pa.ml test.ml
 
 PACKAGES := $(PACKAGES),antlr,cmdliner,yojson,pa_ppx.located_yojson,pa_ppx.runtime
 
@@ -41,12 +41,15 @@ endif
 ocaml-test:: ocaml-compile
 	./test.opt test $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input > ocaml-output.NEW 2> ocaml-errors.NEW
 
+ocaml-test-locations:: ocaml-compile
+	./test.opt test --via-camlp5 --with-locations $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input.2
+
 ocaml-compile:: $(TESTS) $(TESTSOPT)
 
-test.exe: l.cmo test.cmo
+test.exe: l.cmo camlp5_adapter.cmo test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $^
 
-test.opt: l.cmx test.cmx
+test.opt: l.cmx camlp5_adapter.cmx test.cmx
 	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $^
 
 clean::

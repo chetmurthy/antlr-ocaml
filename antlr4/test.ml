@@ -4,7 +4,7 @@ open Pa_ppx_utils
 open Antlr
 open Cmdliner
 open Cmdliner.Term.Syntax
-
+open Camlp5_adapter
 
 let __str__ self =
   let symbolic_names = (fst L.atns.lexer).Interp.Raw.token_symbolic_names in
@@ -44,7 +44,7 @@ let __str__ self =
          (fmt_option fmt_int) self.line
          (fmt_option fmt_int) self.column)
 
-let test ~show_dfa ~disable_logging ~json_log_file file =
+let test ~show_dfa ~via_camlp5 ~with_locations ~disable_logging ~json_log_file file =
   json_log_file |> Option.iter Tracelog.set_log_file ;
   if disable_logging then
     Tracelog._enabled := false ;
@@ -58,7 +58,24 @@ let test ~show_dfa ~disable_logging ~json_log_file file =
   let lex = L.init ~input ~output:stdout in
   let strm : Exec.T.t Stream.t = Exec.TS.init lex in
   let l = Std.list_of_stream strm in
-  l |> List.iter (fun t -> Fmt.(pf stdout "%s\n" (__str__ t))) ;
+  let pp_token pps t =
+    let loc = ploc_of_token ~file t in
+    let prefix =
+    if with_locations then
+      let fname = Ploc.file_name loc in
+      let linen = Ploc.line_nb loc in
+      let bcoln = 1 + Ploc.((first_pos loc) - (bol_pos loc)) in
+      let ecoln = 1 + Ploc.((last_pos loc) - (bol_pos loc)) in
+      Printf.sprintf "File \"%s\", line %d, characters %d-%d: "
+        fname linen bcoln ecoln
+    else "" in
+    let tokstring =
+      if via_camlp5 then
+        let tok = pattern_of_token t in
+        Fmt.(str "%a" (parens (pair ~sep:(const string ", ") string Dump.string)) tok)
+      else __str__ t in
+    Printf.fprintf stdout "%s%s\n" prefix tokstring in
+  l |> List.iter (fun t -> Fmt.(pf stdout "%a" pp_token t)) ;
   if show_dfa then
     let open Exec in
     Fmt.(pf stdout "%s" (DFA.toLexerString lex.L._interp.LAS.decisionToDFA.(C._DEFAULT_MODE)))
@@ -75,6 +92,14 @@ let disable_logging =
   let doc = "disable JSON logging." in
   Arg.(value & flag & info ["disable-logging"] ~doc)
 
+let with_locations =
+  let doc = "with locations." in
+  Arg.(value & flag & info ["with-locations"] ~doc)
+
+let via_camlp5 =
+  let doc = "convert token to camlp5 pattern, then print." in
+  Arg.(value & flag & info ["via-camlp5"] ~doc)
+
 let show_dfa =
   let doc = "show DFA after run." in
   Arg.(value & flag & info ["show-dfa"] ~doc)
@@ -86,8 +111,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "test" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ disable_logging and+ show_dfa and+ json_log_file in
-  test ~disable_logging ~json_log_file ~show_dfa file ;
+  let+ file and+ via_camlp5 and+ with_locations and+ disable_logging and+ show_dfa and+ json_log_file in
+  test ~disable_logging ~json_log_file ~with_locations ~via_camlp5 ~show_dfa file ;
   Cmdliner.Cmd.Exit.ok
 end
 
