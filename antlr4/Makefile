@@ -10,18 +10,18 @@ TESTBASEDIR=$(TOP)/tests/fixtures/test-base-files
 PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/antlr4/ANTLRv4Lexer
 REPLAYTEST=$(TOP)/tests/replay_test.opt
 LIBDIR=$(TOP)/tests/fixtures/grammar-lib
-LIBARG=-lib $(LIBDIR)
+LIBARG=-lib .
 
 ifndef JSONLOGGING
 export JSONLOGGING=0
 endif
 
 
-all: compare
+python-test: compare
 
 compile::
 
-prepare:: M.py update-pertest
+python-prepare:: M.py update-pertest
 	$(ADJUST) M.py
 	cp M.interp Lexer.interp
 

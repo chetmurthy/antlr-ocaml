@@ -66,7 +66,7 @@ let lexer cs =
     assert(Std.isSome t.channel) ;
     if (Std.outSome t.channel) <> 0 then next_token()
     else
-      located_pattern_of_token !input_file t in
+      located_pattern_of_token ~file:!input_file t in
   Plexing.make_stream_and_location next_token
 
 let _ : Plexing.(pattern lexer_func) = lexer

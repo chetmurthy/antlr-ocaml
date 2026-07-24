@@ -42,8 +42,8 @@ simulate-all:: replay_test.opt
 generate-all:: antlrtest_util.opt
 	mkdir -p _generated && $(MANAGETRIP) generate -v
 
-prepare-all:: antlrtest_util.opt
-	$(MANAGETRIP) prepare -v
+python-prepare-all:: antlrtest_util.opt
+	$(MANAGETRIP) python-prepare -v
 
 depend-all:: antlrtest_util.opt
 	$(MANAGETRIP) depend -v
@@ -51,8 +51,8 @@ depend-all:: antlrtest_util.opt
 compile-all:: antlrtest_util.opt
 	$(MANAGETRIP) compile -v
 
-test-all:: antlrtest_util.opt
-	$(MANAGETRIP) test -v
+python-test-all:: antlrtest_util.opt
+	$(MANAGETRIP) python-test -v
 
 compare-all:: antlrtest_util.opt
 	$(MANAGETRIP) compare-atns -v
@@ -150,13 +150,14 @@ DTEST := \
 	fixtures/descriptors/SemPredEvalLexer/DisableRule.txt \
 	fixtures/custom-descriptors/antlr4/ANTLRv4Lexer.txt \
 	fixtures/custom-descriptors/antlr4/A2.txt \
+	fixtures/custom-descriptors/SemPredEvalLexer/IdentKinds.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)
 
-prepare-selected:: antlrtest_test.exe
-	$(MANAGETRIP) prepare -v $(SELECTED)
+python-prepare-selected:: antlrtest_test.exe
+	$(MANAGETRIP) python-prepare -v $(SELECTED)
 
 depend-selected:: antlrtest_test.exe
 	$(MANAGETRIP) depend -v $(SELECTED)
@@ -164,8 +165,8 @@ depend-selected:: antlrtest_test.exe
 compile-selected:: antlrtest_test.exe
 	$(MANAGETRIP) compile -v $(SELECTED)
 
-test-selected:: antlrtest_test.exe
-	$(MANAGETRIP) test -v $(SELECTED)
+python-test-selected:: antlrtest_test.exe
+	$(MANAGETRIP) python-test -v $(SELECTED)
 
 clean-selected:: antlrtest_test.exe
 	$(MANAGETRIP) clean -v $(SELECTED)

@@ -1,0 +1,18 @@
+[type]
+Lexer
+
+[grammar]
+lexer grammar L;
+UID   : [a-zA-Z]+ { self.text[0].isupper() }? { print("UID " + self.text, file=self._output) } ;
+LID   : [a-zA-Z]+ { self.text[0].islower() }? { print("LID " + self.text, file=self._output) } ;
+WS   : [ \n] -> skip ;
+
+[input]
+enum ENUM
+
+[output]
+LID enum
+UID ENUM
+[@0,0:3='enum',<2>,1:0]
+[@1,5:8='ENUM',<1>,1:5]
+[@2,9:8='<EOF>',<-1>,1:9]

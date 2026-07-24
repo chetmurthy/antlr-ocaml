@@ -18,6 +18,8 @@ endif
 
 EEARGS=$(LOCARG) $(MAXDEPTHARG)
 
+all: $(CMO)
+
 ocaml-compare:: output.NEW errors.NEW
 	diff -Bwiu output output.NEW
 	diff -Bwiu errors errors.NEW
