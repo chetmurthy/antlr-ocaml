@@ -146,8 +146,7 @@ DTEST += \
 #DTEST := \
 #	fixtures/descriptors/ParserExec/Basic.txt
 
-DTEST := \
-	fixtures/descriptors/SemPredEvalLexer/DisableRule.txt \
+DTEST += \
 	fixtures/custom-descriptors/antlr4/ANTLRv4Lexer.txt \
 	fixtures/custom-descriptors/antlr4/A2.txt \
 	fixtures/custom-descriptors/SemPredEvalLexer/IdentKinds.txt \

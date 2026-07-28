@@ -11,6 +11,58 @@ open Cmdliner.Term.Syntax
 open Antlr
 open Atn
 
+let pp_option ppf pps = function
+    None -> Fmt.(pf pps "None")
+  | Some x -> Fmt.(pf pps "Some %a" ppf x)
+
+let emit_ocaml ~debug file =
+  Atn.debug := debug ;
+  let raw_atn =
+    file
+    |> Fpath.v
+    |>  Bos.OS.File.read
+    |> Result.get_ok
+    |> Interp_syntax.read_raw in
+
+    Fmt.(pf stdout
+{|
+let atn = Antlr.Interp.Raw.{
+  token_literal_names = [|%a|]
+; token_symbolic_names = [|%a|]
+; rule_names = [|%a|]
+; channel_names = [%a]
+; mode_names = [%a]
+; atn = [%a]@ 
+ }
+ |}
+(array ~sep:semi (pp_option Dump.string)) raw_atn.Interp.Raw.token_literal_names
+(array ~sep:semi (pp_option Dump.string)) raw_atn.Interp.Raw.token_symbolic_names
+(array ~sep:semi Dump.string) raw_atn.Interp.Raw.rule_names
+(list ~sep:semi (pp_option Dump.string)) raw_atn.Interp.Raw.channel_names
+(list ~sep:semi Dump.string) raw_atn.Interp.Raw.mode_names
+(list ~sep:semi int) raw_atn.Interp.Raw.atn) ;
+         ()
+
+let emit_ocaml_cmd =
+let file =
+  let docv = "The file to read-and-convert to OCaml." in
+  let absent = "absent." in
+  Arg.(required & pos 0 (some string) None & info [] ~absent ~docv) in
+
+let debug =
+  let doc = "enable debugging." in
+  Arg.(value & flag & info ["debug"] ~doc) in
+
+  let doc = "Convert an ATN to OCaml" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "emit-ocaml" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ debug in
+  emit_ocaml ~debug file ;
+  Cmdliner.Cmd.Exit.ok
+
 let check_rule_separation atn =
   let state2rule = MHM.mk 23 in
   atn.states
@@ -157,27 +209,10 @@ let with_rule_index =
   graph ~with_rule_index ~xdot ~ruleIndex file ;
   Cmdliner.Cmd.Exit.ok
 
-let flag = Arg.(value & flag & info ["flag"] ~doc:"The flag")
-let infile =
-  let doc = "$(docv) is the input file. Use $(b,-) for $(b,stdin)." in
-  Arg.(value & pos 0 filepath "-" & info [] ~doc ~docv:"FILE")
-
-let hey_cmd =
-  let doc = "The hey command synopsis is TODO" in
-  Cmd.make (Cmd.info "hey" ~doc) @@
-  let+ unit = Term.const () in
-  ho ()
-
-let ho_cmd =
-  let doc = "The ho command synopsis is TODO" in
-  Cmd.make (Cmd.info "ho" ~doc) @@
-  let+ unit = Term.const () in
-  ho unit
-
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [hey_cmd; ho_cmd; dump_cmd; graph_cmd]
+  [emit_ocaml_cmd; dump_cmd; graph_cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())

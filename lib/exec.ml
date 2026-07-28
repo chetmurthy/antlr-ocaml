@@ -370,13 +370,20 @@ module Atns = struct
 type t = { lexer : (Interp.Raw.t * Atn.t)
          ; _parser : (Interp.Raw.t * Atn.t) option }
 
-let read_atn ~grammarType file =
-  let raw = 
-    file
-    |> Fpath.v
-    |>  Bos.OS.File.read
-    |> Result.get_ok
-    |> Interp_syntax.read_raw in
+let read_atn ~grammarType ?raw ?file () =
+  let (raw, file) = 
+    match (raw, file) with
+      ((None, None)
+       |(Some _, Some _)) -> failwith "Exec.Atns.read_atn: must specify exactly one of file or raw ATN"
+    | (Some raw, None) -> (raw, "<raw>")
+    | (None, Some file) ->
+       let raw =
+         file
+         |> Fpath.v
+         |>  Bos.OS.File.read
+         |> Result.get_ok
+         |> Interp_syntax.read_raw in
+       (raw, file) in
   let atn = 
     raw
     |> Atn.deser ~verify:true in
@@ -389,8 +396,8 @@ let read_atn ~grammarType file =
   (raw, atn)
 
 let load ~lexer_atn ~parser_atn =
-  { lexer = read_atn ~grammarType:Atn.LEXER lexer_atn
-  ; _parser = Option.map (read_atn ~grammarType:Atn.PARSER) parser_atn
+  { lexer = read_atn ~grammarType:Atn.LEXER ~file:lexer_atn ()
+  ; _parser = Option.map (fun file -> read_atn ~grammarType:Atn.PARSER ~file ()) parser_atn
   }
 
 let for_grammar atns grammarType =

@@ -1,13 +1,17 @@
-l.cmo camlp5_adapter.cmo test.cmo l.cmi camlp5_adapter.cmi test.cmi l.cmx camlp5_adapter.cmx test.cmx: /home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/local-install/lib/antlr/META
-l.cmo :
-l.cmx :
+ANTLRv4Lexer_atn.cmo ANTLRv4Lexer.cmo camlp5_adapter.cmo pa.cmo ANTLRv4Lexer_atn.cmi ANTLRv4Lexer.cmi camlp5_adapter.cmi pa.cmi ANTLRv4Lexer_atn.cmx ANTLRv4Lexer.cmx camlp5_adapter.cmx pa.cmx: ../local-install/lib/antlr/META
+ANTLRv4Lexer_atn.cmo :
+ANTLRv4Lexer_atn.cmx :
+ANTLRv4Lexer.cmo : \
+    ANTLRv4Lexer_atn.cmo
+ANTLRv4Lexer.cmx : \
+    ANTLRv4Lexer_atn.cmx
 camlp5_adapter.cmo : \
-    l.cmo
+    ANTLRv4Lexer.cmo
 camlp5_adapter.cmx : \
-    l.cmx
-test.cmo : \
-    l.cmo \
+    ANTLRv4Lexer.cmx
+pa.cmo : \
     camlp5_adapter.cmo
-test.cmx : \
-    l.cmx \
+pa.cmx : \
     camlp5_adapter.cmx
+mk_meta.cmo :
+mk_meta.cmx :

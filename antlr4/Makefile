@@ -13,7 +13,7 @@ TARGET_PACKAGE=parse_antlr4
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
-	ANTLRv4Lexer.ml camlp5_adapter.ml pa.ml
+	ANTLRv4Lexer_atn.ml ANTLRv4Lexer.ml camlp5_adapter.ml pa.ml
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)
@@ -34,6 +34,9 @@ local-install::
 
 clean::
 	rm -rf META mk_meta mk_meta.ml
+
+ANTLRv4Lexer_atn.ml: grammars/Lexer.interp
+	$(TOP)/tests/atn_util.opt emit-ocaml grammars/Lexer.interp > $@.NEW && mv $@.NEW $@
 
 $(TARGET_PACKAGE).cmo $(TARGET_PACKAGE).cmi: $(CMO)
 	$(OCAMLFIND) ocamlc $(DEBUG) -pack -o $(TARGET_PACKAGE).cmo $^

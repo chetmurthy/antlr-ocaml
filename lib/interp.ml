@@ -5,8 +5,8 @@ type t = {
     token_literal_names : string option array
   ; token_symbolic_names : string option array
   ; rule_names : string array
-  ; channel_names : string list option
-  ; mode_names : string list option
+  ; channel_names : string option list
+  ; mode_names : string list
   ; atn : int list
   }
 end

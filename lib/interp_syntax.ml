@@ -40,11 +40,13 @@ let read_raw txt =
   let rule_names =
     Array.of_list ([%split {|\n|}] (find_stanza "rule names" stanzas)) in
   let channel_names =
-    (find_stanza_opt "channel names" stanzas)
-  |> Option.map [%split {|\n|}] in
+    (find_stanza "channel names" stanzas)
+    |> [%split {|\n|}]
+    |> (List.map (conv_null (fun x -> x)))
+  in
   let mode_names =
-    (find_stanza_opt "mode names" stanzas)
-    |> Option.map [%split {|\n|}] in
+    (find_stanza "mode names" stanzas)
+    |> [%split {|\n|}] in
   let atn =
     let txt = find_stanza "atn" stanzas in
     match [%match {|\[(.*)\]|} / pcre2 strings !1] txt with

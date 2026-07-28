@@ -4,8 +4,8 @@ open Ppxutil
 open Antlr
 open Exec
 
-let atns = Atns.load ~lexer_atn:"Lexer.interp" ~parser_atn:None ;;
-let atn = snd atns.Atns.lexer ;;
+let full_atn = Exec.Atns.read_atn ~grammarType:LEXER ~raw:ANTLRv4Lexer_atn.atn ()
+let atn = snd full_atn
 
 let inLexerRule self = true
 
