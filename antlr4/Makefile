@@ -1,78 +1,48 @@
+# Makefile,v
+# Copyright (c) INRIA 2007-2017
+
 WD=$(shell pwd)
-TOP=/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml
+TOP=..
 include $(TOP)/config/Makefile.sub
 
-PYTHONPATH:=$(TOP)/python:$(PYTHONPATH)
-#PYTHONPATH:=/home/chet/Hack/Antlr/src/antlr4/runtime/Python3/src:$(PYTHONPATH)
-SHELL := /bin/bash
-ADJUST=$(TOP)/tests/tools/adjust-dfa
-TESTBASEDIR=$(TOP)/tests/fixtures/test-base-files
-PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/antlr4/ANTLRv4Lexer
-REPLAYTEST=$(TOP)/tests/replay_test.opt
-LIBDIR=$(TOP)/tests/fixtures/grammar-lib
-LIBARG=-lib .
+DESTDIR=
 
-ifndef JSONLOGGING
-export JSONLOGGING=0
-endif
+PACKAGES := $(PACKAGES),antlr
 
+TARGET_PACKAGE=parse_antlr4
+TARGET = $(TARGET_PACKAGE).cma
 
-python-test: compare
+ML=\
+	ANTLRv4Lexer.ml camlp5_adapter.ml pa.ml
 
-compile::
+TOOLSML = mk_meta.ml
+ALLSRC=$(ML) $(TOOLSML)
+ALLPACKAGES=$(PACKAGES)
 
-python-prepare:: M.py update-pertest
-	$(ADJUST) M.py
-	cp M.interp Lexer.interp
+OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Parse_antlr4
 
-update-pertest::
-	cp $(TESTBASEDIR)/* .
-	if [ -d $(PERTESTDIR) ]; then cp $(PERTESTDIR)/* .; fi
+all: $(TARGET) $(TARGET:.cma=.cmxa)
+	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
-compare:: output.NEW errors.NEW
-	diff -Bwiu output output.NEW
-	diff -Bwiu errors errors.NEW
+doc: $(CMT) $(CMTI)
 
-save-json-log: json.log
-	cp json.log json.log.SAVED
+TARGET_INSTALL_FILES= $(PACKED_ARCHIVE_TARGET_INSTALL_FILES)
+install:: default_install
 
-compare-json-log:: json.log.SAVED json.log
-	diff -Bwiu json.log.SAVED json.log
-
-M.py: M.g4
-	antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Python3 M.g4
-
-output.NEW errors.NEW json.log:: M.py
-	env PYTHONPATH=$(PYTHONPATH) python3 Test.py $(RUNARGS) input > output.NEW 2> errors.NEW
-	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log
-
-GENLEXFILES=M.py M.interp M.tokens
-
-deserialize-python-json::
-	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py M.interp
-
-deserialize-python::
-	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py M.interp
-
-deserialize-ocaml-json::
-	$(TOP)/tests/atn_util.opt dump --json M.interp
-
-deserialize-ocaml::
-	$(TOP)/tests/atn_util.opt dump M.interp
-
-compare-atns:: M.py
-	diff -bBwi -u10 \
-	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py M.interp | jq '.' ) \
-	<( $(TOP)/tests/atn_util.opt dump --json M.interp | jq '.' )
-
-visualize-lexer: M.interp
-	xdot <( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot M.interp )
-
-
-realclean:: clean
-	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES)
+local-install::
+	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
 clean::
-	rm -rf output.NEW errors.NEW *.log *.BAK *.RAW
+	rm -rf META mk_meta mk_meta.ml
 
--include ocaml-Makefile
+$(TARGET_PACKAGE).cmo $(TARGET_PACKAGE).cmi: $(CMO)
+	$(OCAMLFIND) ocamlc $(DEBUG) -pack -o $(TARGET_PACKAGE).cmo $^
+
+$(TARGET_PACKAGE).cmx: $(CMO:.cmo=.cmx)
+	$(OCAMLFIND) ocamlopt $(DEBUG) -pack -o $(TARGET_PACKAGE).cmx $^
+
+$(TARGET): $(TARGET_PACKAGE).cmo
+	$(OCAMLFIND) ocamlc $(DEBUG) $^ -a -o $(TARGET)
+
+$(TARGET:.cma=.cmxa): $(TARGET_PACKAGE).cmx
+	$(OCAMLFIND) ocamlopt $(DEBUG) $^ -a -o $(TARGET:.cma=.cmxa)

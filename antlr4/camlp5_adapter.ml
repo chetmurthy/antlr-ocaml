@@ -19,8 +19,8 @@ let string_of_char_stream cs =
   Buffer.contents b
 
 let pattern_of_token self : Plexing.pattern =
-  let symbolic_names = (fst L.atns.lexer).Interp.Raw.token_symbolic_names in
-  let literal_names = (fst L.atns.lexer).Interp.Raw.token_literal_names in
+  let symbolic_names = (fst ANTLRv4Lexer.atns.lexer).Interp.Raw.token_symbolic_names in
+  let literal_names = (fst ANTLRv4Lexer.atns.lexer).Interp.Raw.token_literal_names in
   assert (Array.length symbolic_names = Array.length literal_names) ;
   match self.Exec.T.type_ with
     None -> assert false
@@ -60,7 +60,7 @@ let lexer cs =
         Exec.IS.init txt ()
       ) ()
   in
-  let lex = L.init ~input ~output:stdout in
+  let lex = ANTLRv4Lexer.init ~input ~output:stdout in
   let rec next_token () =
     let t = Exec.Lexer.nextToken lex in
     assert(Std.isSome t.channel) ;
