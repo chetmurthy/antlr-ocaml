@@ -153,6 +153,9 @@ DTEST += \
 	fixtures/custom-descriptors/antlr4/A2.txt \
 	fixtures/custom-descriptors/SemPredEvalLexer/IdentKinds.txt \
 
+DTEST += \
+	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.txt \
+
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)

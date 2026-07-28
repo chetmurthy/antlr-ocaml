@@ -1,0 +1,61 @@
+[type]
+CompositeLexer
+
+[grammar]
+lexer grammar L;
+import T, S;
+WORD1 : ID1+ { print(self.text, file=self._output) } ;
+WORD2 : ID2+ { print(self.text, file=self._output) } ;
+fragment ID1 : { <Column()> \< 2 }? [a-zA-Z];
+fragment ID2 : { <Column()> >= 2 }? [a-zA-Z];
+WS : (' '|'\n') -> skip;
+
+A1 :  { print("1", file=self._output) } { <Column()> \< 2 }? { print("2", file=self._output) } [a-z] { print("3", file=self._output) }  { <Column()> \< 2 }? { print("4", file=self._output) } -> more ;
+A2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+
+mode A;
+A3 :  { print("1", file=self._output) } { <Column()> \< 2 }? { print("2", file=self._output) } [a-z] { print("3", file=self._output) }  { <Column()> \< 2 }? { print("4", file=self._output) } -> more ;
+A4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+[slaveGrammar]
+lexer grammar S;
+SA1 :  { print("1", file=self._output) } { <Column()> \< 2 }? { print("2", file=self._output) } [a-z] { print("3", file=self._output) }  { <Column()> \< 2 }? { print("4", file=self._output) } -> more ;
+SA2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+mode SA;
+SA3 :  { print("1", file=self._output) } { <Column()> \< 2 }? { print("2", file=self._output) } [a-z] { print("3", file=self._output) }  { <Column()> \< 2 }? { print("4", file=self._output) } -> more ;
+SA4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+[slaveGrammar]
+lexer grammar T;
+TA1 :  { print("1", file=self._output) } { <Column()> \< 2 }? { print("2", file=self._output) } [a-z] { print("3", file=self._output) }  { <Column()> \< 2 }? { print("4", file=self._output) } -> more ;
+TA2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+mode TB;
+TA3 :  { print("1", file=self._output) } { <Column()> \< 2 }? { print("2", file=self._output) } [a-z] { print("3", file=self._output) }  { <Column()> \< 2 }? { print("4", file=self._output) } -> more ;
+TA4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+mode TC;
+TA5 :  { print("1", file=self._output) } { <Column()> \< 2 }? { print("2", file=self._output) } [a-z] { print("3", file=self._output) }  { <Column()> \< 2 }? { print("4", file=self._output) } -> more ;
+TA6 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+[input]
+"""a cde
+abcde
+"""
+
+[output]
+a
+cde
+ab
+cde
+[@0,0:0='a',<1>,1:0]
+[@1,2:4='cde',<2>,1:2]
+[@2,6:7='ab',<1>,2:0]
+[@3,8:10='cde',<2>,2:2]
+[@4,12:11='<EOF>',<-1>,3:0]
+
+[flags]
+showDFA
+
