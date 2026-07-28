@@ -2,19 +2,20 @@ WD=$(shell pwd)
 TOP=..
 include $(TOP)/config/Makefile.sub
 
-PACKAGES := $(PACKAGES),antlr,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
+PACKAGES := $(PACKAGES),antlr,parse_antlrv4,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 
 ML= \
 	lib_test.ml antlr_test.ml atn_util.ml mimick_test.ml \
 	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
-	replay_test.ml
+	replay_test.ml parser_test.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
 TESTS=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
 	antlrtest_test.exe antlrtest_util.exe \
-	deserialize_jsonlog.exe replay_test.exe
+	deserialize_jsonlog.exe replay_test.exe \
+	parser_test.exe
 
 TESTSOPT=$(TESTS:.exe=.opt)
 
@@ -25,6 +26,7 @@ test:: all
 	mkdir -p _build && ./antlr_test.exe
 	mkdir -p _build && ./mimick_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
+	mkdir -p _build && ./parser_test.exe
 
 MANAGETRIP=./tools/manage-trip-tests
 deserialize-all:: replay_test.opt

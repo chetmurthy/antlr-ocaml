@@ -35,8 +35,8 @@ local-install::
 clean::
 	rm -rf META mk_meta mk_meta.ml
 
-ANTLRv4Lexer_atn.ml: grammars/Lexer.interp
-	$(TOP)/tests/atn_util.opt emit-ocaml grammars/Lexer.interp > $@.NEW && mv $@.NEW $@
+bootstrap:: ../tests/atn_util.opt
+	$(TOP)/tests/atn_util.opt emit-ocaml grammars/Lexer.interp > ANTLRv4Lexer_atn.ml.NEW && mv ANTLRv4Lexer_atn.ml.NEW ANTLRv4Lexer_atn.ml
 
 $(TARGET_PACKAGE).cmo $(TARGET_PACKAGE).cmi: $(CMO)
 	$(OCAMLFIND) ocamlc $(DEBUG) -pack -o $(TARGET_PACKAGE).cmo $^

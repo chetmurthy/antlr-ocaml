@@ -22,6 +22,9 @@ let pp_char_stream strm =
 #require "pa_ppx.located_yojson";;
 #require "pa_ppx.deriving_plugins.located_yojson";;
 
+Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
+Pa_ppx_runtime_fat.Exceptions.Ploc.pp_loc_verbose := true ;;
+
 open Pa_ppx_utils ;;
 
 #require "antlr";;
@@ -31,7 +34,24 @@ Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.
 
 
 #require "parse_antlrv4" ;;
-open Parse_antlrv4.Pa ;;
+open Parse_antlrv4 ;;
+
+#install_printer Fpath.pp ;;
+
+let pp_token_stream strm =
+  let l = Stream.npeek !Toploop.max_printer_depth strm in
+  let rec trim_eoi = function
+    ("EOI",_ as x)::_ -> [x]
+  | h::t -> h::(trim_eoi t)
+  | [] -> []
+  in 
+  Fmt.(pf stdout "<strm<[%a]>>" (list ~sep:comma (parens (pair ~sep:comma (quote string) (quote string)))) (trim_eoi l))
+;;
+#install_printer pp_token_stream ;;
+
+#trace Pa.check_rule_modifiers_uid_f ;;
+
+Pa.Grammar.load ~file:"_generated/SemPredEvalLexer/LexerInputPositionSensitivePredicates/L.g4" ;;
 
 (*
 ;;; Local Variables: ***

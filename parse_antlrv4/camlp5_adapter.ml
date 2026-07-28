@@ -52,7 +52,7 @@ let located_pattern_of_token ~file self : (Plexing.pattern * Ploc.t) =
   let tok = pattern_of_token self in
   (tok,loc)
 
-let input_file = ref ""
+let input_file = Plexing.input_file
 let lexer cs =
   let txt = string_of_char_stream cs in
   let input : Exec.IS.t =

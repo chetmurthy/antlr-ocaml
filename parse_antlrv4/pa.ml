@@ -140,7 +140,7 @@ type lexer_element_t = [
   | LEXELEM_SEMPRED of string and option predicate_options_t
   | LEXELEM_BLOCK of list lexer_alt_t
   ]
-and lexer_alt_t = (list lexer_element_t * option (list lexer_command_t))
+and lexer_alt_t = (option (list lexer_element_t) * option (list lexer_command_t))
 ;
 
 type rule_spec_t = [
@@ -203,6 +203,42 @@ value check_identifier_not_assign_f strm =
 value check_identifier_not_assign =
   Grammar.Entry.of_parser g "check_identifier_not_assign"
     check_identifier_not_assign_f
+;
+
+value check_rule_modifiers_uid_f strm =
+  let rec checkrec n =
+    let l = stream_npeek n strm in
+    if List.length l < n then raise Stream.Failure else
+    let last = Std.last l in
+    match last with [
+        ("UID", _) -> ()
+      | ("",("fragment"|"public"|"private"|"protected")) -> checkrec (n+1)
+      | _ -> raise Stream.Failure
+      ]
+  in checkrec 1
+;
+
+value check_rule_modifiers_uid =
+  Grammar.Entry.of_parser g "check_rule_modifiers_uid"
+    check_rule_modifiers_uid_f
+;
+
+value check_rule_modifiers_lid_f strm =
+  let rec checkrec n =
+    let l = stream_npeek n strm in
+    if List.length l < n then raise Stream.Failure else
+    let last = Std.last l in
+    match last with [
+        ("LID", _) -> ()
+      | ("",("fragment"|"public"|"private"|"protected")) -> checkrec (n+1)
+      | _ -> raise Stream.Failure
+      ]
+  in checkrec 1
+;
+
+value check_rule_modifiers_lid =
+  Grammar.Entry.of_parser g "check_rule_modifiers_lid"
+    check_rule_modifiers_lid_f
 ;
 
 EXTEND
@@ -288,6 +324,7 @@ rule_spec: [ [
 ;
 
 parser_rule_spec: [ [
+      check_rule_modifiers_lid ;
       rml = OPT rule_modifiers ; id = LID ; action_opt = OPT arg_action_block ;
       returns_opt = OPT rule_returns ;
       throws_opt = OPT throws_spec ;
@@ -357,6 +394,7 @@ labeled_alt: [ [
 ;
 
 lexer_rule_spec: [ [
+      check_rule_modifiers_uid ;
       frag = FLAG "fragment" ;
       uid = UID ;
       opts = OPT options_spec ; ":" ;
@@ -370,12 +408,11 @@ lexer_rule_block: [ [ l = lexer_alt_list -> l ] ]  ;
 lexer_alt_list: [ [ l = LIST1 lexer_alt SEP "|" -> l ] ] ;
 
 lexer_alt: [ [
-      l = lexer_elements ; cmds_opt = OPT lexer_commands -> (l, cmds_opt)
-    | -> ([], None)
+      l_opt = lexer_elements ; cmds_opt = OPT lexer_commands -> (l_opt, cmds_opt)
   ] ]
 ;
 
-lexer_elements: [ [ l = LIST1 lexer_element -> l ] ] ;
+lexer_elements: [ [ l = LIST1 lexer_element -> Some l | -> None ] ] ;
 
 lexer_element: [ [
       e = lexer_atom ; suff = OPT ebnf_suffix ->
