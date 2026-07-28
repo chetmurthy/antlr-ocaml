@@ -1,6 +1,7 @@
 (**pp -syntax camlp5r -package camlp5.extend *)
 
 open Pa_ppx_utils ;
+open Pa_ppx_located_yojson ;
 
 value stream_npeek n s = (Stream.npeek n s : list (string * string)) ;
 
@@ -158,6 +159,13 @@ type rule_spec_t = [
   ]
 ;
 
+type grammar_t = {
+    type_ : grammar_type
+  ; prequels : list prequel_t
+  ; rules : list rule_spec_t
+  ; modes : list (string * list rule_spec_t)
+  } ;
+
 value g = Grammar.gcreate lexer;
 value grammar_spec = Grammar.Entry.create g "grammar_spec";
 value grammar_decl = Grammar.Entry.create g "grammar_decl";
@@ -213,7 +221,7 @@ EXTEND
       rl = rules ;
       ml = LIST0 mode_spec ;
       EOI ->
-      (d,l,rl,ml)
+      {type_= d; prequels=l; rules=rl; modes=ml}
     ] ]
   ;
   grammar_decl: [ [
@@ -551,4 +559,9 @@ identifier: [ [ id = LID -> id | id = UID -> id ] ] ;
 qualified_identifier: [ [ l = LIST1 identifier SEP "." -> l ] ] ;
 
 END ;
+
+module Grammar = Pa_json.PAHelper(struct
+                     type t = grammar_t ;
+                     value entry = grammar_spec ;
+                   end) ;
 
