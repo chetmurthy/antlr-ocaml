@@ -9,7 +9,7 @@ DESTDIR=
 
 PACKAGES := $(PACKAGES),antlr
 
-TARGET_PACKAGE=parse_antlr4
+TARGET_PACKAGE=parse_antlrv4
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
@@ -19,7 +19,7 @@ TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)
 ALLPACKAGES=$(PACKAGES)
 
-OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Parse_antlr4
+OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Parse_antlrv4
 
 all: $(TARGET) $(TARGET:.cma=.cmxa)
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install

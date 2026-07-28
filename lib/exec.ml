@@ -2994,7 +2994,11 @@ module TS = struct
 end
 module TokenStream = TS
 
-let file_init  ~dfast_cache ~acs_cache ~ac_cache () = begin
+let inited = ref false
+let file_init  ~dfast_cache ~acs_cache ~ac_cache () =
+  if !inited then () else
+  begin
+    inited := true ;
     AS.module_init ~dfast_cache ~acs_cache ~ac_cache () ;
     LAS.module_init ~dfast_cache ~acs_cache ~ac_cache ()
   end

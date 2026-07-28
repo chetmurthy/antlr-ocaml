@@ -326,8 +326,6 @@ rule_prequel: [ [
   ] ]
 ;
 
-action_block: [ [ a = ACTION -> a ] ] ;
-
 rule_returns: [ [ "returns" ; a = arg_action_block -> a ] ] ;
 
 throws_spec: [ [
