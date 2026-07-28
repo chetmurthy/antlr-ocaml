@@ -24,13 +24,13 @@ let pattern_of_token self : Plexing.pattern =
   assert (Array.length symbolic_names = Array.length literal_names) ;
   match self.Exec.T.type_ with
     None -> assert false
-  | Some (-1) -> ("EOF","EOF")
+  | Some (-1) -> ("EOI","")
   | Some n when n < 0 -> assert false
   | Some n when n >= Array.length symbolic_names -> assert false
   | Some n ->
      match (symbolic_names.(n), literal_names.(n)) with
        (None, _) -> assert false
-     | (Some _, Some txt) -> (txt, txt)
+     | (Some _, Some txt) -> ("", txt)
      | (Some ty, None) ->
         let txt =
           match self._text with
