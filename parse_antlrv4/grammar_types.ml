@@ -1,5 +1,10 @@
 (**pp -syntax camlp5r -package camlp5.extend *)
 
+type action_t = [ ACTION of string ] ;
+type sempred_t = [ SEMPRED of string ] ;
+
+value action2sempred = fun [ (ACTION a) -> SEMPRED a ] ;
+
 type grammar_type = [ LEXER | PARSER ] ;
 type qualified_id = list string ;
 type option_value_t = [
@@ -20,13 +25,13 @@ type prequel_t = [
   | PQ_DELEGATE_GRAMMARS of list delegate_grammar_t
   | PQ_TOKENS_SPEC of list string
   | PQ_CHANNELS_SPEC of list string
-  | PQ_ACTION_ of (option action_scope_name * string * string)
+  | PQ_ACTION_ of (option action_scope_name * string * action_t)
   ]
 ;
 
 type rule_prequel_t = [
     RPQ_OPTIONS of list option_t 
-  | RPQ_RULEACTION of string and string
+  | RPQ_RULEACTION of string and action_t
   ]
 ;
 
@@ -55,7 +60,7 @@ type element_options_t = list element_option_t ;
 
 type predicate_option_value_t = [
     PREDOPT_EOPT of element_option_value_t
-  | PREDOPT_ACTION of string and string
+  | PREDOPT_ACTION of string and action_t
   | PREDOPT_INT of string and string
   | PREDOPT_STRING of string and string
   ]
@@ -105,9 +110,9 @@ type ebnf_suffix_t = {
 type element_t = [
     ELEM_LABELED of string and bool and element_t
   | ELEM_SUFFIX of element_t and ebnf_suffix_t
-  | ELEM_SEMPRED of string and option predicate_options_t
-  | ELEM_ACTION of string and option predicate_options_t
-  | ELEM_BLOCK of option (option (list option_t) * list (string * string)) and list alternative_t
+  | ELEM_SEMPRED of sempred_t and option predicate_options_t
+  | ELEM_ACTION of action_t and option predicate_options_t
+  | ELEM_BLOCK of option (option (list option_t) * list (string * action_t)) and list alternative_t
   | ELEM_ATOM of atom_t
   ]
 and alternative_t = (option element_options_t * list element_t)
@@ -125,8 +130,8 @@ type labeled_alternative_t = (alternative_t * option string) ;
 type lexer_element_t = [
     LEXELEM_ATOM of lexer_atom_t
   | LEXELEM_SUFFIX of lexer_element_t and ebnf_suffix_t
-  | LEXELEM_ACTION of string
-  | LEXELEM_SEMPRED of string and option predicate_options_t
+  | LEXELEM_ACTION of action_t
+  | LEXELEM_SEMPRED of sempred_t and option predicate_options_t
   | LEXELEM_BLOCK of list lexer_alt_t
   ]
 and lexer_alt_t = (option (list lexer_element_t) * option (list lexer_command_t))
@@ -142,9 +147,14 @@ type rule_spec_t = [
     ; locals : option (list string)
     ; rule_prequels : list rule_prequel_t
     ; rules : (list labeled_alternative_t)
-    ; exception_group : (list ((list string) * string) * (option string))
+    ; exception_group : (list ((list string) * action_t) * (option action_t))
     }
-  | RULESPEC_LEXER of bool and string and option (list option_t) and list lexer_alt_t
+  | RULESPEC_LEXER of {
+      fragment: bool
+    ; name : string
+    ; options :  option (list option_t)
+    ; rules : list lexer_alt_t
+    }
   ]
 ;
 

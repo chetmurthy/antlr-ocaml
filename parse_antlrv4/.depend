@@ -17,7 +17,11 @@ pa.cmo : \
 pa.cmx : \
     grammar_types.cmx \
     camlp5_adapter.cmx
-grammar_tools.cmo :
-grammar_tools.cmx :
+grammar_tools.cmo : \
+    pa.cmo \
+    grammar_types.cmo
+grammar_tools.cmx : \
+    pa.cmx \
+    grammar_types.cmx
 mk_meta.cmo :
 mk_meta.cmx :

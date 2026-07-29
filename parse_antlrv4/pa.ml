@@ -144,11 +144,11 @@ channels_spec: [ [ CHANNELS ; l = OPT id_list ; "}" ->
 id_list: [ [ l = LIST1 identifier SEP "," ; OPT "," -> l ] ] ;
 
 action_: [ [ "@" ; sname_opt = OPT [ sname = action_scope_name ; "::" -> sname ] ;
-             id = identifier ; a = ACTION -> (sname_opt, id, a) ] ] ;
+             id = identifier ; a = ACTION -> (sname_opt, id, ACTION a) ] ] ;
 
 action_scope_name: [ [ id = identifier -> ASN_ID id | gt = grammar_type -> ASN_GRAMMAR gt ] ];
 
-action_block: [ [ a = ACTION -> a ] ] ;
+action_block: [ [ a = ACTION -> ACTION a ] ] ;
 
 arg_action_block: [ [
     BEGIN_ARGUMENT ; l = LIST0 ARGUMENT_CONTENT ; END_ARGUMENT  -> l
@@ -245,7 +245,12 @@ lexer_rule_spec: [ [
       uid = UID ;
       opts = OPT options_spec ; ":" ;
       rb = lexer_rule_block ; ";"
-      -> RULESPEC_LEXER frag uid opts rb
+      -> RULESPEC_LEXER {
+             fragment=frag
+           ; name=uid
+           ; options=opts
+           ; rules=rb
+           }
   ] ]
 ;
 
@@ -267,7 +272,7 @@ lexer_element: [ [
       (match suff with [ None -> e | Some suff -> LEXELEM_SUFFIX e suff ])
     | a = action_block ; ispred = FLAG "?" ; popt = OPT predicate_options ->
        (if ispred then
-         LEXELEM_SEMPRED a popt
+         LEXELEM_SEMPRED (action2sempred a) popt
        else do {
           assert (Std.isNone popt) ;
           LEXELEM_ACTION a
@@ -317,7 +322,7 @@ element: [ [
             (match suff with [ None -> e | Some suff -> ELEM_SUFFIX e suff ])
       | a = action_block ; qflag = FLAG "?" ; popt = OPT predicate_options ->
          (if qflag then
-           ELEM_SEMPRED a popt
+           ELEM_SEMPRED (action2sempred a) popt
          else ELEM_ACTION a popt)
     ] ]
   ;

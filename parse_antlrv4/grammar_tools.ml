@@ -45,6 +45,14 @@ let load_imports g =
     if not (List.for_all (function PQ_DELEGATE_GRAMMARS _ -> true | _ -> false) g.prequels) then
       Fmt.(failwithf "slaveGrammar %s (file %s) should only have imports, not other prequels"
              name file) ;
-    loadrec g
+    let g = loadrec g in
+    let rulenames =
+      (g.rules @ (List.concat_map snd g.modes))
+      |> List.map (function RULESPEC_LEXER {name} -> name
+                          | _ -> Fmt.(failwithf "PARSER rule in a Lexer grammar!")) in
+    let repeats = Std2.hash_list_repeats rulenames in
+    if repeats <>  [] then
+      Fmt.(failwithf "load_imports: repeated rule-names: %a@." (list ~sep:comma string) repeats) ;
+    g
   in
   g |> loadrec |> group_modes
