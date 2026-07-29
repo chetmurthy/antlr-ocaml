@@ -11,6 +11,8 @@ open Cmdliner.Term.Syntax
 open Antlr
 open Atn
 
+module EmitOCaml = struct
+
 let pp_option ppf pps = function
     None -> Fmt.(pf pps "None")
   | Some x -> Fmt.(pf pps "Some %a" ppf x)
@@ -43,7 +45,7 @@ let atn = Antlr.Interp.Raw.{
 (list ~sep:semi int) raw_atn.Interp.Raw.atn) ;
          ()
 
-let emit_ocaml_cmd =
+let cmd =
 let file =
   let docv = "The file to read-and-convert to OCaml." in
   let absent = "absent." in
@@ -62,6 +64,8 @@ let debug =
   let+ file and+ debug in
   emit_ocaml ~debug file ;
   Cmdliner.Cmd.Exit.ok
+
+end
 
 let check_rule_separation atn =
   let state2rule = MHM.mk 23 in
@@ -104,7 +108,9 @@ let dump ~json ~debug ~disable_verify ~check_rule_separation:check file =
     check_rule_separation atn ;
   ()
 
-let dump_cmd =
+module Dump = struct
+
+let cmd =
 let file =
   let docv = "The file to read-and-dump." in
   let absent = "absent." in
@@ -136,6 +142,9 @@ let disable_verify =
   dump ~check_rule_separation ~json ~debug ~disable_verify file ;
   Cmdliner.Cmd.Exit.ok
 
+end
+
+module Graph = struct
 let graph ~xdot ~with_rule_index ~ruleIndex file =
   let ruleIndex = if ruleIndex = -1 then None else Some ruleIndex in
   let atn =
@@ -181,7 +190,7 @@ let graph ~xdot ~with_rule_index ~ruleIndex file =
                e
                dump_state_id t)) edges
 
-let graph_cmd =
+let cmd =
 let file =
   let docv = "The file to convert to dot format." in
   let absent = "absent." in
@@ -208,11 +217,12 @@ let with_rule_index =
   let+ file and+ ruleIndex and+ xdot and+ with_rule_index in
   graph ~with_rule_index ~xdot ~ruleIndex file ;
   Cmdliner.Cmd.Exit.ok
+end
 
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [emit_ocaml_cmd; dump_cmd; graph_cmd]
+  [EmitOCaml.cmd; Dump.cmd; Graph.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())
