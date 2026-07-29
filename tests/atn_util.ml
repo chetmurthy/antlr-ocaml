@@ -11,7 +11,7 @@ open Cmdliner.Term.Syntax
 open Antlr
 open Atn
 
-module EmitOCaml = struct
+module EmitATN = struct
 
 let pp_option ppf pps = function
     None -> Fmt.(pf pps "None")
@@ -60,7 +60,7 @@ let debug =
     `S Manpage.s_bugs;
     `P "Email bug reports to <bugs@example.org>." ]
   in
-  Cmd.make (Cmd.info "emit-ocaml" ~version:"%%VERSION%%" ~doc ~man) @@
+  Cmd.make (Cmd.info "emit-ocaml-atn" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ debug in
   emit_ocaml ~debug file ;
   Cmdliner.Cmd.Exit.ok
@@ -222,7 +222,7 @@ end
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [EmitOCaml.cmd; Dump.cmd; Graph.cmd]
+  [EmitATN.cmd; Dump.cmd; Graph.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())

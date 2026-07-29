@@ -19,11 +19,11 @@ EXE=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
 
 TESTML=$(shell ls *_test.ml)
 
-TESTSOPT=$(TESTML:.ml=.opt)
+OPT=$(EXE:.exe=.opt)
 
-all: $(EXE) $(TESTSOPT)
+all: $(EXE) $(OPT)
 
-test:: $(TESTML:.ml=.TEST)
+test:: all $(TESTML:.ml=.TEST)
 
 %.TEST: %.opt
 	mkdir -p _build && ./$<
