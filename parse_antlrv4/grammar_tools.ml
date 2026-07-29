@@ -6,6 +6,17 @@ open Pa_ppx_utils
 
 open Grammar_types
 
+let group_modes g =
+  let rec grec = function
+      [] -> []
+    | ((mode, _)::_ as l) ->
+       let thismode_rules =  Std.filter (fun (m, _) -> m = mode) l in
+       let remainder =  Std.filter (fun (m, _) -> m <> mode) l in
+       let grouped = (mode, List.concat_map snd thismode_rules) in
+       grouped::(grec remainder)
+  in
+  {(g) with modes = grec g.modes}
+
 let load_imports g =
   let rec loadrec g =
     let toimport =
@@ -36,15 +47,4 @@ let load_imports g =
              name file) ;
     loadrec g
   in
-  loadrec g
-
-let group_modes g =
-  let rec grec = function
-      [] -> []
-    | ((mode, _)::_ as l) ->
-       let thismode_rules =  Std.filter (fun (m, _) -> m = mode) l in
-       let remainder =  Std.filter (fun (m, _) -> m <> mode) l in
-       let grouped = (mode, List.concat_map snd thismode_rules) in
-       grouped::(grec remainder)
-  in
-  {(g) with modes = grec g.modes}
+  g |> loadrec |> group_modes
