@@ -7,40 +7,39 @@ PACKAGES := $(PACKAGES),antlr,parse_antlrv4,ounit2,cmdliner,yojson,antlrtest,pa_
 ML= \
 	lib_test.ml antlr_test.ml atn_util.ml mimick_test.ml \
 	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
-	replay_test.ml parser_test.ml grammar_tools_test.ml
+	replay_util.ml parser_test.ml grammar_tools_test.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
-TESTS=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
+EXE=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
 	antlrtest_test.exe antlrtest_util.exe \
-	deserialize_jsonlog.exe replay_test.exe \
+	deserialize_jsonlog.exe replay_util.exe \
 	parser_test.exe grammar_tools_test.exe
 
-TESTSOPT=$(TESTS:.exe=.opt)
+TESTML=$(shell ls *_test.ml)
 
-all: $(TESTS) $(TESTSOPT)
+TESTSOPT=$(TESTML:.ml=.opt)
 
-test:: all
-	mkdir -p _build && ./lib_test.exe
-	mkdir -p _build && ./antlr_test.exe
-	mkdir -p _build && ./mimick_test.exe
-	mkdir -p _build && ./antlrtest_test.exe
-	mkdir -p _build && ./parser_test.exe
-	mkdir -p _build && ./grammar_tools_test.exe
+all: $(EXE) $(TESTSOPT)
+
+test:: $(TESTML:.ml=.TEST)
+
+%.TEST: %.opt
+	mkdir -p _build && ./$<
 
 MANAGETRIP=./tools/manage-trip-tests
-deserialize-all:: replay_test.opt
-	./replay_test.opt deserialize -v _generated/*/*/json.log
+deserialize-all:: replay_util.opt
+	./replay_util.opt deserialize -v _generated/*/*/json.log
 
-filter-all:: replay_test.opt
-	./replay_test.opt simulate -it "ENTER PredictionContext.merge" _generated/*/*/json.log
+filter-all:: replay_util.opt
+	./replay_util.opt simulate -it "ENTER PredictionContext.merge" _generated/*/*/json.log
 
-simulate-all:: replay_test.opt
-	./replay_test.opt simulate --ooe -e "PredictionContext.merge" _generated/*/*/json.log
-#	./replay_test.opt simulate -it "ENTER PredictionContext.merge" _generated/*/*/json.log
-#	./replay_test.opt simulate -it "ENTER PredictionContext.mergeArrays" _generated/*/*/json.log
-#	./replay_test.opt simulate -it "ENTER PredictionContext.mergeRoot" _generated/*/*/json.log
+simulate-all:: replay_util.opt
+	./replay_util.opt simulate --ooe -e "PredictionContext.merge" _generated/*/*/json.log
+#	./replay_util.opt simulate -it "ENTER PredictionContext.merge" _generated/*/*/json.log
+#	./replay_util.opt simulate -it "ENTER PredictionContext.mergeArrays" _generated/*/*/json.log
+#	./replay_util.opt simulate -it "ENTER PredictionContext.mergeRoot" _generated/*/*/json.log
 
 generate-all:: antlrtest_util.opt
 	mkdir -p _generated && $(MANAGETRIP) generate -v
