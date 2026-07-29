@@ -8,6 +8,15 @@ open Antlr
 open Util
 open Grammar_types
 
+let rulespec_name = function
+    RULESPEC_LEXER {name} -> name
+  | _ -> Fmt.(failwithf "PARSER rule in a Lexer grammar!")
+
+let concat_rulespecs rsl1 rsl2 =
+  let names1 = List.map rulespec_name rsl1 in
+  let rsl2 = List.filter (fun rs -> not (List.mem (rulespec_name rs) names1)) rsl2 in
+  rsl1@rsl2
+
 let group_modes g =
   let rec grec = function
       [] -> []
@@ -46,7 +55,7 @@ let load_imports ~path g =
     let gl_modes = gl |> List.concat_map (fun g -> g.modes) in
     { (g) with
       prequels = new_prequels
-    ; rules = g.rules @ gl_rules
+    ; rules = concat_rulespecs g.rules gl_rules
     ; modes = g.modes @ gl_modes
     }
   and loadfile ~file name =
@@ -61,8 +70,7 @@ let load_imports ~path g =
     let g = loadrec g in
     let rulenames =
       (g.rules @ (List.concat_map snd g.modes))
-      |> List.map (function RULESPEC_LEXER {name} -> name
-                          | _ -> Fmt.(failwithf "PARSER rule in a Lexer grammar!")) in
+      |> List.map rulespec_name in
     let repeats = Std2.hash_list_repeats rulenames in
     if repeats <>  [] then
       Fmt.(failwithf "load_imports: repeated rule-names: %a@." (list ~sep:comma string) repeats) ;
@@ -106,10 +114,7 @@ let grammar_extract1 extractor g =
   let rulespecs = g.rules @ (List.concat_map snd g.modes) in
   let labeled_rulespecs =
     List.mapi (fun i rs ->
-        let name =
-          match rs with
-            RULESPEC_LEXER {name} -> name
-          | _ -> assert false in
+        let name = rulespec_name rs in
         ((name,i), rs)) rulespecs in
   labeled_rulespecs
   |> List.concat_map

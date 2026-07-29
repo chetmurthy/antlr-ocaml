@@ -159,6 +159,10 @@ DTEST += \
 	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.2.txt \
 	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.3.txt \
 
+DTEST += \
+	fixtures/custom-descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.1.txt \
+	fixtures/custom-descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.2.txt \
+
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
 	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)
