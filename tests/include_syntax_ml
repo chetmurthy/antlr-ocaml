@@ -50,7 +50,7 @@ let pp_token_stream strm =
 ;;
 #install_printer pp_token_stream ;;
 
-let g = Pa.Grammar.load ~file:"_generated/SemPredEvalLexer/ManyPredsActions.2/L.g4";;
+let g = Pa.Grammar.load ~file:"_generated/CompositeLexers/LexerDelegatorRuleOverridesDelegate.1/M.g4";;
 let g = Grammar_tools.load_imports ~path:[] g ;;
 
 (*
@@ -70,8 +70,8 @@ Grammar_tools.grammar_sempreds g ;;
 #load "grammar_tools_test.cmo";;
 open Grammar_tools_test ;;
 
-Action.full (Fpath.v "_generated/SemPredEvalLexer/ManyPredsActions.2/L.py") ;;
-Sempred.full (Fpath.v "_generated/SemPredEvalLexer/ManyPredsActions.2/L.py") ;;
+Action.full (Fpath.v "_generated/CompositeLexers/LexerDelegatorRuleOverridesDelegate.1/M.py") ;;
+Sempred.full (Fpath.v "_generated/CompositeLexers/LexerDelegatorRuleOverridesDelegate.1/M.py") ;;
 
 (*
 ;;; Local Variables: ***

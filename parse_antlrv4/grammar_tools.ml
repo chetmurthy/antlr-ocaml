@@ -51,10 +51,11 @@ let load_imports ~path g =
              let file = Path.find ~path file in
              let file = Fpath.to_string file in
              loadfile ~file n) in
+    let gl_prequels = gl |> List.concat_map (fun g -> g.prequels) in
     let gl_rules = gl |> List.concat_map (fun g -> g.rules) in
     let gl_modes = gl |> List.concat_map (fun g -> g.modes) in
     { (g) with
-      prequels = new_prequels
+      prequels = new_prequels @ gl_prequels
     ; rules = concat_rulespecs g.rules gl_rules
     ; modes = g.modes @ gl_modes
     }
@@ -64,9 +65,6 @@ let load_imports ~path g =
     if g.name <> name then
       Fmt.(failwithf "slaveGrammar %s (file %s) was named %s"
              name file g.name) ;
-    if not (List.for_all (function PQ_DELEGATE_GRAMMARS _ -> true | _ -> false) g.prequels) then
-      Fmt.(failwithf "slaveGrammar %s (file %s) should only have imports, not other prequels"
-             name file) ;
     let g = loadrec g in
     let rulenames =
       (g.rules @ (List.concat_map snd g.modes))
