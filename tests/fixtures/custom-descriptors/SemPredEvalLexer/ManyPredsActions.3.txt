@@ -1,0 +1,61 @@
+[type]
+CompositeLexer
+
+[grammar]
+lexer grammar L;
+import T, S;
+WORD1 : ID1+ { print(self.text) } ;
+WORD2 : ID2+ { print(self.text) } ;
+fragment ID1 : { <Column()> \< 2 }? [a-zA-Z];
+fragment ID2 : { <Column()> >= 2 }? [a-zA-Z];
+WS : (' '|'\n') -> skip;
+
+A1 :  { print("A1.1") } { <Column()> \< 2 }? { print("A1.2") } [a-z] { print("A1.3") }  { <Column()> \< 2 }? { print("A1.4") } -> more ;
+A2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+
+mode A;
+A3 :  { print("A3.1") } { <Column()> \< 2 }? { print("A3.2") } [a-z] { print("A3.3") }  { <Column()> \< 2 }? { print("A3.4") } -> more ;
+A4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+[slaveGrammar]
+lexer grammar S;
+SA1 :  { print("SA1.1") } { <Column()> \< 2 }? { print("SA1.2") } [a-z] { print("SA1.3") }  { <Column()> \< 2 }? { print("SA1.4") } -> more ;
+SA2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+mode SA;
+SA3 :  { print("SA3.1") } { <Column()> \< 2 }? { print("SA3.2") } [a-z] { print("SA3.3") }  { <Column()> \< 2 }? { print("SA3.4") } -> more ;
+SA4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+[slaveGrammar]
+lexer grammar T;
+TA1 :  { print("TA1.1") } { <Column()> \< 2 }? { print("TA1.2") } [a-z] { print("TA1.3") }  { <Column()> \< 2 }? { print("TA1.4") } -> more ;
+TA2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+mode TB;
+TA3 :  { print("TA3.1") } { <Column()> \< 2 }? { print("TA3.2") } [a-z] { print("TA3.3") }  { <Column()> \< 2 }? { print("TA3.4") } -> more ;
+TA4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+mode A;
+TA5 :  { print("TA5.1") } { <Column()> \< 2 }? { print("TA5.2") } [a-z] { print("TA5.3") }  { <Column()> \< 2 }? { print("TA5.4") } -> more ;
+TA6 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
+
+[input]
+"""a cde
+abcde
+"""
+
+[output]
+a
+cde
+ab
+cde
+[@0,0:0='a',<1>,1:0]
+[@1,2:4='cde',<2>,1:2]
+[@2,6:7='ab',<1>,2:0]
+[@3,8:10='cde',<2>,2:2]
+[@4,12:11='<EOF>',<-1>,3:0]
+
+[flags]
+showDFA
+

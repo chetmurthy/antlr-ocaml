@@ -153,8 +153,10 @@ DTEST += \
 	fixtures/custom-descriptors/antlr4/A2.txt \
 	fixtures/custom-descriptors/SemPredEvalLexer/IdentKinds.txt \
 
-#DTEST += \
+#DTEST := \
 #	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.txt \
+#	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.2.txt \
+#	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.3.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe

@@ -2,6 +2,7 @@
 
 open Pa_ppx_base
 open Ppxutil
+open Pa_ppx_utils
 
 open Grammar_types
 
@@ -36,3 +37,14 @@ let load_imports g =
     loadrec g
   in
   loadrec g
+
+let group_modes g =
+  let rec grec = function
+      [] -> []
+    | ((mode, _)::_ as l) ->
+       let thismode_rules =  Std.filter (fun (m, _) -> m = mode) l in
+       let remainder =  Std.filter (fun (m, _) -> m <> mode) l in
+       let grouped = (mode, List.concat_map snd thismode_rules) in
+       grouped::(grec remainder)
+  in
+  {(g) with modes = grec g.modes}
