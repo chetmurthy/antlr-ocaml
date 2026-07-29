@@ -12,18 +12,8 @@ let _ID_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
   if actionIndex = 1 then
   output_string stdout "ID\n" ;;
 
+let actions = [(0,_I_action); (1,_ID_action)]
+let sempreds = []
+
 let init ~input ~output =
-  let decisionToDFA : DFA.t array =
-    atn.Atn.decisionToState
-    |> Array.mapi (fun i stid ->
-           DFA.init atn Atn.LEXER stid i
-         ) in
-  let recog = R.init input ~output ~actions:[(0,_I_action); (1,_ID_action)] () in
-  let interp : LAS.t =
-    Tracelog.with_disabled (fun () ->
-        LAS.init atn decisionToDFA [] ~recog ()
-      ) ()
-  in
-  Tracelog.with_disabled (fun () ->
-      Lexer.init ~recog ~interp ()
-    ) ()
+  LexerBase.init ~atn ~actions ~sempreds ~input ~output

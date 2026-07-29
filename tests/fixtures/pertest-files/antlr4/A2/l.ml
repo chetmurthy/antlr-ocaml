@@ -27,18 +27,8 @@ let _END_ARGUMENT_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIn
   if actionIndex = 0 then
     handleEndArgument self cu
 
+let actions = [(6,_BEGIN_ARGUMENT_action);(54,_END_ARGUMENT_action)]
+let sempreds = []
+
 let init ~input ~output =
-  let decisionToDFA : DFA.t array =
-    atn.Atn.decisionToState
-    |> Array.mapi (fun i stid ->
-           DFA.init atn Atn.LEXER stid i
-         ) in
-  let recog = R.init input ~output ~actions:[(6,_BEGIN_ARGUMENT_action);(54,_END_ARGUMENT_action)] () in
-  let interp : LAS.t =
-    Tracelog.with_disabled (fun () ->
-        LAS.init atn decisionToDFA [] ~recog ()
-      ) ()
-  in
-  Tracelog.with_disabled (fun () ->
-      Lexer.init ~recog ~interp ()
-    ) ()
+  LexerBase.init ~atn ~actions ~sempreds ~input ~output
