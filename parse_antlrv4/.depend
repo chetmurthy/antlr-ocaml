@@ -1,4 +1,4 @@
-ANTLRv4Lexer_atn.cmo ANTLRv4Lexer.cmo camlp5_adapter.cmo pa.cmo ANTLRv4Lexer_atn.cmi ANTLRv4Lexer.cmi camlp5_adapter.cmi pa.cmi ANTLRv4Lexer_atn.cmx ANTLRv4Lexer.cmx camlp5_adapter.cmx pa.cmx: ../local-install/lib/antlr/META
+ANTLRv4Lexer_atn.cmo ANTLRv4Lexer.cmo camlp5_adapter.cmo grammar_types.cmo pa.cmo grammar_tools.cmo ANTLRv4Lexer_atn.cmi ANTLRv4Lexer.cmi camlp5_adapter.cmi grammar_types.cmi pa.cmi grammar_tools.cmi ANTLRv4Lexer_atn.cmx ANTLRv4Lexer.cmx camlp5_adapter.cmx grammar_types.cmx pa.cmx grammar_tools.cmx: ../local-install/lib/antlr/META
 ANTLRv4Lexer_atn.cmo :
 ANTLRv4Lexer_atn.cmx :
 ANTLRv4Lexer.cmo : \
@@ -9,9 +9,15 @@ camlp5_adapter.cmo : \
     ANTLRv4Lexer.cmo
 camlp5_adapter.cmx : \
     ANTLRv4Lexer.cmx
+grammar_types.cmo :
+grammar_types.cmx :
 pa.cmo : \
+    grammar_types.cmo \
     camlp5_adapter.cmo
 pa.cmx : \
+    grammar_types.cmx \
     camlp5_adapter.cmx
+grammar_tools.cmo :
+grammar_tools.cmx :
 mk_meta.cmo :
 mk_meta.cmx :
