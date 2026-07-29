@@ -7,7 +7,7 @@ include $(TOP)/config/Makefile.sub
 
 DESTDIR=
 
-PACKAGES := $(PACKAGES),ocamlgraph
+PACKAGES := $(PACKAGES),ocamlgraph,fpath,bos
 
 TARGET_PACKAGE=antlr
 TARGET = $(TARGET_PACKAGE).cma

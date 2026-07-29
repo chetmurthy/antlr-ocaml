@@ -1,5 +1,6 @@
 #use "topfind.camlp5";;
 #camlp5o ;;
+#require "ounit2";;
 #require "camlp5.pr_o";;
 
 let pp_ploc_t pps (loc : Ploc.t) = Fmt.(pf pps "<%s>" (Ploc.string_of_location loc)) ;;
@@ -49,9 +50,28 @@ let pp_token_stream strm =
 ;;
 #install_printer pp_token_stream ;;
 
-#trace Pa.check_rule_modifiers_uid_f ;;
+let g = Pa.Grammar.load ~file:"_generated/SemPredEvalLexer/ManyPredsActions.2/L.g4";;
+let g = Grammar_tools.load_imports ~path:[] g ;;
 
-Pa.Grammar.load ~file:"_generated/SemPredEvalLexer/LexerInputPositionSensitivePredicates/L.g4" ;;
+(*
+#trace Grammar_tools.Debug.new_migrate_action_t ;;
+#trace Migrate_grammar.migrate_rule_spec_t ;;
+#trace Migrate_grammar.migrate_prequel_t ;;
+#trace Migrate_grammar.migrate_rule_prequel_t ;;
+#trace Migrate_grammar.migrate_predicate_option_value_t ;;
+#trace Migrate_grammar.migrate_element_t ;;
+#trace Migrate_grammar.migrate_lexer_element_t ;;
+#trace Migrate_grammar.migrate_lexer_alt_t ;;
+ *)
+
+Grammar_tools.grammar_actions g ;;
+Grammar_tools.grammar_sempreds g ;;
+
+#load "grammar_tools_test.cmo";;
+open Grammar_tools_test ;;
+
+Action.full (Fpath.v "_generated/SemPredEvalLexer/ManyPredsActions.2/L.py") ;;
+Sempred.full (Fpath.v "_generated/SemPredEvalLexer/ManyPredsActions.2/L.py") ;;
 
 (*
 ;;; Local Variables: ***

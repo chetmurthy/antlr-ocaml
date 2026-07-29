@@ -18,7 +18,7 @@ let parse_grammars_test () =
     [Fpath.v "_generated"]
     |> Bos.OS.Path.fold (fun a b -> a::b) []
     |> Result.get_ok
-    |> List.filter (fun fp -> fp |> Fpath.to_string |> Std.ends_with ~pat:".g4")
+    |> List.filter (Fpath.has_ext "g4")
     |> List.map Fpath.to_string
  in
  let test_parse f ctxt =

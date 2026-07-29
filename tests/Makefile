@@ -7,7 +7,7 @@ PACKAGES := $(PACKAGES),antlr,parse_antlrv4,ounit2,cmdliner,yojson,antlrtest,pa_
 ML= \
 	lib_test.ml antlr_test.ml atn_util.ml mimick_test.ml \
 	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
-	replay_test.ml parser_test.ml
+	replay_test.ml parser_test.ml grammar_tools_test.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
@@ -15,7 +15,7 @@ ALLPACKAGES=$(PACKAGES)
 TESTS=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
 	antlrtest_test.exe antlrtest_util.exe \
 	deserialize_jsonlog.exe replay_test.exe \
-	parser_test.exe
+	parser_test.exe grammar_tools_test.exe
 
 TESTSOPT=$(TESTS:.exe=.opt)
 
@@ -27,6 +27,7 @@ test:: all
 	mkdir -p _build && ./mimick_test.exe
 	mkdir -p _build && ./antlrtest_test.exe
 	mkdir -p _build && ./parser_test.exe
+	mkdir -p _build && ./grammar_tools_test.exe
 
 MANAGETRIP=./tools/manage-trip-tests
 deserialize-all:: replay_test.opt
@@ -153,10 +154,10 @@ DTEST += \
 	fixtures/custom-descriptors/antlr4/A2.txt \
 	fixtures/custom-descriptors/SemPredEvalLexer/IdentKinds.txt \
 
-#DTEST := \
-#	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.txt \
-#	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.2.txt \
-#	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.3.txt \
+DTEST += \
+	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.txt \
+	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.2.txt \
+	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.3.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe

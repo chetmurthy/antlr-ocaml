@@ -228,3 +228,17 @@ let escape_string s =
   let s = [%subst "\r" / {|\r|} / pcre2 g s] s in
   let s = [%subst "\t" / {|\t|} / pcre2 g s] s in
   s
+
+module Path = struct
+  type t = Fpath.t list
+
+  let find ~path fname =
+    match List.find_map (fun dir ->
+              let full = Fpath.append dir fname in
+              if full |> Bos.OS.File.exists |> Rresult.R.get_ok then
+                Some full
+              else None) path with
+      Some full -> full
+    | None -> Fmt.(failwithf "Cannot find %a on path (%a)"
+                     Fpath.pp fname (list ~sep:(const string " ") Fpath.pp) path)
+end

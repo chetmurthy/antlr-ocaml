@@ -103,7 +103,8 @@ EXTEND
       rl = rules ;
       ml = LIST0 mode_spec ;
       EOI ->
-      {name = name; type_= d; prequels=l; rules=rl; modes=ml}
+      let filename = Ploc.file_name loc in
+      {name = name; type_= d; prequels=l; rules=rl; modes=ml; filename = filename}
     ] ]
   ;
   grammar_decl: [ [

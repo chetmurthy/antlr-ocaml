@@ -4,6 +4,8 @@ open Pa_ppx_base
 open Ppxutil
 open Pa_ppx_utils
 
+open Antlr
+open Util
 open Grammar_types
 
 let group_modes g =
@@ -17,23 +19,34 @@ let group_modes g =
   in
   {(g) with modes = grec g.modes}
 
-let load_imports g =
+let load_imports ~path g =
+  let path =
+    let dir = g.filename |> Fpath.v |> Fpath.parent in
+    if not (List.mem dir path) then
+      (dir::path)
+    else path in
   let rec loadrec g =
     let toimport =
       g.prequels
       |> List.concat_map (function PQ_DELEGATE_GRAMMARS l -> l | _ -> []) in
+    let new_prequels =
+      g.prequels
+    |> List.filter_map (function PQ_DELEGATE_GRAMMARS _ -> None | x -> Some x) in
     if List.exists (function (_, Some _) -> true | _ -> false) toimport then
       Fmt.(failwithf "grammar %s has a two-part import -- don't know how to do that"
              g.name) ;
     let gl =
       toimport
       |> List.map (fun (n, _) ->
-             let file = n^".g4" in
+             let file = Fpath.v (n^".g4") in
+             let file = Path.find ~path file in
+             let file = Fpath.to_string file in
              loadfile ~file n) in
     let gl_rules = gl |> List.concat_map (fun g -> g.rules) in
     let gl_modes = gl |> List.concat_map (fun g -> g.modes) in
     { (g) with
-      rules = g.rules @ gl_rules
+      prequels = new_prequels
+    ; rules = g.rules @ gl_rules
     ; modes = g.modes @ gl_modes
     }
   and loadfile ~file name =
@@ -66,3 +79,46 @@ let load_imports g =
 
     A similar method for generating sempreds.
  *)
+
+let extract_actions rs =
+  let acc = ref [] in
+  let open Migrate_grammar in
+  let dt = make_dt() in
+  let migrate_action_t _ a =
+    Std.push acc a ;
+    a in
+  let dt = { (dt) with migrate_action_t = migrate_action_t } in
+  ignore (dt.migrate_rule_spec_t dt rs : rule_spec_t) ;
+  List.rev !acc
+
+let extract_sempreds rs =
+  let acc = ref [] in
+  let open Migrate_grammar in
+  let dt = make_dt() in
+  let migrate_sempred_t _ a =
+    Std.push acc a ;
+    a in
+  let dt = { (dt) with migrate_sempred_t = migrate_sempred_t } in
+  ignore (dt.migrate_rule_spec_t dt rs : rule_spec_t) ;
+  List.rev !acc
+
+let grammar_extract1 extractor g =
+  let rulespecs = g.rules @ (List.concat_map snd g.modes) in
+  let labeled_rulespecs =
+    List.mapi (fun i rs ->
+        let name =
+          match rs with
+            RULESPEC_LEXER {name} -> name
+          | _ -> assert false in
+        ((name,i), rs)) rulespecs in
+  labeled_rulespecs
+  |> List.concat_map
+       (fun (lab,rs) ->
+         let actions = extractor rs in
+         List.map (fun act -> (lab, act)) actions)
+  |> List.mapi
+       (fun j (lab, act) ->
+         (lab, (j, act)))
+
+let grammar_actions g = grammar_extract1 extract_actions g
+let grammar_sempreds g = grammar_extract1 extract_sempreds g

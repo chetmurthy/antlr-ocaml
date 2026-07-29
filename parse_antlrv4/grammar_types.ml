@@ -163,4 +163,5 @@ type grammar_t = {
   ; prequels : list prequel_t
   ; rules : list rule_spec_t
   ; modes : list (string * list rule_spec_t)
+  ; filename : string
   } ;

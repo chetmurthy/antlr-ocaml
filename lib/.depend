@@ -39,6 +39,7 @@ atn.cmo : \
     tracelog.cmo \
     token.cmo \
     range.cmo \
+    mimick.cmo \
     intervalSet.cmo \
     interp.cmo
 atn.cmx : \
@@ -47,6 +48,7 @@ atn.cmx : \
     tracelog.cmx \
     token.cmx \
     range.cmx \
+    mimick.cmx \
     intervalSet.cmx \
     interp.cmx
 visualization.cmo : \
@@ -57,15 +59,19 @@ exec.cmo : \
     util.cmo \
     types.cmo \
     tracelog.cmo \
+    range.cmo \
     mimick.cmo \
     interp_syntax.cmo \
+    interp.cmo \
     atn.cmo
 exec.cmx : \
     util.cmx \
     types.cmx \
     tracelog.cmx \
+    range.cmx \
     mimick.cmx \
     interp_syntax.cmx \
+    interp.cmx \
     atn.cmx
 simulate.cmo : \
     tracelog.cmo \
