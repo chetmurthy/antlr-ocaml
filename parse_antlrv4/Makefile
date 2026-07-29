@@ -14,7 +14,7 @@ TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
 	ANTLRv4Lexer_atn.ml ANTLRv4Lexer.ml camlp5_adapter.ml \
-	grammar_types.ml pa.ml grammar_tools.ml
+	grammar_types.ml pa.ml migrate_grammar.ml grammar_tools.ml
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)

@@ -56,3 +56,13 @@ let load_imports g =
     g
   in
   g |> loadrec |> group_modes
+
+(** generate actions:
+    
+    To generate actions:
+
+    (1) extract all rule-specs, numbering them.
+    (2) for each rulespec, extract all actions, numbering them.
+
+    A similar method for generating sempreds.
+ *)

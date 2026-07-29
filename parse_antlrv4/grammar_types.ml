@@ -5,10 +5,11 @@ type sempred_t = [ SEMPRED of string ] ;
 
 value action2sempred = fun [ (ACTION a) -> SEMPRED a ] ;
 
+type qualified_identifier_t = list string ;
+
 type grammar_type = [ LEXER | PARSER ] ;
-type qualified_id = list string ;
 type option_value_t = [
-    OPTION_ID of qualified_id
+    OPTION_ID of qualified_identifier_t
   | OPTION_STRING of string
   | OPTION_ACTION of string
   | OPTION_INT of string
@@ -42,8 +43,6 @@ type rule_modifier_t = [
     | RULE_FRAGMENT
   ]
 ;
-
-type qualified_identifier_t = list string ;
 
 type element_option_value_t = [
     EOPTVAL_QID of qualified_identifier_t
