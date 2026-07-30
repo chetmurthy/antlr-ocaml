@@ -50,8 +50,11 @@ let pp_token_stream strm =
 ;;
 #install_printer pp_token_stream ;;
 
-#trace Camlp5_adapter.pattern_of_token ;;
-{| a[99] |} |> Pa.Alternative.of_string ;;
+open Grammar_tools ;;
+let g = Pa.Grammar.load ~file:"_generated/ParserExec/Basic/T.g4" ;;
+grammar_actions g ;;
+
+generate_lexer ~path:[] ~translation_file:(Fpath.v "translation.json") (Fpath.v "_generated/ParserExec/Basic/T.g4") ;;
 
 (*
 ;;; Local Variables: ***

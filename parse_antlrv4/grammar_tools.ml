@@ -10,7 +10,9 @@ open Grammar_types
 
 let rulespec_name = function
     RULESPEC_LEXER {name} -> name
-  | _ -> Fmt.(failwithf "PARSER rule in a Lexer grammar!")
+  | RULESPEC_PARSER {name} -> name
+
+let isLexerRulespec = function RULESPEC_LEXER _ -> true | _ -> false
 
 let concat_rulespecs rsl1 rsl2 =
   let names1 = List.map rulespec_name rsl1 in
@@ -61,7 +63,6 @@ let load_imports ~path g =
     }
   and loadfile ~file name =
     let g = Pa.Grammar.load ~file in
-    assert (g.type_ = LEXER) ;
     if g.name <> name then
       Fmt.(failwithf "slaveGrammar %s (file %s) was named %s"
              name file g.name) ;
@@ -110,10 +111,11 @@ let extract_sempreds rs =
 
 let grammar_extract1 extractor g =
   let rulespecs = g.rules @ (List.concat_map snd g.modes) in
+  let lexer_rulespecs = List.filter isLexerRulespec rulespecs in
   let labeled_rulespecs =
     List.mapi (fun i rs ->
         let name = rulespec_name rs in
-        ((name,i), rs)) rulespecs in
+        ((name,i), rs)) lexer_rulespecs in
   labeled_rulespecs
   |> List.concat_map
        (fun (lab,rs) ->
