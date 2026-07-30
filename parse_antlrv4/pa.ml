@@ -26,6 +26,7 @@ value (element : Grammar.Entry.e element_t) = Grammar.Entry.create g "element";
 value (element_options : Grammar.Entry.e element_options_t) = Grammar.Entry.create g "element_options";
 value (element_option : Grammar.Entry.e element_option_t) = Grammar.Entry.create g "element_option";
 value (alternative : Grammar.Entry.e alternative_t) = Grammar.Entry.create g "alternative";
+value (alternative_eoi : Grammar.Entry.e alternative_t) = Grammar.Entry.create g "alternative_eoi";
 
 value check_identifier_dot_f strm =
   match stream_npeek 2 strm with [
@@ -124,8 +125,10 @@ EXTEND
           element
           element_options
           element_option
-          alternative
+          alternative alternative_eoi
 ;
+  alternative_eoi: [ [ x = alternative ; EOI -> x ] ] ;
+
   grammar_spec: [ [
       (name, d) = grammar_decl ;
       l = LIST0 prequel_construct ;
@@ -338,7 +341,8 @@ lexer_command_expr: [ [
 alt_list: [ [ l = LIST1 alternative SEP "|" -> l ] ] ;
 
 alternative: [ [
-      eopt = OPT [ element_options ] ; l = LIST1 element -> (eopt, l)
+      e = element_options ; l = LIST1 element -> (Some e, l)
+    | l = LIST1 element -> (None, l)
     | -> (None, [])
   ] ]
 ;
@@ -485,6 +489,6 @@ module Grammar = Pa_json.PAHelper(struct
 
 module Alternative = Pa_json.PAHelper(struct
                      type t = alternative_t ;
-                     value entry = alternative ;
+                     value entry = alternative_eoi ;
                    end) ;
 
