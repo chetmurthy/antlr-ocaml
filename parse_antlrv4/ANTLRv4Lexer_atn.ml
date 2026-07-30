@@ -1,5 +1,5 @@
 
-let atn = Antlr.Interp.Raw.{
+let raw_atn = Antlr.Interp.Raw.{
   token_literal_names = [|None; None; None;
 None; Some "="; None; None; None; None; None; None; None; None; None; None;
 None; None; None; None; None; None; None; None; None; None; None; None; None;

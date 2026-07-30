@@ -3,6 +3,8 @@
 let hey () = Cmdliner.Cmd.Exit.ok
 let ho () = Cmdliner.Cmd.Exit.ok
 
+open Pa_ppx_base
+open Ppxutil
 open Pa_ppx_utils
 open Coll
 open Cmdliner
@@ -11,24 +13,26 @@ open Cmdliner.Term.Syntax
 open Antlr
 open Atn
 
+let caches = Simulate.Caches.mk () ;;
+Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
+
 module EmitATN = struct
 
 let pp_option ppf pps = function
     None -> Fmt.(pf pps "None")
   | Some x -> Fmt.(pf pps "Some %a" ppf x)
 
-let emit_ocaml ~debug file =
+let emit ~debug file =
   Atn.debug := debug ;
   let raw_atn =
     file
-    |> Fpath.v
     |>  Bos.OS.File.read
     |> Result.get_ok
     |> Interp_syntax.read_raw in
 
     Fmt.(pf stdout
 {|
-let atn = Antlr.Interp.Raw.{
+let raw_atn = Antlr.Interp.Raw.{
   token_literal_names = [|%a|]
 ; token_symbolic_names = [|%a|]
 ; rule_names = [|%a|]
@@ -62,7 +66,44 @@ let debug =
   in
   Cmd.make (Cmd.info "emit-ocaml-atn" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ debug in
-  emit_ocaml ~debug file ;
+  emit ~debug (Fpath.v file) ;
+  Cmdliner.Cmd.Exit.ok
+
+end
+
+module EmitLexer = struct
+open Parse_antlrv4
+
+let emit ~debug ~translation_file file =
+  let interp_file = file |> Fpath.set_ext "interp" in
+  if not (interp_file |> Bos.OS.File.exists |> Rresult.R.get_ok) then
+    Fmt.(failwithf "interp file %a (for grammar %a) does not exist@."
+           Fpath.pp interp_file Fpath.pp file) ;
+  EmitATN.emit ~debug interp_file ;
+  Grammar_tools.generate_lexer ~path:[] ~translation_file file
+
+let cmd =
+let file =
+  let docv = "The file to read-and-convert to OCaml." in
+  let absent = "absent." in
+  Arg.(value & pos 1 file "" & info [] ~absent ~docv) in
+
+let translation_file =
+  let docv = "translation-file: JSON file containing translations for actions/sempreds." in
+  Arg.(value & pos 0 file "" & info [] ~docv) in
+
+let debug =
+  let doc = "enable debugging." in
+  Arg.(value & flag & info ["debug"] ~doc) in
+
+  let doc = "Convert an ATN to OCaml" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "emit-ocaml-lexer" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ debug and+ translation_file in
+  emit ~debug ~translation_file:(Fpath.v translation_file) (Fpath.v file) ;
   Cmdliner.Cmd.Exit.ok
 
 end
@@ -222,7 +263,7 @@ end
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [EmitATN.cmd; Dump.cmd; Graph.cmd]
+  [EmitATN.cmd; EmitLexer.cmd; Dump.cmd; Graph.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())

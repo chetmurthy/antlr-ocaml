@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -125,3 +125,118 @@ let grammar_extract1 extractor g =
 
 let grammar_actions g = grammar_extract1 extract_actions g
 let grammar_sempreds g = grammar_extract1 extract_sempreds g
+
+let groupby_fst l =
+  let eatfst k l =
+    let rec eatrec acc = function
+        (k',v)::t when k = k' ->
+        eatrec (v::acc) t
+      | l -> ((k,List.rev acc), l) in
+    eatrec [] l in
+  let rec grec acc = function
+      ((k,_)::_ as l) ->
+      let (h,l) = eatfst k l in
+      grec (h::acc) l
+    | [] -> List.rev acc in
+  grec [] l
+
+module TF = struct
+open Coll
+
+type _t =
+  (string * string) list
+    [@@deriving yojson { exn = true }]
+
+type t = (string, string) MHM.t
+
+let load file =
+  let j = Yojson.Safe.from_file file in
+  let l = j |> _t_of_yojson_exn in
+  MHM.ofList 23 l
+
+let map t lhs =
+  match MHM.map t lhs with
+    rhs -> rhs
+  | exception Not_found ->
+     Fmt.(failwithf "TranslationFile.map: key %a not found"
+            Dump.string lhs)
+
+let map_action t = function
+    ACTION s -> map t s
+
+let map_sempred t = function
+    SEMPRED s -> map t s
+
+end
+module TranslationFile = TF
+
+let generate_lexer ~path ~translation_file gramfile =
+  let tf = TF.load (Fpath.to_string translation_file) in
+  let g =
+    gramfile
+    |> Fpath.to_string
+    |> (fun file -> Pa.Grammar.load ~file)
+    |> (load_imports ~path) in
+
+  let actions = groupby_fst (grammar_actions g) in
+  let sempreds = groupby_fst (grammar_sempreds g) in
+
+  let pp_action pps (actionIndex, action) =
+    Fmt.(pf pps 
+           {| if actionIndex = %d then %s
+else |}
+           actionIndex
+           (TF.map_action tf action)) in
+
+  let pp_action_name pps lab = Fmt.(pf pps "_%s_action" lab) in
+  let pp_sempred_name pps lab = Fmt.(pf pps "_%s_sempred" lab) in
+  let pp_action_func pps ((lab, ruleIndex), actions)  =
+    Fmt.(pf pps 
+{|let %a (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
+%a
+ Fmt.(failwithf "%a: unrecognized actionIndex %%d" actionIndex)
+ |}
+         pp_action_name lab
+         (list pp_action) actions
+         pp_action_name lab
+    )
+  in
+
+  let pp_sempred pps (predIndex, sempred) =
+    Fmt.(pf pps 
+           {| if predIndex = %d then %s
+else |}
+           predIndex
+           (TF.map_sempred tf sempred)) in
+
+  let pp_sempred_func pps ((lab, ruleIndex), sempreds)  =
+    Fmt.(pf pps 
+{|let %a (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
+%a
+ Fmt.(failwithf "%a: unrecognized predIndex %%d" predIndex)
+ |}
+         pp_sempred_name lab
+         (list pp_sempred) sempreds
+         pp_sempred_name lab
+    )
+  in
+
+  let pp_action_binding pps (lab, ruleIndex) =
+    Fmt.(pf pps "(%d, %a)" ruleIndex pp_action_name lab) in
+  let pp_sempred_binding pps (lab, ruleIndex) =
+    Fmt.(pf pps "(%d, %a)" ruleIndex pp_sempred_name lab) in
+
+  let pp_action_bindings pps actions =
+    Fmt.(pf pps "let actions = [%a]" (list ~sep:(const string "; ") pp_action_binding)
+         (List.map fst actions)) in
+
+  let pp_sempred_bindings pps actions =
+    Fmt.(pf pps "let sempreds = [%a]" (list ~sep:(const string "; ") pp_sempred_binding)
+         (List.map fst actions)) in
+
+  Fmt.(pf stdout "%a\n%a\n%a\n%a"
+         (list pp_action_func) actions
+         (list pp_sempred_func) sempreds
+         pp_action_bindings actions
+         pp_sempred_bindings sempreds
+  )
