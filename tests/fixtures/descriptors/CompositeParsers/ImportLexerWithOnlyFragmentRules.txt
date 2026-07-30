@@ -6,7 +6,7 @@ fragments breaks generated lexer".  https://github.com/antlr/antlr4/issues/248
 CompositeParser
 
 [grammar]
-grammar Test;
+grammar Test2;
 import Unicode;
 
 program : 'test' 'test';

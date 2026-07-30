@@ -5,7 +5,7 @@ Checks that this compiles; see https://github.com/antlr/antlr4/issues/2016
 Parser
 
 [grammar]
-grammar Test;
+grammar Test2;
 
 expression
 @after {

@@ -40,36 +40,41 @@ simulate-all:: replay_util.opt
 #	./replay_util.opt simulate -it "ENTER PredictionContext.merge" _generated/*/*/json.log
 #	./replay_util.opt simulate -it "ENTER PredictionContext.mergeArrays" _generated/*/*/json.log
 #	./replay_util.opt simulate -it "ENTER PredictionContext.mergeRoot" _generated/*/*/json.log
-
-generate-all:: antlrtest_util.opt
+generate-all:: antlrtest_test.exe
 	mkdir -p _generated && $(MANAGETRIP) generate -v
 
-python-prepare-all:: antlrtest_util.opt
+python-prepare-all:: antlrtest_test.exe
 	$(MANAGETRIP) python-prepare -v
 
-depend-all:: antlrtest_util.opt
+depend-all:: antlrtest_test.exe
 	$(MANAGETRIP) depend -v
 
-compile-all:: antlrtest_util.opt
+compile-all:: antlrtest_test.exe
 	$(MANAGETRIP) compile -v
 
-python-test-all:: antlrtest_util.opt
+python-test-all:: antlrtest_test.exe
 	$(MANAGETRIP) python-test -v
 
-compare-all:: antlrtest_util.opt
-	$(MANAGETRIP) compare-atns -v
-
-save-json-log-all:: antlrtest_util.opt
-	$(MANAGETRIP) save-json-log -v
-
-compare-json-log-all:: antlrtest_util.opt
-	$(MANAGETRIP) compare-json-log -v
-
-clean-all:: antlrtest_util.opt
+clean-all:: antlrtest_test.exe
 	$(MANAGETRIP) clean -v
 
-realclean-all:: antlrtest_util.opt
+realclean-all:: antlrtest_test.exe
 	$(MANAGETRIP) realclean -v
+
+compare-all:: antlrtest_test.exe
+	$(MANAGETRIP) compare-atns -v
+
+update-pertest-all:: antlrtest_test.exe
+	$(MANAGETRIP) update-pertest -v
+
+ocaml-compile-all:: antlrtest_test.exe
+	$(MANAGETRIP) ocaml-compile -v
+
+ocaml-test-all:: antlrtest_test.exe
+	$(MANAGETRIP) ocaml-test -v
+
+ocaml-compare-all:: antlrtest_test.exe
+	$(MANAGETRIP) ocaml-compare -v
 
 #DTEST=$(shell ls fixtures/descriptors/LexerExec/*)
 #CTEST=$(shell ls fixtures/custom-descriptors/*/*)
@@ -161,6 +166,10 @@ DTEST += \
 DTEST += \
 	fixtures/custom-descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.1.txt \
 	fixtures/custom-descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.2.txt \
+
+DTEST := \
+	fixtures/descriptors/ParserExec/Basic.txt \
+	fixtures/descriptors/LexerExec/CharSet.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe

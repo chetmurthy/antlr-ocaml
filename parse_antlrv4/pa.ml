@@ -39,6 +39,18 @@ value check_identifier_dot =
     check_identifier_dot_f
 ;
 
+value check_identifier_asgop_f strm =
+  match stream_npeek 2 strm with [
+    [(("LID"|"UID"), _); ("", ("="|"+="))] -> ()
+  | _ -> raise Stream.Failure
+  ]
+;
+
+value check_identifier_asgop =
+  Grammar.Entry.of_parser g "check_identifier_asgop"
+    check_identifier_asgop_f
+;
+
 value check_identifier_not_assign_f strm =
   match stream_npeek 2 strm with [
     [(("LID"|"UID"), _); ("", "=")] -> raise Stream.Failure
@@ -87,11 +99,28 @@ value check_rule_modifiers_lid =
     check_rule_modifiers_lid_f
 ;
 
+value check_asn_coloncolon_f strm =
+  match stream_npeek 2 strm with [
+    [((("LID"|"UID"), _)|(_,("lexer"|"parser"))); ("", "::")] -> ()
+  | _ -> raise Stream.Failure
+  ]
+;
+
+value check_asn_coloncolon =
+  Grammar.Entry.of_parser g "check_asn_coloncolon"
+    check_asn_coloncolon_f
+;
+
 EXTEND
   GLOBAL: grammar_spec grammar_decl
           prequel_construct options_spec delegate_grammars tokens_spec channels_spec action_
           rules
           check_identifier_dot
+          check_identifier_not_assign
+          check_rule_modifiers_uid
+          check_rule_modifiers_lid
+          check_identifier_asgop
+          check_asn_coloncolon
           element
           element_options
           element_option
@@ -144,7 +173,7 @@ channels_spec: [ [ CHANNELS ; l = OPT id_list ; "}" ->
 
 id_list: [ [ l = LIST1 identifier SEP "," ; OPT "," -> l ] ] ;
 
-action_: [ [ "@" ; sname_opt = OPT [ sname = action_scope_name ; "::" -> sname ] ;
+action_: [ [ "@" ; sname_opt = OPT [ check_asn_coloncolon ; sname = action_scope_name ; "::" -> sname ] ;
              id = identifier ; a = ACTION -> (sname_opt, id, ACTION a) ] ] ;
 
 action_scope_name: [ [ id = identifier -> ASN_ID id | gt = grammar_type -> ASN_GRAMMAR gt ] ];
@@ -315,6 +344,7 @@ alternative: [ [
 ;
 
 element: [ [
+        check_identifier_asgop ;
         e = labeled_element ; suff = ebnf_suffix_question ->
             (match suff with [ None -> e | Some suff -> ELEM_SUFFIX e suff ])
       | e = atom ; suff = ebnf_suffix_question ->
@@ -450,5 +480,11 @@ END ;
 module Grammar = Pa_json.PAHelper(struct
                      type t = grammar_t ;
                      value entry = grammar_spec ;
+                   end) ;
+
+
+module Alternative = Pa_json.PAHelper(struct
+                     type t = alternative_t ;
+                     value entry = alternative ;
                    end) ;
 
