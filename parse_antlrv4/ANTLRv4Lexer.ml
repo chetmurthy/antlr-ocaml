@@ -51,7 +51,7 @@ let init ~input ~output =
            DFA.init atn Atn.LEXER stid i
          ) in
   let recog = R.init input ~output ~actions ~sempreds () in
-  let interp : LAS.t =
+ let interp : LAS.t =
     Tracelog.with_disabled (fun () ->
         LAS.init atn decisionToDFA [] ~recog ()
       ) ()

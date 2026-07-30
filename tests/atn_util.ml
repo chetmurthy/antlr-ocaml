@@ -74,13 +74,13 @@ end
 module EmitLexer = struct
 open Parse_antlrv4
 
-let emit ~debug ~translation_file file =
+let emit ~debug ~grammar_lib ~translation_file file =
   let interp_file = file |> Fpath.set_ext "interp" in
   if not (interp_file |> Bos.OS.File.exists |> Rresult.R.get_ok) then
     Fmt.(failwithf "interp file %a (for grammar %a) does not exist@."
            Fpath.pp interp_file Fpath.pp file) ;
   EmitATN.emit ~debug interp_file ;
-  Grammar_tools.generate_lexer ~path:[] ~translation_file file
+  Grammar_tools.generate_lexer ~path:[Fpath.v grammar_lib] ~translation_file file
 
 let cmd =
 let file =
@@ -92,6 +92,10 @@ let translation_file =
   let docv = "translation-file: JSON file containing translations for actions/sempreds." in
   Arg.(value & pos 0 file "" & info [] ~docv) in
 
+let grammar_lib =
+  let docv = "grammar-lib: directory for looking up grammar files." in
+  Arg.(value & opt dir "" & info ["grammar-lib"] ~docv) in
+
 let debug =
   let doc = "enable debugging." in
   Arg.(value & flag & info ["debug"] ~doc) in
@@ -102,11 +106,13 @@ let debug =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "emit-ocaml-lexer" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ translation_file in
-  emit ~debug ~translation_file:(Fpath.v translation_file) (Fpath.v file) ;
+  let+ file and+ debug and+ translation_file and+ grammar_lib in
+  emit ~debug ~grammar_lib ~translation_file:(Fpath.v translation_file) (Fpath.v file) ;
   Cmdliner.Cmd.Exit.ok
 
 end
+
+module Dump = struct
 
 let check_rule_separation atn =
   let state2rule = MHM.mk 23 in
@@ -148,8 +154,6 @@ let dump ~json ~debug ~disable_verify ~check_rule_separation:check file =
   if check then
     check_rule_separation atn ;
   ()
-
-module Dump = struct
 
 let cmd =
 let file =

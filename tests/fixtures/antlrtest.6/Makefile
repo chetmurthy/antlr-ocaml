@@ -8,7 +8,7 @@ SHELL := /bin/bash
 ADJUST=$(TOP)/tests/tools/adjust-dfa
 TESTBASEDIR=$(TOP)/tests/fixtures/test-base-files
 PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/<testName>
-REPLAYTEST=$(TOP)/tests/replay_test.opt
+REPLAYTEST=$(TOP)/tests/replay_util.opt
 LIBDIR=$(TOP)/tests/fixtures/grammar-lib
 LIBARG=-lib $(LIBDIR)
 
@@ -37,7 +37,7 @@ python-prepare:: <lexerName>.py update-pertest
 
 update-pertest::
 	cp $(TESTBASEDIR)/* .
-	if [ -d $(PERTESTDIR) ]; then cp $(PERTESTDIR)/* .; fi
+	if [ -d $(PERTESTDIR) ]; then cp -r $(PERTESTDIR)/. .; fi
 
 python-compare:: output.NEW errors.NEW
 	diff -Bwiu output output.NEW
@@ -54,6 +54,9 @@ VISITOR=-visitor
 <endif>
 <lexerName>.py: <grammarName>.g4
 	antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Python3 <grammarName>.g4
+
+l.ml:
+	$(TOP)/tests/atn_util.opt emit-ocaml-lexer --grammar-lib $(TOP)/tests/fixtures/grammar-lib $(TOP)/tests/translation.json <lexerName>.g4 > l.ml.NEW && mv l.ml.NEW l.ml
 
 output.NEW errors.NEW json.log:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 Test.py $(RUNARGS) input > output.NEW 2> errors.NEW

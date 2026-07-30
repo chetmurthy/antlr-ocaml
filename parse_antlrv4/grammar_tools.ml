@@ -234,7 +234,21 @@ else |}
     Fmt.(pf pps "let sempreds = [%a]" (list ~sep:(const string "; ") pp_sempred_binding)
          (List.map fst actions)) in
 
-  Fmt.(pf stdout "%a\n%a\n%a\n%a"
+  Fmt.(pf stdout 
+{|
+ open Pa_ppx_base
+ open Ppxutil
+ open Antlr
+ open Exec
+let full_atn = Exec.Atns.read_atn ~grammarType:LEXER ~raw:raw_atn ()
+let atn = snd full_atn
+%a
+%a
+%a
+%a
+let init ~input ~output =
+  LexerBase.init ~atn ~actions ~sempreds ~input ~output
+|}
          (list pp_action_func) actions
          (list pp_sempred_func) sempreds
          pp_action_bindings actions

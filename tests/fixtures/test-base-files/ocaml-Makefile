@@ -1,5 +1,5 @@
 
-ML=lexerBase.ml l.ml test.ml
+include pertest-ocaml-Makefile
 
 PACKAGES := $(PACKAGES),antlr,cmdliner,yojson,pa_ppx.located_yojson,pa_ppx.runtime
 
@@ -43,10 +43,10 @@ ocaml-test:: ocaml-compile
 
 ocaml-compile:: $(TESTS) $(TESTSOPT)
 
-test.exe: lexerBase.cmo l.cmo test.cmo
+test.exe: $(ML:.ml=.cmo)
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $^
 
-test.opt: lexerBase.cmx l.cmx test.cmx
+test.opt: $(ML:.ml=.cmx)
 	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $^
 
 clean::
