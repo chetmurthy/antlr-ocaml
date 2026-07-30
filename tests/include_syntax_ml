@@ -50,38 +50,7 @@ let pp_token_stream strm =
 ;;
 #install_printer pp_token_stream ;;
 
-let g = Pa.Grammar.load ~file:"_generated/SemPredEvalLexer/ManyPredsActions.2/L.g4";;
-let g = Grammar_tools.load_imports ~path:[] g ;;
-
-(*
-#trace Grammar_tools.Debug.new_migrate_action_t ;;
-#trace Migrate_grammar.migrate_rule_spec_t ;;
-#trace Migrate_grammar.migrate_prequel_t ;;
-#trace Migrate_grammar.migrate_rule_prequel_t ;;
-#trace Migrate_grammar.migrate_predicate_option_value_t ;;
-#trace Migrate_grammar.migrate_element_t ;;
-#trace Migrate_grammar.migrate_lexer_element_t ;;
-#trace Migrate_grammar.migrate_lexer_alt_t ;;
- *)
-
-open Grammar_tools ;;
-grammar_actions g ;;
-grammar_sempreds g ;;
-
-#load "grammar_tools_test.cmo";;
-open Grammar_tools_test ;;
-
-Action.full (Fpath.v "_generated/SemPredEvalLexer/ManyPredsActions.2/L.py") ;;
-Sempred.full (Fpath.v "_generated/SemPredEvalLexer/ManyPredsActions.2/L.py") ;;
-
-[
-  (
-    {|{print("I", file=self._output)}|}
-  ,
-    {|output_string stdout "I\n"|}
-  )
-] |> TF._t_to_yojson |> Yojson.Safe.to_string |> print_string;;
-
+{| a[99] |} |> Pa.Alternative.of_string ;;
 
 (*
 ;;; Local Variables: ***
