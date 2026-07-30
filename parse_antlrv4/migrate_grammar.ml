@@ -22,6 +22,7 @@ let _migrate_list subrw0 __dt__ l =
   [%%import: Grammar_types.action_scope_name]
   [%%import: Grammar_types.action_t]
   [%%import: Grammar_types.alternative_t]
+  [%%import: Grammar_types.arg_action_t]
   [%%import: Grammar_types.atom_t]
   [%%import: Grammar_types.char_set_t]
   [%%import: Grammar_types.delegate_grammar_t]
@@ -59,6 +60,7 @@ let _migrate_list subrw0 __dt__ l =
             action_scope_name
           ; action_t
           ; alternative_t
+          ; arg_action_t
           ; atom_t
           ; char_set_t
           ; delegate_grammar_t

@@ -2,6 +2,7 @@
 
 type action_t = [ ACTION of string ] ;
 type sempred_t = [ SEMPRED of string ] ;
+type arg_action_t = [ ARG_ACTION of string ] ;
 
 value action2sempred = fun [ (ACTION a) -> SEMPRED a ] ;
 
@@ -92,7 +93,7 @@ type lexer_atom_t = [
 
 type atom_t = [
     ATOM_TERMINAL of terminal_def_t
-  | ATOM_RULEREF of string and option (list string) and option element_options_t
+  | ATOM_RULEREF of string and option arg_action_t and option element_options_t
   | ATOM_NOTSET of char_set_t
   | ATOM_WILDCARD of option element_options_t
   ]
@@ -140,13 +141,13 @@ type rule_spec_t = [
     RULESPEC_PARSER of {
       modifiers : option (list rule_modifier_t)
     ; name : string
-    ; action : option (list string)
-    ; returns : option (list string)
+    ; action : option arg_action_t
+    ; returns : option arg_action_t
     ; throws : option (list qualified_identifier_t)
-    ; locals : option (list string)
+    ; locals : option arg_action_t
     ; rule_prequels : list rule_prequel_t
     ; rules : (list labeled_alternative_t)
-    ; exception_group : (list ((list string) * action_t) * (option action_t))
+    ; exception_group : (list (arg_action_t * action_t) * (option action_t))
     }
   | RULESPEC_LEXER of {
       fragment: bool

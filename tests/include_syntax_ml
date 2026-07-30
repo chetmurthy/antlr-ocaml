@@ -50,6 +50,7 @@ let pp_token_stream strm =
 ;;
 #install_printer pp_token_stream ;;
 
+#trace Camlp5_adapter.pattern_of_token ;;
 {| a[99] |} |> Pa.Alternative.of_string ;;
 
 (*

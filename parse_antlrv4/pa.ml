@@ -112,6 +112,18 @@ value check_asn_coloncolon =
     check_asn_coloncolon_f
 ;
 
+value check_string_not_dotdot_f strm =
+  match stream_npeek 2 strm with [
+    [("STRING_LITERAL", _); ("", "..")] -> raise Stream.Failure
+  | _ -> ()
+  ]
+;
+
+value check_string_not_dotdot =
+  Grammar.Entry.of_parser g "check_string_not_dotdot"
+    check_string_not_dotdot_f
+;
+
 EXTEND
   GLOBAL: grammar_spec grammar_decl
           prequel_construct options_spec delegate_grammars tokens_spec channels_spec action_
@@ -122,6 +134,7 @@ EXTEND
           check_rule_modifiers_lid
           check_identifier_asgop
           check_asn_coloncolon
+          check_string_not_dotdot
           element
           element_options
           element_option
@@ -184,7 +197,7 @@ action_scope_name: [ [ id = identifier -> ASN_ID id | gt = grammar_type -> ASN_G
 action_block: [ [ a = ACTION -> ACTION a ] ] ;
 
 arg_action_block: [ [
-    BEGIN_ARGUMENT ; l = LIST0 ARGUMENT_CONTENT ; END_ARGUMENT  -> l
+    x = LEXER_CHAR_SET  -> ARG_ACTION x
   ] ]
 ;
 
@@ -365,6 +378,7 @@ element: [ [
 predicate_options: [ [ "<" ;  l = LIST1 predicate_option SEP "," ; ">" -> l ] ] ;
 
 predicate_option: [ [
+      check_identifier_not_assign ;
       eov = element_option_value -> PREDOPT_EOPT eov
     | id = identifier; "="; a = action_block -> PREDOPT_ACTION id a
     | id = identifier; "="; n = INT -> PREDOPT_INT id n
@@ -427,7 +441,8 @@ block_set: [ [
 
 set_element: [ [
       id = UID ; e_opt = OPT element_options -> CSET_ID id e_opt
-    | s = STRING_LITERAL ; e_opt = OPT element_options -> CSET_LITERAL s e_opt
+    | check_string_not_dotdot ;
+      s = STRING_LITERAL ; e_opt = OPT element_options -> CSET_LITERAL s e_opt
     | (s1,s2) = character_range -> CSET_RANGE s1 s2
     | t = LEXER_CHAR_SET -> CSET_CHARSET t
   ] ]
