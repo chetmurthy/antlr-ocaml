@@ -140,15 +140,23 @@ module Cache = Cacher(struct
                    let name = "InputStream"
                  end)
 
-let to_mimick t =
-  M.InputStream {
-      id = t.id
-    ; name = t.name
-    ; strdata = t.strdata
-    ; _index = t._index
-    ; data = t.data
-    ; _size = t._size
-    }
+let to_mimick ?(terse=true) t =
+  if terse then
+    M.InputStreamTerse {
+        id = t.id
+      ; name = t.name
+      ; _index = t._index
+      ; _size = t._size
+      }
+  else
+    M.InputStream {
+        id = t.id
+      ; name = t.name
+      ; strdata = t.strdata
+      ; _index = t._index
+      ; data = t.data
+      ; _size = t._size
+      }
 
 let _of_mimick t =
   match t with
@@ -322,6 +330,19 @@ let init_CommonToken ~input ?source ?type_ ?channel ?start ?stop ?text () =
   ; _text = text
   }
 
+let text self =
+  match self._text with
+    Some txt -> txt
+  | None ->
+     assert (Std.isSome self.start) ;
+     assert (Std.isSome self.stop) ;
+     let start = Std.outSome self.start in
+     let stop = Std.outSome self.stop in
+     let n = IS.size self._input in
+     if start < n && stop < n then
+       (IS.getText self._input start stop)
+     else "<EOF>"
+
 let __str__ self =
   let fmt_int pps n = Fmt.(pf pps "%d" n) in
   let fmt_option ppsub pps nopt =
@@ -330,22 +351,12 @@ let __str__ self =
     | Some n -> Fmt.(pf pps "%a" ppsub n) in
   let fmt_channel pps c =
     if c > 0 then Fmt.(pf pps ",channel=%d" c) else Fmt.(pf pps "") in
+  let esc_text = Util.escape_string (text self) in
   Fmt.(str "[%@%a,%a:%a='%s',<%a>%a,%a:%a]"
          (fmt_option fmt_int) self.tokenIndex
          (fmt_option fmt_int) self.start
          (fmt_option fmt_int) self.stop
-         (match self._text with
-            Some txt -> Util.escape_string txt
-          | None ->
-             assert (Std.isSome self.start) ;
-             assert (Std.isSome self.stop) ;
-             let start = Std.outSome self.start in
-             let stop = Std.outSome self.stop in
-             let n = IS.size self._input in
-             if start < n && stop < n then
-               Util.escape_string (IS.getText self._input start stop)
-             else "<EOF>"
-         )
+         esc_text
          (fmt_option fmt_int) self.type_
          (fmt_option fmt_channel) self.channel
          (fmt_option fmt_int) self.line
@@ -2019,8 +2030,8 @@ let init ?predicted_id atn grammarType atnStartState decision =
   rv
 
 let _states_get dfa st =
-Tracelog.with_disabled
-  (fun () -> ACSMap.find_opt dfa._states st.DFASt.configset) ()
+  Tracelog.with_disabled
+    (fun () -> ACSMap.find_opt dfa._states st.DFASt.configset) ()
 
 let states_get dfa st =
   [%trace(DFA_ENTER_states_get(to_mimick dfa, DFASt.to_mimick st))] ;
@@ -2802,9 +2813,44 @@ let module_init ~dfast_cache ~acs_cache ~ac_cache () = begin
   end
 
 end
-
 module LexerATNSimulator = LAS
-module L = struct
+
+module type LEXER =
+  sig
+    type lexer_t = {
+      mutable _stateNumber : Atn.state_id;
+      mutable _token : Token.t option;
+      mutable _hitEOF : bool;
+      recog : R.t;
+      _interp : LAS.t;
+    }
+    type t = lexer_t
+    val to_mimick : lexer_t -> M.lexer_t
+    val _init : interp:LAS.t -> recog:R.t -> unit -> lexer_t
+    val init : interp:LAS.t -> recog:R.t -> unit -> lexer_t
+    val getErrorDisplay : 'a -> string -> string
+    val getErrorListenerDispatch : lexer_t -> EL.t list
+    val notifyListeners : lexer_t -> exn -> unit
+    val recover : lexer_t -> exn -> unit
+    val getCharIndex : lexer_t -> int
+    val line : lexer_t -> int
+    val column : lexer_t -> int
+    val emitToken : lexer_t -> Token.t -> unit
+    val _emit : lexer_t -> T.t
+    val emit : lexer_t -> T.t
+    val _emitEOF : lexer_t -> Token.token_t
+    val emitEOF : lexer_t -> Token.token_t
+    val _nextToken : lexer_t -> T.t
+    val nextToken : lexer_t -> T.t
+  end
+
+
+module type FULL_LEXER = sig
+  include LEXER
+  val full_init : input:IS.t -> output:out_channel -> lexer_t
+end
+
+module L : LEXER = struct
 
 type lexer_t =
   {
@@ -2830,6 +2876,7 @@ let to_mimick t =
     ; _tokenStartColumn = t.recog.R._tokenStartColumn
     ; _tokenStartLine = t.recog.R._tokenStartLine
     ; _type = t.recog.R._type
+    ; _input = IS.to_mimick ~terse:true t.recog.R._input
   }
 
 let _init ~interp ~recog () =
@@ -2983,8 +3030,9 @@ let nextToken self : T.t =
 end
 module Lexer = L
 
-module TS = struct
-  let init (l : Lexer.t) =
+
+module TokenStreamFunctor(L : LEXER) = struct
+  let init (l : L.t) =
     let next i =
       let t = L.nextToken l in
       t.T.tokenIndex <- Some i ;
@@ -2992,6 +3040,8 @@ module TS = struct
     in
     Util.stream_of_function_until_i next T.is_eof
 end
+
+module TS = TokenStreamFunctor(L)
 module TokenStream = TS
 
 let inited = ref false

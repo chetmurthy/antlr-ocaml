@@ -65,12 +65,24 @@ def disable():
     _enabled = False
     return orig
 
+def enable():
+    global _enabled
+    orig = _enabled
+    _enabled = True
+    return orig
+
 def restore(orig):
     global _enabled
     _enabled = orig
 
 def with_disabled(f):
     orig = disable()
+    rv = f()
+    restore(orig)
+    return rv
+
+def with_enabled(f):
+    orig = enable()
     rv = f()
     restore(orig)
     return rv

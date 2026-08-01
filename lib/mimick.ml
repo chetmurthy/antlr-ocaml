@@ -168,6 +168,7 @@ and lexer_t =
     ; _tokenStartColumn : int
     ; _tokenStartLine : int
     ; _type: int
+    ; _input : input_stream_t
   }
 
 and prediction_mode_t =
@@ -208,6 +209,12 @@ and input_stream_t =
     ; strdata : string
     ; _index : int
     ; data : int array
+    ; _size : int
+  }
+| InputStreamTerse of {
+      id : int
+    ; name : string
+    ; _index : int
     ; _size : int
   }
 
@@ -515,6 +522,14 @@ type json_log_t =
 | Lexer_EXIT_nextToken of lexer_t * token_t
                       [@yojson.name "EXIT Lexer.nextToken"]
                       [@located_yojson.name "EXIT Lexer.nextToken"]
+
+| PAL_ENTER_nextToken of lexer_t
+                      [@yojson.name "ENTER PAL.nextToken"]
+                      [@located_yojson.name "ENTER PAL.nextToken"]
+
+| PAL_EXIT_nextToken of lexer_t * token_t
+                      [@yojson.name "EXIT PAL.nextToken"]
+                      [@located_yojson.name "EXIT PAL.nextToken"]
 
 | Lexer_ENTER_emit of lexer_t
                       [@yojson.name "ENTER Lexer.emit"]

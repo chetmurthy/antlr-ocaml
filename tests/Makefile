@@ -2,6 +2,10 @@ WD=$(shell pwd)
 TOP=..
 include $(TOP)/config/Makefile.sub
 
+ifndef JSONLOGGING
+export JSONLOGGING=0
+endif
+
 PACKAGES := $(PACKAGES),antlr,parse_antlrv4,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 
 ML= \
@@ -170,6 +174,12 @@ DTEST += \
 DTEST := \
 	fixtures/descriptors/ParserExec/Basic.txt \
 	fixtures/descriptors/LexerExec/CharSet.txt \
+	fixtures/descriptors/LexerExec/PositionAdjustingLexer.txt \
+	fixtures/custom-descriptors/antlr4/Lexer1.txt \
+	fixtures/custom-descriptors/antlr4/Lexer2.txt \
+	fixtures/custom-descriptors/antlr4/ANTLRv4Lexer.txt \
+	fixtures/custom-descriptors/antlr4/A2.txt \
+	fixtures/custom-descriptors/antlr4/Lexer3.txt \
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe

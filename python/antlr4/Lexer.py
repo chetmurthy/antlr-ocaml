@@ -113,7 +113,8 @@ class Lexer(Recognizer, TokenSource):
             '_type' : self._type,
             '_modeStack' : self._modeStack,
             '_mode' : self._mode,
-            '_text' : self._text
+            '_text' : self._text,
+            '_input': self._input.asdict(terse=True),
         }
         return ["Lexer", d]
 
@@ -139,7 +140,8 @@ class Lexer(Recognizer, TokenSource):
 
     def nextToken(self):
         Trace.writej(lambda:[ 'ENTER Lexer.nextToken',
-                                 self.asdict() ])
+                              self.asdict(),
+                             ])
         rv = self._nextToken()
         assert (rv is not None)
         Trace.writej(lambda:[ 'EXIT Lexer.nextToken',

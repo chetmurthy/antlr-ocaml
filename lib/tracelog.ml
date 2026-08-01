@@ -154,3 +154,15 @@ let with_disabled f () =
     let bt = Printexc.get_raw_backtrace () in
     _enabled := old_enabled ;
     Printexc.raise_with_backtrace exc bt
+
+let with_enabled f () =
+  let old_enabled = !_enabled in
+  try
+    _enabled := true ;
+    let rv = f () in
+    _enabled := old_enabled ;
+    rv
+  with exc ->
+    let bt = Printexc.get_raw_backtrace () in
+    _enabled := old_enabled ;
+    Printexc.raise_with_backtrace exc bt

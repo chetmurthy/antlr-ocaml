@@ -5,6 +5,14 @@ open Antlr
 open Cmdliner
 open Cmdliner.Term.Syntax
 
+module type FULL_LEXER = sig
+  include Exec.LEXER
+  val full_init : input:Exec.IS.t -> output:out_channel -> lexer_t
+end
+
+module TestLexer(L : FULL_LEXER with type lexer_t = Exec.L.lexer_t) = struct
+
+module TS = Exec.TokenStreamFunctor(L)
 
 let test ~show_dfa ~disable_logging ~json_log_file file =
   json_log_file |> Option.iter Tracelog.set_log_file ;
@@ -17,15 +25,18 @@ let test ~show_dfa ~disable_logging ~json_log_file file =
         Exec.IS.init (file |> Fpath.v |> Bos.OS.File.read |> Result.get_ok) ()
       ) ()
   in
-  let lex = L.init ~input ~output:stdout in
-  let strm : Exec.T.t Stream.t = Exec.TS.init lex in
+  let lex = L.full_init ~input ~output:stdout in
+  let strm : Exec.T.t Stream.t = TS.init lex in
   let l = Std.list_of_stream strm in
   l |> List.iter (fun t -> Fmt.(pf stdout "%s\n" (Exec.T.__str__ t))) ;
   if show_dfa then
     let open Exec in
     Fmt.(pf stdout "%s" (DFA.toLexerString lex.L._interp.LAS.decisionToDFA.(C._DEFAULT_MODE)))
+end
 
-module Test = struct
+module Test = TestLexer(L.Full)
+
+module TestCmd = struct
 
 let file = Arg.(value & pos 0 file "" & info [] ~docv:"input-file")
 
@@ -49,14 +60,14 @@ let cmd =
   in
   Cmd.make (Cmd.info "test" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ disable_logging and+ show_dfa and+ json_log_file in
-  test ~disable_logging ~json_log_file ~show_dfa file ;
+  Test.test ~disable_logging ~json_log_file ~show_dfa file ;
   Cmdliner.Cmd.Exit.ok
 end
 
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [Test.cmd
+  [TestCmd.cmd
   ]
 
 let main () = Cmd.eval' cmd

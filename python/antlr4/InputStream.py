@@ -26,18 +26,26 @@ class InputStream (object):
         self.name = "<empty>"
         self.strdata = data
         self._loadString()
-        Trace.writej(lambda:[ 'EXIT InputStream.__init__', self.asdict() ])
+        Trace.writej(lambda:[ 'EXIT InputStream.__init__', self.asdict(terse=False) ])
         Trace.restore(orig)
 
-    def asdict(self):
-        return ["InputStream", {
-            'id' : self.id,
-            'name' : self.name,
-            'strdata': self.strdata,
-            '_index' : self._index,
-            'data': self.data,
-            '_size': self._size,
-        }]
+    def asdict(self,terse=True):
+        if terse:
+            return ["InputStreamTerse", {
+                'id' : self.id,
+                'name' : self.name,
+                '_index' : self._index,
+                '_size': self._size,
+            }]
+        else:
+            return ["InputStream", {
+                'id' : self.id,
+                'name' : self.name,
+                'strdata': self.strdata,
+                '_index' : self._index,
+                'data': self.data,
+                '_size': self._size,
+            }]
 
     def _loadString(self):
         self._index = 0

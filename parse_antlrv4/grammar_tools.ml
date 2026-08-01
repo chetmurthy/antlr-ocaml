@@ -238,6 +238,7 @@ else |}
 
   Fmt.(pf stdout 
 {|
+ open Pa_ppx_utils
  open Pa_ppx_base
  open Ppxutil
  open Antlr
@@ -248,8 +249,11 @@ let atn = snd full_atn
 %a
 %a
 %a
-let init ~input ~output =
+module Full = struct
+include Exec.Lexer
+let full_init ~input ~output =
   LexerBase.init ~atn ~actions ~sempreds ~input ~output
+end
 |}
          (list pp_action_func) actions
          (list pp_sempred_func) sempreds
