@@ -10,6 +10,10 @@ let test_template ctxt =
   ()
   ; assert_equal ~printer [TEXT {|<|}] (T.pa {|\<|})
   ; assert_equal ~printer [TEXT {| w < l i > s |}] (T.pa {| w \< l i > s |})
+  ; assert_equal ~printer [TEXT "{"; INCLUDE ("writeln", [{|"\"S.A\""|}]); TEXT "}"]
+      (T.pa {|{<writeln("\"S.A\"")>}|})
+  ; assert_equal ~printer []
+      (T.pa {|{<ToStringTree("$ctx"):writeln()>}|})
 
 let test_group ctxt =
   let module T = Stg.Template in
@@ -25,6 +29,23 @@ let test_group ctxt =
   ; assert_equal ~printer ["P",G.{formals=[]; rhs=T.pa {| w \< l i > s |} }]
       (G.pa {|P() ::= << w \< l i > s >>|})
 
+let test_stg ctxt =
+  let includes = Stg.Group.load (Fpath.v "fixtures/Python3.test.stg") in
+  let env = Stg.Env.mt in
+  let env = { (env) with includes = includes } in
+  let trans ?(env=env) x = (Stg.transform ~file:"<none>" env x) in
+  let printer x = x in
+  ()
+  ; assert_equal ~printer "x"  (trans {|x|})
+  ; assert_equal ~printer "<" (trans {|\<|})
+  ; assert_equal ~printer {|{print("S.A", file=self._output)}|} (trans {|{<writeln("\"S.A\"")>}|})
+  ; assert_equal ~printer {|{print($label.y, file=self._output)}|} (trans {|{<writeln("$label.y")>}|})
+  ; assert_equal ~printer {|{self.dumpDFA()}|} (trans {|{<DumpDFA()>}|})
+  ; assert_equal ~printer {|{x = 0}|} (trans {|{<InitIntVar("x","0")>}|})
+  ; assert_equal ~printer {|{$ctx.toStringTree(recog=self)}|} (trans {|{<ToStringTree("$ctx")>}|})
+  ; assert_equal ~printer {|{print($ctx.toStringTree(recog=self), file=self._output)}|} (trans {|{<ToStringTree("$ctx"):writeln()>}|})
+  ; assert_equal ~printer (trans {||}) {||}
+
 let test_descriptor ctxt =
   let module D = Descriptor in
   ()
@@ -35,6 +56,7 @@ let test_descriptor ctxt =
 let suite = "Test Antlrtest" >::: [
       "template"   >:: test_template
     ; "group"   >:: test_group
+    ; "stg"   >:: test_stg
     ; "descriptor"   >:: test_descriptor
     ]
 

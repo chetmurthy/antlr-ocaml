@@ -197,6 +197,9 @@ module Env = struct
       attributes : string strmap
     ; includes : Group.include_definition_rhs strmap
     } [@@deriving yojson]
+
+  let mt = { attributes = [] ; includes = [] }
+
 end
 
 module Subst = struct
