@@ -71,6 +71,76 @@ let debug =
 
 end
 
+module EmitConstants = struct
+
+let pp_option ppf pps = function
+    None -> Fmt.(pf pps "None")
+  | Some x -> Fmt.(pf pps "Some %a" ppf x)
+
+let emit ~debug file =
+  Atn.debug := debug ;
+  let raw_atn =
+    file
+    |>  Bos.OS.File.read
+    |> Result.get_ok
+    |> Interp_syntax.read_raw in
+
+  let open Interp.Raw in
+  let channel_constants =
+    raw_atn.channel_names
+    |> List.filter Std.isSome
+    |> List.mapi (fun i -> function (Some n) -> (n,i) | None -> assert false) in
+  let mode_constants =
+    raw_atn.mode_names
+    |> List.mapi (fun i n -> (n,i)) in
+  let token_constants =
+    raw_atn.token_symbolic_names
+    |> Array.to_list
+    |> List.mapi (fun i -> Option.map (fun n -> (n, i)))
+    |> List.filter_map (fun x -> x) in
+
+  let pp1 pps (n,i) = Fmt.(pf pps "let _%s = %d" n i) in
+
+    Fmt.(pf stdout
+{|
+ module Channels = struct
+ %a
+ end
+ module Modes = struct
+ %a
+ end
+ module Tokens = struct
+ %a
+ end
+ |}
+(list ~sep:(const string "\n") pp1) channel_constants
+(list ~sep:(const string "\n") pp1) mode_constants
+(list ~sep:(const string "\n") pp1) token_constants
+    ) ;
+    ()
+
+let cmd =
+let file =
+  let docv = "The file to read-and-convert to OCaml." in
+  let absent = "absent." in
+  Arg.(required & pos 0 (some string) None & info [] ~absent ~docv) in
+
+let debug =
+  let doc = "enable debugging." in
+  Arg.(value & flag & info ["debug"] ~doc) in
+
+  let doc = "Convert an ATN to OCaml" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "emit-ocaml-constants" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ debug in
+  emit ~debug (Fpath.v file) ;
+  Cmdliner.Cmd.Exit.ok
+
+end
+
 module EmitLexer = struct
 open Parse_antlrv4
 
@@ -267,7 +337,7 @@ end
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [EmitATN.cmd; EmitLexer.cmd; Dump.cmd; Graph.cmd]
+  [EmitATN.cmd; EmitLexer.cmd; EmitConstants.cmd; Dump.cmd; Graph.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())

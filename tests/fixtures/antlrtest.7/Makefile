@@ -58,6 +58,9 @@ VISITOR=-visitor
 l.ml:
 	$(TOP)/tests/atn_util.opt emit-ocaml-lexer -i Lexer.interp --grammar-lib $(TOP)/tests/fixtures/grammar-lib -t $(TOP)/tests/translation.json <grammarName>.g4 > l.ml.NEW && mv l.ml.NEW l.ml
 
+l_constants.ml:
+	$(TOP)/tests/atn_util.opt emit-ocaml-constants Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
+
 output.NEW errors.NEW json.log:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 Test.py $(RUNARGS) input > output.NEW 2> errors.NEW
 	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log
