@@ -6,17 +6,17 @@ lexer grammar M;
 
 @lexer::members {
 
-def isLDelim(self):
-    return (self._interp.getText(self._input) == "\<")
+def isLDelimNotComment(self):
+    return (self._input.LA(-1) == ord('\<') and self._input.LA(1) != ord('!'))
 
 def isRDelim(self):
-    return (self._interp.getText(self._input) == ord('>'))
+    return (self._input.LA(-1) == ord('>'))
 
 def isLTmplComment(self):
-    return (self.isLDelim() and self._input.LA(2) == ord('!'))
+    return (self._input.LA(-1) == ord('\<') and self._input.LA(1) == ord('!'))
 
 def isRTmplComment(self):
-    return (self.isRDelim() and self._input.LA(-1) == ord('!'))
+    return (self._input.LA(-2) == ord('!') and self._input.LA(-1) == ord('>'))
 
 def adjText(self):
     c1 = self._input.LA(1)
