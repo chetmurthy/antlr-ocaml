@@ -5,12 +5,7 @@ open Antlr
 open Cmdliner
 open Cmdliner.Term.Syntax
 
-module type FULL_LEXER = sig
-  include Exec.LEXER
-  val full_init : input:Exec.IS.t -> output:out_channel -> lexer_t
-end
-
-module TestLexer(L : FULL_LEXER with type lexer_t = Exec.L.lexer_t) = struct
+module TestLexer(L : Exec.FULL_LEXER with type lexer_t = Exec.L.lexer_t) = struct
 
 module TS = Exec.TokenStreamFunctor(L)
 

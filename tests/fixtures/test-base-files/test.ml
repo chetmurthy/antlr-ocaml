@@ -5,14 +5,9 @@ open Antlr
 open Cmdliner
 open Cmdliner.Term.Syntax
 
-module type FULL_LEXER = sig
-  include Exec.LEXER
-  val full_init : input:Exec.IS.t -> output:out_channel -> lexer_t
-end
+module TestLexer(Lex : Exec.FULL_LEXER with type lexer_t = Exec.L.lexer_t) = struct
 
-module TestLexer(L : FULL_LEXER with type lexer_t = Exec.L.lexer_t) = struct
-
-module TS = Exec.TokenStreamFunctor(L)
+module TS = Exec.TokenStreamFunctor(Lex)
 
 let test ~show_dfa ~disable_logging ~json_log_file file =
   json_log_file |> Option.iter Tracelog.set_log_file ;
@@ -25,13 +20,13 @@ let test ~show_dfa ~disable_logging ~json_log_file file =
         Exec.IS.init (file |> Fpath.v |> Bos.OS.File.read |> Result.get_ok) ()
       ) ()
   in
-  let lex = L.full_init ~input ~output:stdout in
+  let lex = Lex.full_init ~input ~output:stdout in
   let strm : Exec.T.t Stream.t = TS.init lex in
   let l = Std.list_of_stream strm in
   l |> List.iter (fun t -> Fmt.(pf stdout "%s\n" (Exec.T.__str__ t))) ;
   if show_dfa then
     let open Exec in
-    Fmt.(pf stdout "%s" (DFA.toLexerString lex.L._interp.LAS.decisionToDFA.(C._DEFAULT_MODE)))
+    Fmt.(pf stdout "%s" (DFA.toLexerString lex.Lex._interp.LAS.decisionToDFA.(C._DEFAULT_MODE)))
 end
 
 module Test = TestLexer(L.Full)
