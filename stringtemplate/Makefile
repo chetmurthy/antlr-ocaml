@@ -40,6 +40,8 @@ clean::
 	rm -rf META mk_meta mk_meta.ml
 
 bootstrap:: ../tests/atn_util.opt
+	cp $(TOP)/tests/fixtures/grammar-lib/Lex* .
+	cp $(TOP)/tests/fixtures/grammar-lib/ST* .
 	(cd grammars && antlr4 -Dlanguage=Python3 STGLexer.g4)
 	(cd grammars && antlr4 -Dlanguage=Python3 STLexer.g4)
 	$(TOP)/tests/atn_util.opt emit-ocaml-lexer \
