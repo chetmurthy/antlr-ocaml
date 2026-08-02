@@ -2,7 +2,7 @@
 
 type action_t = [ ACTION of string ] ;
 type sempred_t = [ SEMPRED of string ] ;
-type arg_action_t = [ ARG_ACTION of string ] ;
+type arg_action_t = [ ARG_ACTION of (list string) ] ;
 
 value action2sempred = fun [ (ACTION a) -> SEMPRED a ] ;
 

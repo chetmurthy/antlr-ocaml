@@ -1,8 +1,8 @@
 
 open Pa_ppx_utils
-open Antlr
 
 let ploc_of_token ~file t =
+  let open Antlr in
   let open Exec in
   let open T in
   let open Std in
@@ -19,8 +19,9 @@ let string_of_char_stream cs =
   Buffer.contents b
 
 let pattern_of_token self : Plexing.pattern =
-  let symbolic_names = (fst ANTLRv4Lexer.full_atn).Interp.Raw.token_symbolic_names in
-  let literal_names = (fst ANTLRv4Lexer.full_atn).Interp.Raw.token_literal_names in
+  let open Antlr in
+  let symbolic_names = L.raw_atn.Interp.Raw.token_symbolic_names in
+  let literal_names = L.raw_atn.Interp.Raw.token_literal_names in
   assert (Array.length symbolic_names = Array.length literal_names) ;
   match self.Exec.T.type_ with
     None -> assert false
@@ -52,17 +53,33 @@ let located_pattern_of_token ~file self : (Plexing.pattern * Ploc.t) =
   let tok = pattern_of_token self in
   (tok,loc)
 
+module Full = struct
+open Antlr
+include Exec.Lexer
+
+let nextToken self =
+  let t = Exec.Lexer.nextToken self in
+  let t = ActionFuns.after_nextToken self t in
+  Exec.Lexer.emitToken self t ;
+  t
+
+let full_init ~input ~output =
+  let open L in
+  LexerBase.init ~atn ~actions ~sempreds ~input ~output
+end
+
 let input_file = Plexing.input_file
 let lexer cs =
+  let open Antlr in
   let txt = string_of_char_stream cs in
   let input : Exec.IS.t =
     Tracelog.with_disabled (fun () ->
         Exec.IS.init txt ()
       ) ()
   in
-  let lex = ANTLRv4Lexer.init ~input ~output:stdout in
+  let lex = Full.full_init ~input ~output:stdout in
   let rec next_token () =
-    let t = Exec.Lexer.nextToken lex in
+    let t = Full.nextToken lex in
     assert(Std.isSome t.channel) ;
     if (Std.outSome t.channel) <> 0 then next_token()
     else

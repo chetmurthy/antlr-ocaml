@@ -344,8 +344,9 @@ NOT
 // -------------------------
 // Identifiers - allows unicode rule/token names
 
-UID : NameStartChar NameChar* { self.text[0].isupper() }? ;
-LID : NameStartChar NameChar* { self.text[0].islower() }? ;
+ID
+    : NameStartChar NameChar*
+    ;
 
 // -------------------------
 // Whitespace

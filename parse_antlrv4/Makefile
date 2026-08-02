@@ -13,7 +13,9 @@ TARGET_PACKAGE=parse_antlrv4
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
-	ANTLRv4Lexer_atn.ml ANTLRv4Lexer.ml camlp5_adapter.ml \
+	ANTLRv4Lexer_atn.ml ANTLRv4Lexer.ml \
+	lexerBase.ml l_constants.ml actionFuns.ml l.ml \
+	camlp5_adapter.ml \
 	grammar_types.ml pa.ml migrate_grammar.ml grammar_tools.ml
 
 TOOLSML = mk_meta.ml
@@ -34,10 +36,13 @@ local-install::
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
 clean::
-	rm -rf META mk_meta mk_meta.ml
+	rm -rf META mk_meta mk_meta.ml grammars/*.interp
 
 bootstrap:: ../tests/atn_util.opt
-	$(TOP)/tests/atn_util.opt emit-ocaml-atn grammars/Lexer.interp > ANTLRv4Lexer_atn.ml.NEW && mv ANTLRv4Lexer_atn.ml.NEW ANTLRv4Lexer_atn.ml
+	(cd grammars && antlr4 -Dlanguage=Python3 ANTLRv4Lexer.g4)
+	$(TOP)/tests/atn_util.opt emit-ocaml-lexer -i grammars/ANTLRv4Lexer.interp --grammar-lib $(TOP)/tests/fixtures/grammar-lib -t $(TOP)/tests/translation.json grammars/ANTLRv4Lexer.g4 > l.ml.NEW && mv l.ml.NEW l.ml
+	$(TOP)/tests/atn_util.opt emit-ocaml-constants grammars/ANTLRv4Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
+
 
 $(TARGET_PACKAGE).cmo $(TARGET_PACKAGE).cmi: $(CMO)
 	$(OCAMLFIND) ocamlc $(DEBUG) -pack -o $(TARGET_PACKAGE).cmo $^

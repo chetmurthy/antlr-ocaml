@@ -30,7 +30,7 @@ value (alternative_eoi : Grammar.Entry.e alternative_t) = Grammar.Entry.create g
 
 value check_identifier_dot_f strm =
   match stream_npeek 2 strm with [
-    [(("LID"|"UID"), _); ("", ".")] -> ()
+    [(("RULE_REF"|"TOKEN_REF"), _); ("", ".")] -> ()
   | _ -> raise Stream.Failure
   ]
 ;
@@ -42,7 +42,7 @@ value check_identifier_dot =
 
 value check_identifier_asgop_f strm =
   match stream_npeek 2 strm with [
-    [(("LID"|"UID"), _); ("", ("="|"+="))] -> ()
+    [(("RULE_REF"|"TOKEN_REF"), _); ("", ("="|"+="))] -> ()
   | _ -> raise Stream.Failure
   ]
 ;
@@ -54,7 +54,7 @@ value check_identifier_asgop =
 
 value check_identifier_not_assign_f strm =
   match stream_npeek 2 strm with [
-    [(("LID"|"UID"), _); ("", "=")] -> raise Stream.Failure
+    [(("RULE_REF"|"TOKEN_REF"), _); ("", "=")] -> raise Stream.Failure
   | _ -> ()
   ]
 ;
@@ -70,7 +70,7 @@ value check_rule_modifiers_uid_f strm =
     if List.length l < n then raise Stream.Failure else
     let last = Std.last l in
     match last with [
-        ("UID", _) -> ()
+        ("TOKEN_REF", _) -> ()
       | ("",("fragment"|"public"|"private"|"protected")) -> checkrec (n+1)
       | _ -> raise Stream.Failure
       ]
@@ -88,7 +88,7 @@ value check_rule_modifiers_lid_f strm =
     if List.length l < n then raise Stream.Failure else
     let last = Std.last l in
     match last with [
-        ("LID", _) -> ()
+        ("RULE_REF", _) -> ()
       | ("",("fragment"|"public"|"private"|"protected")) -> checkrec (n+1)
       | _ -> raise Stream.Failure
       ]
@@ -102,7 +102,7 @@ value check_rule_modifiers_lid =
 
 value check_asn_coloncolon_f strm =
   match stream_npeek 2 strm with [
-    [((("LID"|"UID"), _)|(_,("lexer"|"parser"))); ("", "::")] -> ()
+    [((("RULE_REF"|"TOKEN_REF"), _)|(_,("lexer"|"parser"))); ("", "::")] -> ()
   | _ -> raise Stream.Failure
   ]
 ;
@@ -197,7 +197,10 @@ action_scope_name: [ [ id = identifier -> ASN_ID id | gt = grammar_type -> ASN_G
 action_block: [ [ a = ACTION -> ACTION a ] ] ;
 
 arg_action_block: [ [
+    "[" ; l = LIST0 ARGUMENT_CONTENT ; END_ARGUMENT  -> ARG_ACTION l
+(*
     x = LEXER_CHAR_SET  -> ARG_ACTION x
+ *)
   ] ]
 ;
 
@@ -217,7 +220,7 @@ rule_spec: [ [
 
 parser_rule_spec: [ [
       check_rule_modifiers_lid ;
-      rml = OPT rule_modifiers ; id = LID ; action_opt = OPT arg_action_block ;
+      rml = OPT rule_modifiers ; id = RULE_REF ; action_opt = OPT arg_action_block ;
       returns_opt = OPT rule_returns ;
       throws_opt = OPT throws_spec ;
       locals_opt = OPT locals_spec ;
@@ -288,7 +291,7 @@ labeled_alt: [ [
 lexer_rule_spec: [ [
       check_rule_modifiers_uid ;
       frag = FLAG "fragment" ;
-      uid = UID ;
+      uid = TOKEN_REF ;
       opts = OPT options_spec ; ":" ;
       rb = lexer_rule_block ; ";"
       -> RULESPEC_LEXER {
@@ -440,7 +443,7 @@ block_set: [ [
 ;
 
 set_element: [ [
-      id = UID ; e_opt = OPT element_options -> CSET_ID id e_opt
+      id = TOKEN_REF ; e_opt = OPT element_options -> CSET_ID id e_opt
     | check_string_not_dotdot ;
       s = STRING_LITERAL ; e_opt = OPT element_options -> CSET_LITERAL s e_opt
     | (s1,s2) = character_range -> CSET_RANGE s1 s2
@@ -455,7 +458,7 @@ block: [ [
   ;
 
 rule_ref: [ [
-      id = LID ;  action_opt = OPT arg_action_block ; e_opt = OPT element_options
+      id = RULE_REF ;  action_opt = OPT arg_action_block ; e_opt = OPT element_options
       -> (id, action_opt, e_opt)
   ] ]
   ;
@@ -466,7 +469,7 @@ character_range: [ [
   ;
 
 terminal_def: [ [
-      id = UID ; eopt = OPT element_options -> (TD_ID id eopt)
+      id = TOKEN_REF ; eopt = OPT element_options -> (TD_ID id eopt)
     | s = STRING_LITERAL ; eopt = OPT element_options -> (TD_LITERAL s eopt)
   ] ]
 ;
@@ -490,7 +493,7 @@ element_option_value: [ [
   ] ]
 ;
 
-identifier: [ [ id = LID -> id | id = UID -> id ] ] ;
+identifier: [ [ id = RULE_REF -> id | id = TOKEN_REF -> id ] ] ;
 
 qualified_identifier: [ [ l = LIST1 identifier SEP "." -> l ] ] ;
 

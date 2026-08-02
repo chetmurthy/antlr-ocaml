@@ -1,6 +1,7 @@
 #use "topfind.camlp5";;
 #camlp5o ;;
 #require "ounit2";;
+#require "cmdliner";;
 #require "camlp5.pr_o";;
 
 let pp_ploc_t pps (loc : Ploc.t) = Fmt.(pf pps "<%s>" (Ploc.string_of_location loc)) ;;
@@ -50,11 +51,12 @@ let pp_token_stream strm =
 ;;
 #install_printer pp_token_stream ;;
 
-open Grammar_tools ;;
-let g = Pa.Grammar.load ~file:"_generated/ParserExec/Basic/T.g4" ;;
-grammar_actions g ;;
+let pp_atn pps (x : Atn.t) = Fmt.(pf pps "#<atn>") ;;
+#install_printer pp_atn ;;
+let pp_dfa pps (x : Exec.DFA.t) = Fmt.(pf pps "#<atn>") ;;
+#install_printer pp_dfa ;;
 
-generate_lexer ~path:[] ~translation_file:(Fpath.v "translation.json") (Fpath.v "_generated/ParserExec/Basic/T.g4") ;;
+
 
 (*
 ;;; Local Variables: ***

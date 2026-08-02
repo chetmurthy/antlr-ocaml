@@ -82,7 +82,7 @@ let emit ~debug file =
   let raw_atn =
     file
     |>  Bos.OS.File.read
-    |> Result.get_ok
+    |> Rresult.R.failwith_error_msg
     |> Interp_syntax.read_raw in
 
   let open Interp.Raw in
