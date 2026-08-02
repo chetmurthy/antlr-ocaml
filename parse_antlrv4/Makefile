@@ -13,7 +13,6 @@ TARGET_PACKAGE=parse_antlrv4
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
-	ANTLRv4Lexer_atn.ml ANTLRv4Lexer.ml \
 	lexerBase.ml l_constants.ml actionFuns.ml l.ml \
 	camlp5_adapter.ml \
 	grammar_types.ml pa.ml migrate_grammar.ml grammar_tools.ml
@@ -36,7 +35,7 @@ local-install::
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
 clean::
-	rm -rf META mk_meta mk_meta.ml grammars/*.interp
+	rm -rf META mk_meta mk_meta.ml
 
 bootstrap:: ../tests/atn_util.opt
 	(cd grammars && antlr4 -Dlanguage=Python3 ANTLRv4Lexer.g4)

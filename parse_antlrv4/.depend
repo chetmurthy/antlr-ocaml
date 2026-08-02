@@ -1,10 +1,4 @@
-ANTLRv4Lexer_atn.cmo ANTLRv4Lexer.cmo lexerBase.cmo l_constants.cmo actionFuns.cmo l.cmo camlp5_adapter.cmo grammar_types.cmo pa.cmo migrate_grammar.cmo grammar_tools.cmo ANTLRv4Lexer_atn.cmi ANTLRv4Lexer.cmi lexerBase.cmi l_constants.cmi actionFuns.cmi l.cmi camlp5_adapter.cmi grammar_types.cmi pa.cmi migrate_grammar.cmi grammar_tools.cmi ANTLRv4Lexer_atn.cmx ANTLRv4Lexer.cmx lexerBase.cmx l_constants.cmx actionFuns.cmx l.cmx camlp5_adapter.cmx grammar_types.cmx pa.cmx migrate_grammar.cmx grammar_tools.cmx: ../local-install/lib/antlr/META
-ANTLRv4Lexer_atn.cmo :
-ANTLRv4Lexer_atn.cmx :
-ANTLRv4Lexer.cmo : \
-    ANTLRv4Lexer_atn.cmo
-ANTLRv4Lexer.cmx : \
-    ANTLRv4Lexer_atn.cmx
+lexerBase.cmo l_constants.cmo actionFuns.cmo l.cmo camlp5_adapter.cmo grammar_types.cmo pa.cmo migrate_grammar.cmo grammar_tools.cmo lexerBase.cmi l_constants.cmi actionFuns.cmi l.cmi camlp5_adapter.cmi grammar_types.cmi pa.cmi migrate_grammar.cmi grammar_tools.cmi lexerBase.cmx l_constants.cmx actionFuns.cmx l.cmx camlp5_adapter.cmx grammar_types.cmx pa.cmx migrate_grammar.cmx grammar_tools.cmx: ../local-install/lib/antlr/META
 lexerBase.cmo :
 lexerBase.cmx :
 l_constants.cmo :
