@@ -55,7 +55,7 @@ let located_pattern_of_token ~file self : (Plexing.pattern * Ploc.t) =
 
 module Full = struct
 open Antlr
-include Exec.Lexer
+include L.Full
 
 let nextToken self =
   let t = Exec.Lexer.nextToken self in
@@ -65,7 +65,7 @@ let nextToken self =
 
 let full_init ~input ~output =
   let open L in
-  LexerBase.init ~atn ~actions ~sempreds ~input ~output
+  LexerBase.init ~atn:(snd full_atn) ~actions ~sempreds ~input ~output
 end
 
 let input_file = Plexing.input_file

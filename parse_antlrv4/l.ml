@@ -308,23 +308,24 @@ Some "COMMENT"]
  open Ppxutil
  open Antlr
  open Exec
+module Full = struct
 let full_atn = Exec.Atns.read_atn ~grammarType:LEXER ~raw:raw_atn ()
 let atn = snd full_atn
 let _BEGIN_ARGUMENT_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 0 then ActionFuns.handleBeginArgument self cu
+ if actionIndex = 0 then ignore(ActionFuns.handleBeginArgument self cu)
 else 
  Fmt.(failwithf "_BEGIN_ARGUMENT_action: unrecognized actionIndex %d" actionIndex)
  
 let _END_ARGUMENT_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 1 then ActionFuns.handleEndArgument self cu
+ if actionIndex = 1 then ignore(ActionFuns.handleEndArgument self cu)
 else 
  Fmt.(failwithf "_END_ARGUMENT_action: unrecognized actionIndex %d" actionIndex)
  
 
 let actions = [(6, _BEGIN_ARGUMENT_action); (54, _END_ARGUMENT_action)]
 let sempreds = []
-module Full = struct
 include Exec.Lexer
+let full_atn = full_atn
 let full_init ~input ~output =
   LexerBase.init ~atn ~actions ~sempreds ~input ~output
 end
