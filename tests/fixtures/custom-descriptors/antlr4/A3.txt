@@ -1,0 +1,141 @@
+[type]
+CompositeLexer
+
+[grammar]
+lexer grammar M;
+
+@lexer::members {
+
+PREQUEL_CONSTRUCT = -10
+OPTIONS_CONSTRUCT = -11
+
+def getCurrentRuleType(self):
+    if not(hasattr(self, '_currentRuleType')):
+        self._currentRuleType = Token.INVALID_TYPE
+    return self._currentRuleType
+
+def setCurrentRuleType(self, ruleType):
+    self._currentRuleType = ruleType
+
+def handleBeginArgument(self):
+    if self.inLexerRule():
+        self.pushMode(2)
+        self.more()
+    else:
+        self.pushMode(1)
+
+def handleEndArgument(self):
+    self.popMode()
+    if len(self._modeStack) > 0:
+        self.type = M.ARGUMENT_CONTENT
+
+def emit(self):
+    if (
+        (self._type == M.OPTIONS
+         or self._type == M.TOKENS
+         or self._type == M.CHANNELS)
+            and self.getCurrentRuleType() == Token.INVALID_TYPE
+    ):
+        self.setCurrentRuleType(self.PREQUEL_CONSTRUCT)
+
+    elif (
+        self._type == M.OPTIONS
+        and self.getCurrentRuleType() == M.TOKEN_REF
+    ):
+        self.setCurrentRuleType(self.OPTIONS_CONSTRUCT)
+
+    elif (
+        self._type == M.RBRACE
+        and self.getCurrentRuleType() == self.PREQUEL_CONSTRUCT
+    ):
+        self.setCurrentRuleType(Token.INVALID_TYPE)
+
+    elif (
+        self._type == M.RBRACE
+        and self.getCurrentRuleType() == self.OPTIONS_CONSTRUCT
+    ):
+        self.setCurrentRuleType(M.TOKEN_REF)
+
+    elif (
+        self._type == M.AT
+        and self.getCurrentRuleType() == Token.INVALID_TYPE
+    ):
+        self.setCurrentRuleType(M.AT)
+
+    elif (
+        self._type == M.SEMI
+        and self.getCurrentRuleType() == self.OPTIONS_CONSTRUCT
+    ):
+        pass
+
+    elif (
+        self._type == M.ACTION
+        and self.getCurrentRuleType() == M.AT
+    ):
+        self.setCurrentRuleType(Token.INVALID_TYPE)
+
+    elif self._type == M.ID:
+        from antlr4 import InputStream
+
+        firstChar = self._input.getText(self._tokenStartCharIndex, self._tokenStartCharIndex)
+        if firstChar and firstChar[0].isupper():
+            self._type = M.TOKEN_REF
+        else:
+            self._type = M.RULE_REF
+
+        if self.getCurrentRuleType() == Token.INVALID_TYPE:
+            self.setCurrentRuleType(self._type)
+
+    elif self._type == M.SEMI:
+        self.setCurrentRuleType(Token.INVALID_TYPE)
+
+    return super().emit()
+
+def inLexerRule(self):
+    return self.getCurrentRuleType() == M.TOKEN_REF
+
+def inParserRule(self):
+    return self.getCurrentRuleType() == M.RULE_REF
+
+}
+
+import ANTLRv4Lexer;
+
+[slaveGrammar]
+lexer grammar S;
+A : 'a' {<writeln("\"S.A\"")>};
+C : 'c' ;
+
+[input]
+A : [\r\n] ;
+a : [\r\n] ;
+B : [\r\n] ;
+[output]
+[@0,0:0='A',<9>,1:0]
+[@1,1:1=' ',<12>,channel=2,1:1]
+[@2,2:2=':',<50>,1:2]
+[@3,3:3=' ',<12>,channel=2,1:3]
+[@4,4:9='[\r\n]',<5>,1:4]
+[@5,10:10=' ',<12>,channel=2,1:10]
+[@6,11:11=';',<53>,1:11]
+[@7,12:12='\n',<12>,channel=2,1:12]
+[@8,13:13='a',<6>,2:0]
+[@9,14:14=' ',<12>,channel=2,2:1]
+[@10,15:15=':',<50>,2:2]
+[@11,16:16=' ',<12>,channel=2,2:3]
+[@12,17:17='[',<32>,2:4]
+[@13,18:19='\r',<74>,2:5]
+[@14,20:21='\n',<74>,2:7]
+[@15,22:22=']',<72>,2:9]
+[@16,23:23=' ',<12>,channel=2,2:10]
+[@17,24:24=';',<53>,2:11]
+[@18,25:25='\n',<12>,channel=2,2:12]
+[@19,26:26='B',<9>,3:0]
+[@20,27:27=' ',<12>,channel=2,3:1]
+[@21,28:28=':',<50>,3:2]
+[@22,29:29=' ',<12>,channel=2,3:3]
+[@23,30:35='[\r\n]',<5>,3:4]
+[@24,36:36=' ',<12>,channel=2,3:10]
+[@25,37:37=';',<53>,3:11]
+[@26,38:38='\n',<12>,channel=2,3:12]
+[@27,39:38='<EOF>',<-1>,4:0]

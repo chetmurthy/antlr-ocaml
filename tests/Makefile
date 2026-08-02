@@ -174,12 +174,10 @@ DTEST += \
 DTEST := \
 	fixtures/descriptors/ParserExec/Basic.txt \
 	fixtures/descriptors/LexerExec/CharSet.txt \
-	fixtures/descriptors/LexerExec/PositionAdjustingLexer.txt \
 	fixtures/custom-descriptors/antlr4/ANTLRv4Lexer.txt \
 	fixtures/custom-descriptors/antlr4/A2.txt \
-	fixtures/custom-descriptors/antlr4/Lexer1.txt \
-	fixtures/custom-descriptors/antlr4/Lexer2.txt \
-	fixtures/custom-descriptors/antlr4/Lexer3.txt \
+	fixtures/custom-descriptors/antlr4/A3.txt \
+
 
 SELECTED=$(DTEST) $(CTEST)
 generate-selected:: antlrtest_test.exe
