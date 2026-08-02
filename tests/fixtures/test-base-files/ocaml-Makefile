@@ -41,6 +41,16 @@ else
 #	diff -Bwiu json.log ocaml-json.log
 endif
 
+ocaml-json.ee.log: ocaml-json.log
+	$(REPLAYTEST) entry-exit-depth $(EEARGS) ocaml-json.log > ocaml-json.ee.log
+
+json.ee.log: json.log
+	$(REPLAYTEST) entry-exit-depth $(EEARGS) json.log > json.ee.log
+
+lexer-json.ee.log: lexer-json.log
+	$(REPLAYTEST) entry-exit-depth $(EEARGS) lexer-json.log > lexer-json.ee.log
+
+
 ifdef SHOWDFA
 SHOWARGS=--show-dfa
 endif

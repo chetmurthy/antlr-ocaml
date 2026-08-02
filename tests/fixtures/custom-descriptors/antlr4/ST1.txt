@@ -1,0 +1,54 @@
+[type]
+Lexer
+
+[grammar]
+lexer grammar M;
+
+@lexer::members {
+
+def isLDelim(self):
+    return (self._interp.getText(self._input) == "\<")
+
+def isRDelim(self):
+    return (self._interp.getText(self._input) == ord('>'))
+
+def isLTmplComment(self):
+    return (self.isLDelim() and self._input.LA(2) == ord('!'))
+
+def isRTmplComment(self):
+    return (self.isRDelim() and self._input.LA(-1) == ord('!'))
+
+def adjText(self):
+    c1 = self._input.LA(1)
+    if c1 == ord('\\'):
+        c2 = self._input.LA(2)
+        if c2 == ord('\\'):
+            self._input.consume()
+        elif c2 == ord('\<') or c2 == ord('}'):
+            self._input.consume()
+    return True
+
+def startsSubTemplate(self):
+    if not(hasattr(self,'subtemplateDepth')):
+        self.subtemplateDepth = 0
+    self.subtemplateDepth += 1
+    return False
+
+def endsSubTemplate(self):
+    if not(hasattr(self,'subtemplateDepth')):
+        self.subtemplateDepth = 0
+    if self.subtemplateDepth > 0:
+        self.subtemplateDepth -= 1
+        self.mode(1)
+    return True
+}
+
+import STLexer;
+
+
+[input]
+{<writeln("\"I\"")>}
+[output]
+[@0,0:5='[\r\n]',<5>,1:0]
+[@1,6:6='\n',<12>,channel=2,1:6]
+[@2,7:6='<EOF>',<-1>,2:0]
