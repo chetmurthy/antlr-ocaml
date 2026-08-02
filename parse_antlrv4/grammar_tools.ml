@@ -185,7 +185,7 @@ let generate_lexer ~path ~translation_file gramfile =
 
   let pp_action pps (actionIndex, action) =
     Fmt.(pf pps 
-           {| if actionIndex = %d then %s
+           {| if actionIndex = %d then ignore(%s)
 else |}
            actionIndex
            (TF.map_action tf action)) in
