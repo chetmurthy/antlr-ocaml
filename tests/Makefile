@@ -44,44 +44,7 @@ simulate-all:: replay_util.opt
 #	./replay_util.opt simulate -it "ENTER PredictionContext.merge" _generated/*/*/json.log
 #	./replay_util.opt simulate -it "ENTER PredictionContext.mergeArrays" _generated/*/*/json.log
 #	./replay_util.opt simulate -it "ENTER PredictionContext.mergeRoot" _generated/*/*/json.log
-generate-all:: antlrtest_test.exe
-	mkdir -p _generated && $(MANAGETRIP) generate -v
 
-python-prepare-all:: antlrtest_test.exe
-	$(MANAGETRIP) python-prepare -v
-
-depend-all:: antlrtest_test.exe
-	$(MANAGETRIP) depend -v
-
-compile-all:: antlrtest_test.exe
-	$(MANAGETRIP) compile -v
-
-python-test-all:: antlrtest_test.exe
-	$(MANAGETRIP) python-test -v
-
-clean-all:: antlrtest_test.exe
-	$(MANAGETRIP) clean -v
-
-realclean-all:: antlrtest_test.exe
-	$(MANAGETRIP) realclean -v
-
-compare-all:: antlrtest_test.exe
-	$(MANAGETRIP) compare-atns -v
-
-update-pertest-all:: antlrtest_test.exe
-	$(MANAGETRIP) update-pertest -v
-
-ocaml-compile-all:: antlrtest_test.exe
-	$(MANAGETRIP) ocaml-compile -v
-
-ocaml-test-all:: antlrtest_test.exe
-	$(MANAGETRIP) ocaml-test -v
-
-ocaml-compare-all:: antlrtest_test.exe
-	$(MANAGETRIP) ocaml-compare -v
-
-#DTEST=$(shell ls fixtures/descriptors/LexerExec/*)
-#CTEST=$(shell ls fixtures/custom-descriptors/*/*)
 DTEST=\
 	fixtures/descriptors/LexerExec/CharSet.txt \
 	fixtures/descriptors/LexerExec/CharSetRange.txt \
@@ -182,42 +145,17 @@ DTEST += \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
 
 
-SELECTED=$(DTEST) $(CTEST)
-generate-selected:: antlrtest_test.exe
-	mkdir -p _generated && $(MANAGETRIP) generate -v $(SELECTED)
+DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)
 
-python-prepare-selected:: antlrtest_test.exe
-	$(MANAGETRIP) python-prepare -v $(SELECTED)
+%.DTEST: %.txt
+	$(MANAGETRIP) full -v $<
 
-depend-selected:: antlrtest_test.exe
-	$(MANAGETRIP) depend -v $(SELECTED)
+full-selected:: antlrtest_test.exe
+	$(MANAGETRIP) full -v $(DTEST)
 
-compile-selected:: antlrtest_test.exe
-	$(MANAGETRIP) compile -v $(SELECTED)
+dtest-selected: $(DTEST:.txt=.DTEST)
 
-python-test-selected:: antlrtest_test.exe
-	$(MANAGETRIP) python-test -v $(SELECTED)
-
-clean-selected:: antlrtest_test.exe
-	$(MANAGETRIP) clean -v $(SELECTED)
-
-realclean-selected:: antlrtest_test.exe
-	$(MANAGETRIP) realclean -v $(SELECTED)
-
-compare-selected:: antlrtest_test.exe
-	$(MANAGETRIP) compare-atns -v $(SELECTED)
-
-update-pertest-selected:: antlrtest_test.exe
-	$(MANAGETRIP) update-pertest -v $(SELECTED)
-
-ocaml-compile-selected:: antlrtest_test.exe
-	$(MANAGETRIP) ocaml-compile -v $(SELECTED)
-
-ocaml-test-selected:: antlrtest_test.exe
-	$(MANAGETRIP) ocaml-test -v $(SELECTED)
-
-ocaml-compare-selected:: antlrtest_test.exe
-	$(MANAGETRIP) ocaml-compare -v $(SELECTED)
+dtest-all: $(DALL:.txt=.DTEST)
 
 #ONE=LexerExec/CharSet
 ONE=ParserExec/Basic

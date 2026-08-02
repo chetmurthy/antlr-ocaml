@@ -74,8 +74,14 @@ $ENV{'TOP'} = ".." ;
     elsif ($ARGV[0] eq 'ocaml-compare') {
       $subcommand = shift @ARGV ;
     }
+    elsif ($ARGV[0] eq 'full') {
+      $subcommand = shift @ARGV ;
+    }
     else { last ; }
   }
+
+  my @full1 = qw(python-prepare python-test compare-atns update-pertest) ;
+  my @full2 = qw(ocaml-compile ocaml-test ocaml-compare) ;
 
   my @testfiles = @ARGV ;
 
@@ -108,10 +114,7 @@ $ENV{'TOP'} = ".." ;
   }
   elsif ($subcommand eq 'generate') {
     foreach my $tf (@testfiles) {
-      my $p = test_name($tf) ;
-      v_systemx([0], ["$ENV{'TOP'}/tests/antlrtest_util.opt", "generate", @genargs,
-		      "-d", "_generated", "-n", $p,
-		      $tf]) ;
+      generate($tf) ;
     }
   }
   elsif ($subcommand eq 'clean') {
@@ -212,9 +215,28 @@ $ENV{'TOP'} = ".." ;
       v_systemx([0], ["make", "-C", $dir, "ocaml-compare"]) ;
     }
   }
+  elsif ($subcommand eq 'full') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_generated/$p" ;
+      v_systemx([0], ["rm", "-rf", $dir]) ;
+      generate($tf) ;
+      v_systemx([0], ["make", "-C", $dir, @full1]) ;
+      v_systemx([0], ["make", "-C", $dir, @full2]) ;
+    }
+  }
 
   else { die "unrecognized subcommand <<$subcommand>>" ; }
 
+}
+
+sub generate {
+  my $tf = shift ;
+  my $p = test_name($tf) ;
+
+  v_systemx([0], ["$ENV{'TOP'}/tests/antlrtest_util.opt", "generate", @genargs,
+		  "-d", "_generated", "-n", $p,
+		  $tf]) ;
 }
 
 # "$ENV{'TOP'}/tests/fixtures/descriptors/*/*.txt"
