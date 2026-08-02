@@ -103,7 +103,7 @@ LBRACK   : LBrack;
 RBRACK   : RBrack;
 EQUALS   : Equal;
 BANG     : Bang;
-ID        : NameStartChar NameChar*;
+ID : NameStartChar NameChar*;
 
 // -----------------------------------
 // Unknown content in mode Inside

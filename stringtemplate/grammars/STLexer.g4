@@ -62,11 +62,11 @@ TMPL_COMMENT: TmplComment -> channel(OFF_CHANNEL);
 HORZ_WS : Hws+ -> channel(OFF_CHANNEL);
 VERT_WS : Vws+ -> channel(OFF_CHANNEL);
 
-ESCAPE : .      { isLDelim() }? EscSeq . { isRDelim() }?; // self contained
-LDELIM : .      { isLDelim() }? -> mode(Inside); // switch mode to inside
-RBRACE : RBrace { endsSubTemplate(); }; // conditional switch to inside
+ESCAPE : .      { self.isLDelim() }? EscSeq . { self.isRDelim() }?; // self contained
+LDELIM : .      { self.isLDelim() }? -> mode(Inside); // switch mode to inside
+RBRACE : RBrace { self.endsSubTemplate(); }; // conditional switch to inside
 
-TEXT: . { adjText(); }; // have to handle weird terminals
+TEXT: . { self.adjText(); }; // have to handle weird terminals
 
 // -----------------------------------
 mode Inside;
@@ -74,8 +74,8 @@ mode Inside;
 INS_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
 INS_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
 
-LBRACE : LBrace { startsSubTemplate() }? -> mode(SubTemplate);
-RDELIM : .      { isRDelim() }? -> mode(DEFAULT_MODE);
+LBRACE : LBrace { self.startsSubTemplate() }? -> mode(SubTemplate);
+RDELIM : .      { self.isRDelim() }? -> mode(DEFAULT_MODE);
 
 STRING: DQuoteLiteral;
 
@@ -103,6 +103,7 @@ LBRACK   : LBrack;
 RBRACK   : RBrack;
 EQUALS   : Equal;
 BANG     : Bang;
+ID : NameStartChar NameChar*;
 
 // -----------------------------------
 // Unknown content in mode Inside
@@ -124,5 +125,5 @@ PIPE      : Pipe  -> mode(DEFAULT_MODE);
 
 fragment TmplComment: LTmplMark .*? RTmplMark;
 
-fragment LTmplMark : .      { isLTmplComment() }? Bang;
-fragment RTmplMark : Bang . { isRTmplComment() }?;
+fragment LTmplMark : .      { self.isLTmplComment() }? Bang;
+fragment RTmplMark : Bang . { self.isRTmplComment() }?;

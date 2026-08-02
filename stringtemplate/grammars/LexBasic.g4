@@ -172,8 +172,8 @@ fragment JavaLetterOrDigit:
 // covers all characters above 0xFF which are not a surrogate
 // and UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
 fragment JavaUnicodeChars:
-    ~[\u0000-\u00FF\uD800-\uDBFF]     {Character.isJavaIdentifierPart(_input.LA(-1))}?
-    | [\uD800-\uDBFF] [\uDC00-\uDFFF] {Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
+    ~[\u0000-\u00FF\uD800-\uDBFF]     { False }?
+    | [\uD800-\uDBFF] [\uDC00-\uDFFF] { False }?
 ;
 
 // -----------------------------------
