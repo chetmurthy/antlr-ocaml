@@ -588,11 +588,11 @@ class STGLexer(Lexer):
 
     def JavaUnicodeChars_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 0:
-                return Character.isJavaIdentifierPart(_input.LA(-1))
+                return  False 
          
 
             if predIndex == 1:
-                return Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))
+                return  False 
          
 
 

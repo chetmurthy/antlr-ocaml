@@ -571,20 +571,21 @@ Some "OFF_CHANNEL"]
  open Ppxutil
  open Antlr
  open Exec
+module Full = struct
 let full_atn = Exec.Atns.read_atn ~grammarType:LEXER ~raw:raw_atn ()
 let atn = snd full_atn
 
 let _JavaUnicodeChars_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 0 then assert false
+ if predIndex = 0 then false
 else 
- if predIndex = 1 then assert false
+ if predIndex = 1 then false
 else 
  Fmt.(failwithf "_JavaUnicodeChars_sempred: unrecognized predIndex %d" predIndex)
  
 let actions = []
 let sempreds = [(87, _JavaUnicodeChars_sempred)]
-module Full = struct
 include Exec.Lexer
+let full_atn = full_atn
 let full_init ~input ~output =
   LexerBase.init ~atn ~actions ~sempreds ~input ~output
 end

@@ -29,15 +29,15 @@ let adjText self cu =
     end ;
   true
 
-let isLDelim self cu =
-  lDelim = IS.la self.R._input 1
+let isLDelimNotComment self cu =
+  IS.la self.R._input (-1) = lDelim && IS.la self.R._input 1 <> Char.code '!'
 
 let isRDelim self cu =
   rDelim = IS.la self.R._input (-1)
 
-
 let isLTmplComment self cu =
-   isLDelim self cu && IS.la self._input 2 = Char.code '!'
+   IS.la self.R._input (-1) = lDelim && IS.la self._input (1) = Char.code '!'
 
 let isRTmplComment self cu =
-   isRDelim self cu && IS.la self._input 2 = Char.code '!'
+   IS.la self.R._input (-2) = Char.code '!' && IS.la self._input (-1) = rDelim
+

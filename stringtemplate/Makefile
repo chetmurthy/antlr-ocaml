@@ -42,6 +42,8 @@ clean::
 bootstrap:: ../tests/atn_util.opt
 	cp $(TOP)/tests/fixtures/grammar-lib/Lex* grammars/
 	cp $(TOP)/tests/fixtures/grammar-lib/ST* grammars/
+	cp $(TOP)/tests/fixtures/pertest-files/antlr4/ST1/translation.json .
+	cp $(TOP)/tests/fixtures/pertest-files/antlr4/ST1/actionFuns.ml .
 	(cd grammars && antlr4 -Dlanguage=Python3 STGLexer.g4)
 	(cd grammars && antlr4 -Dlanguage=Python3 STLexer.g4)
 	$(TOP)/tests/atn_util.opt emit-ocaml-lexer \

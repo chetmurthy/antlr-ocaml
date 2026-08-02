@@ -62,8 +62,8 @@ TMPL_COMMENT: TmplComment -> channel(OFF_CHANNEL);
 HORZ_WS : Hws+ -> channel(OFF_CHANNEL);
 VERT_WS : Vws+ -> channel(OFF_CHANNEL);
 
-ESCAPE : .      { self.isLDelim() }? EscSeq . { self.isRDelim() }?; // self contained
-LDELIM : .      { self.isLDelim() }? -> mode(Inside); // switch mode to inside
+ESCAPE : .      { self.isLDelimNotComment() }? EscSeq . { self.isRDelim() }?; // self contained
+LDELIM : .      { self.isLDelimNotComment() }? -> mode(Inside); // switch mode to inside
 RBRACE : RBrace { self.endsSubTemplate(); }; // conditional switch to inside
 
 TEXT: . { self.adjText(); }; // have to handle weird terminals
@@ -103,7 +103,7 @@ LBRACK   : LBrack;
 RBRACK   : RBrack;
 EQUALS   : Equal;
 BANG     : Bang;
-ID : NameStartChar NameChar*;
+InsideID : NameStartChar NameChar*;
 
 // -----------------------------------
 // Unknown content in mode Inside
