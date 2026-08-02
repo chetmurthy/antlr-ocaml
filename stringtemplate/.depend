@@ -1,0 +1,33 @@
+ANTLRv4Lexer_atn.cmo ANTLRv4Lexer.cmo camlp5_adapter.cmo grammar_types.cmo pa.cmo migrate_grammar.cmo grammar_tools.cmo ANTLRv4Lexer_atn.cmi ANTLRv4Lexer.cmi camlp5_adapter.cmi grammar_types.cmi pa.cmi migrate_grammar.cmi grammar_tools.cmi ANTLRv4Lexer_atn.cmx ANTLRv4Lexer.cmx camlp5_adapter.cmx grammar_types.cmx pa.cmx migrate_grammar.cmx grammar_tools.cmx: ../local-install/lib/antlr/META
+ANTLRv4Lexer_atn.cmo :
+ANTLRv4Lexer_atn.cmx :
+ANTLRv4Lexer.cmo : \
+    ANTLRv4Lexer_atn.cmo
+ANTLRv4Lexer.cmx : \
+    ANTLRv4Lexer_atn.cmx
+camlp5_adapter.cmo : \
+    ANTLRv4Lexer.cmo
+camlp5_adapter.cmx : \
+    ANTLRv4Lexer.cmx
+grammar_types.cmo :
+grammar_types.cmx :
+pa.cmo : \
+    grammar_types.cmo \
+    camlp5_adapter.cmo
+pa.cmx : \
+    grammar_types.cmx \
+    camlp5_adapter.cmx
+migrate_grammar.cmo : \
+    grammar_types.cmo
+migrate_grammar.cmx : \
+    grammar_types.cmx
+grammar_tools.cmo : \
+    pa.cmo \
+    migrate_grammar.cmo \
+    grammar_types.cmo
+grammar_tools.cmx : \
+    pa.cmx \
+    migrate_grammar.cmx \
+    grammar_types.cmx
+mk_meta.cmo :
+mk_meta.cmx :
