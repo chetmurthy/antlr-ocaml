@@ -2847,6 +2847,7 @@ module type LEXER =
 
 module type FULL_LEXER = sig
   include LEXER
+  val full_atn : (Interp.Raw.t * Atn.t)
   val full_init : input:IS.t -> output:out_channel -> lexer_t
 end
 

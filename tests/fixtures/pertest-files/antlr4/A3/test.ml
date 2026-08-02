@@ -30,17 +30,13 @@ let test ~show_dfa ~disable_logging ~json_log_file file =
 end
 
 module Full = struct
-include Exec.Lexer
+include L.Full
 
 let nextToken self =
   let t = Exec.Lexer.nextToken self in
   let t = ActionFuns.after_nextToken self t in
   Exec.Lexer.emitToken self t ;
   t
-
-let full_init ~input ~output =
-  let open L in
-  LexerBase.init ~atn ~actions ~sempreds ~input ~output
 end
 
 module Test = TestLexer(Full)

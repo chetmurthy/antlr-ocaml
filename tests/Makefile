@@ -178,8 +178,7 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/A2.txt \
 	fixtures/custom-descriptors/antlr4/A3.txt \
 
-DTEST := \
-	fixtures/descriptors/LexerExec/CharSet.txt \
+DTEST += \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
 
 

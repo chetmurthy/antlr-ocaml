@@ -2,12 +2,10 @@
 
 open Pa_ppx_utils
 
-open L
-
 module Full = struct
 open Antlr
+include L.Full
 open Exec
-include Lexer
 
 let resetAcceptPosition self index line column =
     IS.seek self.recog.R._input index ;
@@ -44,7 +42,7 @@ let handleAcceptPositionForIdentifier self t =
     end
   else t
 
-let token_symbolic_name raw_atn ty =
+let token_symbolic_name (raw_atn, _) ty =
   if ty < 0 then None
   else if ty >= Array.length raw_atn.Interp.Raw.token_symbolic_names then None
   else raw_atn.Interp.Raw.token_symbolic_names.(ty)
@@ -53,9 +51,9 @@ let _nextToken self =
   let rv = Lexer.nextToken self in
 
   let rv = 
-    if token_symbolic_name raw_atn (Std.outSome rv.T.type_) = Some "TOKENS" then
+    if token_symbolic_name full_atn (Std.outSome rv.T.type_) = Some "TOKENS" then
       handleAcceptPositionForKeyword self "tokens" rv
-    else if token_symbolic_name raw_atn (Std.outSome rv.T.type_) = Some "LABEL" then
+    else if token_symbolic_name full_atn (Std.outSome rv.T.type_) = Some "LABEL" then
       handleAcceptPositionForIdentifier self rv
     else rv in
   Lexer.emitToken self rv ;

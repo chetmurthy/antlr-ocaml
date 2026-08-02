@@ -1,0 +1,23 @@
+[
+    ["{ False }",
+     "false"],
+    ["{Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}",
+     "assert false"],
+    ["{ self.startsSubTemplate() }",
+     "ActionFuns.startsSubTemplate self cu"],
+    ["{ self.endsSubTemplate(); }",
+     "ActionFuns.endsSubTemplate self cu"],
+    ["{ self.adjText(); }",
+     "ActionFuns.adjText self cu"],
+    ["{ self.isLDelimNotComment() }",
+     "ActionFuns.isLDelimNotComment self cu"],
+    ["{ self.isRDelim() }",
+     "ActionFuns.isRDelim self cu"],
+    ["{ self.isLTmplComment() }",
+     "ActionFuns.isLTmplComment self cu"],
+    ["{ self.isRTmplComment() }",
+     "ActionFuns.isRTmplComment self cu"]
+]
+
+
+

@@ -243,14 +243,15 @@ else |}
  open Ppxutil
  open Antlr
  open Exec
+module Full = struct
 let full_atn = Exec.Atns.read_atn ~grammarType:LEXER ~raw:raw_atn ()
 let atn = snd full_atn
 %a
 %a
 %a
 %a
-module Full = struct
 include Exec.Lexer
+let full_atn = full_atn
 let full_init ~input ~output =
   LexerBase.init ~atn ~actions ~sempreds ~input ~output
 end

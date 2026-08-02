@@ -56,7 +56,7 @@ VISITOR=-visitor
 	antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Python3 <grammarName>.g4
 
 l.ml:
-	$(TOP)/tests/atn_util.opt emit-ocaml-lexer -i Lexer.interp --grammar-lib $(TOP)/tests/fixtures/grammar-lib -t $(TOP)/tests/translation.json <grammarName>.g4 > l.ml.NEW && mv l.ml.NEW l.ml
+	$(TOP)/tests/atn_util.opt emit-ocaml-lexer -i Lexer.interp --grammar-lib $(TOP)/tests/fixtures/grammar-lib -t translation.json <grammarName>.g4 > l.ml.NEW && mv l.ml.NEW l.ml
 
 l_constants.ml:
 	$(TOP)/tests/atn_util.opt emit-ocaml-constants Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
