@@ -2,6 +2,7 @@
 #camlp5o ;;
 #require "ounit2";;
 #require "cmdliner";;
+#require "uucp";;
 #require "camlp5.pr_o";;
 
 let pp_ploc_t pps (loc : Ploc.t) = Fmt.(pf pps "<%s>" (Ploc.string_of_location loc)) ;;
@@ -17,6 +18,7 @@ let pp_char_stream strm =
 #install_printer pp_char_stream ;;
 
 
+#require "pa_ppx.base" ;;
 #require "pa_ppx.utils" ;;
 #require "pa_ppx_regexp";;
 #require "pa_ppx.runtime";;
@@ -27,6 +29,8 @@ let pp_char_stream strm =
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 Pa_ppx_runtime_fat.Exceptions.Ploc.pp_loc_verbose := true ;;
 
+open Pa_ppx_base ;;
+open Ppxutil ;;
 open Pa_ppx_utils ;;
 
 #require "antlr";;
@@ -34,9 +38,6 @@ open Antlr ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
-
-#require "parse_antlrv4" ;;
-open Parse_antlrv4 ;;
 
 #install_printer Fpath.pp ;;
 
@@ -56,7 +57,33 @@ let pp_atn pps (x : Atn.t) = Fmt.(pf pps "#<atn>") ;;
 let pp_dfa pps (x : Exec.DFA.t) = Fmt.(pf pps "#<atn>") ;;
 #install_printer pp_dfa ;;
 
+let find_token_index atn s =
+  let open Interp.Raw in
+  match Array.find_index (function (Some s') -> s = s' | None -> false) atn.token_symbolic_names with
+      None -> Fmt.(failwithf "cannot find %s" s)
+    | Some n -> n
+;;
 
+let check_tokens file l =
+let open Interp.Raw in
+let atn = fst (Exec.Atns.read_atn ~grammarType:LEXER ~file ()) in
+l |> List.iter (fun s ->
+         let i = find_token_index atn s in
+         let sym = atn.token_symbolic_names.(i) in
+         let lit = atn.token_literal_names.(i) in
+         Fmt.(pf stdout "%s/%d: %a %a@." s i
+                (option ~none:(const string "<none>") string) sym
+                (option ~none:(const string "<none>") Dump.string) lit))
+
+;;
+
+#require "stringtemplate" ;;
+open Stringtemplate ;;
+
+#trace Camlp5_adapter.pattern_of_token ;;
+
+{|abc def|} |> Pa.Template.of_string ;;
+{|{<writeln("\"I\"")>}|} |> Pa.Template.of_string ;;
 
 (*
 ;;; Local Variables: ***
