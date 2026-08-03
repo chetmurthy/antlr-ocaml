@@ -103,7 +103,7 @@ LBRACK   : LBrack;
 RBRACK   : RBrack;
 EQUALS   : Equal;
 BANG     : Bang;
-InsideID : NameStartChar NameChar*;
+ID : NameStartChar NameChar*;
 
 // -----------------------------------
 // Unknown content in mode Inside
@@ -116,7 +116,7 @@ mode SubTemplate;
 SUB_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
 SUB_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
 
-ID        : NameStartChar NameChar*;
+SUB_ID    : NameStartChar NameChar* -> type(ID) ;
 SUB_COMMA : Comma -> type(COMMA);
 PIPE      : Pipe  -> mode(DEFAULT_MODE);
 

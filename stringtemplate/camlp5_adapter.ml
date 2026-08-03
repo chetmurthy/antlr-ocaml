@@ -18,18 +18,31 @@ let string_of_char_stream cs =
   Stream.iter (Buffer.add_char b) cs ;
   Buffer.contents b
 
-let pattern_of_token self : Plexing.pattern =
+let renaming = [
+  ]
+
+let rename x =
+  match List.assoc_opt x renaming with
+    None -> x
+  | Some y -> y
+
+let names =
   let open Antlr in
   let symbolic_names = L_st.raw_atn.Interp.Raw.token_symbolic_names in
   let literal_names = L_st.raw_atn.Interp.Raw.token_literal_names in
   assert (Array.length symbolic_names = Array.length literal_names) ;
+  let names = Array.of_list (Std.combine (Array.to_list symbolic_names) (Array.to_list literal_names)) in
+  Array.map rename names
+
+let pattern_of_token self : Plexing.pattern =
+  let open Antlr in
   match self.Exec.T.type_ with
     None -> assert false
   | Some (-1) -> ("EOI","")
   | Some n when n < 0 -> assert false
-  | Some n when n >= Array.length symbolic_names -> assert false
+  | Some n when n >= Array.length names -> assert false
   | Some n ->
-     match (symbolic_names.(n), literal_names.(n)) with
+     match names.(n) with
        (None, _) -> assert false
      | (Some _, Some txt) -> ("", txt)
      | (Some ty, None) ->

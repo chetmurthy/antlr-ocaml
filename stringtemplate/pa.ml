@@ -37,7 +37,7 @@ element: [ [
 
 single_element: [ [
       x = expr_tag -> EXPR_TAG x
-    | x = TEXT -> TEXT x
+    | x = [ x = TEXT -> x | x = RBRACE -> x ] -> TEXT x
   ] ]
   ;
 
@@ -56,8 +56,8 @@ expr_tag: [ [
 
 map_expr: [ [
       me = member_expr ;
-      melopt = OPT [ mel = LIST1 member_expr SEP COMMA ; COLON ; mtr = map_template_ref -> (mel, mtr) ] ;
-      mtrll = LIST1 [ COLON ; mtrl = LIST1 map_template_ref SEP COMMA -> mtrl ] SEP COLON ->
+      melopt = OPT [ mel = LIST1 [ COMMA ; me = member_expr -> me ] ; COLON ; mtr = map_template_ref -> (mel, mtr) ] ;
+      mtrll = LIST0 [ COLON ; mtrl = LIST1 map_template_ref SEP COMMA -> mtrl ] ->
       (me, melopt, mtrll)
   ] ]
   ;
