@@ -19,10 +19,26 @@ value template_eoi = Grammar.Entry.create g "template_eoi";
 value top_map_expr = Grammar.Entry.create g "top_map_expr";
 value top_map_template_ref = Grammar.Entry.create g "top_map_template_ref";
 value top_member_expr = Grammar.Entry.create g "top_member_expr";
+value top_include_expr = Grammar.Entry.create g "top_include_expr";
+
+value check_id_lparen_f strm =
+  match stream_npeek 2 strm with [
+    [(("ID"), _); ("LPAREN", "(")] -> ()
+  | _ -> raise Stream.Failure
+  ]
+;
+
+value check_id_lparen =
+  Grammar.Entry.of_parser g "check_id_lparen"
+    check_id_lparen_f
+;
+
+
 
 EXTEND
   GLOBAL: template template_eoi
-          top_map_expr top_map_template_ref top_member_expr
+          top_map_expr top_map_template_ref top_member_expr top_include_expr
+          check_id_lparen
   ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
@@ -30,6 +46,7 @@ template_eoi: [ [ x = template ; EOI -> x ] ] ;
 top_map_expr: [ [ "#inside" ; x = map_expr ; EOI -> x ] ] ;
 top_map_template_ref: [ [ "#inside" ; x = map_template_ref ; EOI -> x ] ] ;
 top_member_expr: [ [ "#inside" ; x = member_expr ; EOI -> x ] ] ;
+top_include_expr: [ [ "#inside" ; x = include_expr ; EOI -> x ] ] ;
 
 template: [ [ l = LIST0 element -> l ] ] ;
 
@@ -94,9 +111,12 @@ named_arg: [ [ id = ID ; EQUALS ; e = expr -> (id,e) ] ] ;
 expr: [ [ me = map_expr -> me ] ] ;
 
 include_expr: [ [
+      check_id_lparen ;
       id = ID ; LPAREN ; eopt = OPT expr ; RPAREN -> EXEC_FUNC id eopt
     | SUPER ; DOT ; id = ID ; LPAREN ; l = args ; RPAREN -> INCLUDE_SUPER id l
+(*
     | qid = qualified_id ; LPAREN ; l = args ; RPAREN -> INCLUDE qid l
+ *)
     | AT ; SUPER ; DOT ; id = ID ; LPAREN ; RPAREN -> INCLUDE_SUPER_REGION id
     | AT ; id = ID ; LPAREN ; RPAREN -> INCLUDE_REGION id
     | p = primary -> INCLUDE_PRIMARY p
@@ -186,4 +206,9 @@ module Map_Template_Ref = Pa_json.PAHelper(struct
 module Member_Expr = Pa_json.PAHelper(struct
                      type t = member_expr_t ;
                      value entry = top_member_expr ;
+                   end) ;
+
+module Include_Expr = Pa_json.PAHelper(struct
+                     type t = include_expr_t ;
+                     value entry = top_include_expr ;
                    end) ;

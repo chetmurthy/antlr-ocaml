@@ -79,12 +79,17 @@ l |> List.iter (fun s ->
 
 #require "stringtemplate" ;;
 open Stringtemplate ;;
-
+(*
 #trace Camlp5_adapter.pattern_of_token ;;
-
+ *)
 {|abc def|} |> Pa.Template.of_string ;;
 {|{<writeln("\"I\"")>}|} |> Pa.Template.of_string ;;
+{|{<name>}|} |> Pa.Template.of_string ;;
 {|{<ToStringTree("$ctx"):writeln()>}|} |> Pa.Template.of_string ;;
+
+{|#inside writeln("\"I\"") |} |> Pa.Map_Expr.of_string ;;
+{|#inside writeln("\"I\"") |} |> Pa.Include_Expr.of_string ;;
+{|#inside writeln() |} |> Pa.Include_Expr.of_string ;;
 
 (*
 ;;; Local Variables: ***
