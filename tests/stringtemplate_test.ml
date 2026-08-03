@@ -17,6 +17,8 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore({|{<name>}|} |> Pa.Template.of_string))
   ; assert_equal () (ignore ({|{<ToStringTree("$ctx"):writeln()>}|} |> Pa.Template.of_string))
   ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
+  ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
+  ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
 
 
 let suite = "Test Stringtemplate" >::: [
