@@ -16,29 +16,44 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore({|{<writeln("\"I\"")>}|} |> Pa.Template.of_string))
   ; assert_equal () (ignore({|{<name>}|} |> Pa.Template.of_string))
   ; assert_equal () (ignore ({|{<ToStringTree("$ctx"):writeln()>}|} |> Pa.Template.of_string))
+  ; assert_equal () (ignore ({|{<InitIntMember("i","0")>}|} |> Pa.Template.of_string))
+
   ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
   ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
   ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
 
-let test_parse_file file ctxt =
+let test_parse_grammar txt ctxt =
   let open Stringtemplate in
-  ()
-  ; assert_equal () (ignore (Pa.Template.load ~file))
+  ignore(Pa.Template.of_string txt)
 
-let test_parse_all_grammars () =
+let test_parse_descriptor file =
+  let open Stringtemplate in
+  let module D = Descriptor in
+  let testname = [%match {|([^/]+/[^/]+)\.txt$|} / pcre2 strings !1 exc] file in
+  let d = D.load ~testname file in
+  [
+    d.grammar_name >:: (test_parse_grammar d.grammar)
+  ]
+
+let test_parse_all_descriptors () =
   let g4list =
-    [Fpath.v "_generated"]
+    [Fpath.v "fixtures/descriptors"; Fpath.v "fixtures/custom-descriptors"]
     |> Bos.OS.Path.fold (fun a b -> a::b) []
     |> Result.get_ok
-    |> List.filter (Fpath.has_ext "g4")
+    |> List.filter (Fpath.has_ext "txt")
   in
  let tests =
    g4list |>
      List.map (fun f ->
          let f = Fpath.to_string f in
-         f >:: (test_parse_file f))
+         f >::: (test_parse_descriptor f))
  in
  tests
+
+let test_parse_file file ctxt =
+  let open Stringtemplate in
+  ()
+  ; assert_equal () (ignore (Pa.Template.load ~file))
 
 let parse_fixed_files = 
   "parse fixed files" >:::
@@ -51,9 +66,7 @@ let parse_fixed_files =
 let suite = "Test Stringtemplate" >::: [
       "parse st"   >:: test_parse_st
     ; "parse fixed files" >: parse_fixed_files
-(*
-    ; "parse grammars" >::: (test_parse_all_grammars())
- *)
+    ; "parse descriptors" >::: (test_parse_all_descriptors())
     ]
 
 let _ = 

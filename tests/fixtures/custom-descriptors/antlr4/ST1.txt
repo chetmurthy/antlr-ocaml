@@ -24,7 +24,7 @@ def adjText(self):
         c2 = self._input.LA(1)
         if c2 == ord('\\'):
             self._input.consume()
-        elif c2 == ord('<') or c2 == ord('}'):
+        elif c2 == ord('\<') or c2 == ord('}'):
             self._input.consume()
     return True
 

@@ -122,12 +122,14 @@ named_arg: [ [ id = ID ; EQUALS ; e = expr -> (id,e) ] ] ;
 expr: [ [ me = map_expr -> me ] ] ;
 
 include_expr: [ [
+(*
       check_id_lparen ;
       id = ID ; "(" ; eopt = OPT expr ; ")" -> EXEC_FUNC id eopt
-    | SUPER ; "." ; id = ID ; "(" ; l = args ; ")" -> INCLUDE_SUPER id l
-(*
-    | qid = qualified_id ; "(" ; l = args ; ")" -> INCLUDE qid l
- *)
+    | *)
+
+      SUPER ; "." ; id = ID ; "(" ; l = args ; ")" -> INCLUDE_SUPER id l
+    | check_id_lparen ;
+      qid = qualified_id ; "(" ; l = args ; ")" -> INCLUDE qid l
     | AT ; SUPER ; "." ; id = ID ; "(" ; ")" -> INCLUDE_SUPER_REGION id
     | AT ; id = ID ; "(" ; ")" -> INCLUDE_REGION id
     | p = primary -> INCLUDE_PRIMARY p
