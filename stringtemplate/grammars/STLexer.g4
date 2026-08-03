@@ -53,6 +53,8 @@ channels {
 // -----------------------------------
 // default mode = Outside
 
+INSIDE : '#inside' -> mode(Inside) ;
+
 DOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL);
 BLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL);
 LINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL);

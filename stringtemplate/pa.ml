@@ -16,16 +16,20 @@ value g = Grammar.gcreate lexer;
 value template = Grammar.Entry.create g "template";
 value template_eoi = Grammar.Entry.create g "template_eoi";
 
-value map_expr = Grammar.Entry.create g "map_expr";
-value map_template_ref = Grammar.Entry.create g "map_template_ref";
-value member_expr = Grammar.Entry.create g "member_expr";
+value top_map_expr = Grammar.Entry.create g "top_map_expr";
+value top_map_template_ref = Grammar.Entry.create g "top_map_template_ref";
+value top_member_expr = Grammar.Entry.create g "top_member_expr";
 
 EXTEND
   GLOBAL: template template_eoi
-          map_expr map_template_ref member_expr
+          top_map_expr top_map_template_ref top_member_expr
   ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
+
+top_map_expr: [ [ "#inside" ; x = map_expr ; EOI -> x ] ] ;
+top_map_template_ref: [ [ "#inside" ; x = map_template_ref ; EOI -> x ] ] ;
+top_member_expr: [ [ "#inside" ; x = member_expr ; EOI -> x ] ] ;
 
 template: [ [ l = LIST0 element -> l ] ] ;
 
@@ -81,6 +85,7 @@ args: [ [
       l = arg_expr_list -> ARGS_LIST l
     | l = LIST1 named_arg SEP COMMA ; ellipsis = [ COMMA ; ELLIPSIS -> True | -> False] ->
       ARGS_NAMED l ellipsis
+    | -> ARGS_EMPTY
   ] ]
   ;
 
@@ -166,4 +171,19 @@ END ;
 module Template = Pa_json.PAHelper(struct
                      type t = template_t ;
                      value entry = template_eoi ;
+                   end) ;
+
+module Map_Expr = Pa_json.PAHelper(struct
+                     type t = map_expr_t ;
+                     value entry = top_map_expr ;
+                   end) ;
+
+module Map_Template_Ref = Pa_json.PAHelper(struct
+                     type t = map_template_ref_t ;
+                     value entry = top_map_template_ref ;
+                   end) ;
+
+module Member_Expr = Pa_json.PAHelper(struct
+                     type t = member_expr_t ;
+                     value entry = top_member_expr ;
                    end) ;

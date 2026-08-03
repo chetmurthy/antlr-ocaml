@@ -19,6 +19,7 @@ and include_expr_t =
 and args_t =
   ARGS_LIST of arg_expr_list_t
 | ARGS_NAMED of named_arg_t list * bool
+| ARGS_EMPTY
 
 and arg_expr_list_t = expr_t list
 

@@ -84,6 +84,7 @@ open Stringtemplate ;;
 
 {|abc def|} |> Pa.Template.of_string ;;
 {|{<writeln("\"I\"")>}|} |> Pa.Template.of_string ;;
+{|{<ToStringTree("$ctx"):writeln()>}|} |> Pa.Template.of_string ;;
 
 (*
 ;;; Local Variables: ***
