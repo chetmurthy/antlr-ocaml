@@ -9,7 +9,7 @@ DESTDIR=
 
 PACKAGES := $(PACKAGES),antlr
 
-TARGET_PACKAGE=parse_antlrv4
+TARGET_PACKAGE=stringtemplate
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
@@ -17,13 +17,14 @@ ML=\
 	l_stg_constants.ml l_st_constants.ml \
 	actionFuns.ml \
 	l_stg.ml l_st.ml \
+	st_types.ml camlp5_adapter.ml pa.ml
 
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)
 ALLPACKAGES=$(PACKAGES)
 
-OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Parse_antlrv4
+OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Stringtemplate
 
 all: $(TARGET) $(TARGET:.cma=.cmxa)
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install

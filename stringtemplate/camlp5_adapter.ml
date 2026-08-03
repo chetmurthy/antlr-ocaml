@@ -20,8 +20,8 @@ let string_of_char_stream cs =
 
 let pattern_of_token self : Plexing.pattern =
   let open Antlr in
-  let symbolic_names = L.raw_atn.Interp.Raw.token_symbolic_names in
-  let literal_names = L.raw_atn.Interp.Raw.token_literal_names in
+  let symbolic_names = L_st.raw_atn.Interp.Raw.token_symbolic_names in
+  let literal_names = L_st.raw_atn.Interp.Raw.token_literal_names in
   assert (Array.length symbolic_names = Array.length literal_names) ;
   match self.Exec.T.type_ with
     None -> assert false
@@ -53,21 +53,6 @@ let located_pattern_of_token ~file self : (Plexing.pattern * Ploc.t) =
   let tok = pattern_of_token self in
   (tok,loc)
 
-module Full = struct
-open Antlr
-include Exec.Lexer
-
-let nextToken self =
-  let t = Exec.Lexer.nextToken self in
-  let t = ActionFuns.after_nextToken self t in
-  Exec.Lexer.emitToken self t ;
-  t
-
-let full_init ~input ~output =
-  let open L in
-  LexerBase.init ~atn ~actions ~sempreds ~input ~output
-end
-
 let input_file = Plexing.input_file
 let lexer cs =
   let open Antlr in
@@ -77,9 +62,9 @@ let lexer cs =
         Exec.IS.init txt ()
       ) ()
   in
-  let lex = Full.full_init ~input ~output:stdout in
+  let lex = L_st.Full.full_init ~input ~output:stdout in
   let rec next_token () =
-    let t = Full.nextToken lex in
+    let t = L_st.Full.nextToken lex in
     assert(Std.isSome t.channel) ;
     if (Std.outSome t.channel) <> 0 then next_token()
     else

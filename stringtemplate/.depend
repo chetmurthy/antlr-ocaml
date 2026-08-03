@@ -1,33 +1,33 @@
-ANTLRv4Lexer_atn.cmo ANTLRv4Lexer.cmo camlp5_adapter.cmo grammar_types.cmo pa.cmo migrate_grammar.cmo grammar_tools.cmo ANTLRv4Lexer_atn.cmi ANTLRv4Lexer.cmi camlp5_adapter.cmi grammar_types.cmi pa.cmi migrate_grammar.cmi grammar_tools.cmi ANTLRv4Lexer_atn.cmx ANTLRv4Lexer.cmx camlp5_adapter.cmx grammar_types.cmx pa.cmx migrate_grammar.cmx grammar_tools.cmx: ../local-install/lib/antlr/META
-ANTLRv4Lexer_atn.cmo :
-ANTLRv4Lexer_atn.cmx :
-ANTLRv4Lexer.cmo : \
-    ANTLRv4Lexer_atn.cmo
-ANTLRv4Lexer.cmx : \
-    ANTLRv4Lexer_atn.cmx
+lexerBase.cmo l_stg_constants.cmo l_st_constants.cmo actionFuns.cmo l_stg.cmo l_st.cmo st_types.cmo camlp5_adapter.cmo pa.cmo lexerBase.cmi l_stg_constants.cmi l_st_constants.cmi actionFuns.cmi l_stg.cmi l_st.cmi st_types.cmi camlp5_adapter.cmi pa.cmi lexerBase.cmx l_stg_constants.cmx l_st_constants.cmx actionFuns.cmx l_stg.cmx l_st.cmx st_types.cmx camlp5_adapter.cmx pa.cmx: ../local-install/lib/antlr/META
+lexerBase.cmo :
+lexerBase.cmx :
+l_stg_constants.cmo :
+l_stg_constants.cmx :
+l_st_constants.cmo :
+l_st_constants.cmx :
+actionFuns.cmo :
+actionFuns.cmx :
+l_stg.cmo : \
+    lexerBase.cmo
+l_stg.cmx : \
+    lexerBase.cmx
+l_st.cmo : \
+    lexerBase.cmo \
+    actionFuns.cmo
+l_st.cmx : \
+    lexerBase.cmx \
+    actionFuns.cmx
+st_types.cmo :
+st_types.cmx :
 camlp5_adapter.cmo : \
-    ANTLRv4Lexer.cmo
+    l_st.cmo
 camlp5_adapter.cmx : \
-    ANTLRv4Lexer.cmx
-grammar_types.cmo :
-grammar_types.cmx :
+    l_st.cmx
 pa.cmo : \
-    grammar_types.cmo \
+    st_types.cmo \
     camlp5_adapter.cmo
 pa.cmx : \
-    grammar_types.cmx \
+    st_types.cmx \
     camlp5_adapter.cmx
-migrate_grammar.cmo : \
-    grammar_types.cmo
-migrate_grammar.cmx : \
-    grammar_types.cmx
-grammar_tools.cmo : \
-    pa.cmo \
-    migrate_grammar.cmo \
-    grammar_types.cmo
-grammar_tools.cmx : \
-    pa.cmx \
-    migrate_grammar.cmx \
-    grammar_types.cmx
 mk_meta.cmo :
 mk_meta.cmx :
