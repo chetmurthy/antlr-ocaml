@@ -180,7 +180,6 @@ qualified_id: [ [
   ;
 
 ifstat: [ [
-      
   ] ]
   ;
 

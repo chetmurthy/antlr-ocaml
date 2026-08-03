@@ -14,6 +14,7 @@ let test_parse_st ctxt =
   ()
   ; assert_equal () (ignore({|abc def|} |> Pa.Template.of_string))
   ; assert_equal () (ignore({|{<writeln("\"I\"")>}|} |> Pa.Template.of_string))
+  ; assert_equal () (ignore({|{<name>}|} |> Pa.Template.of_string))
   ; assert_equal () (ignore ({|{<ToStringTree("$ctx"):writeln()>}|} |> Pa.Template.of_string))
 
 let suite = "Test Stringtemplate" >::: [
