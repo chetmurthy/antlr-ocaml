@@ -6,12 +6,13 @@ ifndef JSONLOGGING
 export JSONLOGGING=0
 endif
 
-PACKAGES := $(PACKAGES),antlr,parse_antlrv4,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
+PACKAGES := $(PACKAGES),antlr,parse_antlrv4,stringtemplate,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 
 ML= \
 	lib_test.ml antlr_test.ml atn_util.ml mimick_test.ml \
 	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
-	replay_util.ml parser_test.ml grammar_tools_test.ml
+	replay_util.ml parser_test.ml grammar_tools_test.ml \
+	stringtemplate_test.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
@@ -19,7 +20,8 @@ ALLPACKAGES=$(PACKAGES)
 EXE=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
 	antlrtest_test.exe antlrtest_util.exe \
 	deserialize_jsonlog.exe replay_util.exe \
-	parser_test.exe grammar_tools_test.exe
+	parser_test.exe grammar_tools_test.exe \
+	stringtemplate_test.exe
 
 TESTML=$(shell ls *_test.ml)
 
