@@ -141,7 +141,7 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/A2.txt \
 	fixtures/custom-descriptors/antlr4/A3.txt \
 
-DTEST += \
+DTEST := \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
 
 

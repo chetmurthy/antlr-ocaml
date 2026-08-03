@@ -12,12 +12,12 @@ Arg.(parse [
      "mk_meta -destdir <dir>")
 ;;
 
-Fmt.(pf stdout {|# Specifications for the "parse_antlrv4" package:
+Fmt.(pf stdout {|# Specifications for the "stringtemplate" package:
 version = "%s"
-description = "Parse ANTLR4 Grammars"
+description = "String Templates"
 
-  archive(byte) = "parse_antlrv4.cma"
-  archive(native) = "parse_antlrv4.cmxa"
+  archive(byte) = "stringtemplate.cma"
+  archive(native) = "stringtemplate.cmxa"
 
   requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils,yojson,pa_ppx.located_yojson"
 |} version)
