@@ -23,7 +23,7 @@ value top_include_expr = Grammar.Entry.create g "top_include_expr";
 
 value check_id_lparen_f strm =
   match stream_npeek 2 strm with [
-    [(("ID"), _); ("LPAREN", "(")] -> ()
+    [(("ID"), _); ("", "(")] -> ()
   | _ -> raise Stream.Failure
   ]
 ;
@@ -33,12 +33,22 @@ value check_id_lparen =
     check_id_lparen_f
 ;
 
+value check_not_lt_if_elseif_else_endif_f strm =
+  match stream_npeek 2 strm with [
+    [("", "<"); ("", ("if"|"elseif"|"else"|"endif"))] -> raise Stream.Failure
+  | _ -> ()
+  ]
+;
 
+value check_not_lt_if_elseif_else_endif =
+  Grammar.Entry.of_parser g "check_not_lt_if_elseif_else_endif"
+    check_not_lt_if_elseif_else_endif_f
+;
 
 EXTEND
   GLOBAL: template template_eoi
           top_map_expr top_map_template_ref top_member_expr top_include_expr
-          check_id_lparen
+          check_id_lparen check_not_lt_if_elseif_else_endif
   ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
@@ -51,6 +61,7 @@ top_include_expr: [ [ "#inside" ; x = include_expr ; EOI -> x ] ] ;
 template: [ [ l = LIST0 element -> l ] ] ;
 
 element: [ [
+      check_not_lt_if_elseif_else_endif ;
       x = single_element -> x
     | x = compound_element -> x
   ] ]
@@ -58,7 +69,7 @@ element: [ [
 
 single_element: [ [
       x = expr_tag -> EXPR_TAG x
-    | x = [ x = TEXT -> x | x = RBRACE -> x ] -> TEXT x
+    | x = [ x = TEXT -> x | x = "}" -> x ] -> TEXT x
   ] ]
   ;
 
@@ -69,7 +80,7 @@ compound_element: [ [
   ;
 
 expr_tag: [ [
-      LDELIM ; me = map_expr ; eo_opt = OPT [ SEMI ; eo = expr_options -> eo ] ; RDELIM ->
+      "<" ; me = map_expr ; eo_opt = OPT [ ";" ; eo = expr_options -> eo ] ; ">" ->
       let eo_list = match eo_opt with [ None -> [] | Some l -> l ] in
       (me,  eo_list)
   ] ]
@@ -77,30 +88,30 @@ expr_tag: [ [
 
 map_expr: [ [
       me = member_expr ;
-      melopt = OPT [ mel = LIST1 [ COMMA ; me = member_expr -> me ] ; COLON ; mtr = map_template_ref -> (mel, mtr) ] ;
-      mtrll = LIST0 [ COLON ; mtrl = LIST1 map_template_ref SEP COMMA -> mtrl ] ->
+      melopt = OPT [ mel = LIST1 [ "," ; me = member_expr -> me ] ; ":" ; mtr = map_template_ref -> (mel, mtr) ] ;
+      mtrll = LIST0 [ ":" ; mtrl = LIST1 map_template_ref SEP "," -> mtrl ] ->
       (me, melopt, mtrll)
   ] ]
   ;
 
 member_expr: [ [
       iexp = include_expr ;
-      l = LIST0 [ DOT ; id = ID -> IEARG_ID id
-                | DOT ; LPAREN ; me = map_expr ; RPAREN -> IEARG_EXPR me ] ->
+      l = LIST0 [ "." ; id = ID -> IEARG_ID id
+                | "." ; "(" ; me = map_expr ; ")" -> IEARG_EXPR me ] ->
       (iexp, l)
   ] ]
   ;
 
 map_template_ref: [ [
-      qid = qualified_id ; LPAREN ; a = args ; RPAREN -> MT_INCLUDE qid a
+      qid = qualified_id ; "(" ; a = args ; ")" -> MT_INCLUDE qid a
     | st = subtemplate -> MT_SUB st
-    | LPAREN ; me = map_expr ; RPAREN ; LPAREN ; mel = arg_expr_list ; RPAREN -> MT_INCLUDE_IND me mel
+    | "(" ; me = map_expr ; ")" ; "(" ; mel = arg_expr_list ; ")" -> MT_INCLUDE_IND me mel
   ] ]
   ;
 
 args: [ [
       l = arg_expr_list -> ARGS_LIST l
-    | l = LIST1 named_arg SEP COMMA ; ellipsis = [ COMMA ; ELLIPSIS -> True | -> False] ->
+    | l = LIST1 named_arg SEP "," ; ellipsis = [ "," ; ELLIPSIS -> True | -> False] ->
       ARGS_NAMED l ellipsis
     | -> ARGS_EMPTY
   ] ]
@@ -112,13 +123,13 @@ expr: [ [ me = map_expr -> me ] ] ;
 
 include_expr: [ [
       check_id_lparen ;
-      id = ID ; LPAREN ; eopt = OPT expr ; RPAREN -> EXEC_FUNC id eopt
-    | SUPER ; DOT ; id = ID ; LPAREN ; l = args ; RPAREN -> INCLUDE_SUPER id l
+      id = ID ; "(" ; eopt = OPT expr ; ")" -> EXEC_FUNC id eopt
+    | SUPER ; "." ; id = ID ; "(" ; l = args ; ")" -> INCLUDE_SUPER id l
 (*
-    | qid = qualified_id ; LPAREN ; l = args ; RPAREN -> INCLUDE qid l
+    | qid = qualified_id ; "(" ; l = args ; ")" -> INCLUDE qid l
  *)
-    | AT ; SUPER ; DOT ; id = ID ; LPAREN ; RPAREN -> INCLUDE_SUPER_REGION id
-    | AT ; id = ID ; LPAREN ; RPAREN -> INCLUDE_REGION id
+    | AT ; SUPER ; "." ; id = ID ; "(" ; ")" -> INCLUDE_SUPER_REGION id
+    | AT ; id = ID ; "(" ; ")" -> INCLUDE_REGION id
     | p = primary -> INCLUDE_PRIMARY p
   ] ]
   ;
@@ -130,44 +141,44 @@ primary: [ [
     | FALSE -> PRIMARY_BOOL False
     | st = subtemplate -> PRIMARY_SUBTEMPLATE st
     | l = list_ -> PRIMARY_LIST l
-    | LPAREN ; c = conditional ; RPAREN -> PRIMARY_CONDITIONAL c
-    | LPAREN ; e = expr ; RPAREN ; aeopt = OPT [ LPAREN ; ae = arg_expr_list ; RPAREN -> ae ] ->
+    | "(" ; c = conditional ; ")" -> PRIMARY_CONDITIONAL c
+    | "(" ; e = expr ; ")" ; aeopt = OPT [ "(" ; ae = arg_expr_list ; ")" -> ae ] ->
       PRIMARY_INCLUDE_IND e aeopt
   ] ]
   ;
 
-list_: [ [ LBRACK ; lopt = OPT arg_expr_list ; RBRACK -> lopt ] ] ;
+list_: [ [ "[" ; lopt = OPT arg_expr_list ; "]" -> lopt ] ] ;
 
-conditional: [ [ l = LIST1 and_conditional SEP OR -> OR l ] ] ;
-and_conditional: [ [ l = LIST1 not_conditional SEP AND -> AND l ] ] ;
+conditional: [ [ l = LIST1 and_conditional SEP "||" -> OR l ] ] ;
+and_conditional: [ [ l = LIST1 not_conditional SEP "&&" -> AND l ] ] ;
 not_conditional: [ [
-      BANG ; c = not_conditional -> NOT c
+      "!" ; c = not_conditional -> NOT c
     | me = member_expr -> ATOM me
     ] ]
   ;
 
 
 subtemplate: [ [
-      LBRACE ; lopt = OPT [ ids = LIST1 ID SEP COMMA ; PIPE -> ids ] ; t = template ; RBRACE ->
+      "{" ; lopt = OPT [ ids = LIST1 ID SEP "," ; "|" -> ids ] ; t = template ; "}" ->
       let l = match lopt with [ None -> [] | Some l -> l ] in
       (l, t)
   ] ]
   ;
 
-arg_expr_list: [ [ l = LIST1 arg SEP COMMA -> l ] ];
+arg_expr_list: [ [ l = LIST1 arg SEP "," -> l ] ];
 
 arg: [ [ e = expr_no_comma -> e  ] ] ;
 
 expr_no_comma: [ [
         me = member_expr ;
-        mtropt = OPT [ COLON ; mtr = map_template_ref -> mtr ] ->
+        mtropt = OPT [ ":" ; mtr = map_template_ref -> mtr ] ->
         let l = match mtropt with [ None -> [] | Some mtr -> [[mtr]] ] in
         (me, None, l)
     ] ]
 ;
 
 expr_options: [ [
-      l = LIST0 [ COMMA ; eo = expr_option -> eo ] ->  (l : list expr_option_t)
+      l = LIST0 [ "," ; eo = expr_option -> eo ] ->  (l : list expr_option_t)
   ] ]
   ;
 
@@ -180,6 +191,10 @@ qualified_id: [ [
   ;
 
 ifstat: [ [
+      "<" ; "if" ; "(" ; c1 = conditional ; ")" ; ">" ; t1 = template ;
+      l = LIST0 [ "<" ; "elseif" ; "(" ; c = conditional ; ")" ; ">" ; t = template -> (c,t) ] ;
+      elseopt = OPT [ "<" ; "else" ; ">" ; t = template -> t ] ;
+      "<" ; "endif" ; ">" -> IFSTAT c1 t1 l elseopt
   ] ]
   ;
 

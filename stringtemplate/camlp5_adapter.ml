@@ -19,6 +19,22 @@ let string_of_char_stream cs =
   Buffer.contents b
 
 let renaming = [
+    ((Some "LDELIM", None), (Some "LDELIM",Some "<"))
+  ; ((Some "RDELIM", None), (Some "RDELIM",Some ">"))
+  ; ((Some "LBRACE", None), (Some "LBRACE",Some "{"))
+  ; ((Some "RBRACE", None), (Some "RBRACE",Some "}"))
+  ; ((Some "COLON", None), (Some "COLON",Some ":"))
+  ; ((Some "COMMA", None), (Some "COMMA",Some ","))
+  ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
+  ; ((Some "LPAREN", None), (Some "LPAREN",Some "("))
+  ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
+  ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
+  ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
+  ; ((Some "DOT", None), (Some "DOT",Some "."))
+  ; ((Some "BANG", None), (Some "BANG",Some "!"))
+  ; ((Some "AND", None), (Some "AND",Some "&&"))
+  ; ((Some "OR", None), (Some "OR",Some "||"))
+  ; ((Some "PIPE", None), (Some "PIPE",Some "|"))
   ]
 
 let rename x =

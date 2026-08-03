@@ -91,6 +91,10 @@ open Stringtemplate ;;
 {|#inside writeln("\"I\"") |} |> Pa.Include_Expr.of_string ;;
 {|#inside writeln() |} |> Pa.Include_Expr.of_string ;;
 
+{|
+<if(a)>abc<endif>
+|} |> Pa.Template.of_string ;;
+
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***
