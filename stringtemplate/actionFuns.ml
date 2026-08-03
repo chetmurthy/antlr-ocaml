@@ -18,9 +18,9 @@ let endsSubTemplate self cu =
   true
 
 let adjText self cu =
-  let c1 = IS.la self.R._input 1 in
+  let c1 = IS.la self.R._input (-1) in
   if c1 = Char.code '\\' then begin
-      let c2 = IS.la self._input 2 in
+      let c2 = IS.la self._input 1 in
       if c2 = Char.code '\\' then
         IS.consume self._input
       else if c2 = lDelim || c2 = Char.code '}' then
