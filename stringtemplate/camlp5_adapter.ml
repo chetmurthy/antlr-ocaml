@@ -91,6 +91,7 @@ let lexer cs =
         Exec.IS.init txt ()
       ) ()
   in
+  ActionFuns.reset() ;
   let lex = L_st.Full.full_init ~input ~output:stdout in
   let rec next_token () =
     let t = L_st.Full.nextToken lex in

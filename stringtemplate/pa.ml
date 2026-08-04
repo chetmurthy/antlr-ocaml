@@ -20,6 +20,7 @@ value top_map_expr = Grammar.Entry.create g "top_map_expr";
 value top_map_template_ref = Grammar.Entry.create g "top_map_template_ref";
 value top_member_expr = Grammar.Entry.create g "top_member_expr";
 value top_include_expr = Grammar.Entry.create g "top_include_expr";
+value top_subtemplate = Grammar.Entry.create g "top_subtemplate";
 
 value check_id_lparen_f strm =
   match stream_npeek 2 strm with [
@@ -32,6 +33,20 @@ value check_id_lparen =
   Grammar.Entry.of_parser g "check_id_lparen"
     check_id_lparen_f
 ;
+
+value check_id_comma_or_bar_f strm =
+  match stream_npeek 2 strm with [
+    [(("ID"), _); ("", (","|"|"))] -> ()
+  | _ -> raise Stream.Failure
+  ]
+;
+
+value check_id_comma_or_bar =
+  Grammar.Entry.of_parser g "check_id_comma_or_bar"
+    check_id_comma_or_bar_f
+;
+
+
 
 value check_not_lt_if_elseif_else_endif_f strm =
   match stream_npeek 2 strm with [
@@ -48,7 +63,8 @@ value check_not_lt_if_elseif_else_endif =
 EXTEND
   GLOBAL: template template_eoi
           top_map_expr top_map_template_ref top_member_expr top_include_expr
-          check_id_lparen check_not_lt_if_elseif_else_endif
+          top_subtemplate
+          check_id_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
   ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
@@ -57,8 +73,14 @@ top_map_expr: [ [ "#inside" ; x = map_expr ; EOI -> x ] ] ;
 top_map_template_ref: [ [ "#inside" ; x = map_template_ref ; EOI -> x ] ] ;
 top_member_expr: [ [ "#inside" ; x = member_expr ; EOI -> x ] ] ;
 top_include_expr: [ [ "#inside" ; x = include_expr ; EOI -> x ] ] ;
+top_subtemplate: [ [ "#inside" ; x = subtemplate ; EOI -> x ] ] ;
 
-template: [ [ l = LIST0 element -> l ] ] ;
+template: [ [
+      l = LIST0 [ l = limited_template -> l | x = "}" -> [TEXT x] ] -> List.concat l
+  ] ]
+  ;
+
+limited_template: [ [ l = LIST1 element -> l ] ] ;
 
 element: [ [
       check_not_lt_if_elseif_else_endif ;
@@ -69,7 +91,7 @@ element: [ [
 
 single_element: [ [
       x = expr_tag -> EXPR_TAG x
-    | x = [ x = TEXT -> x | x = "}" -> x ] -> TEXT x
+    | x = TEXT -> TEXT x
   ] ]
   ;
 
@@ -161,9 +183,8 @@ not_conditional: [ [
 
 
 subtemplate: [ [
-      "{" ; lopt = OPT [ ids = LIST1 ID SEP "," ; "|" -> ids ] ; t = template ; "}" ->
-      let l = match lopt with [ None -> [] | Some l -> l ] in
-      (l, t)
+      "{" ; ids = LIST0 ID SEP "," ; "|"  ; t = limited_template ; "}" ->
+      (ids, t)
   ] ]
   ;
 
@@ -227,4 +248,9 @@ module Member_Expr = Pa_json.PAHelper(struct
 module Include_Expr = Pa_json.PAHelper(struct
                      type t = include_expr_t ;
                      value entry = top_include_expr ;
+                   end) ;
+
+module Subtemplate = Pa_json.PAHelper(struct
+                     type t = subtemplate_t ;
+                     value entry = top_subtemplate ;
                    end) ;

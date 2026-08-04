@@ -32,7 +32,7 @@ def startsSubTemplate(self):
     if not(hasattr(self,'subtemplateDepth')):
         self.subtemplateDepth = 0
     self.subtemplateDepth += 1
-    return False
+    return True
 
 def endsSubTemplate(self):
     if not(hasattr(self,'subtemplateDepth')):

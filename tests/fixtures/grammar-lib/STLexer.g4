@@ -110,7 +110,7 @@ ID : NameStartChar NameChar*;
 // -----------------------------------
 // Unknown content in mode Inside
 
-ERR_CHAR: . -> skip;
+// ERR_CHAR: . -> skip;
 
 // -----------------------------------
 mode SubTemplate;

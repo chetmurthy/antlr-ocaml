@@ -41,3 +41,5 @@ let isLTmplComment self cu =
 let isRTmplComment self cu =
    IS.la self.R._input (-2) = Char.code '!' && IS.la self._input (-1) = rDelim
 
+let reset () =
+  subtemplateDepth := 0

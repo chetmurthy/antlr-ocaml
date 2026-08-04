@@ -56,6 +56,8 @@ let pp_atn pps (x : Atn.t) = Fmt.(pf pps "#<atn>") ;;
 #install_printer pp_atn ;;
 let pp_dfa pps (x : Exec.DFA.t) = Fmt.(pf pps "#<atn>") ;;
 #install_printer pp_dfa ;;
+let pp_is pps (x : Exec.IS.t) = Fmt.(pf pps "#<is>") ;;
+#install_printer pp_is ;;
 
 let find_token_index atn s =
   let open Interp.Raw in
@@ -115,8 +117,11 @@ open Antlrtest ;;
 #load "stringtemplate_test.cmo";;
 open Stringtemplate_test ;;
 
-let file = "fixtures/descriptors/SemPredEvalParser/PredFromAltTestedInLoopBack_2.txt" ;;
-test_parse_descriptor_now file () ;;
+let file = "fixtures/descriptors/SemPredEvalParser/PredFromAltTestedInLoopBack_1.txt" ;;
+test_parse_descriptor file () ;;
+
+#trace Camlp5_adapter.pattern_of_token ;;
+{|#inside {|T<ParserToken("Parser", "NL")>}|} |> Pa.Subtemplate.of_string ;;
 
 (*
 ;;; Local Variables: ***

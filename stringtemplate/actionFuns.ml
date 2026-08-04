@@ -8,7 +8,7 @@ let subtemplateDepth = ref 0
 
 let startsSubTemplate self cu =
   incr subtemplateDepth ;
-  false
+  true
 
 let endsSubTemplate self cu =
   if !subtemplateDepth > 0 then begin
@@ -41,3 +41,5 @@ let isLTmplComment self cu =
 let isRTmplComment self cu =
    IS.la self.R._input (-2) = Char.code '!' && IS.la self._input (-1) = rDelim
 
+let reset () =
+  subtemplateDepth := 0
