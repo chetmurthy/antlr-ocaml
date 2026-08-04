@@ -32,7 +32,7 @@ all: $(EXE) $(OPT)
 test:: all $(TESTML:.ml=.TEST)
 
 %.TEST: %.opt
-	mkdir -p _build && ./$<
+	mkdir -p _build && ./$< -runner sequential -shards 1
 
 MANAGETRIP=./tools/manage-trip-tests
 deserialize-all:: replay_util.opt

@@ -26,29 +26,24 @@ let test_parse_grammar txt ctxt =
   let open Stringtemplate in
   ignore(Pa.Template.of_string txt)
 
-let test_parse_descriptor file =
+let test_parse_descriptor file ctxt =
   let open Stringtemplate in
   let module D = Descriptor in
   let testname = [%match {|([^/]+/[^/]+)\.txt$|} / pcre2 strings !1 exc] file in
   let d = D.load ~testname file in
-  [
-    d.grammar_name >:: (test_parse_grammar d.grammar)
-  ]
+  (test_parse_grammar d.grammar) ()
 
-let test_parse_all_descriptors () =
-  let g4list =
-    [Fpath.v "fixtures/descriptors"; Fpath.v "fixtures/custom-descriptors"]
-    |> Bos.OS.Path.fold (fun a b -> a::b) []
-    |> Result.get_ok
-    |> List.filter (Fpath.has_ext "txt")
-  in
- let tests =
-   g4list |>
+let list_all_descriptors () =
+  [Fpath.v "fixtures/descriptors"; Fpath.v "fixtures/custom-descriptors"]
+  |> Bos.OS.Path.fold (fun a b -> a::b) []
+  |> Result.get_ok
+  |> List.filter (Fpath.has_ext "txt")
+  |> List.map Fpath.to_string
+
+let test_parse_all_descriptors =
+  (list_all_descriptors()) |>
      List.map (fun f ->
-         let f = Fpath.to_string f in
-         f >::: (test_parse_descriptor f))
- in
- tests
+         f >:: (test_parse_descriptor f))
 
 let test_parse_file file ctxt =
   let open Stringtemplate in
@@ -56,17 +51,17 @@ let test_parse_file file ctxt =
   ; assert_equal () (ignore (Pa.Template.load ~file))
 
 let parse_fixed_files = 
-  "parse fixed files" >:::
-    ([
-        "fixtures/antlrtest.7/Makefile"
-      ; "fixtures/antlrtest.7/Test.py"
-      ; "fixtures/antlrtest.7/TestLexer.py"
-      ] |> List.map (fun f -> (f >:: test_parse_file f)))
+  [
+    "fixtures/antlrtest.7/Makefile"
+  ; "fixtures/antlrtest.7/Test.py"
+  ; "fixtures/antlrtest.7/TestLexer.py"
+  ]
+  |> List.map (fun f -> (f >:: test_parse_file f))
 
 let suite = "Test Stringtemplate" >::: [
       "parse st"   >:: test_parse_st
-    ; "parse fixed files" >: parse_fixed_files
-    ; "parse descriptors" >::: (test_parse_all_descriptors())
+    ; "parse fixed files" >::: parse_fixed_files
+    ; "parse descriptors" >::: test_parse_all_descriptors
     ]
 
 let _ = 

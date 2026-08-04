@@ -115,12 +115,8 @@ open Antlrtest ;;
 #load "stringtemplate_test.cmo";;
 open Stringtemplate_test ;;
 
-let file = "fixtures/descriptors/SemPredEvalParser/Order.txt" ;;
-open Stringtemplate ;;
-module D = Descriptor ;;
-let testname = [%match {|([^/]+/[^/]+)\.txt$|} / pcre2 strings !1 exc] file ;;
-let d = D.load ~testname file ;;
-Pa.Template.of_string d.grammar ;;
+let file = "fixtures/descriptors/SemPredEvalParser/PredFromAltTestedInLoopBack_2.txt" ;;
+test_parse_descriptor_now file () ;;
 
 (*
 ;;; Local Variables: ***
