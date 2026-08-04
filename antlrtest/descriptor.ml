@@ -13,18 +13,26 @@ let clean_stanza s =
   let s = [%subst {|^\n|} / "" / s] s in
   [%subst {|\n\n$|} / "" / s] s
 
-let split_stanzas txt = [%split {|^\[(notes|type|grammar|slaveGrammar|start|input|output|errors|flags|skip)\]$|} / pcre2 m strings !1] txt
+let split_stanzas txt = [%split {|^\[(notes|type|grammar|slaveGrammar|start|input|output|errors|flags|skip)([^\]]*)\]$|} / pcre2 m strings (!1, !2)] txt
 
-let parse txt =
+let parse_stanza_params txt =
+  txt
+  |> [%split {|\s+|} / pcre2]
+  |> List.filter_map [%match {|^([^=]+)=([^=]+)$|} / pcre2 strings (!1,!2)]
+
+
+let parse txt : (string * ((string * string) list * string)) list =
   let l = split_stanzas txt in
   let rec parec acc = function
       (`Text s)::tl when is_ws s ->
       parec acc tl
     | (`Text s)::_ ->
        Fmt.(failwithf "Descriptor.parse: text encountered before stanza: %a" Dump.string s)
-    | (`Delim name)::(`Text body)::tl ->
-       parec ((name,clean_stanza body)::acc) tl
-    | (`Delim n)::[] -> 
+    | (`Delim (name,params))::(`Text body)::tl ->
+       let params = parse_stanza_params params in
+       let body = clean_stanza body in
+       parec ((name,(params,body))::acc) tl
+    | (`Delim (n,_))::[] -> 
        Fmt.(failwithf "Descriptor.parse: trailing stanza name: %s" n)
     | [] -> List.rev acc in
   parec [] l
@@ -48,13 +56,15 @@ let pa_flags txt =
   ; buildParseTree = not ([%match {|notBuildParseTree|} / pcre2 pred] txt)
   }
 
+type params_t = (string * string) list
+
 type t = {
     is_lexer : bool
   ; is_composite : bool
   ; grammar_name : string
   ; grammar : string
-  ; slaveGrammars : string list
-  ; stanzas : (string * string) list
+  ; slaveGrammars : (params_t * string) list
+  ; stanzas : (string * (params_t *string)) list
   ; filename : string
   ; testname : string
   ; flags : flags_t
@@ -66,6 +76,9 @@ let stanza_opt d name =
     x -> Some x
   | exception Not_found ->
      None
+
+let stanza_all d name =
+  List.filter_map (fun (n,v) -> if n = name then Some v else None) d.stanzas
 
 let stanza d name =
   match List.assoc name d.stanzas with
@@ -80,34 +93,34 @@ let grammar_name ~file txt =
 
 let _mk ~testname ~file stanzas =
   let (is_lexer, is_composite) = match List.assoc "type" stanzas with
-      "Lexer" -> (true, false)
-    | "CompositeLexer" -> (true, true)
-    | "Parser" -> (false, false)
-    | "CompositeParser" -> (false, true)
-    | t -> Fmt.(failwithf "%s: Descriptor.mk: descriptor-type was %a (not {,Composite}{Lexer,Parser})"
+      (_,"Lexer") -> (true, false)
+    | (_,"CompositeLexer") -> (true, true)
+    | (_,"Parser") -> (false, false)
+    | (_,"CompositeParser") -> (false, true)
+    | (_,t) -> Fmt.(failwithf "%s: Descriptor.mk: descriptor-type was %a (not {,Composite}{Lexer,Parser})"
                   file Dump.string t)
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no descriptor-type stanza" file) in
   let grammar = match List.assoc "grammar" stanzas with
-      x -> clean_triple_quotes x
+      (_,x) -> clean_triple_quotes x
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no grammar stanza" file) in
 
   let slaveGrammars =
     stanzas
     |> List.filter_map (function
-             ("slaveGrammar",txt) -> Some(clean_triple_quotes txt)
+             ("slaveGrammar",(params, txt)) -> Some(params, clean_triple_quotes txt)
            | _ -> None) in
 
   let flags_txt =
     match List.assoc "flags" stanzas with
-      x -> x
+      (_,x) -> x
     | exception Not_found -> "" in
   let flags = pa_flags flags_txt in
 
   let startRule =
     match List.assoc "start" stanzas with
-      x -> Some x
+      (_,x) -> Some x
     | exception Not_found -> None in
 
   let grammar_name = grammar_name ~file grammar in

@@ -58,6 +58,11 @@ endif
 ocaml-test:: ocaml-compile
 	./test.opt test $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input > ocaml-output.NEW 2> ocaml-errors.NEW
 
+named-ocaml-test:: ocaml-compile
+	./test.opt test $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input.$(NAME) > ocaml-output.$(NAME).NEW 2> ocaml-errors.$(NAME).NEW
+	diff -Bwiu lexer-errors.$(NAME).NEW ocaml-errors.$(NAME).NEW || true
+	diff -Bwiu lexer-output.$(NAME).NEW ocaml-output.$(NAME).NEW || true
+
 ocaml-compile:: $(TESTS) $(TESTSOPT)
 
 test.exe: $(ML:.ml=.cmo)

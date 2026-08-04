@@ -66,7 +66,7 @@ VERT_WS : Vws+ -> channel(OFF_CHANNEL);
 
 ESCAPE : .      { self.isLDelimNotComment() }? EscSeq . { self.isRDelim() }?; // self contained
 LDELIM : .      { self.isLDelimNotComment() }? -> mode(Inside); // switch mode to inside
-RBRACE : RBrace { self.endsSubTemplate(); }; // conditional switch to inside
+RBRACE : RBrace { self.exitSubTemplate(); }; // conditional switch to inside
 
 TEXT: . { self.adjText(); }; // have to handle weird terminals
 
@@ -76,7 +76,8 @@ mode Inside;
 INS_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
 INS_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
 
-LBRACE : LBrace { self.startsSubTemplate() }? -> mode(SubTemplate);
+LBRACE : LBrace { self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> mode(SubTemplate);
+LBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), mode(DEFAULT_MODE);
 RDELIM : .      { self.isRDelim() }? -> mode(DEFAULT_MODE);
 
 STRING: DQuoteLiteral;

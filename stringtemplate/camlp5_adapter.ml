@@ -35,6 +35,7 @@ let renaming = [
   ; ((Some "AND", None), (Some "AND",Some "&&"))
   ; ((Some "OR", None), (Some "OR",Some "||"))
   ; ((Some "PIPE", None), (Some "PIPE",Some "|"))
+  ; ((Some "EQUALS", None), (Some "EQUALS", Some "="))
   ]
 
 let rename x =

@@ -46,6 +46,17 @@ value check_id_comma_or_bar =
     check_id_comma_or_bar_f
 ;
 
+value check_id_equals_f strm =
+  match stream_npeek 2 strm with [
+    [(("ID"), _); ("", "=")] -> ()
+  | _ -> raise Stream.Failure
+  ]
+;
+
+value check_id_equals =
+  Grammar.Entry.of_parser g "check_id_equals"
+    check_id_equals_f
+;
 
 
 value check_not_lt_if_elseif_else_endif_f strm =
@@ -65,6 +76,7 @@ EXTEND
           top_map_expr top_map_template_ref top_member_expr top_include_expr
           top_subtemplate
           check_id_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
+          check_id_equals
   ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
@@ -132,14 +144,15 @@ map_template_ref: [ [
   ;
 
 args: [ [
-      l = arg_expr_list -> ARGS_LIST l
-    | l = LIST1 named_arg SEP "," ; ellipsis = [ "," ; ELLIPSIS -> True | -> False] ->
+      check_id_equals ;
+      l = LIST1 named_arg SEP "," ; ellipsis = [ "," ; ELLIPSIS -> True | -> False] ->
       ARGS_NAMED l ellipsis
+    | l = arg_expr_list -> ARGS_LIST l
     | -> ARGS_EMPTY
   ] ]
   ;
 
-named_arg: [ [ id = ID ; EQUALS ; e = expr -> (id,e) ] ] ;  
+named_arg: [ [ id = ID ; "=" ; e = expr -> (id,e) ] ] ;  
 
 expr: [ [ me = map_expr -> me ] ] ;
 
@@ -181,10 +194,10 @@ not_conditional: [ [
     ] ]
   ;
 
-
 subtemplate: [ [
-      "{" ; ids = LIST0 ID SEP "," ; "|"  ; t = limited_template ; "}" ->
-      (ids, t)
+      "{" ; lopt = OPT [ ids = LIST1 ID SEP "," ; "|" -> ids ] ; t = limited_template ; "}" ->
+      let l = match lopt with [ None -> [] | Some l -> l ] in
+      (l, t)
   ] ]
   ;
 
@@ -205,7 +218,7 @@ expr_options: [ [
   ] ]
   ;
 
-expr_option: [ [ id = ID ; EQUALS ; e = expr -> (id,e) ] ] ;
+expr_option: [ [ id = ID ; "=" ; e = expr -> (id,e) ] ] ;
 
 qualified_id: [ [
       rooted = FLAG SLASH ; id = ID ; l = LIST0 [ SLASH ; id = ID -> id] ->

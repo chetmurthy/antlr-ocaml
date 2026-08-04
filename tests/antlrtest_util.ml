@@ -61,7 +61,7 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
   let includes = Stg.Group.load helperfile in
   let env = {(env) with includes = includes } in
 
-  if [%match {|python3|} / s i pcre2 pred] (match D.stanza_opt d "skip" with None -> "" | Some s -> s) then
+  if [%match {|python3|} / s i pcre2 pred] (match D.stanza_opt d "skip" with None -> "" | Some (_,s) -> s) then
     Fmt.(pf stderr "SKIP %s@." file)
  else
 
@@ -77,18 +77,44 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
   let generated_files =
     [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar_name))),
      Stg.transform ~file:Fmt.(str "%s grammar %s" file d.grammar_name) env d.D.grammar
-    ;Fpath.(append destdir (v "input")),
-     D.clean_triple_quotes (match D.stanza_opt d "input" with None -> "" | Some s -> s)
-    ;Fpath.(append destdir (v "output")),
-     D.clean_triple_quotes (match D.stanza_opt d "output" with None -> "" | Some s -> s)
-    ;Fpath.(append destdir (v "errors")),
-     D.clean_triple_quotes (match D.stanza_opt d "errors" with None -> "" | Some s -> s)
     ]@generated_files in
+  let input_generated_files =
+    let input_l = D.stanza_all d "input" in
+    let output_l = D.stanza_all d "output" in
+    let errors_l = D.stanza_all d "errors" in
+    input_l 
+    |> List.concat_map (fun (p,input_txt) ->
+           let output_txt =
+             match List.assoc_opt p output_l with
+               Some txt -> txt
+             | None -> "" in
+           let errors_txt =
+             match List.assoc_opt p errors_l with
+               Some txt -> txt
+             | None -> "" in
+           let file_name prefix =
+               if p = [] then prefix
+               else
+                 match List.assoc_opt "name" p with
+                   Some x -> prefix^"."^x
+                 | None ->
+                    Fmt.(failwithf "no 'name' in params %a"
+                           [%pp: (string * string) list] p) in
+
+           [Fpath.(append destdir (v (file_name "input"))),
+            D.clean_triple_quotes input_txt
+           ;Fpath.(append destdir (v (file_name "output"))),
+            D.clean_triple_quotes output_txt
+           ;Fpath.(append destdir (v (file_name "errors"))),
+            D.clean_triple_quotes errors_txt
+         ]) in
+
+  let generated_files = input_generated_files@generated_files in
   let generated_files =
     if d.D.is_composite then
       let l =
         d.D.slaveGrammars
-        |> List.map (fun slavetxt ->
+        |> List.map (fun (_, slavetxt) ->
                let slave_name = D.grammar_name ~file slavetxt in
                (Fpath.(append destdir (v Fmt.(str "%s.g4" slave_name))),
                 Stg.transform ~file:Fmt.(str "%s slaveGrammar %s" file slave_name) env slavetxt)) in

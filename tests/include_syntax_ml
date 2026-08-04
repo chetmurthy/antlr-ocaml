@@ -121,7 +121,7 @@ let file = "fixtures/descriptors/SemPredEvalParser/PredFromAltTestedInLoopBack_1
 test_parse_descriptor file () ;;
 
 #trace Camlp5_adapter.pattern_of_token ;;
-{|#inside {|T<ParserToken("Parser", "NL")>}|} |> Pa.Subtemplate.of_string ;;
+{|<TreeNodeWithAltNumField(X="T")>|} |> Pa.Template.of_string ;;
 
 (*
 ;;; Local Variables: ***

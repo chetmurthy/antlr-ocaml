@@ -6,16 +6,23 @@ let rDelim = Char.code '>'
 
 let subtemplateDepth = ref 0
 
-let startsSubTemplate self cu =
-  incr subtemplateDepth ;
-  true
+let enterSubTemplate self cu =
+  incr subtemplateDepth
 
-let endsSubTemplate self cu =
+let exitSubTemplate self cu =
   if !subtemplateDepth > 0 then begin
       decr subtemplateDepth ;
       R.mode self 1
-    end ;
-  true
+    end
+
+let subTemplateHasIDs self cu =
+  let rec idrec i =
+  let c = IS.la self.R._input i in
+  if c = Char.code '|' then true
+  else if c = Char.code '}' then false
+  else if c = C._EOF then false
+  else idrec (i+1)
+  in idrec 1
 
 let adjText self cu =
   let c1 = IS.la self.R._input (-1) in

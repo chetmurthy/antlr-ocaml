@@ -65,6 +65,13 @@ output.NEW errors.NEW json.log:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 Test.py $(RUNARGS) input > output.NEW 2> errors.NEW
 	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log
 
+named-python-test:: M.py
+	env PYTHONPATH=$(PYTHONPATH) python3 Test.py $(RUNARGS) input.$(NAME) > output.$(NAME).NEW 2> errors.$(NAME).NEW
+	env PYTHONPATH=$(PYTHONPATH) python3 TestLexer.py $(RUNARGS) input.$(NAME) > lexer-output.$(NAME).NEW 2> lexer-errors.$(NAME).NEW
+	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log
+	diff -Bwiu output.$(NAME) output.$(NAME).NEW
+	diff -Bwiu errors.$(NAME) errors.$(NAME).NEW
+
 lexer-output.NEW lexer-errors.NEW lexer-json.log:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 TestLexer.py $(RUNARGS) input > lexer-output.NEW 2> lexer-errors.NEW
 	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW lexer-json.log
