@@ -28,19 +28,27 @@ def adjText(self):
             self._input.consume()
     return True
 
-def startsSubTemplate(self):
+def enterSubTemplate(self):
     if not(hasattr(self,'subtemplateDepth')):
         self.subtemplateDepth = 0
     self.subtemplateDepth += 1
-    return True
 
-def endsSubTemplate(self):
+def exitSubTemplate(self):
     if not(hasattr(self,'subtemplateDepth')):
         self.subtemplateDepth = 0
     if self.subtemplateDepth > 0:
         self.subtemplateDepth -= 1
         self.mode(1)
-    return True
+
+def subTemplateHasIDs(self):
+    i = 1
+    while True:
+        c = self._input.LA(i)
+        if c == ord('|'): return True
+        if c == ord('}'): return False
+        if c == Token.EOF: return True
+        i += 1
+
 }
 
 import STLexer;
