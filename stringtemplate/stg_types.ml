@@ -33,7 +33,13 @@ type group_def_t =
   GROUPDEF_TEMPLATE of template_t
 | GROUPDEF_DICT of dict_t
 
+type header_t = {
+    name : string * string option
+  ; implements : (string * string option) option
+  }
+
 type group_t = {
-    imports : string list
+    header : header_t option
+  ; imports : string list
   ; defs : group_def_t list
   }

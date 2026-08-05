@@ -60,11 +60,19 @@ EXTEND
 group_eoi: [ [ x = group ; EOI -> x ] ] ;
 
 group: [ [
+      header = OPT [ h = header -> h ] ;
       dopt = OPT [ d = delimiters -> d ] ;
       iopt = OPT [ i = imports -> i ] ;
       defs = LIST0 [ t = template_ -> GROUPDEF_TEMPLATE t | d = dict_ -> GROUPDEF_DICT d ] ->
       let imports = match iopt with [ None ->  [] | Some l -> l ] in
-      { imports = imports ; defs = defs }
+      { header = header ; imports = imports ; defs = defs }
+  ] ]
+  ;
+
+header: [ [
+      "group" ; name = [ s1 = ID ; s2opt = OPT [ ":" ; s = ID -> s ] -> (s1, s2opt) ] ;
+      implements = OPT [ "implements" ; name = [ s1 = ID ; s2opt = OPT [ ":" ; s = ID -> s ] -> (s1, s2opt) ] -> name ] ; ";" ->
+       { name = name ; implements = implements }
   ] ]
   ;
 

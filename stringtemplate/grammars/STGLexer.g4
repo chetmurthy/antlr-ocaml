@@ -82,6 +82,7 @@ AT       : At;
 TRUE     : True_;
 FALSE    : False_;
 ELLIPSIS : Ellipsis;
+SEMI     : Semi;
 
 // -----------------------------------
 // Key words
@@ -103,11 +104,11 @@ STRLEN  : 'strlen';
 REVERSE : 'reverse';
 
 GROUP     : 'group'; // not used by parser?
-WRAP      : 'wrap';
-ANCHOR    : 'anchor';
-SEPARATOR : 'separator';
+// WRAP      : 'wrap';
+// ANCHOR    : 'anchor';
+// SEPARATOR : 'separator';
 
-ID: NameStartChar NameChar*;
+ID: NameStartChar (NameChar | '-')*;
 
 // -----------------------------------
 // Grammar specific fragments

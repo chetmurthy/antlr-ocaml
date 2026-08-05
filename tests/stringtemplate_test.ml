@@ -78,6 +78,7 @@ let list_all_stg () =
     "/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/templates"
   ; "/home/chet/Hack/Antlr/src/antlr4/tool/resources/org/antlr/v4/tool/templates/codegen"
   ; "/home/chet/Hack/Antlr/src/antlr4/tool/resources/org/antlr/v4/tool/templates"
+  ; "/home/chet/Hack/Github/antlr/stringtemplate4/"
   ]
   |> List.map Fpath.v
   |> Bos.OS.Path.fold (fun a b -> a::b) []

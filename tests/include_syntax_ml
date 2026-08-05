@@ -88,6 +88,9 @@ open Stringtemplate ;;
 #trace Pa_stg.check_id_lparen_f ;;
  *)
 
+#require "antlrtest" ;;
+#load "stringtemplate_test.cmo";;
+open Stringtemplate_test ;;
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***

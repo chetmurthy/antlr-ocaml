@@ -142,5 +142,6 @@ let renaming = [
   ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
   ; ((Some "ELLIPSIS", None), (Some "ELLIPSIS", Some "..."))
   ; ((Some "COLON", None), (Some "COLON",Some ":"))
+  ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
   ]
               end)(L_stg.Full)
