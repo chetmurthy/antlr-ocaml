@@ -1,4 +1,4 @@
-lexerBase.cmo l_stg_constants.cmo l_st_constants.cmo actionFuns.cmo l_stg.cmo l_st.cmo st_types.cmo camlp5_adapter.cmo pa.cmo lexerBase.cmi l_stg_constants.cmi l_st_constants.cmi actionFuns.cmi l_stg.cmi l_st.cmi st_types.cmi camlp5_adapter.cmi pa.cmi lexerBase.cmx l_stg_constants.cmx l_st_constants.cmx actionFuns.cmx l_stg.cmx l_st.cmx st_types.cmx camlp5_adapter.cmx pa.cmx: ../local-install/lib/antlr/META
+lexerBase.cmo l_stg_constants.cmo l_st_constants.cmo actionFuns.cmo l_stg.cmo l_st.cmo st_types.cmo camlp5_adapter.cmo pa_st.cmo lexerBase.cmi l_stg_constants.cmi l_st_constants.cmi actionFuns.cmi l_stg.cmi l_st.cmi st_types.cmi camlp5_adapter.cmi pa_st.cmi lexerBase.cmx l_stg_constants.cmx l_st_constants.cmx actionFuns.cmx l_stg.cmx l_st.cmx st_types.cmx camlp5_adapter.cmx pa_st.cmx: ../local-install/lib/antlr/META
 lexerBase.cmo :
 lexerBase.cmx :
 l_stg_constants.cmo :
@@ -20,13 +20,15 @@ l_st.cmx : \
 st_types.cmo :
 st_types.cmx :
 camlp5_adapter.cmo : \
-    l_st.cmo
+    l_st.cmo \
+    actionFuns.cmo
 camlp5_adapter.cmx : \
-    l_st.cmx
-pa.cmo : \
+    l_st.cmx \
+    actionFuns.cmx
+pa_st.cmo : \
     st_types.cmo \
     camlp5_adapter.cmo
-pa.cmx : \
+pa_st.cmx : \
     st_types.cmx \
     camlp5_adapter.cmx
 mk_meta.cmo :

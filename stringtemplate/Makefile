@@ -17,7 +17,7 @@ ML=\
 	l_stg_constants.ml l_st_constants.ml \
 	actionFuns.ml \
 	l_stg.ml l_st.ml \
-	st_types.ml camlp5_adapter.ml pa.ml
+	st_types.ml camlp5_adapter.ml pa_st.ml
 
 
 TOOLSML = mk_meta.ml
