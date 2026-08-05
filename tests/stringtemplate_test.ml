@@ -12,21 +12,21 @@ Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.
 let test_parse_st ctxt =
   let open Stringtemplate in
   ()
-  ; assert_equal () (ignore({|abc def|} |> Pa.Template.of_string))
-  ; assert_equal () (ignore({|{<writeln("\"I\"")>}|} |> Pa.Template.of_string))
-  ; assert_equal () (ignore({|{<name>}|} |> Pa.Template.of_string))
-  ; assert_equal () (ignore ({|{<ToStringTree("$ctx"):writeln()>}|} |> Pa.Template.of_string))
-  ; assert_equal () (ignore ({|{<InitIntMember("i","0")>}|} |> Pa.Template.of_string))
-  ; assert_equal () (ignore ({|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|} |> Pa.Template.of_string))
-  ; assert_equal () (ignore ({|<TreeNodeWithAltNumField(X="T")>|} |> Pa.Template.of_string))
+  ; assert_equal () (ignore({|abc def|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore({|{<writeln("\"I\"")>}|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore({|{<name>}|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore ({|{<ToStringTree("$ctx"):writeln()>}|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore ({|{<InitIntMember("i","0")>}|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore ({|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore ({|<TreeNodeWithAltNumField(X="T")>|} |> Pa_st.Template.of_string))
 
-  ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
-  ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
-  ; assert_equal () (ignore (Pa.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
+  ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
+  ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
+  ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
 
 let test_parse_grammar txt ctxt =
   let open Stringtemplate in
-  ignore(Pa.Template.of_string txt)
+  ignore(Pa_st.Template.of_string txt)
 
 let test_parse_descriptor file ctxt =
   let open Stringtemplate in
@@ -57,7 +57,7 @@ let test_parse_all_descriptors ctxt =
 let test_parse_file file ctxt =
   let open Stringtemplate in
   ()
-  ; assert_equal () (ignore (Pa.Template.load ~file))
+  ; assert_equal () (ignore (Pa_st.Template.load ~file))
 
 let parse_fixed_files = 
   [
