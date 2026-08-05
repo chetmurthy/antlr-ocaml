@@ -33,7 +33,7 @@ and map_template_ref_t =
 | MT_INCLUDE_IND of map_expr_t * expr_t list
 
 and subtemplate_t =
-  string list * template_t
+  string list * elements_t
 
 and primary_t =
   PRIMARY_ID of string
@@ -75,7 +75,7 @@ and element_t =
 
 and elements_t = element_t list
 
-type template_t = element_t list
+and template_t = elements_t
 
 let coalesce1 (l : template_t) : template_t =
   let finish_stracc tacc stracc =

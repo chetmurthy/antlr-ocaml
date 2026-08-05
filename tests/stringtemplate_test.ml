@@ -29,6 +29,19 @@ let test_parse_stg ctxt =
   let open Stringtemplate in
   ()
   ; assert_equal () (ignore({| import "foo" |} |> Pa_stg.Group.of_string))
+  ; assert_equal () (ignore({| 
+cppTypeInitMap ::= [
+    "int":"0",
+    "long":"0",
+    "float":"0.0f",
+    "double":"0.0",
+    "bool":"false",
+    "short":"0",
+    "char":"0",
+    default: "nullptr" // anything other than a primitive type is an object
+]
+
+ |} |> Pa_stg.Group.of_string))
 
 let test_parse_grammar txt ctxt =
   let open Stringtemplate in
