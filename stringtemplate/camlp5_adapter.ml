@@ -1,5 +1,6 @@
 
 open Pa_ppx_utils
+open Antlr
 
 module type ACTION_FUNS = sig
   val reset : unit -> unit
@@ -11,7 +12,7 @@ end
 
 
 
-module Make(AF : ACTION_FUNS)(TC : TOKEN_CUSTOMIZATION) = struct
+module Make(AF : ACTION_FUNS)(TC : TOKEN_CUSTOMIZATION)(Lex : Exec.FULL_LEXER) = struct
 
 let ploc_of_token ~file t =
   let open Antlr in
@@ -37,8 +38,8 @@ let rename x =
 
 let names =
   let open Antlr in
-  let symbolic_names = L_st.raw_atn.Interp.Raw.token_symbolic_names in
-  let literal_names = L_st.raw_atn.Interp.Raw.token_literal_names in
+  let symbolic_names = (fst Lex.full_atn).Interp.Raw.token_symbolic_names in
+  let literal_names = (fst Lex.full_atn).Interp.Raw.token_literal_names in
   assert (Array.length symbolic_names = Array.length literal_names) ;
   let names = Array.of_list (Std.combine (Array.to_list symbolic_names) (Array.to_list literal_names)) in
   Array.map rename names
@@ -85,9 +86,9 @@ let lexer cs =
       ) ()
   in
   AF.reset() ;
-  let lex = L_st.Full.full_init ~input ~output:stdout in
+  let lex = Lex.full_init ~input ~output:stdout in
   let rec next_token () =
-    let t = L_st.Full.nextToken lex in
+    let t = Lex.nextToken lex in
     assert(Std.isSome t.channel) ;
     if (Std.outSome t.channel) <> 0 then next_token()
     else
@@ -116,4 +117,4 @@ let renaming = [
   ; ((Some "PIPE", None), (Some "PIPE",Some "|"))
   ; ((Some "EQUALS", None), (Some "EQUALS", Some "="))
   ]
-              end)
+              end)(L_st.Full)
