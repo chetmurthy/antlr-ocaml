@@ -76,23 +76,3 @@ and element_t =
 and elements_t = element_t list
 
 and template_t = elements_t
-
-let coalesce1 (l : template_t) : template_t =
-  let finish_stracc tacc stracc =
-    match stracc with
-      [] -> tacc
-    | strl ->
-       let s = String.concat "" (List.rev strl) in
-        (TEXT s)::tacc in
-
-  let rec corec tacc stracc = function
-      [] ->
-       let tacc = finish_stracc tacc stracc in
-       List.rev tacc
-    | (TEXT s)::l -> corec tacc (s::stracc) l
-    | h::l ->
-       let tacc = finish_stracc tacc stracc in
-       corec (h::tacc) [] l
-  in
-  corec [] [] l
-

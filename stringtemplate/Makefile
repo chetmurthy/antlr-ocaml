@@ -20,6 +20,7 @@ ML=\
 	st_types.ml stg_types.ml \
 	camlp5_adapter.ml \
 	pa_st.ml pa_stg.ml \
+	st_ops.ml \
 	eval.ml
 
 
