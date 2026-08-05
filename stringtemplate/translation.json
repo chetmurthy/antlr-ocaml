@@ -4,23 +4,23 @@
     ["{Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}",
      "assert false"],
     ["{ self.subTemplateHasIDs() }",
-     "ActionFuns.subTemplateHasIDs self cu"],
+     "ActionFuns_st.subTemplateHasIDs self cu"],
     ["{ not self.subTemplateHasIDs() }",
-     "not (ActionFuns.subTemplateHasIDs self cu)"],
+     "not (ActionFuns_st.subTemplateHasIDs self cu)"],
     ["{ self.enterSubTemplate() }",
-     "ActionFuns.enterSubTemplate self cu"],
+     "ActionFuns_st.enterSubTemplate self cu"],
     ["{ self.exitSubTemplate(); }",
-     "ActionFuns.exitSubTemplate self cu"],
+     "ActionFuns_st.exitSubTemplate self cu"],
     ["{ self.adjText(); }",
-     "ActionFuns.adjText self cu"],
+     "ActionFuns_st.adjText self cu"],
     ["{ self.isLDelimNotComment() }",
-     "ActionFuns.isLDelimNotComment self cu"],
+     "ActionFuns_st.isLDelimNotComment self cu"],
     ["{ self.isRDelim() }",
-     "ActionFuns.isRDelim self cu"],
+     "ActionFuns_st.isRDelim self cu"],
     ["{ self.isLTmplComment() }",
-     "ActionFuns.isLTmplComment self cu"],
+     "ActionFuns_st.isLTmplComment self cu"],
     ["{ self.isRTmplComment() }",
-     "ActionFuns.isRTmplComment self cu"]
+     "ActionFuns_st.isRTmplComment self cu"]
 ]
 
 
