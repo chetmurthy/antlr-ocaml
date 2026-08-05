@@ -59,7 +59,7 @@ let test_parse_all_descriptors ctxt =
         Fmt.(pf stderr "[%s]@." f) ;
         (test_parse_descriptor f ()))
 
-let test_parse_file file ctxt =
+let test_parse_st_file file ctxt =
   let open Stringtemplate in
   ()
   ; assert_equal () (ignore (Pa_st.Template.load ~file))
@@ -70,13 +70,39 @@ let parse_fixed_files =
   ; "fixtures/antlrtest.7/Test.py"
   ; "fixtures/antlrtest.7/TestLexer.py"
   ]
-  |> List.map (fun f -> (f >:: test_parse_file f))
+  |> List.map (fun f -> (f >:: test_parse_st_file f))
+
+
+let list_all_stg () =
+  [
+    "/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/templates"
+  ; "/home/chet/Hack/Antlr/src/antlr4/tool/resources/org/antlr/v4/tool/templates/codegen"
+  ; "/home/chet/Hack/Antlr/src/antlr4/tool/resources/org/antlr/v4/tool/templates"
+  ]
+  |> List.map Fpath.v
+  |> Bos.OS.Path.fold (fun a b -> a::b) []
+  |> Result.get_ok
+  |> List.filter (Fpath.has_ext "stg")
+  |> List.map Fpath.to_string
+
+let test_parse_stg_file file ctxt =
+  let open Stringtemplate in
+  ()
+  ; assert_equal () (ignore (Pa_stg.Group.load ~file))
+
+let test_parse_all_stg ctxt =
+  (list_all_stg())
+  |>
+    List.iter (fun f ->
+        Fmt.(pf stderr "[%s]@." f) ;
+        (test_parse_stg_file f ()))
 
 let suite = "Test Stringtemplate" >::: [
       "parse st"   >:: test_parse_st
     ; "parse stg"   >:: test_parse_stg
     ; "parse fixed files" >::: parse_fixed_files
     ; "parse descriptors" >:: test_parse_all_descriptors
+    ; "parse stg files" >:: test_parse_all_stg
     ]
 
 let _ = 

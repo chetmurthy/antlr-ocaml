@@ -33,3 +33,18 @@ import "foo"
 [@2,7:11='"foo"',<7>,1:7]
 [@3,12:12='\n',<6>,channel=2,1:12]
 [@4,13:12='<EOF>',<-1>,2:0]
+[input name=C]
+decision-rank(states) ::= <<
+{rank=same; rankdir=TB; <states:{s | s<s>}; separator="; ">}
+>>
+[output name=C]
+[@0,0:12='decision-rank',<42>,1:0]
+[@1,13:13='(',<16>,1:13]
+[@2,14:19='states',<42>,1:14]
+[@3,20:20=')',<17>,1:20]
+[@4,21:21=' ',<5>,channel=2,1:21]
+[@5,22:24='::=',<11>,1:22]
+[@6,25:25=' ',<5>,channel=2,1:25]
+[@7,26:91='<<\n{rank=same; rankdir=TB; <states:{s | s<s>}; separator="; ">}\n>>',<8>,1:26]
+[@8,92:92='\n',<6>,channel=2,3:2]
+[@9,93:92='<EOF>',<-1>,4:0]

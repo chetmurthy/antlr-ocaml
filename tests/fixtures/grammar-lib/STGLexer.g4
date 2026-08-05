@@ -107,7 +107,7 @@ WRAP      : 'wrap';
 ANCHOR    : 'anchor';
 SEPARATOR : 'separator';
 
-ID: NameStartChar NameChar*;
+ID: NameStartChar (NameChar | '-')*;
 
 // -----------------------------------
 // Grammar specific fragments
