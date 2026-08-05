@@ -33,7 +33,7 @@ and map_template_ref_t =
 | MT_INCLUDE_IND of map_expr_t * expr_t list
 
 and subtemplate_t =
-  string list * element_t list
+  string list * template_t
 
 and primary_t =
   PRIMARY_ID of string
@@ -77,36 +77,13 @@ and elements_t = element_t list
 
 type template_t = element_t list
 
-let is_blank s =
-  assert (String.length s = 1) ;
-  Char.Ascii.is_blank s.[0]
-
-let is_nonblank s = not(is_blank s)
-
-let coalesce_text l =
-  let rec copred pred acc = function
-      s::t when pred s -> copred pred (s::acc) t
-    | l -> (String.concat "" (List.rev acc), l)
-
-  and corec acc = function
-      [] -> List.rev acc
-    | (s::_ as l) ->
-       let (s,t) =
-         if is_blank s then
-           copred is_blank [] l
-         else copred is_nonblank [] l in
-       corec (s::acc) t
-  in corec [] l
-
 let coalesce1 (l : template_t) : template_t =
   let finish_stracc tacc stracc =
     match stracc with
       [] -> tacc
     | strl ->
-       let strl = List.rev strl in
-       let strl = coalesce_text strl in
-       let textl = List.map (fun s -> TEXT s) strl in
-       List.rev_append textl tacc in
+       let s = String.concat "" (List.rev strl) in
+        (TEXT s)::tacc in
 
   let rec corec tacc stracc = function
       [] ->
