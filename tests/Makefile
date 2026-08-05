@@ -145,6 +145,7 @@ DTEST := \
 
 DTEST := \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
+	fixtures/custom-descriptors/antlr4/STG1.txt \
 
 
 DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)
