@@ -13,6 +13,7 @@ let test_parse_st ctxt =
   let open Stringtemplate in
   ()
   ; assert_equal () (ignore({|abc def|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore({|Hello, <name>!|} |> Pa_st.Template.of_string))
   ; assert_equal () (ignore({|{<writeln("\"I\"")>}|} |> Pa_st.Template.of_string))
   ; assert_equal () (ignore({|{<name>}|} |> Pa_st.Template.of_string))
   ; assert_equal () (ignore ({|{<ToStringTree("$ctx"):writeln()>}|} |> Pa_st.Template.of_string))

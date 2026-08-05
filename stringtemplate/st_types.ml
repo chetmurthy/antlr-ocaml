@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o *)
+(**pp -syntax camlp5o -package pa_ppx_regexp *)
 
 type qualified_id_t =
   QID_ROOTED of string list
@@ -67,6 +67,8 @@ and expr_option_t = string * expr_t
 
 and element_t =
   TEXT of string
+| HORZ_WS of string
+| VERT_WS of string
 | EXPR_TAG of expr_tag_t
 | IFSTAT of conditional_t * elements_t * (conditional_t * elements_t) list * elements_t option
 | REGION of string * elements_t
@@ -74,3 +76,46 @@ and element_t =
 and elements_t = element_t list
 
 type template_t = element_t list
+
+let is_blank s =
+  assert (String.length s = 1) ;
+  Char.Ascii.is_blank s.[0]
+
+let is_nonblank s = not(is_blank s)
+
+let coalesce_text l =
+  let rec copred pred acc = function
+      s::t when pred s -> copred pred (s::acc) t
+    | l -> (String.concat "" (List.rev acc), l)
+
+  and corec acc = function
+      [] -> List.rev acc
+    | (s::_ as l) ->
+       let (s,t) =
+         if is_blank s then
+           copred is_blank [] l
+         else copred is_nonblank [] l in
+       corec (s::acc) t
+  in corec [] l
+
+let coalesce1 (l : template_t) : template_t =
+  let finish_stracc tacc stracc =
+    match stracc with
+      [] -> tacc
+    | strl ->
+       let strl = List.rev strl in
+       let strl = coalesce_text strl in
+       let textl = List.map (fun s -> TEXT s) strl in
+       List.rev_append textl tacc in
+
+  let rec corec tacc stracc = function
+      [] ->
+       let tacc = finish_stracc tacc stracc in
+       List.rev tacc
+    | (TEXT s)::l -> corec tacc (s::stracc) l
+    | h::l ->
+       let tacc = finish_stracc tacc stracc in
+       corec (h::tacc) [] l
+  in
+  corec [] [] l
+

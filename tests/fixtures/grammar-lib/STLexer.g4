@@ -61,8 +61,8 @@ LINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL);
 
 TMPL_COMMENT: TmplComment -> channel(OFF_CHANNEL);
 
-HORZ_WS : Hws+ -> channel(OFF_CHANNEL);
-VERT_WS : Vws+ -> channel(OFF_CHANNEL);
+HORZ_WS : Hws+ ;
+VERT_WS : Vws+ ;
 
 ESCAPE : .      { self.isLDelimNotComment() }? EscSeq . { self.isRDelim() }?; // self contained
 LDELIM : .      { self.isLDelimNotComment() }? -> mode(Inside); // switch mode to inside

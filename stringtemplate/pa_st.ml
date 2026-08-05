@@ -104,6 +104,8 @@ element: [ [
 single_element: [ [
       x = expr_tag -> EXPR_TAG x
     | x = TEXT -> TEXT x
+    | x = HORZ_WS -> HORZ_WS x
+    | x = VERT_WS -> VERT_WS x
   ] ]
   ;
 
