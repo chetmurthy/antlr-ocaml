@@ -44,7 +44,7 @@ clean::
 
 bootstrap:: ../tests/atn_util.opt
 	cp $(TOP)/tests/fixtures/grammar-lib/Lex* grammars/
-	cp $(TOP)/tests/fixtures/grammar-lib/ST* grammars/
+	cp $(TOP)/tests/fixtures/grammar-lib/ST*.g4 grammars/
 	cp $(TOP)/tests/fixtures/pertest-files/antlr4/ST1/translation.json .
 	cp $(TOP)/tests/fixtures/pertest-files/antlr4/ST1/actionFuns_st.ml actionFuns_st.ml 
 	(cd grammars && antlr4 -Dlanguage=Python3 STGLexer.g4)

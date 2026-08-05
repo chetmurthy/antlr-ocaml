@@ -24,6 +24,11 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
   ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
 
+let test_parse_stg ctxt =
+  let open Stringtemplate in
+  ()
+  ; assert_equal () (ignore({| import "foo" |} |> Pa_stg.Group.of_string))
+
 let test_parse_grammar txt ctxt =
   let open Stringtemplate in
   ignore(Pa_st.Template.of_string txt)
@@ -69,6 +74,7 @@ let parse_fixed_files =
 
 let suite = "Test Stringtemplate" >::: [
       "parse st"   >:: test_parse_st
+    ; "parse stg"   >:: test_parse_stg
     ; "parse fixed files" >::: parse_fixed_files
     ; "parse descriptors" >:: test_parse_all_descriptors
     ]
