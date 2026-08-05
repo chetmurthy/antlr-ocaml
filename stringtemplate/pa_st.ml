@@ -6,7 +6,7 @@ open St_types ;
 
 value stream_npeek n s = (Stream.npeek n s : list (string * string)) ;
 
-value lexer = {Plexing.tok_func = Camlp5_adapter.lexer;
+value lexer = {Plexing.tok_func = Camlp5_adapter.ST.lexer;
  Plexing.tok_using _ = (); Plexing.tok_removing _ = ();
  Plexing.tok_match = Plexing.default_match;
  Plexing.tok_text = Plexing.lexer_text;

@@ -1,6 +1,18 @@
 
 open Pa_ppx_utils
 
+module type ACTION_FUNS = sig
+  val reset : unit -> unit
+end
+
+module type TOKEN_CUSTOMIZATION = sig
+  val renaming : ((string option * string option) * (string option * string option)) list
+end
+
+
+
+module Make(AF : ACTION_FUNS)(TC : TOKEN_CUSTOMIZATION) = struct
+
 let ploc_of_token ~file t =
   let open Antlr in
   let open Exec in
@@ -18,28 +30,8 @@ let string_of_char_stream cs =
   Stream.iter (Buffer.add_char b) cs ;
   Buffer.contents b
 
-let renaming = [
-    ((Some "LDELIM", None), (Some "LDELIM",Some "<"))
-  ; ((Some "RDELIM", None), (Some "RDELIM",Some ">"))
-  ; ((Some "LBRACE", None), (Some "LBRACE",Some "{"))
-  ; ((Some "RBRACE", None), (Some "RBRACE",Some "}"))
-  ; ((Some "COLON", None), (Some "COLON",Some ":"))
-  ; ((Some "COMMA", None), (Some "COMMA",Some ","))
-  ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
-  ; ((Some "LPAREN", None), (Some "LPAREN",Some "("))
-  ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
-  ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
-  ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
-  ; ((Some "DOT", None), (Some "DOT",Some "."))
-  ; ((Some "BANG", None), (Some "BANG",Some "!"))
-  ; ((Some "AND", None), (Some "AND",Some "&&"))
-  ; ((Some "OR", None), (Some "OR",Some "||"))
-  ; ((Some "PIPE", None), (Some "PIPE",Some "|"))
-  ; ((Some "EQUALS", None), (Some "EQUALS", Some "="))
-  ]
-
 let rename x =
-  match List.assoc_opt x renaming with
+  match List.assoc_opt x TC.renaming with
     None -> x
   | Some y -> y
 
@@ -92,7 +84,7 @@ let lexer cs =
         Exec.IS.init txt ()
       ) ()
   in
-  ActionFuns_st.reset() ;
+  AF.reset() ;
   let lex = L_st.Full.full_init ~input ~output:stdout in
   let rec next_token () =
     let t = L_st.Full.nextToken lex in
@@ -102,4 +94,26 @@ let lexer cs =
       located_pattern_of_token ~file:!input_file t in
   Plexing.make_stream_and_location next_token
 
-let _ : Plexing.(pattern lexer_func) = lexer
+end
+
+module ST = Make(ActionFuns_st)(struct
+let renaming = [
+    ((Some "LDELIM", None), (Some "LDELIM",Some "<"))
+  ; ((Some "RDELIM", None), (Some "RDELIM",Some ">"))
+  ; ((Some "LBRACE", None), (Some "LBRACE",Some "{"))
+  ; ((Some "RBRACE", None), (Some "RBRACE",Some "}"))
+  ; ((Some "COLON", None), (Some "COLON",Some ":"))
+  ; ((Some "COMMA", None), (Some "COMMA",Some ","))
+  ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
+  ; ((Some "LPAREN", None), (Some "LPAREN",Some "("))
+  ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
+  ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
+  ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
+  ; ((Some "DOT", None), (Some "DOT",Some "."))
+  ; ((Some "BANG", None), (Some "BANG",Some "!"))
+  ; ((Some "AND", None), (Some "AND",Some "&&"))
+  ; ((Some "OR", None), (Some "OR",Some "||"))
+  ; ((Some "PIPE", None), (Some "PIPE",Some "|"))
+  ; ((Some "EQUALS", None), (Some "EQUALS", Some "="))
+  ]
+              end)
