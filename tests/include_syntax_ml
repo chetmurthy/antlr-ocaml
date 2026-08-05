@@ -81,8 +81,12 @@ l |> List.iter (fun s ->
 
 #require "stringtemplate" ;;
 open Stringtemplate ;;
-
+(*
 #trace Camlp5_adapter.STG.pattern_of_token ;;
+ *)
+
+#trace Pa_stg.check_id_tmplassign_f ;;
+#trace Pa_stg.check_id_lparen_f ;;
 
 (*
 ;;; Local Variables: ***
