@@ -145,7 +145,7 @@ map_template_ref: [ [
 
 args: [ [
       check_id_equals ;
-      l = LIST1 named_arg SEP "," ; ellipsis = [ "," ; ELLIPSIS -> True | -> False] ->
+      l = LIST1 named_arg SEP "," ; ellipsis = [ "," ; "..." -> True | -> False] ->
       ARGS_NAMED l ellipsis
     | l = arg_expr_list -> ARGS_LIST l
     | -> ARGS_EMPTY
@@ -165,8 +165,8 @@ include_expr: [ [
       SUPER ; "." ; id = ID ; "(" ; l = args ; ")" -> INCLUDE_SUPER id l
     | check_id_lparen ;
       qid = qualified_id ; "(" ; l = args ; ")" -> INCLUDE qid l
-    | AT ; SUPER ; "." ; id = ID ; "(" ; ")" -> INCLUDE_SUPER_REGION id
-    | AT ; id = ID ; "(" ; ")" -> INCLUDE_REGION id
+    | "@" ; SUPER ; "." ; id = ID ; "(" ; ")" -> INCLUDE_SUPER_REGION id
+    | "@" ; id = ID ; "(" ; ")" -> INCLUDE_REGION id
     | p = primary -> INCLUDE_PRIMARY p
   ] ]
   ;
@@ -174,8 +174,8 @@ include_expr: [ [
 primary: [ [
       id = ID -> PRIMARY_ID id
     | s = STRING -> PRIMARY_STRING s
-    | TRUE -> PRIMARY_BOOL True
-    | FALSE -> PRIMARY_BOOL False
+    | "true" -> PRIMARY_BOOL True
+    | "false" -> PRIMARY_BOOL False
     | st = subtemplate -> PRIMARY_SUBTEMPLATE st
     | l = list_ -> PRIMARY_LIST l
     | "(" ; c = conditional ; ")" -> PRIMARY_CONDITIONAL c

@@ -81,47 +81,8 @@ l |> List.iter (fun s ->
 
 #require "stringtemplate" ;;
 open Stringtemplate ;;
-(*
-#trace Camlp5_adapter.pattern_of_token ;;
- *)
 
-(*
-{|abc def|} |> Pa.Template.of_string ;;
-{|{<writeln("\"I\"")>}|} |> Pa.Template.of_string ;;
-{|{<name>}|} |> Pa.Template.of_string ;;
-{|{<ToStringTree("$ctx"):writeln()>}|} |> Pa.Template.of_string ;;
-
-{|#inside writeln("\"I\"") |} |> Pa.Map_Expr.of_string ;;
-{|#inside writeln("\"I\"") |} |> Pa.Include_Expr.of_string ;;
-{|#inside writeln() |} |> Pa.Include_Expr.of_string ;;
-{|{<InitIntMember("i","0")>}|} |> Pa.Template.of_string ;;
-
-{|#inside InitIntMember("i","0") |} |> Pa.Include_Expr.of_string ;;
-
-{|
-grammar T;
-s : a a;
-
-a : {<False()>}? ID INT {<writeln("\"alt 1\"")>}
-  | {<False()>}? ID INT {<writeln("\"alt 2\"")>}
-  ;
-ID : 'a'..'z'+ ;
-INT : '0'..'9'+;
-WS : (' '|'\n') -> skip ;
-
- |} |> Pa.Template.of_string ;;
- *)
-
-#require "antlrtest";;
-open Antlrtest ;;
-#load "stringtemplate_test.cmo";;
-open Stringtemplate_test ;;
-
-let file = "fixtures/descriptors/SemPredEvalParser/PredFromAltTestedInLoopBack_1.txt" ;;
-test_parse_descriptor file () ;;
-
-#trace Camlp5_adapter.pattern_of_token ;;
-{|<TreeNodeWithAltNumField(X="T")>|} |> Pa.Template.of_string ;;
+#trace Camlp5_adapter.STG.pattern_of_token ;;
 
 (*
 ;;; Local Variables: ***

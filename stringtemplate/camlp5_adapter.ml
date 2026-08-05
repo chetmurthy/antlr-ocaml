@@ -116,5 +116,30 @@ let renaming = [
   ; ((Some "OR", None), (Some "OR",Some "||"))
   ; ((Some "PIPE", None), (Some "PIPE",Some "|"))
   ; ((Some "EQUALS", None), (Some "EQUALS", Some "="))
+  ; ((Some "AT", None), (Some "AT", Some "@"))
+  ; ((Some "TRUE", None), (Some "TRUE", Some "true"))
+  ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
   ]
               end)(L_st.Full)
+
+module ActionFuns_stg = struct
+let reset () = ()
+end
+
+module STG = Make(ActionFuns_stg)(struct
+let renaming = [
+    ((Some "TMPL_ASSIGN", None), (Some "TMPL_ASSIGN", Some "::="))
+  ; ((Some "TMPL_ASSIGN", None), (Some "TMPL_ASSIGN", Some "::="))
+  ; ((Some "ASSIGN", None), (Some "ASSIGN", Some "="))
+  ; ((Some "DOT", None), (Some "DOT",Some "."))
+  ; ((Some "COMMA", None), (Some "COMMA",Some ","))
+  ; ((Some "LPAREN", None), (Some "LPAREN",Some "("))
+  ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
+  ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
+  ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
+  ; ((Some "AT", None), (Some "AT", Some "@"))
+  ; ((Some "TRUE", None), (Some "TRUE", Some "true"))
+  ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
+  ; ((Some "ELLIPSIS", None), (Some "ELLIPSIS", Some "..."))
+  ]
+              end)(L_stg.Full)

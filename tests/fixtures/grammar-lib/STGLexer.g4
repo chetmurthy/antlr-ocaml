@@ -60,8 +60,6 @@ TMPL_COMMENT: LBang .? RBang -> channel(OFF_CHANNEL);
 HORZ_WS : Hws+ -> channel(OFF_CHANNEL);
 VERT_WS : Vws+ -> channel(OFF_CHANNEL);
 
-ID: NameStartChar NameChar*;
-
 STRING          : DQuoteLiteral;
 BIGSTRING       : LDAngle .*? RDAngle;
 BIGSTRING_NO_NL : LPct .*? RPct;
@@ -108,6 +106,8 @@ GROUP     : 'group'; // not used by parser?
 WRAP      : 'wrap';
 ANCHOR    : 'anchor';
 SEPARATOR : 'separator';
+
+ID: NameStartChar NameChar*;
 
 // -----------------------------------
 // Grammar specific fragments
