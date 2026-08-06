@@ -163,11 +163,12 @@ dtest-all: $(DALL:.txt=.DTEST)
 STALL=$(shell ls fixtures/st4-tests/*.json)
 
 ST4UTIL=$(TOP)/tests/stringtemplate_util.opt
+ST4GEN=_generated/st4
 
 %.STTEST: %.json
-	$(ST4UTIL) generate -f -d _generated $<
-	$(ST4UTIL) compile -d _generated $<
-	$(ST4UTIL) execute -d _generated $<
+	$(ST4UTIL) generate -f -d $(ST4GEN) $<
+	$(ST4UTIL) compile -d $(ST4GEN) $<
+	$(ST4UTIL) execute -d $(ST4GEN) $<
 
 sttest-all: $(STALL:.json=.STTEST)
 

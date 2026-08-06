@@ -4,16 +4,21 @@ open Pa_ppx_utils
 open Pa_ppx_base
 open Ppxutil
 
+Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
+
 open Stringtemplate
 
-let generate_st4_test ~debug ~force ~destroot file =
+let filename_to_testname file =
+  Fpath.(file |> v |> rem_ext |> basename)
+
+let generate_st4_test ~debug ~force ~destroot ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   let destroot = Fpath.v destroot in
   let th = load ~file in
-  let testname = th.name in
-  let testfilename = testname^".java" in
+  let testname = if testname <> "" then testname else filename_to_testname file in
+  let testfilename = th.classname^".java" in
   let destdir = Fpath.(append destroot (v testname)) in
   if destdir |> Bos.OS.Dir.exists |> Result.get_ok then
     if force then
@@ -36,7 +41,7 @@ test:
 compile:
 	javac -d classes %s.java
 |}
-           testname testname) in
+           th.classname th.classname) in
   let makefile  = Fpath.(append destdir (v "Makefile")) in
   Bos.OS.File.write ~mode:0o644 makefile maketxt |> Rresult.R.failwith_error_msg ;
   
@@ -56,14 +61,13 @@ let system cmd =
        (`Msg
           (Printf.sprintf "st4_util: command stopped by signal %d" n))
 
-let compile_st4_test ~debug ~force ~destroot file =
+let compile_st4_test ~debug ~force ~destroot ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   let destroot = Fpath.v destroot in
   let th = load ~file in
-  let testname = th.name in
-  let testfilename = testname^".java" in
+  let testname = if testname <> "" then testname else filename_to_testname file in
   let destdir = Fpath.(append destroot (v testname)) in
   if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
       Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
@@ -71,14 +75,13 @@ let compile_st4_test ~debug ~force ~destroot file =
   cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
-let execute_st4_test ~debug ~force ~destroot file =
+let execute_st4_test ~debug ~force ~destroot ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   let destroot = Fpath.v destroot in
   let th = load ~file in
-  let testname = th.name in
-  let testfilename = testname^".java" in
+  let testname = if testname <> "" then testname else filename_to_testname file in
   let destdir = Fpath.(append destroot (v testname)) in
   if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
       Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
@@ -93,6 +96,10 @@ let file =
   let docv = "The test descriptor file." in
   let absent = "absent." in
   Arg.(required & pos 0 (some file) None & info [] ~absent ~docv)
+
+let testname =
+  let docv = "The name of the test directory (if absent, taken from test JSON)." in
+  Arg.(value & opt string "" & info ["n"; "test-name"] ~docv)
 
 let destroot =
   let docv = "The generated destination root directory." in
@@ -113,8 +120,8 @@ let generate_cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "generate" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ force and+ destroot in
-  generate_st4_test ~debug ~force ~destroot file ;
+  let+ file and+ debug and+ force and+ destroot and+ testname in
+  generate_st4_test ~debug ~force ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 
 let compile_cmd =
@@ -124,8 +131,8 @@ let compile_cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "compile" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ destroot in
-  compile_st4_test ~debug ~force ~destroot file ;
+  let+ file and+ debug and+ destroot and+ testname in
+  compile_st4_test ~debug ~force ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 
 let execute_cmd =
@@ -135,8 +142,8 @@ let execute_cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "execute" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ destroot in
-  execute_st4_test ~debug ~force ~destroot file ;
+  let+ file and+ debug and+ destroot and+ testname in
+  execute_st4_test ~debug ~force ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 
 let cmd =

@@ -4,7 +4,7 @@ open Eval
 
 type harness_t =
   {
-    name : string
+    classname : string
   ; template_s : string
   ; attributes : Environ.frame_t
   ; groupfile : (string * string) option
@@ -22,7 +22,7 @@ let load ~file =
   harness_t_of_located_yojson_exn j
 
 let eg1 = {
-    name = "hello"
+    classname = "hello"
   ; template_s = "<{Hello, <name>!}>"
   ; attributes = Value.[
         ("name", STRING "World")
@@ -57,7 +57,7 @@ public class %s {
     }
 }
 |}
-         th.name
+         th.classname
          stconstructor th
          (list staddattr) th.attributes
   )

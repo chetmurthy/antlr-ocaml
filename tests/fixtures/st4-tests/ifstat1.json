@@ -8,7 +8,7 @@
       ]
   ],
   "groupfile": null,
-  "name": "ifstat1",
+  "classname": "ifstat1",
   "template_s": {foo|
 <if(name)>Hello<endif>
 <if(undef)>Not this.<endif>

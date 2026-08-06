@@ -9,6 +9,6 @@
     ]
   ],
   "groupfile": null,
-  "name": "hello",
+  "classname": "HelloWorld",
   "template_s": {foo|<{Hello, <name>!}>|foo}
 }
