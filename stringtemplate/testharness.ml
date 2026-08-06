@@ -84,12 +84,25 @@ let eg4 = {
   ; expected = "Hello, World!"
   }
 
+let eg4 = {
+    classname = "hello"
+  ; template_s = "<{Hello, <name>!}>"
+  ; attributes = [
+        ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))
+                 ]
+  ; groupfile = None
+  ; expected = "Hello, World!"
+  }
+
 let rec fmt_value pps v =
   match v with
     STRING s -> Fmt.(pf pps "%a" Dump.string s)
   | LIST l when List.for_all isSTRING l ->
      let pp1 pps (STRING s) = Fmt.(pf pps "add(%a);" Dump.string s) in
      Fmt.(pf pps "new ArrayList<String>() {{%a}}" (list pp1) l)
+  | DICT l when List.for_all (fun (_,v) -> isSTRING v) l ->
+     let pp1 pps (k,STRING s) = Fmt.(pf pps "put(%a,%a);" Dump.string k Dump.string s) in
+     Fmt.(pf pps "new LinkedHashMap<String,String>() {{%a}}" (list pp1) l)
   | _ -> Fmt.(failwithf "fmt_value: cannot format %a" Value.pp v)
 
 let add_attr pps (n,v) =
@@ -112,6 +125,7 @@ let emit pps th =
                            Dump.string th.template_s) in
   Fmt.(pf pps {|
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import org.stringtemplate.v4.*;
 
 public class %s {
