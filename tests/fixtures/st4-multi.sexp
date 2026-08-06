@@ -83,60 +83,60 @@ foo(x) ::= "blech <x>" |})))
   )
  ("TestCoreBasics-testMapAcrossDictionaryUsesKeys"
   ((classname hello)
-   (template_s {|<foo:{f | <f>}>|})
-(attributes ((foo (SV (DICT ((a (STRING b)) (c (STRING d))))))))
-(groupfile ())
-(expected {bar|ac|bar}))
-)
-("TestCoreBasics-testNullAttrProp"
-((classname hello)
-(template_s {|<u.id>: <u.name>|})
-(attributes ())
-(groupfile ())
-(expected {bar|: |bar}))
-)
-("TestCoreBasics-testNullAttr"
-((classname testNullAttr)
-(template_s {|hi <name>!|})
-(attributes ())
-(groupfile ())
-(expected {bar|hi !|bar}))
-)
-("TestCoreBasics-testPassThru"
-((classname hello)
-(template_s {|<a("x","y")>|})
-(attributes ())
-(groupfile (("a.stg" 
-{| 
+   (template_s "<foo:{f | <f>}>")
+   (attributes ((foo (SV (DICT ((a (STRING b)) (c (STRING d))))))))
+   (groupfile ())
+   (expected {bar|ac|bar}))
+  )
+ ("TestCoreBasics-testNullAttrProp"
+  ((classname hello)
+   (template_s {|<u.id>: <u.name>|})
+   (attributes ())
+   (groupfile ())
+   (expected {bar|: |bar}))
+  )
+ ("TestCoreBasics-testNullAttr"
+  ((classname testNullAttr)
+   (template_s {|hi <name>!|})
+   (attributes ())
+   (groupfile ())
+   (expected {bar|hi !|bar}))
+  )
+ ("TestCoreBasics-testPassThru"
+  ((classname hello)
+   (template_s {|<a("x","y")>|})
+   (attributes ())
+   (groupfile (("a.stg" 
+                {| 
 a(x,y) ::= "<b(...)>"
 b(x,y) ::= "<x><y>"
 |})))
-(expected {bar|xy|bar}))
-)
-("TestCoreBasics-testPassThruWithDefaultValue"
-((classname hello)
-(template_s {|<a(x="x")>|})
-(attributes ())
-(groupfile (("a.stg" 
-{| 
+   (expected {bar|xy|bar}))
+  )
+ ("TestCoreBasics-testPassThruWithDefaultValue"
+  ((classname hello)
+   (template_s {|<a(x="x")>|})
+   (attributes ())
+   (groupfile (("a.stg" 
+                {| 
 a(x,y) ::= "<b(...)>"
 b(x,y={99}) ::= "<x><y>"
 |})))
-(expected {bar|x99|bar}))
-)
-("TestCoreBasics-testProp"
-((classname hello)
-(template_s {|<u.id>: <u.name>|})
-(attributes ())
-(groupfile (("a.stg" {| u ::= [ "id":"1", "name": "parrt" ] |})))
-(expected {bar|1: parrt|bar}))
-)
-("TestCoreBasics-testPropWithNoAttr"
-((classname hello)
-(template_s {|<foo.a>: <ick>|})
-(attributes ())
-(groupfile (("a.stg" {| foo ::= [ "a":"b" ] |})))
-(expected {bar|b: |bar}))
-)
+   (expected {bar|x99|bar}))
+  )
+ ("TestCoreBasics-testProp"
+  ((classname hello)
+   (template_s {|<u.id>: <u.name>|})
+   (attributes ())
+   (groupfile (("a.stg" {| u ::= [ "id":"1", "name": "parrt" ] |})))
+   (expected {bar|1: parrt|bar}))
+  )
+ ("TestCoreBasics-testPropWithNoAttr"
+  ((classname hello)
+   (template_s {|<foo.a>: <ick>|})
+   (attributes ())
+   (groupfile (("a.stg" {| foo ::= [ "a":"b" ] |})))
+   (expected {bar|b: |bar}))
+  )
 
-)
+ )
