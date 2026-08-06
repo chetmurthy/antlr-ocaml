@@ -169,6 +169,7 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) generate -f -d $(ST4GEN) $<
 	$(ST4UTIL) compile -d $(ST4GEN) $<
 	$(ST4UTIL) execute -d $(ST4GEN) $<
+	$(ST4UTIL) check -d $(ST4GEN) $<
 
 sttest-all: $(STALL:.json=.STTEST)
 

@@ -10,5 +10,6 @@
   ],
   "groupfile": null,
   "classname": "HelloWorld",
-  "template_s": {foo|<{Hello, <name>!}>|foo}
+  "template_s": {foo|<{Hello, <name>!}>|foo},
+  "expected": {foo|Hello, World!|foo}
 }

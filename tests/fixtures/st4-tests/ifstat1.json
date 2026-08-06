@@ -12,6 +12,8 @@
   "template_s": {foo|
 <if(name)>Hello<endif>
 <if(undef)>Not this.<endif>
-<if(another)>Maybe this.<endif>
-|foo}
+<if(another)>Nor this.<endif>
+|foo},
+  "expected": {bar|Hello
+|bar}
 }

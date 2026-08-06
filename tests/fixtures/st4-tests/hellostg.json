@@ -13,6 +13,7 @@
     "x ::= << >>"
   ],
   "classname": "hellostg",
-  "template_s": "<{Hello, <name>!}>"
+  "template_s": "<{Hello, <name>!}>",
+  "expected": {foo|Hello, World!|foo}
 }
 

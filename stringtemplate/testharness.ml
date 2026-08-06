@@ -8,6 +8,7 @@ type harness_t =
   ; template_s : string
   ; attributes : Environ.frame_t
   ; groupfile : (string * string) option
+  ; expected : string
   }
 [@@deriving show,yojson,located_yojson {exn=true}]
 
@@ -28,6 +29,7 @@ let eg1 = {
         ("name", STRING "World")
                  ]
   ; groupfile = None
+  ; expected = "Hello, World!"
   }
 
 let emit pps th =

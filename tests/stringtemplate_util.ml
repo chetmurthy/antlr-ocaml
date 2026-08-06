@@ -89,6 +89,34 @@ let execute_st4_test ~debug ~force ~destroot ~testname file =
   cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
+let check ~testname th output =
+  let open Testharness in
+  let output =
+    match [%match {|<RoNnIe\|(.*)\|RaYgUn>|} / strings !1 s] output with
+      None -> Fmt.(failwithf "test %s: no output found" testname)
+    | Some output -> output in
+  if output <> th.expected then begin
+      Fmt.(pf stderr "st4_util check: test %s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+             testname th.expected output) ;
+      Fmt.(failwithf "test %s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+             testname th.expected output)
+    end
+
+let check_st4_test ~debug ~force ~destroot ~testname file =
+  let open Testharness in
+  if destroot = "" then
+    failwith "must specify --dest-root|-d" ;
+  let destroot = Fpath.v destroot in
+  let th = load ~file in
+  let testname = if testname <> "" then testname else filename_to_testname file in
+  let destdir = Fpath.(append destroot (v testname)) in
+  if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
+      Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
+  let outputfile = Fpath.(append destdir (v "output")) in
+  let output_txt = outputfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
+  check ~testname th output_txt
+
+
 open Cmdliner
 open Cmdliner.Term.Syntax
 
@@ -146,10 +174,21 @@ let execute_cmd =
   execute_st4_test ~debug ~force ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 
+let check_cmd =
+  let doc = "check output for a Stringtemplate4 test" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "check" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ debug and+ destroot and+ testname in
+  check_st4_test ~debug ~force ~destroot ~testname file ;
+  Cmdliner.Cmd.Exit.ok
+
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [generate_cmd; compile_cmd; execute_cmd]
+  [generate_cmd; compile_cmd; execute_cmd; check_cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())
