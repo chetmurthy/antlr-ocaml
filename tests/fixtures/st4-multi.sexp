@@ -193,5 +193,338 @@ b(x,y={99}) ::= "<x><y>"
  |})))
    (expected {bar|x99|bar}))
   )
+ ("TestCoreBasics-testIndirectMap"
+  ((classname hello)
+   (template_s {|<test(t="inc",name=name)>|})
+   (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+   (groupfile (("a.stg" 
+                {| 
+   inc(x) ::= "[<x>]"
+   test(t,name) ::= "<name:(t)()>!"
+ |})))
+   (expected "[Ter][Tom][Sumana]!"))
+  )
+("TestCoreBasics-testMapThenParallelMap"
+ ((classname hello)
+  (template_s {|<test(names,phones)>|})
+  (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+               (phones (MV ((STRING "x5001") (STRING "x5002"))))
+               ))
+  (groupfile (("a.stg" 
+{| 
+  bold(x) ::= "[<x>]"
+  test(name,phones) ::= "hi <[names:bold()],phones:{n,p | <n>:<p>;}>"
+
+ |})))
+ (expected "hi [Ter]:x5001;[Tom]:x5002;[Sumana]:;"))
+)
+("TestCoreBasics-testMapWithExprAsTemplateName"
+ ((classname hello)
+  (template_s {|<test(name)>|})
+  (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+  (groupfile (("a.stg" 
+{| 
+ d ::= ["foo":"bold"]
+ test(name) ::= "<name:(d.foo)()>"
+ bold(x) ::= <<*<x>*>>
+ |})))
+ (expected "*Ter**Tom**Sumana*"))
+)
+("TestCoreBasics-testParallelMap"
+ ((classname hello)
+  (template_s {|<test(names,phones)>|})
+  (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+              (phones (MV ((STRING "x5001") (STRING "x5002") (STRING "x5003"))))
+             ))
+ (groupfile (("a.stg" 
+{| 
+  test(name,phones) ::= "hi <names,phones:{n,p | <n>:<p>;}>"
+
+  |})))
+ (expected "hi Ter:x5001;Tom:x5002;Sumana:x5003;"))
+)
+("TestCoreBasics-testParallelMapThenMap"
+ ((classname hello)
+  (template_s {|<test(names,phones)>|})
+  (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+              (phones (MV ((STRING "x5001") (STRING "x5002"))))
+             ))
+  (groupfile (("a.stg" 
+{| 
+  bold(x) ::= "[<x>]"
+  test(name,phones) ::= "hi <names,phones:{n,p | <n>:<p>;}:bold()>"
+
+ |})))
+ (expected "hi [Ter:x5001;][Tom:x5002;][Sumana:;]"))
+)
+("TestCoreBasics-testParallelMapWith3Versus2Elements"
+ ((classname hello)
+  (template_s {|<test(names,phones)>|})
+  (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+              (phones (MV ((STRING "x5001") (STRING "x5002"))))
+             ))
+  (groupfile (("a.stg" 
+{| 
+  test(name,phones) ::= "hi <names,phones:{n,p | <n>:<p>;}>"
+
+ |})))
+  (expected "hi Ter:x5001;Tom:x5002;Sumana:;"))
+)
+("TestCoreBasics-testMapIndexes2"
+((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
+             ))
+ (groupfile (("a.stg" 
+{| 
+   test(name) ::= "<name:{n | <i>:<n>}; separator=\", \">"
+ |})))
+ (expected "1:Ter, 2:Tom, 3:Sumana"))
+)
+("TestCoreBasics-testMapIndexes"
+((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
+             ))
+ (groupfile (("a.stg" 
+{| 
+   inc(x,i) ::= "<i>:<x>"
+   test(name) ::= "<name:{n|<inc(n,i)>}; separator=\", \">"
+ |})))
+ (expected "1:Ter, 2:Tom, 3:Sumana"))
+)
+("TestCoreBasics-testMapNullValueInList"
+((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
+             ))
+ (groupfile (("a.stg" 
+{| 
+   test(name) ::= "<name; separator=\", \">"
+ |})))
+ (expected "Ter, Tom, Sumana"))
+)
+("TestCoreBasics-testMapNullValue"
+((classname hello)
+ (template_s {|<test()>|})
+ (attributes ())
+ (groupfile (("a.stg" 
+{| 
+   a(x) ::= "[<x>]"
+   test(name) ::= "hi <name:a()>!"
+ |})))
+ (expected "hi !"))
+)
+("TestCoreBasics-testMapSingleValue"
+((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (SV (STRING Ter)))
+             ))
+ (groupfile (("a.stg" 
+{| 
+   a(x) ::= "[<x>]"
+   test(name) ::= "hi <name:a()>!"
+ |})))
+ (expected "hi [Ter]!"))
+)
+("TestCoreBasics-testRepeatedMap"
+((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+             ))
+ (groupfile (("a.stg" 
+{| 
+   a(x) ::= "[<x>]"
+   b(x) ::= "(<x>)"
+   test(name) ::= "hi <name:a():b()>!"
+ |})))
+ (expected "hi ([Ter])([Tom])([Sumana])!"))
+)
+("TestCoreBasics-testRepeatedMapWithNullValueAndNullOption"
+((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (MV ((STRING Ter) NULL (STRING Sumana))))
+             ))
+ (groupfile (("a.stg" 
+{| 
+   a(x) ::= "[<x>]"
+   b(x) ::= "(<x>)"
+   test(name) ::= "hi <name:a():b(); null={x}>!"
+ |})))
+ (expected "hi ([Ter])x([Sumana])!"))
+)
+("TestCoreBasics-testRepeatedMapWithNullValue"
+((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (MV ((STRING Ter) NULL (STRING Sumana))))
+             ))
+ (groupfile (("a.stg" 
+{| 
+   a(x) ::= "[<x>]"
+   b(x) ::= "(<x>)"
+   test(name) ::= "hi <name:a():b()>!"
+ |})))
+ (expected "hi ([Ter])([Sumana])!"))
+)
+("TestCoreBasics-testRoundRobinMap"
+((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+             ))
+ (groupfile (("a.stg" 
+{| 
+   a(x) ::= "[<x>]"
+   b(x) ::= "(<x>)"
+   test(name) ::= "hi <name:a(),b()>!"
+ |})))
+ (expected "hi [Ter](Tom)[Sumana]!"))
+)
+("TestCoreBasics-testTrueCond"
+((classname hello)
+ (template_s "<if(name)>works<endif>")
+ (attributes ((name (SV (STRING Ter)))
+             ))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testCondParens"
+((classname hello)
+ (template_s "<if(!(x||y)&&!z)>works<endif>")
+ (attributes ())
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testElseIf2"
+((classname hello)
+ (template_s "<if(x)>fail1<elseif(y)>fail2<elseif(z)>works<else>fail3<endif>")
+ (attributes ((z (SV (STRING blort)))))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testElseIf3"
+((classname hello)
+ (template_s "<if(x)><elseif(y)><elseif(z)>works<else><endif>")
+ (attributes ((z (SV (STRING blort)))))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testEmptyIFTemplate"
+((classname hello)
+ (template_s "<if(x)>fail<elseif(name)><endif>")
+ (attributes ((name (SV (STRING Ter)))
+             ))
+ (groupfile ())
+ (expected ""))
+)
+("TestCoreBasics-testFalseCond2"
+((classname hello)
+ (template_s "<if(name)>works<endif>")
+ (attributes ((name (SV NULL))))
+ (groupfile ())
+ (expected ""))
+)
+("TestCoreBasics-testFalseCond"
+((classname hello)
+ (template_s "<if(name)>works<endif>")
+ (attributes ())
+ (groupfile ())
+ (expected ""))
+)
+("TestCoreBasics-testFalseCondWithFormalArgs"
+((classname hello)
+ (template_s "<a()>")
+ (attributes ((name (SV NULL))))
+ (groupfile (("group.stg" 
+{| 
+   a(scope) ::= <<
+foo
+    <if(scope)>oops<endif>
+bar
+>>
+ |})))
+
+ (expected "foo\nbar"))
+)
+("TestCoreBasics-testNotFalseCond"
+((classname hello)
+ (template_s "<if(!name)>works<endif>")
+ (attributes ())
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testNotTrueCond"
+((classname hello)
+ (template_s "<if(!name)>works<endif>")
+ (attributes ((name (SV (STRING Ter)))))
+ (groupfile ())
+ (expected ""))
+)
+("TestCoreBasics-testParensInConditonal2"
+((classname hello)
+ (template_s "<if((!a||b)&&!(c||d))>broken<else>works<endif>")
+ (attributes ((a (SV (BOOL true)))
+              (b (SV (BOOL true)))
+              (c (SV (BOOL true)))
+              (d (SV (BOOL true)))
+             ))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testParensInConditonal"
+((classname hello)
+ (template_s "<if((a||b)&&(c||d))>works<endif>")
+ (attributes ((a (SV (BOOL true)))
+              (b (SV (BOOL true)))
+              (c (SV (BOOL true)))
+              (d (SV (BOOL true)))
+             ))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testElseIfAllExprFalse"
+((classname hello)
+ (template_s "<if(name)>fail<elseif(id)>fail<else>works<endif>")
+ (attributes ())
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testElseIfNoElseAllFalse"
+((classname hello)
+ (template_s "<if(name)>fail<elseif(id)>fail<endif>")
+ (attributes ())
+ (groupfile ())
+ (expected ""))
+)
+("TestCoreBasics-testElseIf"
+((classname hello)
+ (template_s "<if(name)>fail<elseif(id)>works<else>fail<endif>")
+ (attributes ((id (SV (STRING "2DF3DF")))
+             ))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testFalseCondWithElse"
+((classname hello)
+ (template_s "<if(name)>fail<else>works<endif>")
+ (attributes ())
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testOr"
+((classname hello)
+ (template_s "<if(name||notThere)>works<else>fail<endif>")
+ (attributes ((name (SV (STRING Ter)))))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testTrueCondWithElse"
+((classname hello)
+ (template_s "<if(name)>works<else>fail<endif>")
+ (attributes ((name (SV (STRING Ter)))
+             ))
+ (groupfile ())
+ (expected "works"))
+)
+
  )
 

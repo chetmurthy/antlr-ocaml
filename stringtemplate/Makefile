@@ -14,6 +14,7 @@ TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
 	lexerBase.ml \
+	st_util.ml \
 	l_stg_constants.ml l_st_constants.ml \
 	actionFuns_st.ml \
 	 l_st.ml l_stg.ml \

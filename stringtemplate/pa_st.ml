@@ -104,6 +104,7 @@ element: [ [
 single_element: [ [
       x = expr_tag -> EXPR_TAG x
     | x = TEXT -> TEXT x
+    | x = ESCAPE -> TEXT (St_util.unescape x)
     | x = HORZ_WS -> HORZ_WS x
     | x = VERT_WS -> VERT_WS x
   ] ]

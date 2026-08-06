@@ -131,7 +131,8 @@ let eg4 = {
 
 let rec fmt_value pps v =
   match v with
-    STRING s -> Fmt.(pf pps "%a" Dump.string s)
+    NULL -> Fmt.(pf pps "null")
+  | STRING s -> Fmt.(pf pps "%a" Dump.string s)
   | BOOL b -> Fmt.(pf pps "%b" b)
   | LIST l when List.for_all isSTRING l ->
      let pp1 pps (STRING s) = Fmt.(pf pps "add(%a);" Dump.string s) in
