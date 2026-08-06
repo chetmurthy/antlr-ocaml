@@ -32,6 +32,16 @@ let eg1 = {
   ; expected = "Hello, World!"
   }
 
+let eg2 = {
+    classname = "hello"
+  ; template_s = "<{Hello, <name>!}>"
+  ; attributes = Value.[
+        ("name", LIST [STRING "World1"; STRING "World2"])
+                 ]
+  ; groupfile = None
+  ; expected = "Hello, World!"
+  }
+
 let emit pps th =
   let stconstructor pps th =
     match th.groupfile with
@@ -39,11 +49,14 @@ let emit pps th =
     | Some (fname, _) -> Fmt.(pf pps "new ST(new STGroupFile(%a), %a)"
                            Dump.string fname
                            Dump.string th.template_s) in
-  let staddattr pps (n,v) =
+  let rec staddattr pps (n,v) =
     let open Value in
     match v with
       STRING s ->
       Fmt.(pf pps "st.add(%a, %a);" Dump.string n Dump.string s)
+    | LIST l ->
+       let add1 pps v = staddattr pps (n,v) in
+       Fmt.(pf pps "%a" (list add1) l)
     | NULL ->
       Fmt.(pf pps "st.add(%a, null);" Dump.string n)
   in

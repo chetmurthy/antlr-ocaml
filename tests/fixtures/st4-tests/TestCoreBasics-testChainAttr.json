@@ -1,0 +1,25 @@
+{
+  "attributes": [
+    [
+      "names",
+	[
+            "LIST",
+            [
+		[ "STRING", "Ter" ],
+		[ "STRING", "Tom" ]
+            ]
+	]
+    ],
+    [
+      "x",
+      [
+        "STRING",
+        "1"
+      ]
+    ]
+  ],
+  "groupfile": null,
+  "classname": "TestAttr",
+  "template_s": {foo|<x>:<names>!|foo},
+  "expected": {bar|1:TerTom!|bar}
+}
