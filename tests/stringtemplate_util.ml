@@ -25,6 +25,17 @@ let system cmd =
        (`Msg
           (Printf.sprintf "st4_util: command stopped by signal %d" n))
 
+let select_tests ~onlytest ~file =
+  let open Testharness in
+  let thl = Multi.load ~file in
+  match onlytest with
+    None -> thl
+  | Some testname ->
+     match List.assoc_opt testname thl with
+       Some th -> [(testname, th)]
+     | None -> Fmt.(failwithf "ST4_util: selected test %s does not exist in multi-file %s"
+                      testname file)
+
 open Cmdliner
 open Cmdliner.Term.Syntax
 
@@ -40,6 +51,10 @@ let testname =
 let destroot =
   let docv = "The generated destination root directory." in
   Arg.(value & opt string "" & info ["d"; "dest-root"] ~docv)
+
+let onlytest =
+  let docv = "Choose only named test from multi-test file" in
+  Arg.(value & opt (some string) None & info ["o"; "only-test"] ~docv)
 
 let debug =
   let doc = "enable debugging." in
@@ -94,12 +109,12 @@ compile:
   
   ()
 
-let st4_test ~debug ~verbose ~force ~destroot ~multi ~testname file =
+let st4_test ~debug ~verbose ~force ~destroot ~onlytest ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
-    let thl = Multi.load ~file in
+    let thl = select_tests ~onlytest ~file in
     thl
     |> List.iter (fun (testname,th) ->
            one_test ~debug ~verbose ~force ~destroot ~testname th)
@@ -115,8 +130,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "generate" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ verbose and+ force and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~verbose ~force ~destroot ~testname ~multi file ;
+  let+ file and+ debug and+ verbose and+ force and+ onlytest and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~force ~destroot ~testname ~onlytest ~multi file ;
   Cmdliner.Cmd.Exit.ok
 
 end
@@ -135,12 +150,12 @@ let one_test ~debug ~verbose ~destroot ~testname th =
   cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
-let st4_test ~debug ~verbose ~destroot ~multi ~testname file =
+let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
-    let thl = Multi.load ~file in
+    let thl = select_tests ~onlytest ~file in
     thl
     |> List.iter (fun (testname,th) ->
            one_test ~debug ~verbose ~destroot ~testname th)
@@ -156,8 +171,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "compile" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ verbose and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~verbose ~multi ~destroot ~testname file ;
+  let+ file and+ debug and+ verbose and+ onlytest and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~onlytest ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
@@ -176,12 +191,12 @@ let one_test ~debug ~verbose ~destroot ~testname th =
   cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
-let st4_test ~debug ~verbose ~destroot ~multi ~testname file =
+let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
-    let thl = Multi.load ~file in
+    let thl = select_tests ~onlytest ~file in
     thl
     |> List.iter (fun (testname,th) ->
            one_test ~debug ~verbose ~destroot ~testname th)
@@ -197,8 +212,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "execute" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ verbose and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~verbose ~multi ~destroot ~testname file ;
+  let+ file and+ debug and+ verbose and+ onlytest and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~onlytest ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
@@ -230,12 +245,12 @@ let one_test ~debug ~verbose ~destroot ~testname th =
   let output_txt = outputfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
   check ~testname th output_txt
 
-let st4_test ~debug ~verbose ~destroot ~multi ~testname file =
+let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
-    let thl = Multi.load ~file in
+    let thl = select_tests ~onlytest ~file in
     thl
     |> List.iter (fun (testname,th) ->
            one_test ~debug ~verbose ~destroot ~testname th)
@@ -251,8 +266,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "check" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ verbose and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~verbose ~multi ~destroot ~testname file ;
+  let+ file and+ debug and+ verbose and+ onlytest and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~onlytest ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
@@ -265,12 +280,12 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
   Check.one_test ~debug ~verbose ~destroot ~testname th ;
   ()
 
-let st4_test ~debug ~verbose ~destroot ~force ~multi ~testname file =
+let st4_test ~debug ~verbose ~destroot ~force ~onlytest ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
-    let thl = Multi.load ~file in
+    let thl = select_tests ~onlytest ~file in
     thl
     |> List.iter (fun (testname,th) ->
            one_test ~debug ~verbose ~force ~destroot ~testname th)
@@ -286,8 +301,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "full" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ verbose and+ force and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~verbose ~force ~multi ~destroot ~testname file ;
+  let+ file and+ debug and+ verbose and+ force and+ onlytest and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~force ~onlytest ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
