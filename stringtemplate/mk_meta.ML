@@ -19,5 +19,5 @@ description = "String Templates"
   archive(byte) = "stringtemplate.cma"
   archive(native) = "stringtemplate.cmxa"
 
-  requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils,yojson,pa_ppx.located_yojson"
+  requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils,yojson,pa_ppx.located_yojson,pa_ppx.located_sexp"
 |} version)

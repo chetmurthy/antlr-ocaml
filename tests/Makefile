@@ -160,7 +160,8 @@ dtest-selected: $(DTEST:.txt=.DTEST)
 
 dtest-all: $(DALL:.txt=.DTEST)
 
-STALL=$(shell ls fixtures/st4-tests/*.json)
+STJSONALL=$(shell ls fixtures/st4-tests/*.json)
+STSEXPALL=$(shell ls fixtures/st4-tests/*.sexp)
 
 ST4UTIL=$(TOP)/tests/stringtemplate_util.opt
 ST4GEN=_generated/st4
@@ -171,7 +172,13 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) execute -d $(ST4GEN) $<
 	$(ST4UTIL) check -d $(ST4GEN) $<
 
-sttest-all: $(STALL:.json=.STTEST)
+%.STTEST: %.sexp
+	$(ST4UTIL) generate -f -d $(ST4GEN) $<
+	$(ST4UTIL) compile -d $(ST4GEN) $<
+	$(ST4UTIL) execute -d $(ST4GEN) $<
+	$(ST4UTIL) check -d $(ST4GEN) $<
+
+sttest-all: $(STJSONALL:.json=.STTEST) $(STSEXPALL:.sexp=.STTEST)
 
 #ONE=LexerExec/CharSet
 ONE=ParserExec/Basic

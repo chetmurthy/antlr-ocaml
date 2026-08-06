@@ -93,12 +93,9 @@ open Stringtemplate ;;
 open Stringtemplate_test ;;
 
 open Pa_ppx_located_yojson.Json ;;
-open Plexing ;;
-let lexer = Pcaml.Lexer.gmake () ;;
-let (tokstrm,  locations) = {| {foo|abc|foo} |} |> Stream.of_string |> lexer.tok_func
-in Stream.peek tokstrm
-;;
 
+#require "pa_ppx.located_sexp";;
+open Pa_ppx_located_sexp ;;
 
 (*
 ;;; Local Variables: ***
