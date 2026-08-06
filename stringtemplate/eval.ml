@@ -11,10 +11,17 @@ type t =
 | LIST of t list
 | NULL
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+
+let isSTRING = function STRING _ -> true | _ -> false
+
 end
 
 module Environ = struct
-type frame_t = (string * Value.t) list
+type attr_val_t = MV of Value.t list | SV of Value.t
+[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+type binding_t = string * attr_val_t
+[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+type frame_t = binding_t list
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
 type t = frame_t list
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]

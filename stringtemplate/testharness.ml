@@ -42,25 +42,66 @@ let load ~file =
     load_sexp ~file
   else Fmt.(failwithf "TH.load: file %s is neither .json nor .sexp" file)
 
+open Value
+open Environ
 let eg1 = {
     classname = "hello"
   ; template_s = "<{Hello, <name>!}>"
-  ; attributes = Value.[
-        ("name", STRING "World")
-                 ]
-  ; groupfile = None
+  ; attributes = [
+      ("name", SV (STRING "World"))
+    ]
+  ; groupfile = Some ("a.stg"," d() ::= << >> ")
   ; expected = "Hello, World!"
   }
 
 let eg2 = {
     classname = "hello"
   ; template_s = "<{Hello, <name>!}>"
-  ; attributes = Value.[
-        ("name", LIST [STRING "World1"; STRING "World2"])
+  ; attributes = [
+        ("name", MV [STRING "World1"; STRING "World2"])
                  ]
   ; groupfile = None
   ; expected = "Hello, World!"
   }
+
+let eg3 = {
+    classname = "hello"
+  ; template_s = "<{Hello, <name>!}>"
+  ; attributes = [
+      ("name", SV NULL)
+    ]
+  ; groupfile = None
+  ; expected = "Hello, World!"
+  }
+
+let eg4 = {
+    classname = "hello"
+  ; template_s = "<{Hello, <name>!}>"
+  ; attributes = [
+        ("name", SV (LIST [STRING "World1"; STRING "World2"]))
+                 ]
+  ; groupfile = None
+  ; expected = "Hello, World!"
+  }
+
+let rec fmt_value pps v =
+  match v with
+    STRING s -> Fmt.(pf pps "%a" Dump.string s)
+  | LIST l when List.for_all isSTRING l ->
+     let pp1 pps (STRING s) = Fmt.(pf pps "add(%a);" Dump.string s) in
+     Fmt.(pf pps "new ArrayList<String>() {{%a}}" (list pp1) l)
+  | _ -> Fmt.(failwithf "fmt_value: cannot format %a" Value.pp v)
+
+let add_attr pps (n,v) =
+    Fmt.(pf pps "st.add(%a, %a);" Dump.string n fmt_value v)
+
+let add_binding pps (n,rhs) =
+  match rhs with
+    SV v ->
+    add_attr pps (n,v)
+  | MV l ->
+       let add1 pps v = add_attr pps (n,v) in
+       Fmt.(pf pps "%a" (list add1) l)
 
 let emit pps th =
   let stconstructor pps th =
@@ -69,18 +110,8 @@ let emit pps th =
     | Some (fname, _) -> Fmt.(pf pps "new ST(new STGroupFile(%a), %a)"
                            Dump.string fname
                            Dump.string th.template_s) in
-  let rec staddattr pps (n,v) =
-    let open Value in
-    match v with
-      STRING s ->
-      Fmt.(pf pps "st.add(%a, %a);" Dump.string n Dump.string s)
-    | LIST l ->
-       let add1 pps v = staddattr pps (n,v) in
-       Fmt.(pf pps "%a" (list add1) l)
-    | NULL ->
-      Fmt.(pf pps "st.add(%a, null);" Dump.string n)
-  in
   Fmt.(pf pps {|
+import java.util.ArrayList;
 import org.stringtemplate.v4.*;
 
 public class %s {
@@ -94,5 +125,5 @@ public class %s {
 |}
          th.classname
          stconstructor th
-         (list staddattr) th.attributes
+         (list add_binding) th.attributes
   )

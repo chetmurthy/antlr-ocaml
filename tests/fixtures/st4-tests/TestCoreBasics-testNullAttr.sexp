@@ -1,0 +1,5 @@
+((classname testNullAttr)
+ (template_s {|hi <name>!|})
+ (attributes ())
+ (groupfile ())
+ (expected {bar|hi !|bar}))
