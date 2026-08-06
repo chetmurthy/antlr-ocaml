@@ -5,7 +5,7 @@ open Ppxutil
 
 open Eval
 
-type harness_t =
+type t =
   {
     classname : string
   ; template_s : string
@@ -18,22 +18,22 @@ type harness_t =
 let of_json_string s =
   let open Pa_ppx_located_yojson.Json in
   let j = JsonEOI.of_string s in
-  harness_t_of_located_yojson_exn j
+  of_located_yojson_exn j
 
 let of_sexp_string s =
   let open Pa_ppx_located_sexp.Altsexp in
   let j = of_string s in
-  harness_t_of_located_sexp j
+  t_of_located_sexp j
 
 let load_json ~file =
   let open Pa_ppx_located_yojson.Json in
   let j = JsonEOI.load ~file in
-  harness_t_of_located_yojson_exn j
+  of_located_yojson_exn j
 
 let load_sexp ~file =
   let open Pa_ppx_located_sexp.Altsexp in
   let j = load_sexp file in
-  harness_t_of_located_sexp j
+  t_of_located_sexp j
 
 let load ~file =
   if Fpath.(file |> v |> has_ext "json") then
@@ -41,6 +41,41 @@ let load ~file =
   else if Fpath.(file |> v |> has_ext "sexp") then
     load_sexp ~file
   else Fmt.(failwithf "TH.load: file %s is neither .json nor .sexp" file)
+
+module Multi = struct
+type _t = (string * t) list
+[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+type t = _t
+[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+
+let of_json_string s =
+  let open Pa_ppx_located_yojson.Json in
+  let j = JsonEOI.of_string s in
+  of_located_yojson_exn j
+
+let of_sexp_string s =
+  let open Pa_ppx_located_sexp.Altsexp in
+  let j = of_string s in
+  t_of_located_sexp j
+
+let load_json ~file =
+  let open Pa_ppx_located_yojson.Json in
+  let j = JsonEOI.load ~file in
+  of_located_yojson_exn j
+
+let load_sexp ~file =
+  let open Pa_ppx_located_sexp.Altsexp in
+  let j = load_sexp file in
+  t_of_located_sexp j
+
+let load ~file =
+  if Fpath.(file |> v |> has_ext "json") then
+    load_json ~file
+  else if Fpath.(file |> v |> has_ext "sexp") then
+    load_sexp ~file
+  else Fmt.(failwithf "TH.Multi.load: file %s is neither .json nor .sexp" file)
+
+end
 
 open Value
 open Environ
