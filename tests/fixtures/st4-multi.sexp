@@ -138,5 +138,60 @@ b(x,y={99}) ::= "<x><y>"
    (groupfile (("a.stg" {| foo ::= [ "a":"b" ] |})))
    (expected {bar|b: |bar}))
   )
-
+ ("TestCoreBasics-testDefineTemplate"
+  ((classname hello)
+ (template_s {|<test(name)>|})
+ (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+ (groupfile (("a.stg" 
+{| 
+   inc(x) ::= "<x>+1"
+   test(name) ::= "hi <name>!"
+ |})))
+ (expected {bar|hi TerTomSumana!|bar}))
+  )
+ ("TestCoreBasics-testMap"
+  ((classname hello)
+   (template_s {|<test(name)>|})
+   (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+   (groupfile (("a.stg" 
+                {| 
+   inc(x) ::= "[<x>]"
+   test(name) ::= "hi <name:inc()>!"
+ |})))
+   (expected {bar|hi [Ter][Tom][Sumana]!|bar}))
+  )
+ ("TestCoreBasics-testPassThruNoMissingArgs"
+  ((classname hello)
+   (template_s {|<a(x="x",y="y")>|})
+   (attributes ())
+   (groupfile (("a.stg" 
+                {| 
+   a(x,y) ::= "<b(y={99},x={1},...)>"
+   b(x,y) ::= "<x><y>"
+ |})))
+   (expected {bar|199|bar}))
+  )
+ ("TestCoreBasics-testPassThruPartialArgs"
+  ((classname hello)
+   (template_s {|<a(x="x",y="y")>|})
+   (attributes ())
+   (groupfile (("a.stg" 
+                {| 
+  a(x,y) ::= "<b(y={99},...)>"
+  b(x,y) ::= "<x><y>"
+ |})))
+   (expected {bar|x99|bar}))
+  )
+ ("TestCoreBasics-testPassThruWithDefaultValueThatLacksDefinitionAbove"
+  ((classname hello)
+   (template_s {|<a(x="x")>|})
+   (attributes ())
+   (groupfile (("a.stg" 
+                {| 
+  a(x) ::= "<b(...)>"
+  b(x,y={99}) ::= "<x><y>"
+ |})))
+   (expected {bar|x99|bar}))
+  )
  )
+
