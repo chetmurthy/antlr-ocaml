@@ -97,6 +97,14 @@ open Pa_ppx_located_yojson.Json ;;
 #require "pa_ppx.located_sexp";;
 open Pa_ppx_located_sexp ;;
 
+let prharness h =
+  Fmt.(pf stdout "%a" Altsexp.pp_hum Testharness.(h |> located_sexp_of_harness_t));;
+
+prharness Testharness.eg1 ;;
+prharness Testharness.eg2 ;;
+prharness Testharness.eg3 ;;
+prharness Testharness.eg4 ;;
+
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***

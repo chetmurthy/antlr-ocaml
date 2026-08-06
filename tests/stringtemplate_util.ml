@@ -55,7 +55,7 @@ let multi =
 
 module Generate = struct
 
-let generate_one_test ~debug ~force ~destroot ~testname th =
+let one_test ~debug ~force ~destroot ~testname th =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -89,7 +89,7 @@ compile:
   
   ()
 
-let generate_st4_test ~debug ~force ~destroot ~multi ~testname file =
+let st4_test ~debug ~force ~destroot ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -97,11 +97,11 @@ let generate_st4_test ~debug ~force ~destroot ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           generate_one_test ~debug ~force ~destroot ~testname th)
+           one_test ~debug ~force ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  generate_one_test ~debug ~force ~destroot ~testname th
+  one_test ~debug ~force ~destroot ~testname th
 
 let cmd =
   let doc = "generate a testdir for a Stringtemplate4 test" in
@@ -111,13 +111,13 @@ let cmd =
   in
   Cmd.make (Cmd.info "generate" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ debug and+ force and+ multi and+ destroot and+ testname in
-  generate_st4_test ~debug ~force ~destroot ~testname ~multi file ;
+  st4_test ~debug ~force ~destroot ~testname ~multi file ;
   Cmdliner.Cmd.Exit.ok
 
 end
 
 module Compile = struct
-let compile_one_test ~debug ~destroot ~testname th =
+let one_test ~debug ~destroot ~testname th =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -129,7 +129,7 @@ let compile_one_test ~debug ~destroot ~testname th =
   cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
-let compile_st4_test ~debug ~destroot ~multi ~testname file =
+let st4_test ~debug ~destroot ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -137,11 +137,11 @@ let compile_st4_test ~debug ~destroot ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           compile_one_test ~debug ~destroot ~testname th)
+           one_test ~debug ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  compile_one_test ~debug ~destroot ~testname th
+  one_test ~debug ~destroot ~testname th
 
 let cmd =
   let doc = "compile testdir for a Stringtemplate4 test" in
@@ -151,13 +151,13 @@ let cmd =
   in
   Cmd.make (Cmd.info "compile" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ debug and+ multi and+ destroot and+ testname in
-  compile_st4_test ~debug ~multi ~destroot ~testname file ;
+  st4_test ~debug ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
 module Execute = struct
 
-let execute_one_test ~debug ~destroot ~testname th =
+let one_test ~debug ~destroot ~testname th =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -169,7 +169,7 @@ let execute_one_test ~debug ~destroot ~testname th =
   cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
-let execute_st4_test ~debug ~destroot ~multi ~testname file =
+let st4_test ~debug ~destroot ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -177,11 +177,11 @@ let execute_st4_test ~debug ~destroot ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           execute_one_test ~debug ~destroot ~testname th)
+           one_test ~debug ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  execute_one_test ~debug ~destroot ~testname th
+  one_test ~debug ~destroot ~testname th
 
 let cmd =
   let doc = "execute testdir for a Stringtemplate4 test" in
@@ -191,7 +191,7 @@ let cmd =
   in
   Cmd.make (Cmd.info "execute" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ debug and+ multi and+ destroot and+ testname in
-  execute_st4_test ~debug ~multi ~destroot ~testname file ;
+  st4_test ~debug ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
@@ -210,7 +210,7 @@ let check ~testname th output =
     end
 
 
-let check_one_test ~debug ~destroot ~testname th =
+let one_test ~debug ~destroot ~testname th =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -222,7 +222,7 @@ let check_one_test ~debug ~destroot ~testname th =
   let output_txt = outputfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
   check ~testname th output_txt
 
-let check_st4_test ~debug ~destroot ~multi ~testname file =
+let st4_test ~debug ~destroot ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -230,11 +230,11 @@ let check_st4_test ~debug ~destroot ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           check_one_test ~debug ~destroot ~testname th)
+           one_test ~debug ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  check_one_test ~debug ~destroot ~testname th
+  one_test ~debug ~destroot ~testname th
 
 let cmd =
   let doc = "check output for a Stringtemplate4 test" in
@@ -244,20 +244,20 @@ let cmd =
   in
   Cmd.make (Cmd.info "check" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ debug and+ multi and+ destroot and+ testname in
-  check_st4_test ~debug ~multi ~destroot ~testname file ;
+  st4_test ~debug ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
 module Full = struct
 
-let full_one_test ~debug ~force ~destroot ~testname th =
-  Generate.generate_one_test ~debug ~force ~destroot ~testname th ;
-  Compile.compile_one_test ~debug ~destroot ~testname th ;
-  Execute.execute_one_test ~debug ~destroot ~testname th ;
-  Check.check_one_test ~debug ~destroot ~testname th ;
+let one_test ~debug ~force ~destroot ~testname th =
+  Generate.one_test ~debug ~force ~destroot ~testname th ;
+  Compile.one_test ~debug ~destroot ~testname th ;
+  Execute.one_test ~debug ~destroot ~testname th ;
+  Check.one_test ~debug ~destroot ~testname th ;
   ()
 
-let full_st4_test ~debug ~destroot ~force ~multi ~testname file =
+let st4_test ~debug ~destroot ~force ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -265,11 +265,11 @@ let full_st4_test ~debug ~destroot ~force ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           full_one_test ~debug ~force ~destroot ~testname th)
+           one_test ~debug ~force ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  full_one_test ~debug ~force ~destroot ~testname th
+  one_test ~debug ~force ~destroot ~testname th
 
 let cmd =
   let doc = "full test trip for a Stringtemplate4 test" in
@@ -279,7 +279,7 @@ let cmd =
   in
   Cmd.make (Cmd.info "full" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ debug and+ force and+ multi and+ destroot and+ testname in
-  full_st4_test ~debug ~force ~multi ~destroot ~testname file ;
+  st4_test ~debug ~force ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
