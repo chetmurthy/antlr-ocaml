@@ -45,6 +45,10 @@ let debug =
   let doc = "enable debugging." in
   Arg.(value & flag & info ["debug"] ~doc)
 
+let verbose =
+  let doc = "enable verbose logging." in
+  Arg.(value & flag & info ["v";"verbose"] ~doc)
+
 let force =
   let doc = "force generation (delete existing directory)." in
   Arg.(value & flag & info ["f";"force"] ~doc)
@@ -55,7 +59,8 @@ let multi =
 
 module Generate = struct
 
-let one_test ~debug ~force ~destroot ~testname th =
+let one_test ~debug ~verbose ~force ~destroot ~testname th =
+  if verbose then Fmt.(pf stderr "[generate %s]@." testname) ;
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -89,7 +94,7 @@ compile:
   
   ()
 
-let st4_test ~debug ~force ~destroot ~multi ~testname file =
+let st4_test ~debug ~verbose ~force ~destroot ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -97,11 +102,11 @@ let st4_test ~debug ~force ~destroot ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           one_test ~debug ~force ~destroot ~testname th)
+           one_test ~debug ~verbose ~force ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  one_test ~debug ~force ~destroot ~testname th
+  one_test ~debug ~verbose ~force ~destroot ~testname th
 
 let cmd =
   let doc = "generate a testdir for a Stringtemplate4 test" in
@@ -110,14 +115,15 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "generate" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ force and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~force ~destroot ~testname ~multi file ;
+  let+ file and+ debug and+ verbose and+ force and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~force ~destroot ~testname ~multi file ;
   Cmdliner.Cmd.Exit.ok
 
 end
 
 module Compile = struct
-let one_test ~debug ~destroot ~testname th =
+let one_test ~debug ~verbose ~destroot ~testname th =
+  if verbose then Fmt.(pf stderr "[compile %s]@." testname) ;
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -129,7 +135,7 @@ let one_test ~debug ~destroot ~testname th =
   cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
-let st4_test ~debug ~destroot ~multi ~testname file =
+let st4_test ~debug ~verbose ~destroot ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -137,11 +143,11 @@ let st4_test ~debug ~destroot ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           one_test ~debug ~destroot ~testname th)
+           one_test ~debug ~verbose ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  one_test ~debug ~destroot ~testname th
+  one_test ~debug ~verbose ~destroot ~testname th
 
 let cmd =
   let doc = "compile testdir for a Stringtemplate4 test" in
@@ -150,14 +156,15 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "compile" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~multi ~destroot ~testname file ;
+  let+ file and+ debug and+ verbose and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
 module Execute = struct
 
-let one_test ~debug ~destroot ~testname th =
+let one_test ~debug ~verbose ~destroot ~testname th =
+  if verbose then Fmt.(pf stderr "[execute %s]@." testname) ;
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -169,7 +176,7 @@ let one_test ~debug ~destroot ~testname th =
   cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
-let st4_test ~debug ~destroot ~multi ~testname file =
+let st4_test ~debug ~verbose ~destroot ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -177,11 +184,11 @@ let st4_test ~debug ~destroot ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           one_test ~debug ~destroot ~testname th)
+           one_test ~debug ~verbose ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  one_test ~debug ~destroot ~testname th
+  one_test ~debug ~verbose ~destroot ~testname th
 
 let cmd =
   let doc = "execute testdir for a Stringtemplate4 test" in
@@ -190,8 +197,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "execute" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~multi ~destroot ~testname file ;
+  let+ file and+ debug and+ verbose and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
@@ -210,7 +217,8 @@ let check ~testname th output =
     end
 
 
-let one_test ~debug ~destroot ~testname th =
+let one_test ~debug ~verbose ~destroot ~testname th =
+  if verbose then Fmt.(pf stderr "[check %s]@." testname) ;
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -222,7 +230,7 @@ let one_test ~debug ~destroot ~testname th =
   let output_txt = outputfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
   check ~testname th output_txt
 
-let st4_test ~debug ~destroot ~multi ~testname file =
+let st4_test ~debug ~verbose ~destroot ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -230,11 +238,11 @@ let st4_test ~debug ~destroot ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           one_test ~debug ~destroot ~testname th)
+           one_test ~debug ~verbose ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  one_test ~debug ~destroot ~testname th
+  one_test ~debug ~verbose ~destroot ~testname th
 
 let cmd =
   let doc = "check output for a Stringtemplate4 test" in
@@ -243,21 +251,21 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "check" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~multi ~destroot ~testname file ;
+  let+ file and+ debug and+ verbose and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
 module Full = struct
 
-let one_test ~debug ~force ~destroot ~testname th =
-  Generate.one_test ~debug ~force ~destroot ~testname th ;
-  Compile.one_test ~debug ~destroot ~testname th ;
-  Execute.one_test ~debug ~destroot ~testname th ;
-  Check.one_test ~debug ~destroot ~testname th ;
+let one_test ~debug ~verbose ~force ~destroot ~testname th =
+  Generate.one_test ~debug ~verbose ~force ~destroot ~testname th ;
+  Compile.one_test ~debug ~verbose ~destroot ~testname th ;
+  Execute.one_test ~debug ~verbose ~destroot ~testname th ;
+  Check.one_test ~debug ~verbose ~destroot ~testname th ;
   ()
 
-let st4_test ~debug ~destroot ~force ~multi ~testname file =
+let st4_test ~debug ~verbose ~destroot ~force ~multi ~testname file =
   let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
@@ -265,11 +273,11 @@ let st4_test ~debug ~destroot ~force ~multi ~testname file =
     let thl = Multi.load ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           one_test ~debug ~force ~destroot ~testname th)
+           one_test ~debug ~verbose ~force ~destroot ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  one_test ~debug ~force ~destroot ~testname th
+  one_test ~debug ~verbose ~force ~destroot ~testname th
 
 let cmd =
   let doc = "full test trip for a Stringtemplate4 test" in
@@ -278,8 +286,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "full" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ force and+ multi and+ destroot and+ testname in
-  st4_test ~debug ~force ~multi ~destroot ~testname file ;
+  let+ file and+ debug and+ verbose and+ force and+ multi and+ destroot and+ testname in
+  st4_test ~debug ~verbose ~force ~multi ~destroot ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 
