@@ -1,0 +1,20 @@
+{
+  "attributes": [
+    [
+      "name",
+      [
+        "STRING",
+        "Ter"
+      ]
+    ]
+  ],
+  "groupfile": [
+    "t.stg",
+    {foo|t() ::= <<hi <name>!>>
+|foo}
+  ],
+  "classname": "hellostg",
+  "template_s": "<t()>",
+  "expected": {bar|hi Ter!|bar}
+}
+
