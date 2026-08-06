@@ -160,6 +160,17 @@ dtest-selected: $(DTEST:.txt=.DTEST)
 
 dtest-all: $(DALL:.txt=.DTEST)
 
+STALL=$(shell ls fixtures/st4-tests/*.json)
+
+ST4UTIL=$(TOP)/tests/stringtemplate_util.opt
+
+%.STTEST: %.json
+	$(ST4UTIL) generate -f -d _generated $<
+	$(ST4UTIL) compile -d _generated $<
+	$(ST4UTIL) execute -d _generated $<
+
+sttest-all: $(STALL:.json=.STTEST)
+
 #ONE=LexerExec/CharSet
 ONE=ParserExec/Basic
 #ONE=CompositeParsers/ImportLexerWithOnlyFragmentRules

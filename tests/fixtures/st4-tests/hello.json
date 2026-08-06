@@ -10,5 +10,5 @@
   ],
   "groupfile": null,
   "name": "hello",
-  "template_s": "<{Hello, <name>!}>"
+  "template_s": {foo|<{Hello, <name>!}>|foo}
 }

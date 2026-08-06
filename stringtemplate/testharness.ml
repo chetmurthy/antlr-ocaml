@@ -42,6 +42,8 @@ let emit pps th =
     match v with
       STRING s ->
       Fmt.(pf pps "st.add(%a, %a);" Dump.string n Dump.string s)
+    | NULL ->
+      Fmt.(pf pps "st.add(%a, null);" Dump.string n)
   in
   Fmt.(pf pps {|
 import org.stringtemplate.v4.*;

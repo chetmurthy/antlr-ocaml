@@ -31,7 +31,7 @@ let generate_st4_test ~debug ~force ~destroot file =
   let maketxt =
     Fmt.(str {|
 test:
-	java -cp classes:/usr/share/java/stringtemplate4-4.0.8.jar:$(CLASSPATH) %s
+	java -cp classes:/usr/share/java/stringtemplate4-4.0.8.jar:$(CLASSPATH) %s > output.NEW && mv output.NEW output
 
 compile:
 	javac -d classes %s.java
@@ -40,6 +40,50 @@ compile:
   let makefile  = Fpath.(append destdir (v "Makefile")) in
   Bos.OS.File.write ~mode:0o644 makefile maketxt |> Rresult.R.failwith_error_msg ;
   
+  ()
+
+let system cmd =
+  let st = Unix.system cmd in
+  match st with
+    Unix.WEXITED 0 -> Ok ()
+  | Unix.WEXITED n -> exit n
+  | WSIGNALED n ->
+     Error
+       (`Msg
+          (Printf.sprintf "st4_util: command killed by signal %d" n))
+  | WSTOPPED n ->
+     Error
+       (`Msg
+          (Printf.sprintf "st4_util: command stopped by signal %d" n))
+
+let compile_st4_test ~debug ~force ~destroot file =
+  let open Testharness in
+  if destroot = "" then
+    failwith "must specify --dest-root|-d" ;
+  let destroot = Fpath.v destroot in
+  let th = load ~file in
+  let testname = th.name in
+  let testfilename = testname^".java" in
+  let destdir = Fpath.(append destroot (v testname)) in
+  if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
+      Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
+  let cmd = Fmt.(str "make -C %s compile" (Fpath.to_string destdir)) in
+  cmd |> system |> Rresult.R.failwith_error_msg ;
+  ()
+
+let execute_st4_test ~debug ~force ~destroot file =
+  let open Testharness in
+  if destroot = "" then
+    failwith "must specify --dest-root|-d" ;
+  let destroot = Fpath.v destroot in
+  let th = load ~file in
+  let testname = th.name in
+  let testfilename = testname^".java" in
+  let destdir = Fpath.(append destroot (v testname)) in
+  if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
+      Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
+  let cmd = Fmt.(str "make -C %s test" (Fpath.to_string destdir)) in
+  cmd |> system |> Rresult.R.failwith_error_msg ;
   ()
 
 open Cmdliner
@@ -73,10 +117,32 @@ let generate_cmd =
   generate_st4_test ~debug ~force ~destroot file ;
   Cmdliner.Cmd.Exit.ok
 
+let compile_cmd =
+  let doc = "compile testdir for a Stringtemplate4 test" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "compile" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ debug and+ destroot in
+  compile_st4_test ~debug ~force ~destroot file ;
+  Cmdliner.Cmd.Exit.ok
+
+let execute_cmd =
+  let doc = "execute testdir for a Stringtemplate4 test" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "execute" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ debug and+ destroot in
+  execute_st4_test ~debug ~force ~destroot file ;
+  Cmdliner.Cmd.Exit.ok
+
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [generate_cmd]
+  [generate_cmd; compile_cmd; execute_cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())
