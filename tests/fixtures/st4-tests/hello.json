@@ -1,0 +1,14 @@
+{
+  "attributes": [
+    [
+      "name",
+      [
+        "STRING",
+        "World"
+      ]
+    ]
+  ],
+  "groupfile": null,
+  "name": "hello",
+  "template_s": "<{Hello, <name>!}>"
+}

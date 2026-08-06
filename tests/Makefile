@@ -12,7 +12,7 @@ ML= \
 	lib_test.ml antlr_test.ml atn_util.ml mimick_test.ml \
 	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
 	replay_util.ml parser_test.ml grammar_tools_test.ml \
-	stringtemplate_test.ml
+	stringtemplate_test.ml stringtemplate_util.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
@@ -21,7 +21,7 @@ EXE=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
 	antlrtest_test.exe antlrtest_util.exe \
 	deserialize_jsonlog.exe replay_util.exe \
 	parser_test.exe grammar_tools_test.exe \
-	stringtemplate_test.exe
+	stringtemplate_test.exe stringtemplate_util.exe
 
 TESTML=$(shell ls *_test.ml)
 

@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.utils *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.utils *)
 
 open Pa_ppx_utils
 open St_types
@@ -9,14 +9,14 @@ type t =
 | BOOL of bool
 | DICT of (string * t) list
 | LIST of t list
-[@@deriving show]
+| NULL
+[@@deriving show,yojson,located_yojson]
 end
 
 module Environ = struct
 type frame_t = (string * Value.t) list
-[@@deriving show]
+[@@deriving show,yojson,located_yojson]
 type t = frame_t list
-[@@deriving show]
-
+[@@deriving show,yojson,located_yojson]
 end
 

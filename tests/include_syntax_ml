@@ -91,6 +91,15 @@ open Stringtemplate ;;
 #require "antlrtest" ;;
 #load "stringtemplate_test.cmo";;
 open Stringtemplate_test ;;
+
+open Pa_ppx_located_yojson.Json ;;
+open Plexing ;;
+let lexer = Pcaml.Lexer.gmake () ;;
+let (tokstrm,  locations) = {| {foo|abc|foo} |} |> Stream.of_string |> lexer.tok_func
+in Stream.peek tokstrm
+;;
+
+
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***

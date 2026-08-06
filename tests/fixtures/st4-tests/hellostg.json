@@ -1,0 +1,18 @@
+{
+  "attributes": [
+    [
+      "name",
+      [
+        "STRING",
+        "World"
+      ]
+    ]
+  ],
+  "groupfile": [
+    "a.stg",
+    "x ::= << >>"
+  ],
+  "name": "hello",
+  "template_s": "<{Hello, <name>!}>"
+}
+
