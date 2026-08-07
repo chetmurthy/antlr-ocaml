@@ -173,9 +173,13 @@ let emit pps th =
   let stconstructor pps th =
     match th.groupfile with
       None -> Fmt.(pf pps "new ST(%a)" Dump.string th.template_s)
-    | Some (fname, _) -> Fmt.(pf pps "new ST(new STGroupFile(%a), %a)"
-                           Dump.string fname
-                           Dump.string th.template_s) in
+    | Some (fname, _) when String.contains fname '/' ->
+       Fmt.(pf pps "new ST(new STGroupDir(\".\"), %a)"
+              Dump.string th.template_s)
+    | Some (fname, _) ->
+       Fmt.(pf pps "new ST(new STGroupFile(%a), %a)"
+              Dump.string fname
+              Dump.string th.template_s) in
   let render_txt =
     if th.indent then
       "String output = st.render();"

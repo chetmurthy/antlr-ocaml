@@ -181,6 +181,7 @@ ST4GEN=_generated/st4
 sttest-multi::
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestCoreBasics.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestDictionaries.sexp
+	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestGroup.sexp
 
 
 sttest-all: $(STJSONALL:.json=.STTEST) $(STSEXPALL:.sexp=.STTEST)
