@@ -97,6 +97,8 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
   th.groupfile
   |> Option.map (fun (groupfilename, contents) ->
          let full = Fpath.(append destdir (v groupfilename)) in
+         let dir = Fpath.parent full in
+         Bos.OS.Dir.create ~path:true ~mode:0o755 dir |> Rresult.R.failwith_error_msg ;
          Bos.OS.File.write ~mode:0o644 full contents |> Rresult.R.failwith_error_msg) ;
   let javafile  = Fpath.(append destdir (v testfilename)) in
   Bos.OS.File.write ~mode:0o644 javafile Fmt.(str "%a" emit th) |> Rresult.R.failwith_error_msg ;

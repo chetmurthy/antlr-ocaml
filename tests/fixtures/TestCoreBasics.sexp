@@ -4,7 +4,7 @@
    (attributes ((name (SV (STRING World))))) (groupfile ())
    (output "Hello, World!"))
   )
- ("TestCoreBasics-testNullAttr"
+ ("testNullAttr"
   ((classname testNullAttr)
    (template_s {|hi <name>!|})
    (attributes ())
@@ -13,25 +13,25 @@
    (errors "context [anonymous] 1:4 attribute name isn't defined\n")
    )
   )
- ("TestCoreBasics-testAttrIsList"
+ ("testAttrIsList"
   ((classname hello)
    (template_s {|hi <name>!|})
    (attributes ((name (MV ((LIST ((STRING Ter) (STRING Tom))) (STRING Sumana))))))
    (groupfile ())
    (output {bar|hi TerTomSumana!|bar})))
- ("TestCoreBasics-testAttr"
+ ("testAttr"
   ((classname hello)
    (template_s {|hi <name>!|})
    (attributes ((name (SV (STRING "Ter")))))
    (groupfile ())
    (output {bar|hi Ter!|bar}))
   )
- ("TestCoreBasics-testBoolean1"
+ ("testBoolean1"
   ((classname hello) (template_s "<{Hello, <name>!}>")
    (attributes ((name (SV (BOOL true))))) (groupfile ())
    (output {bar|Hello, true!|bar}))
   )
- ("TestCoreBasics-testChainAttr"
+ ("testChainAttr"
   ((classname hello)
    (template_s {|<x>:<names>!|})
    (attributes
@@ -42,7 +42,7 @@
    (groupfile ())
    (output {bar|1:TerTom!|bar}))
   )
- ("TestCoreBasics-testSetUnknownAttr"
+ ("testSetUnknownAttr"
   ((classname hello)
    (template_s {|<t()>|})
    (attributes ())
@@ -53,7 +53,7 @@ t() ::= <<hi <name>!>>
    (errors "context [anonymous /t] 1:4 attribute name isn't defined\n")
    )
   )
- ("TestCoreBasics-testInclude"
+ ("testInclude"
   ((classname hello)
    (template_s {|load <box()>;|})
    (attributes ())
@@ -65,7 +65,7 @@ daddy;|bar})
 |bar})
    )
   )
- ("TestCoreBasics-testIncludeWithArg2"
+ ("testIncludeWithArg2"
   ((classname hello)
    (template_s {|load <box("arg", foo())>;|})
    (attributes ((name (SV (STRING Ter)))))
@@ -74,21 +74,21 @@ daddy;|bar})
 foo() ::= "blech" |})))
    (output {bar|load kewl arg blech daddy;|bar}))
   )
- ("TestCoreBasics-testIncludeWithArg"
+ ("testIncludeWithArg"
   ((classname hello)
    (template_s {|load <box("arg")>;|})
    (attributes ((name (SV (STRING Ter)))))
    (groupfile (("a.stg" {| box(x) ::= "kewl <x> daddy" |})))
    (output {bar|load kewl arg daddy;|bar}))
   )
- ("TestCoreBasics-testIncludeWithEmptySubtemplateArg"
+ ("testIncludeWithEmptySubtemplateArg"
   ((classname hello)
    (template_s {|load <box({})>;|})
    (attributes ((name (SV (STRING Ter)))))
    (groupfile (("a.stg" {| box(x) ::= "kewl <x> daddy" |})))
    (output {bar|load kewl  daddy;|bar}))
   )
- ("TestCoreBasics-testIncludeWithNestedArgs"
+ ("testIncludeWithNestedArgs"
   ((classname hello)
    (template_s {|load <box(foo("arg"))>;|})
    (attributes ((name (SV (STRING Ter)))))
@@ -97,14 +97,14 @@ foo() ::= "blech" |})))
 foo(x) ::= "blech <x>" |})))
    (output {bar|load kewl blech arg daddy;|bar}))
   )
- ("TestCoreBasics-testMapAcrossDictionaryUsesKeys"
+ ("testMapAcrossDictionaryUsesKeys"
   ((classname hello)
    (template_s "<foo:{f | <f>}>")
    (attributes ((foo (SV (DICT ((a (STRING b)) (c (STRING d))))))))
    (groupfile ())
    (output {bar|ac|bar}))
   )
- ("TestCoreBasics-testNullAttrProp"
+ ("testNullAttrProp"
   ((classname hello)
    (template_s {|<u.id>: <u.name>|})
    (attributes ())
@@ -115,7 +115,7 @@ context [anonymous] 1:9 attribute u isn't defined
 |bar})
    )
   )
- ("TestCoreBasics-testNullAttr"
+ ("testNullAttr"
   ((classname testNullAttr)
    (template_s {|hi <name>!|})
    (attributes ())
@@ -125,7 +125,7 @@ context [anonymous] 1:9 attribute u isn't defined
 |bar})
    )
   )
- ("TestCoreBasics-testPassThru"
+ ("testPassThru"
   ((classname hello)
    (template_s {|<a("x","y")>|})
    (attributes ())
@@ -136,7 +136,7 @@ b(x,y) ::= "<x><y>"
 |})))
    (output {bar|xy|bar}))
   )
- ("TestCoreBasics-testPassThruWithDefaultValue"
+ ("testPassThruWithDefaultValue"
   ((classname hello)
    (template_s {|<a(x="x")>|})
    (attributes ())
@@ -150,14 +150,14 @@ b(x,y={99}) ::= "<x><y>"
 |bar})
    )
   )
- ("TestCoreBasics-testProp"
+ ("testProp"
   ((classname hello)
    (template_s {|<u.id>: <u.name>|})
    (attributes ())
    (groupfile (("a.stg" {| u ::= [ "id":"1", "name": "parrt" ] |})))
    (output {bar|1: parrt|bar}))
   )
- ("TestCoreBasics-testPropWithNoAttr"
+ ("testPropWithNoAttr"
   ((classname hello)
    (template_s {|<foo.a>: <ick>|})
    (attributes ())
@@ -167,7 +167,7 @@ b(x,y={99}) ::= "<x><y>"
 |bar})
    )
   )
- ("TestCoreBasics-testDefineTemplate"
+ ("testDefineTemplate"
   ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
@@ -178,7 +178,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output {bar|hi TerTomSumana!|bar}))
   )
- ("TestCoreBasics-testMap"
+ ("testMap"
   ((classname hello)
    (template_s {|<test(name)>|})
    (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
@@ -189,7 +189,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
    (output {bar|hi [Ter][Tom][Sumana]!|bar}))
   )
- ("TestCoreBasics-testPassThruNoMissingArgs"
+ ("testPassThruNoMissingArgs"
   ((classname hello)
    (template_s {|<a(x="x",y="y")>|})
    (attributes ())
@@ -200,7 +200,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
    (output {bar|199|bar}))
   )
- ("TestCoreBasics-testPassThruPartialArgs"
+ ("testPassThruPartialArgs"
   ((classname hello)
    (template_s {|<a(x="x",y="y")>|})
    (attributes ())
@@ -211,7 +211,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
    (output {bar|x99|bar}))
   )
- ("TestCoreBasics-testPassThruWithDefaultValueThatLacksDefinitionAbove"
+ ("testPassThruWithDefaultValueThatLacksDefinitionAbove"
   ((classname hello)
    (template_s {|<a(x="x")>|})
    (attributes ())
@@ -222,7 +222,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
    (output {bar|x99|bar}))
   )
- ("TestCoreBasics-testIndirectMap"
+ ("testIndirectMap"
   ((classname hello)
    (template_s {|<test(t="inc",name=name)>|})
    (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
@@ -233,7 +233,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
    (output "[Ter][Tom][Sumana]!"))
   )
-("TestCoreBasics-testMapThenParallelMap"
+("testMapThenParallelMap"
  ((classname hello)
   (template_s {|<test(names,phones)>|})
   (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
@@ -247,7 +247,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "hi [Ter]:x5001;[Tom]:x5002;[Sumana]:;"))
 )
-("TestCoreBasics-testMapWithExprAsTemplateName"
+("testMapWithExprAsTemplateName"
  ((classname hello)
   (template_s {|<test(name)>|})
   (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
@@ -259,7 +259,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "*Ter**Tom**Sumana*"))
 )
-("TestCoreBasics-testParallelMap"
+("testParallelMap"
  ((classname hello)
   (template_s {|<test(names,phones)>|})
   (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
@@ -272,7 +272,7 @@ b(x,y={99}) ::= "<x><y>"
   |})))
  (output "hi Ter:x5001;Tom:x5002;Sumana:x5003;"))
 )
-("TestCoreBasics-testParallelMapThenMap"
+("testParallelMapThenMap"
  ((classname hello)
   (template_s {|<test(names,phones)>|})
   (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
@@ -286,7 +286,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "hi [Ter:x5001;][Tom:x5002;][Sumana:;]"))
 )
-("TestCoreBasics-testParallelMapWith3Versus2Elements"
+("testParallelMapWith3Versus2Elements"
  ((classname hello)
   (template_s {|<test(names,phones)>|})
   (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
@@ -299,7 +299,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
   (output "hi Ter:x5001;Tom:x5002;Sumana:;"))
 )
-("TestCoreBasics-testMapIndexes2"
+("testMapIndexes2"
 ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
@@ -310,7 +310,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "1:Ter, 2:Tom, 3:Sumana"))
 )
-("TestCoreBasics-testMapIndexes"
+("testMapIndexes"
 ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
@@ -322,7 +322,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "1:Ter, 2:Tom, 3:Sumana"))
 )
-("TestCoreBasics-testMapNullValueInList"
+("testMapNullValueInList"
 ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
@@ -333,7 +333,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "Ter, Tom, Sumana"))
 )
-("TestCoreBasics-testMapNullValue"
+("testMapNullValue"
 ((classname hello)
  (template_s {|<test()>|})
  (attributes ())
@@ -347,7 +347,7 @@ b(x,y={99}) ::= "<x><y>"
 |bar})
  )
 )
-("TestCoreBasics-testMapSingleValue"
+("testMapSingleValue"
 ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (SV (STRING Ter)))
@@ -359,7 +359,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "hi [Ter]!"))
 )
-("TestCoreBasics-testRepeatedMap"
+("testRepeatedMap"
 ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
@@ -372,7 +372,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "hi ([Ter])([Tom])([Sumana])!"))
 )
-("TestCoreBasics-testRepeatedMapWithNullValueAndNullOption"
+("testRepeatedMapWithNullValueAndNullOption"
 ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (MV ((STRING Ter) NULL (STRING Sumana))))
@@ -385,7 +385,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "hi ([Ter])x([Sumana])!"))
 )
-("TestCoreBasics-testRepeatedMapWithNullValue"
+("testRepeatedMapWithNullValue"
 ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (MV ((STRING Ter) NULL (STRING Sumana))))
@@ -398,7 +398,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "hi ([Ter])([Sumana])!"))
 )
-("TestCoreBasics-testRoundRobinMap"
+("testRoundRobinMap"
 ((classname hello)
  (template_s {|<test(name)>|})
  (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
@@ -411,7 +411,7 @@ b(x,y={99}) ::= "<x><y>"
  |})))
  (output "hi [Ter](Tom)[Sumana]!"))
 )
-("TestCoreBasics-testTrueCond"
+("testTrueCond"
 ((classname hello)
  (template_s "<if(name)>works<endif>")
  (attributes ((name (SV (STRING Ter)))
@@ -419,7 +419,7 @@ b(x,y={99}) ::= "<x><y>"
  (groupfile ())
  (output "works"))
 )
-("TestCoreBasics-testCondParens"
+("testCondParens"
 ((classname hello)
  (template_s "<if(!(x||y)&&!z)>works<endif>")
  (attributes ())
@@ -431,7 +431,7 @@ context [anonymous] 1:14 attribute z isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testElseIf2"
+("testElseIf2"
 ((classname hello)
  (template_s "<if(x)>fail1<elseif(y)>fail2<elseif(z)>works<else>fail3<endif>")
  (attributes ((z (SV (STRING blort)))))
@@ -442,7 +442,7 @@ context [anonymous] 1:20 attribute y isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testElseIf3"
+("testElseIf3"
 ((classname hello)
  (template_s "<if(x)><elseif(y)><elseif(z)>works<else><endif>")
  (attributes ((z (SV (STRING blort)))))
@@ -453,7 +453,7 @@ context [anonymous] 1:15 attribute y isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testEmptyIFTemplate"
+("testEmptyIFTemplate"
 ((classname hello)
  (template_s "<if(x)>fail<elseif(name)><endif>")
  (attributes ((name (SV (STRING Ter)))
@@ -464,14 +464,14 @@ context [anonymous] 1:15 attribute y isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testFalseCond2"
+("testFalseCond2"
 ((classname hello)
  (template_s "<if(name)>works<endif>")
  (attributes ((name (SV NULL))))
  (groupfile ())
  (output ""))
 )
-("TestCoreBasics-testFalseCond"
+("testFalseCond"
 ((classname hello)
  (template_s "<if(name)>works<endif>")
  (attributes ())
@@ -481,7 +481,7 @@ context [anonymous] 1:15 attribute y isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testFalseCondWithFormalArgs"
+("testFalseCondWithFormalArgs"
 ((classname hello)
  (template_s "<a()>")
  (attributes ((name (SV NULL))))
@@ -499,7 +499,7 @@ bar
 |bar})
  )
 )
-("TestCoreBasics-testNotFalseCond"
+("testNotFalseCond"
 ((classname hello)
  (template_s "<if(!name)>works<endif>")
  (attributes ())
@@ -509,14 +509,14 @@ bar
 |bar})
  )
 )
-("TestCoreBasics-testNotTrueCond"
+("testNotTrueCond"
 ((classname hello)
  (template_s "<if(!name)>works<endif>")
  (attributes ((name (SV (STRING Ter)))))
  (groupfile ())
  (output ""))
 )
-("TestCoreBasics-testParensInConditonal2"
+("testParensInConditonal2"
 ((classname hello)
  (template_s "<if((!a||b)&&!(c||d))>broken<else>works<endif>")
  (attributes ((a (SV (BOOL true)))
@@ -527,7 +527,7 @@ bar
  (groupfile ())
  (output "works"))
 )
-("TestCoreBasics-testParensInConditonal"
+("testParensInConditonal"
 ((classname hello)
  (template_s "<if((a||b)&&(c||d))>works<endif>")
  (attributes ((a (SV (BOOL true)))
@@ -538,7 +538,7 @@ bar
  (groupfile ())
  (output "works"))
 )
-("TestCoreBasics-testElseIfAllExprFalse"
+("testElseIfAllExprFalse"
 ((classname hello)
  (template_s "<if(name)>fail<elseif(id)>fail<else>works<endif>")
  (attributes ())
@@ -549,7 +549,7 @@ context [anonymous] 1:22 attribute id isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testElseIfNoElseAllFalse"
+("testElseIfNoElseAllFalse"
 ((classname hello)
  (template_s "<if(name)>fail<elseif(id)>fail<endif>")
  (attributes ())
@@ -560,7 +560,7 @@ context [anonymous] 1:22 attribute id isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testElseIf"
+("testElseIf"
 ((classname hello)
  (template_s "<if(name)>fail<elseif(id)>works<else>fail<endif>")
  (attributes ((id (SV (STRING "2DF3DF")))
@@ -571,7 +571,7 @@ context [anonymous] 1:22 attribute id isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testFalseCondWithElse"
+("testFalseCondWithElse"
 ((classname hello)
  (template_s "<if(name)>fail<else>works<endif>")
  (attributes ())
@@ -581,7 +581,7 @@ context [anonymous] 1:22 attribute id isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testOr"
+("testOr"
 ((classname hello)
  (template_s "<if(name||notThere)>works<else>fail<endif>")
  (attributes ((name (SV (STRING Ter)))))
@@ -591,7 +591,7 @@ context [anonymous] 1:22 attribute id isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testTrueCondWithElse"
+("testTrueCondWithElse"
 ((classname hello)
  (template_s "<if(name)>works<else>fail<endif>")
  (attributes ((name (SV (STRING Ter)))
@@ -599,7 +599,7 @@ context [anonymous] 1:22 attribute id isn't defined
  (groupfile ())
  (output "works"))
 )
-("TestCoreBasics-testAndNot"
+("testAndNot"
 ((classname hello)
  (template_s "<if(name&&!notThere)>works<else>fail<endif>")
  (attributes ((name (SV (STRING Ter)))))
@@ -609,7 +609,7 @@ context [anonymous] 1:22 attribute id isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testAnd"
+("testAnd"
 ((classname hello)
  (template_s "<if(name&&notThere)>fail<else>works<endif>")
  (attributes ((name (SV (STRING Ter)))))
@@ -619,35 +619,35 @@ context [anonymous] 1:22 attribute id isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testCharLiterals2"
+("testCharLiterals2"
 ((classname hello)
  (template_s "Foo <\\n><\\t> bar\n")
  (attributes ())
  (groupfile ())
  (output "Foo \n\t bar\n"))
 )
-("TestCoreBasics-testCharLiterals3"
+("testCharLiterals3"
 ((classname hello)
  (template_s "Foo<\\ >bar<\\n>")
  (attributes ())
  (groupfile ())
  (output "Foo bar\n"))
 )
-("TestCoreBasics-testCharLiterals"
+("testCharLiterals"
 ((classname hello)
  (template_s "Foo <\\n><\\n><\\t> bar\n")
  (attributes ())
  (groupfile ())
  (output "Foo \n\n\t bar\n"))
 )
-("TestCoreBasics-testMapConditionAndEscapeInside"
+("testMapConditionAndEscapeInside"
 ((classname hello)
  (template_s "<if(m.name)>works \\\\<endif>")
  (attributes ((m (SV (DICT ((name (STRING Ter))))))))
  (groupfile ())
  (output "works \\"))
 )
-("TestCoreBasics-testOr"
+("testOr"
 ((classname hello)
  (template_s "<if(name||notThere)>works<else>fail<endif>")
  (attributes ((name (SV (STRING Ter)))))
@@ -657,7 +657,7 @@ context [anonymous] 1:22 attribute id isn't defined
 |bar})
  )
 )
-("TestCoreBasics-testSeparatorInIntList"
+("testSeparatorInIntList"
 ((classname hello)
  (template_s "<test(names)>")
  (attributes ((names (SV (LIST ((INT 0) (INT 1)))))))
@@ -667,7 +667,7 @@ test(names) ::= "<names:{n | case <n>}; separator=\", \">"
 |})))
  (output "case 0, case 1"))
 )
-("TestCoreBasics-testSeparatorInList2"
+("testSeparatorInList2"
 ((classname hello)
  (template_s "<test(names)>")
  (attributes ((names (MV ((STRING Ter) (LIST ((STRING Tom) (STRING Sriram))))))))
@@ -677,7 +677,7 @@ test(names) ::= "<names:{n | case <n>}; separator=\", \">"
 |})))
  (output "case Ter, case Tom, case Sriram"))
 )
-("TestCoreBasics-testSeparatorInList"
+("testSeparatorInList"
 ((classname hello)
  (template_s "<test(names)>")
  (attributes ((names (SV (LIST ((STRING Ter) (STRING Tom)))))))
@@ -687,7 +687,7 @@ test(names) ::= "<names:{n | case <n>}; separator=\", \">"
 |})))
  (output "case Ter, case Tom"))
 )
-("TestCoreBasics-testSeparator"
+("testSeparator"
 ((classname hello)
  (template_s "<test(names)>")
  (attributes ((names (MV ((STRING Ter) (STRING Tom))))))
@@ -697,35 +697,35 @@ test(names) ::= "<names:{n | case <n>}; separator=\", \">"
 |})))
  (output "case Ter, case Tom"))
 )
-("TestCoreBasics-testSubtemplateExpr"
+("testSubtemplateExpr"
 ((classname hello)
  (template_s "<{name\n}>")
  (attributes ())
  (groupfile ())
  (output "name\n"))
 )
-("TestCoreBasics-testUnicodeLiterals2"
+("testUnicodeLiterals2"
 ((classname hello)
  (template_s "Foo <\\uFEA5><\\n><\\u00C2> bar\n")
  (attributes ())
  (groupfile ())
  (output "Foo \u{fea5}\n\u{00C2} bar\n"))
 )
-("TestCoreBasics-testUnicodeLiterals3"
+("testUnicodeLiterals3"
 ((classname hello)
  (template_s "Foo<\\ >bar<\\n>")
  (attributes ())
  (groupfile ())
  (output "Foo bar\n"))
 )
-("TestCoreBasics-testUnicodeLiterals"
+("testUnicodeLiterals"
 ((classname hello)
  (template_s "Foo <\\uFEA5><\\n><\\u00C2> bar\n")
  (attributes ())
  (groupfile ())
  (output "Foo \u{fea5}\n\u{00C2} bar\n"))
 )
-("TestCoreBasics-testEarlyEvalIndent"
+("testEarlyEvalIndent"
 ((classname hello)
  (template_s "<main()>")
  (attributes ())
@@ -742,7 +742,7 @@ main() ::= <<
 |})))
  (output "  abc\n  abc\n    abc\n    abc"))
 )
-("TestCoreBasics-testEarlyEvalNoIndent"
+("testEarlyEvalNoIndent"
 ((classname hello)
  (template_s "<main()>")
  (attributes ())
@@ -761,7 +761,7 @@ main() ::= <<
  (indent false)
 )
 )
-("TestCoreBasics-testSeparatorInIntList2"
+("testSeparatorInIntList2"
 ((classname hello)
  (template_s "<test(names)>")
  (attributes ((names (MV ((INT 0) (LIST ((INT 1) (INT 2))))))))

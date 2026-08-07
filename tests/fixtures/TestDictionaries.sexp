@@ -1,5 +1,5 @@
 (
-("TestDictionaries-testDictDefaultValue"
+("testDictDefaultValue"
 ((classname hello)
  (template_s "<var(type,name)>")
  (attributes ((type (SV (STRING UserRecord))) (name (SV (STRING x)))))
@@ -11,7 +11,7 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output "UserRecord x = null;")
 )
  )
-("TestDictionaries-testDictEmptyDefaultValue"
+("testDictEmptyDefaultValue"
 ((classname hello)
  (template_s "<var(type=null,name=name)>")
  (attributes ((type (SV (STRING UserRecord))) (name (SV (STRING x)))))
@@ -26,7 +26,7 @@ context [anonymous] 1:10 attribute null isn't defined
 |bar})
 )
 )
-("TestDictionaries-testDictEmptyValueAndAngleBracketStrings"
+("testDictEmptyValueAndAngleBracketStrings"
 ((classname hello)
  (template_s "<var(type,name)>")
  (attributes ((type (SV (STRING float))) (name (SV (STRING x)))))
@@ -40,7 +40,7 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
 |bar})
 )
  )
-("TestDictionaries-testDictHiddenByFormalArg"
+("testDictHiddenByFormalArg"
 ((classname hello)
  (template_s "<var(typeInit=null,type=type,name=name)>")
  (attributes ((type (SV (STRING int))) (name (SV (STRING x)))))
@@ -54,7 +54,7 @@ var(typeInit,type,name) ::= "<type> <name> = <typeInit.(type)>;"
 |bar})
 )
  )
-("TestDictionaries-testDictMissingDefaultValueIsEmptyForNullKey"
+("testDictMissingDefaultValueIsEmptyForNullKey"
 ((classname hello)
  (template_s "<var(type,w,name)>")
  (attributes ((w (SV (STRING L))) (type (SV NULL)) (name (SV (STRING x)))))
@@ -67,7 +67,7 @@ var(type,w,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output " x = ;")
 )
  )
-("TestDictionaries-testDictMissingDefaultValueIsEmpty"
+("testDictMissingDefaultValueIsEmpty"
 ((classname hello)
  (template_s "<var(type,w,name)>")
  (attributes ((w (SV (STRING L))) (type (SV (STRING double))) (name (SV (STRING x)))))
@@ -80,7 +80,7 @@ var(type,w,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output "double x = ;")
 )
  )
-("TestDictionaries-testDictNullKeyGetsDefaultValue"
+("testDictNullKeyGetsDefaultValue"
 ((classname hello)
  (template_s "<var(type=null,name=name)>")
  (attributes ((type (SV (STRING UserRecord))) (name (SV (STRING x)))))
@@ -94,7 +94,7 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
 |bar})
 )
  )
-("TestDictionaries-testDict"
+("testDict"
 ((classname hello)
  (template_s "<var(type,name)>")
  (attributes ((type (SV (STRING int))) (name (SV (STRING x)))))
@@ -107,7 +107,7 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output "int x = 0;")
 )
  )
-("TestDictionaries-testDictValuesAreTemplates"
+("testDictValuesAreTemplates"
 ((classname hello)
  (template_s "<var(type,w,name)>")
  (attributes ((w (SV (STRING L))) (type (SV (STRING int))) (name (SV (STRING x)))))
@@ -120,7 +120,7 @@ var(type,w,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output "int x = 0L;")
 )
  )
-("TestDictionaries-testDictDefaultIsDefaultString"
+("testDictDefaultIsDefaultString"
 ((classname hello)
  (template_s "<t()>")
  (attributes ((type (SV (STRING UserRecord))) (name (SV (STRING x)))))
@@ -133,7 +133,7 @@ t() ::= << <map.("1")> >>
  (output " default ")
 )
 )
-("TestDictionaries-testDictDefaultStringAsKey"
+("testDictDefaultStringAsKey"
 ((classname hello)
  (template_s "<var(type,name)>")
  (attributes ((type (SV (STRING default))) (name (SV (STRING x)))))
@@ -145,7 +145,7 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output "default x = foo;")
 )
 )
-("TestDictionaries-testDictDefaultValueIsKey"
+("testDictDefaultValueIsKey"
 ((classname hello)
  (template_s "<var(type,name)>")
  (attributes ((type (SV (STRING UserRecord))) (name (SV (STRING x)))))
@@ -158,7 +158,7 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output "UserRecord x = UserRecord;")
 )
 )
-("TestDictionaries-testDictViaEnclosingTemplates2"
+("testDictViaEnclosingTemplates2"
 ((classname hello)
  (template_s "<intermediate(var(type,name))>")
  (attributes ((type (SV (STRING int))) (name (SV (STRING x)))))
@@ -172,7 +172,7 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output "int x = 0;")
 )
 )
-("TestDictionaries-testDictViaEnclosingTemplates"
+("testDictViaEnclosingTemplates"
 ((classname hello)
  (template_s "<intermediate(type,name)>")
  (attributes ((type (SV (STRING int))) (name (SV (STRING x)))))
@@ -187,7 +187,7 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
 )
 )
 
-("TestDictionaries-testDictionaryBehaviorEmptyList"
+("testDictionaryBehaviorEmptyList"
 ((classname hello)
  (template_s "<t()>")
  (attributes ())
@@ -206,7 +206,7 @@ t() ::= <<
  (output "-")
 )
 )
-("TestDictionaries-testDictionaryBehaviorEmptyTemplate"
+("testDictionaryBehaviorEmptyTemplate"
 ((classname hello)
  (template_s "<t()>")
  (attributes ())
@@ -227,7 +227,7 @@ t() ::= <<
 |bar})
 )
 )
-("TestDictionaries-testDictionaryBehaviorFalse"
+("testDictionaryBehaviorFalse"
 ((classname hello)
  (template_s "<t()>")
  (attributes ())
@@ -248,7 +248,7 @@ t() ::= <<
 |bar})
 )
 )
-("TestDictionaries-testDictionaryBehaviorNoNewlineTemplate"
+("testDictionaryBehaviorNoNewlineTemplate"
 ((classname hello)
  (template_s "<t()>")
  (attributes ())
@@ -266,7 +266,7 @@ t() ::= <<
  (output "hi")
 )
 )
-("TestDictionaries-testDictionaryBehaviorTrue"
+("testDictionaryBehaviorTrue"
 ((classname hello)
  (template_s "<t()>")
  (attributes ())
@@ -287,7 +287,7 @@ t() ::= <<
 |bar})
 )
 )
-("TestDictionaries-testDictionarySpecialValues2"
+("testDictionarySpecialValues2"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING nonkeyword)))))
@@ -306,7 +306,7 @@ identifier ::= [
  (output "nonkeyword")
 )
 )
-("TestDictionaries-testDictionarySpecialValues3"
+("testDictionarySpecialValues3"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING default)))))
@@ -325,7 +325,7 @@ identifier ::= [
  (output "default")
 )
 )
-("TestDictionaries-testDictionarySpecialValues4"
+("testDictionarySpecialValues4"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING keys)))))
@@ -344,7 +344,7 @@ identifier ::= [
  (output "keyworddefault")
 )
 )
-("TestDictionaries-testDictionarySpecialValues5"
+("testDictionarySpecialValues5"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING values)))))
@@ -363,7 +363,7 @@ identifier ::= [
  (output "@keywordkey")
 )
 )
-("TestDictionaries-testDictionarySpecialValuesOverride2"
+("testDictionarySpecialValuesOverride2"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING nonkeyword)))))
@@ -384,7 +384,7 @@ identifier ::= [
  (output "nonkeyword")
 )
 )
-("TestDictionaries-testDictionarySpecialValuesOverride3"
+("testDictionarySpecialValuesOverride3"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING default)))))
@@ -405,7 +405,7 @@ identifier ::= [
  (output "default")
 )
 )
-("TestDictionaries-testDictionarySpecialValuesOverride4"
+("testDictionarySpecialValuesOverride4"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING keys)))))
@@ -426,7 +426,7 @@ identifier ::= [
  (output "keys")
 )
 )
-("TestDictionaries-testDictionarySpecialValuesOverride5"
+("testDictionarySpecialValuesOverride5"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING values)))))
@@ -447,7 +447,7 @@ identifier ::= [
  (output "values")
 )
 )
-("TestDictionaries-testDictionarySpecialValuesOverride"
+("testDictionarySpecialValuesOverride"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING keyword)))))
@@ -468,7 +468,7 @@ identifier ::= [
  (output "@keyword")
 )
 )
-("TestDictionaries-testDictionarySpecialValues"
+("testDictionarySpecialValues"
 ((classname hello)
  (template_s "<t(id)>")
  (attributes ((id (SV (STRING keyword)))))
