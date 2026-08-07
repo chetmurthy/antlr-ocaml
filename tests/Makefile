@@ -179,7 +179,7 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) check -d $(ST4GEN) $<
 
 sttest-multi::
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/st4-multi.sexp
+	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestCoreBasics.sexp
 
 
 sttest-all: $(STJSONALL:.json=.STTEST) $(STSEXPALL:.sexp=.STTEST)

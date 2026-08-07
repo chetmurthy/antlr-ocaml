@@ -11,7 +11,8 @@ type t =
   ; template_s : string
   ; attributes : Environ.frame_t
   ; groupfile : (string * string) option
-  ; expected : string
+  ; output : string
+  ; errors : string[@yojson.default ""][@located_yojson.default ""][@located_sexp.default ""]
   ; indent : bool[@yojson.default true][@located_yojson.default true][@located_sexp.default true]
   }
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
@@ -87,7 +88,8 @@ let eg1 = {
       ("name", SV (STRING "World"))
     ]
   ; groupfile = Some ("a.stg"," d() ::= << >> ")
-  ; expected = "Hello, World!"
+  ; output = "Hello, World!"
+  ; errors = ""
   ; indent = false
   }
 
@@ -98,7 +100,8 @@ let eg2 = {
         ("name", MV [STRING "World1"; STRING "World2"])
                  ]
   ; groupfile = None
-  ; expected = "Hello, World!"
+  ; output = "Hello, World!"
+  ; errors = ""
   ; indent = false
   }
 
@@ -109,7 +112,8 @@ let eg3 = {
       ("name", SV NULL)
     ]
   ; groupfile = None
-  ; expected = "Hello, World!"
+  ; output = "Hello, World!"
+  ; errors = ""
   ; indent = false
   }
 
@@ -120,7 +124,8 @@ let eg4 = {
         ("name", SV (LIST [STRING "World1"; STRING "World2"]))
                  ]
   ; groupfile = None
-  ; expected = "Hello, World!"
+  ; output = "Hello, World!"
+  ; errors = ""
   ; indent = false
   }
 
@@ -131,7 +136,8 @@ let eg4 = {
         ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))
                  ]
   ; groupfile = None
-  ; expected = "Hello, World!"
+  ; output = "Hello, World!"
+  ; errors = ""
   ; indent = false
   }
 

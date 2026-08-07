@@ -26,13 +26,18 @@ let system cmd =
           (Printf.sprintf "st4_util: command stopped by signal %d" n))
 
 let select_tests ~onlytest ~file =
+  let last = filename_to_testname file in 
+  let prepend_last testname =
+    Fpath.(to_string (append (v last) (v testname))) in
   let open Testharness in
   let thl = Multi.load ~file in
   match onlytest with
-    None -> thl
+    None ->
+     thl |> List.map (fun (testname, th) -> (prepend_last testname, th))
   | Some testname ->
      match List.assoc_opt testname thl with
-       Some th -> [(testname, th)]
+       Some th ->
+        [(prepend_last testname, th)]
      | None -> Fmt.(failwithf "ST4_util: selected test %s does not exist in multi-file %s"
                       testname file)
 
@@ -98,7 +103,7 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
   let maketxt =
     Fmt.(str {|
 test:
-	java -cp classes:/usr/share/java/stringtemplate4-4.0.8.jar:$(CLASSPATH) %s > output.NEW && mv output.NEW output
+	java -cp classes:/usr/share/java/stringtemplate4-4.0.8.jar:$(CLASSPATH) %s > output.NEW 2> errors.NEW && mv output.NEW output && mv errors.NEW errors
 
 compile:
 	javac -d classes %s.java
@@ -218,19 +223,26 @@ let cmd =
 end
 
 module Check = struct
-let check ~testname th output =
+let check ~testname ~output ~errors th =
   let open Testharness in
   let output =
     match [%match {|<RoNnIe\|(.*)\|RaYgUn>|} / strings !1 s] output with
       None -> Fmt.(failwithf "test %s: no output found" testname)
     | Some output -> output in
-  if output <> th.expected then begin
-      Fmt.(pf stderr "st4_util check: test %s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-             testname th.expected output) ;
-      Fmt.(failwithf "test %s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-             testname th.expected output)
-    end
+  if output <> th.output then
+    Fmt.(pf stderr "st4_util check: test %s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+           testname th.output output) ;
+  if errors <> th.errors then
+    Fmt.(pf stderr "st4_util check: test %s: errors didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+           testname th.errors errors) ;
 
+  let l = (if output <> th.output then  ["output"] else [])
+          @(if errors <> th.errors then  ["errors"] else []) in
+  if l <> [] then
+    Fmt.(failwithf "test %s: %a didn't match"
+           testname
+           (list ~sep:(const string ", ") string) l
+    )
 
 let one_test ~debug ~verbose ~destroot ~testname th =
   if verbose then Fmt.(pf stderr "[check %s]@." testname) ;
@@ -243,7 +255,9 @@ let one_test ~debug ~verbose ~destroot ~testname th =
       Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
   let outputfile = Fpath.(append destdir (v "output")) in
   let output_txt = outputfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
-  check ~testname th output_txt
+  let errorsfile = Fpath.(append destdir (v "errors")) in
+  let errors_txt = errorsfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
+  check ~testname ~output:output_txt ~errors:errors_txt th
 
 let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
   let open Testharness in
