@@ -525,6 +525,123 @@ bar
  (groupfile ())
  (expected "works"))
 )
+("TestCoreBasics-testAndNot"
+((classname hello)
+ (template_s "<if(name&&!notThere)>works<else>fail<endif>")
+ (attributes ((name (SV (STRING Ter)))))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testAnd"
+((classname hello)
+ (template_s "<if(name&&notThere)>fail<else>works<endif>")
+ (attributes ((name (SV (STRING Ter)))))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testCharLiterals2"
+((classname hello)
+ (template_s "Foo <\\n><\\t> bar\n")
+ (attributes ())
+ (groupfile ())
+ (expected "Foo \n\t bar\n"))
+)
+("TestCoreBasics-testCharLiterals3"
+((classname hello)
+ (template_s "Foo<\\ >bar<\\n>")
+ (attributes ())
+ (groupfile ())
+ (expected "Foo bar\n"))
+)
+("TestCoreBasics-testCharLiterals"
+((classname hello)
+ (template_s "Foo <\\n><\\n><\\t> bar\n")
+ (attributes ())
+ (groupfile ())
+ (expected "Foo \n\n\t bar\n"))
+)
+("TestCoreBasics-testMapConditionAndEscapeInside"
+((classname hello)
+ (template_s "<if(m.name)>works \\\\<endif>")
+ (attributes ((m (SV (DICT ((name (STRING Ter))))))))
+ (groupfile ())
+ (expected "works \\"))
+)
+("TestCoreBasics-testOr"
+((classname hello)
+ (template_s "<if(name||notThere)>works<else>fail<endif>")
+ (attributes ((name (SV (STRING Ter)))))
+ (groupfile ())
+ (expected "works"))
+)
+("TestCoreBasics-testSeparatorInIntList"
+((classname hello)
+ (template_s "<test(names)>")
+ (attributes ((names (SV (LIST ((INT 0) (INT 1)))))))
+   (groupfile (("a.stg" 
+                {| 
+test(names) ::= "<names:{n | case <n>}; separator=\", \">"
+|})))
+ (expected "case 0, case 1"))
+)
+("TestCoreBasics-testSeparatorInList2"
+((classname hello)
+ (template_s "<test(names)>")
+ (attributes ((names (MV ((STRING Ter) (LIST ((STRING Tom) (STRING Sriram))))))))
+   (groupfile (("a.stg" 
+                {| 
+test(names) ::= "<names:{n | case <n>}; separator=\", \">"
+|})))
+ (expected "case Ter, case Tom, case Sriram"))
+)
+("TestCoreBasics-testSeparatorInList"
+((classname hello)
+ (template_s "<test(names)>")
+ (attributes ((names (SV (LIST ((STRING Ter) (STRING Tom)))))))
+   (groupfile (("a.stg" 
+                {| 
+test(names) ::= "<names:{n | case <n>}; separator=\", \">"
+|})))
+ (expected "case Ter, case Tom"))
+)
+("TestCoreBasics-testSeparator"
+((classname hello)
+ (template_s "<test(names)>")
+ (attributes ((names (MV ((STRING Ter) (STRING Tom))))))
+   (groupfile (("a.stg" 
+                {| 
+test(names) ::= "<names:{n | case <n>}; separator=\", \">"
+|})))
+ (expected "case Ter, case Tom"))
+)
+("TestCoreBasics-testSubtemplateExpr"
+((classname hello)
+ (template_s "<{name\n}>")
+ (attributes ())
+ (groupfile ())
+ (expected "name\n"))
+)
+("TestCoreBasics-testUnicodeLiterals2"
+((classname hello)
+ (template_s "Foo <\\uFEA5><\\n><\\u00C2> bar\n")
+ (attributes ())
+ (groupfile ())
+ (expected "Foo \u{fea5}\n\u{00C2} bar\n"))
+)
+("TestCoreBasics-testUnicodeLiterals3"
+((classname hello)
+ (template_s "Foo<\\ >bar<\\n>")
+ (attributes ())
+ (groupfile ())
+ (expected "Foo bar\n"))
+)
+("TestCoreBasics-testUnicodeLiterals"
+((classname hello)
+ (template_s "Foo <\\uFEA5><\\n><\\u00C2> bar\n")
+ (attributes ())
+ (groupfile ())
+ (expected "Foo \u{fea5}\n\u{00C2} bar\n"))
+)
 
  )
 

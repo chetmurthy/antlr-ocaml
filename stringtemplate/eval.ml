@@ -7,12 +7,14 @@ module Value = struct
 type t =
   STRING of string
 | BOOL of bool
+| INT of int
 | DICT of (string * t) list
 | LIST of t list
 | NULL
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
 
 let isSTRING = function STRING _ -> true | _ -> false
+let isINT = function INT _ -> true | _ -> false
 
 end
 

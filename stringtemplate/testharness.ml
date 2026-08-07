@@ -137,6 +137,9 @@ let rec fmt_value pps v =
   | LIST l when List.for_all isSTRING l ->
      let pp1 pps (STRING s) = Fmt.(pf pps "add(%a);" Dump.string s) in
      Fmt.(pf pps "new ArrayList<String>() {{%a}}" (list pp1) l)
+  | LIST l when List.for_all isINT l ->
+     let pp1 pps (INT s) = Fmt.(pf pps "add(%d);" s) in
+     Fmt.(pf pps "new ArrayList<Integer>() {{%a}}" (list pp1) l)
   | DICT l when List.for_all (fun (_,v) -> isSTRING v) l ->
      let pp1 pps (k,STRING s) = Fmt.(pf pps "put(%a,%a);" Dump.string k Dump.string s) in
      Fmt.(pf pps "new LinkedHashMap<String,String>() {{%a}}" (list pp1) l)
