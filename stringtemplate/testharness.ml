@@ -12,6 +12,7 @@ type t =
   ; attributes : Environ.frame_t
   ; groupfile : (string * string) option
   ; expected : string
+  ; indent : bool[@yojson.default true][@located_yojson.default true][@located_sexp.default true]
   }
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
 
@@ -87,6 +88,7 @@ let eg1 = {
     ]
   ; groupfile = Some ("a.stg"," d() ::= << >> ")
   ; expected = "Hello, World!"
+  ; indent = false
   }
 
 let eg2 = {
@@ -97,6 +99,7 @@ let eg2 = {
                  ]
   ; groupfile = None
   ; expected = "Hello, World!"
+  ; indent = false
   }
 
 let eg3 = {
@@ -107,6 +110,7 @@ let eg3 = {
     ]
   ; groupfile = None
   ; expected = "Hello, World!"
+  ; indent = false
   }
 
 let eg4 = {
@@ -117,6 +121,7 @@ let eg4 = {
                  ]
   ; groupfile = None
   ; expected = "Hello, World!"
+  ; indent = false
   }
 
 let eg4 = {
@@ -127,12 +132,14 @@ let eg4 = {
                  ]
   ; groupfile = None
   ; expected = "Hello, World!"
+  ; indent = false
   }
 
 let rec fmt_value pps v =
   match v with
     NULL -> Fmt.(pf pps "null")
   | STRING s -> Fmt.(pf pps "%a" Dump.string s)
+  | INT s -> Fmt.(pf pps "%d" s)
   | BOOL b -> Fmt.(pf pps "%b" b)
   | LIST l when List.for_all isSTRING l ->
      let pp1 pps (STRING s) = Fmt.(pf pps "add(%a);" Dump.string s) in
@@ -163,16 +170,29 @@ let emit pps th =
     | Some (fname, _) -> Fmt.(pf pps "new ST(new STGroupFile(%a), %a)"
                            Dump.string fname
                            Dump.string th.template_s) in
+  let render_txt =
+    if th.indent then
+      "String output = st.render();"
+    else
+      "StringWriter sw = new StringWriter();
+        NoIndentWriter w = new NoIndentWriter(sw);
+        st.write(w);
+        String output = sw.toString();"
+  in
+
   Fmt.(pf pps {|
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import org.stringtemplate.v4.AutoIndentWriter;
+import org.stringtemplate.v4.NoIndentWriter;
 import org.stringtemplate.v4.*;
 
 public class %s {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 	ST st = %a;
 	%a
-	String output = st.render();
+	%s
 	System.out.println("<RoNnIe|"+output+"|RaYgUn>");
     }
 }
@@ -180,4 +200,5 @@ public class %s {
          th.classname
          stconstructor th
          (list add_binding) th.attributes
+         render_txt
   )

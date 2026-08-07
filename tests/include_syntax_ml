@@ -98,7 +98,7 @@ open Pa_ppx_located_yojson.Json ;;
 open Pa_ppx_located_sexp ;;
 
 let prharness h =
-  Fmt.(pf stdout "%a" Altsexp.pp_hum Testharness.(h |> located_sexp_of_harness_t));;
+  Fmt.(pf stdout "%a" Altsexp.pp_hum Testharness.(h |> located_sexp_of_t));;
 
 prharness Testharness.eg1 ;;
 prharness Testharness.eg2 ;;

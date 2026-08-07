@@ -642,6 +642,52 @@ test(names) ::= "<names:{n | case <n>}; separator=\", \">"
  (groupfile ())
  (expected "Foo \u{fea5}\n\u{00C2} bar\n"))
 )
+("TestCoreBasics-testEarlyEvalIndent"
+((classname hello)
+ (template_s "<main()>")
+ (attributes ())
+   (groupfile (("t.stg" 
+                {| 
+t() ::= <<  abc>>
+main() ::= <<
+<t()>
+<(t())>
+  <t()>
+  <(t())>
+>>
+
+|})))
+ (expected "  abc\n  abc\n    abc\n    abc"))
+)
+("TestCoreBasics-testEarlyEvalNoIndent"
+((classname hello)
+ (template_s "<main()>")
+ (attributes ())
+   (groupfile (("t.stg" 
+                {| 
+t() ::= <<  abc>>
+main() ::= <<
+<t()>
+<(t())>
+  <t()>
+  <(t())>
+>>
+
+|})))
+ (expected "abc\nabc\nabc\nabc")
+ (indent false)
+)
+)
+("TestCoreBasics-testSeparatorInIntList2"
+((classname hello)
+ (template_s "<test(names)>")
+ (attributes ((names (MV ((INT 0) (LIST ((INT 1) (INT 2))))))))
+   (groupfile (("a.stg" 
+                {| 
+test(names) ::= "<names:{n | case <n>}; separator=\", \">"
+|})))
+ (expected "case 0, case 1, case 2"))
+)
 
  )
 
