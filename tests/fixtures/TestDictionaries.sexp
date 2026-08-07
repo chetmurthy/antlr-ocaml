@@ -186,5 +186,307 @@ var(type,name) ::= "<type> <name> = <typeInit.(type)>;"
  (output "int x = 0;")
 )
 )
+
+("TestDictionaries-testDictionaryBehaviorEmptyList"
+((classname hello)
+ (template_s "<t()>")
+ (attributes ())
+   (groupfile (("test.stg" 
+                {| 
+d ::= [
+   "x" : [],
+   default : false
+]
+
+t() ::= <<
+<d.("x")><if(d.("x"))>+<else>-<endif>
+>>
+
+|})))
+ (output "-")
 )
+)
+("TestDictionaries-testDictionaryBehaviorEmptyTemplate"
+((classname hello)
+ (template_s "<t()>")
+ (attributes ())
+   (groupfile (("test.stg" 
+                {| 
+d ::= [
+   "x" : {},
+   default : false,
+]
+
+t() ::= <<
+<d.("x")><if(d.("x"))>+<else>-<endif>
+>>
+
+|})))
+ (output "+")
+ (errors {bar|test.stg 4:18: extraneous input ',' expecting RBRACK
+|bar})
+)
+)
+("TestDictionaries-testDictionaryBehaviorFalse"
+((classname hello)
+ (template_s "<t()>")
+ (attributes ())
+   (groupfile (("test.stg" 
+                {| 
+d ::= [
+   "x" : false,
+   default : false,
+]
+
+t() ::= <<
+<d.("x")><if(d.("x"))>+<else>-<endif>
+>>
+
+|})))
+ (output "false-")
+ (errors {bar|test.stg 4:18: extraneous input ',' expecting RBRACK
+|bar})
+)
+)
+("TestDictionaries-testDictionaryBehaviorNoNewlineTemplate"
+((classname hello)
+ (template_s "<t()>")
+ (attributes ())
+   (groupfile (("test.stg" 
+                {| 
+d ::= [
+   "x" : <%hi%>
+]
+
+t() ::= <<
+<d.x>
+>>
+
+|})))
+ (output "hi")
+)
+)
+("TestDictionaries-testDictionaryBehaviorTrue"
+((classname hello)
+ (template_s "<t()>")
+ (attributes ())
+   (groupfile (("test.stg" 
+                {| 
+d ::= [
+   "x" : true,
+   default : false,
+]
+
+t() ::= <<
+<d.("x")><if(d.("x"))>+<else>-<endif>
+>>
+
+|})))
+ (output "true+")
+ (errors {bar|test.stg 4:18: extraneous input ',' expecting RBRACK
+|bar})
+)
+)
+("TestDictionaries-testDictionarySpecialValues2"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING nonkeyword)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   default : key
+]
+
+|})))
+ (output "nonkeyword")
+)
+)
+("TestDictionaries-testDictionarySpecialValues3"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING default)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   default : key
+]
+
+|})))
+ (output "default")
+)
+)
+("TestDictionaries-testDictionarySpecialValues4"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING keys)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   default : key
+]
+
+|})))
+ (output "keyworddefault")
+)
+)
+("TestDictionaries-testDictionarySpecialValues5"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING values)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   default : key
+]
+
+|})))
+ (output "@keywordkey")
+)
+)
+("TestDictionaries-testDictionarySpecialValuesOverride2"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING nonkeyword)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   "keys" : "keys",
+   "values" : "values",
+   default : key
+]
+
+|})))
+ (output "nonkeyword")
+)
+)
+("TestDictionaries-testDictionarySpecialValuesOverride3"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING default)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   "keys" : "keys",
+   "values" : "values",
+   default : key
+]
+
+|})))
+ (output "default")
+)
+)
+("TestDictionaries-testDictionarySpecialValuesOverride4"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING keys)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   "keys" : "keys",
+   "values" : "values",
+   default : key
+]
+
+|})))
+ (output "keys")
+)
+)
+("TestDictionaries-testDictionarySpecialValuesOverride5"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING values)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   "keys" : "keys",
+   "values" : "values",
+   default : key
+]
+
+|})))
+ (output "values")
+)
+)
+("TestDictionaries-testDictionarySpecialValuesOverride"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING keyword)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   "keys" : "keys",
+   "values" : "values",
+   default : key
+]
+
+|})))
+ (output "@keyword")
+)
+)
+("TestDictionaries-testDictionarySpecialValues"
+((classname hello)
+ (template_s "<t(id)>")
+ (attributes ((id (SV (STRING keyword)))))
+   (groupfile (("test.stg" 
+                {| 
+t(id) ::= <<
+<identifier.(id)>
+>>
+
+identifier ::= [
+   "keyword" : "@keyword",
+   default : key
+]
+
+|})))
+ (output "@keyword")
+)
+)
+)
+
 

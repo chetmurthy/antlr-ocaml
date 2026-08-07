@@ -103,7 +103,7 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
   let maketxt =
     Fmt.(str {|
 test:
-	java -cp classes:/usr/share/java/stringtemplate4-4.0.8.jar:$(CLASSPATH) %s > output.NEW 2> errors.NEW && mv output.NEW output && mv errors.NEW errors
+	java -cp classes:$(CLASSPATH) %s > output.NEW 2> errors.NEW && mv output.NEW output && mv errors.NEW errors
 
 compile:
 	javac -d classes %s.java

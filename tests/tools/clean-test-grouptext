@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+
+use strict ;
+
+{
+  my @l = <STDIN> ;
+  my $txt = join('',@l);
+  $txt =~ s,^\s+",,gm ;
+  $txt =~ s,\\n"\s*\+$,,gm ;
+  $txt =~ s,\\n";,,m;
+  $txt =~ s,\\",",gm ;
+  print $txt ;
+}
