@@ -228,6 +228,15 @@ let cmd =
 end
 
 module Check = struct
+open Antlr
+open Testharness
+
+let error_ok th errors =
+  if th.errorsContains = "" then
+    errors = th.errors
+  else
+    Util.string_contains ~pat:th.errorsContains errors
+
 let check ~testname ~output ~errors th =
   let open Testharness in
   let output =
@@ -237,14 +246,14 @@ let check ~testname ~output ~errors th =
   if output <> th.output then
     Fmt.(pf stderr "st4_util check: test %s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
            testname th.output output) ;
-  if errors <> th.errors then
-    Fmt.(pf stderr "st4_util check: test %s: errors didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-           testname th.errors errors) ;
+  if not (error_ok th errors) then
+    Fmt.(pf stderr "st4_util check: test %s: unexpected errors: {bar|%s|bar}@."
+           testname errors) ;
 
   let l = (if output <> th.output then  ["output"] else [])
-          @(if errors <> th.errors then  ["errors"] else []) in
+          @(if not(error_ok th errors) then  ["errors"] else []) in
   if l <> [] then
-    Fmt.(failwithf "test %s: %a didn't match"
+    Fmt.(failwithf "test %s: %a didn't match expected"
            testname
            (list ~sep:(const string ", ") string) l
     )

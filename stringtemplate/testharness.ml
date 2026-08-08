@@ -14,6 +14,7 @@ type t =
   ; groupfiles : (string * string) list[@yojson.default []][@located_yojson.default []][@located_sexp.default []]
   ; output : string
   ; errors : string[@yojson.default ""][@located_yojson.default ""][@located_sexp.default ""]
+  ; errorsContains : string[@yojson.default ""][@located_yojson.default ""][@located_sexp.default ""]
   ; indent : bool[@yojson.default true][@located_yojson.default true][@located_sexp.default true]
   }
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
@@ -92,6 +93,7 @@ let eg1 = {
   ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
+  ; errorsContains = ""
   ; indent = false
   }
 
@@ -105,6 +107,7 @@ let eg2 = {
   ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
+  ; errorsContains = ""
   ; indent = false
   }
 
@@ -118,6 +121,7 @@ let eg3 = {
   ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
+  ; errorsContains = ""
   ; indent = false
   }
 
@@ -131,6 +135,7 @@ let eg4 = {
   ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
+  ; errorsContains = ""
   ; indent = false
   }
 
@@ -144,6 +149,7 @@ let eg4 = {
   ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
+  ; errorsContains = ""
   ; indent = false
   }
 

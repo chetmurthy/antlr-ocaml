@@ -328,4 +328,7 @@ let unescape_string s =
        Buffer.add_string b (string_of_uchar uc) ; j+1
 
 in unrec 0
-;
+
+let string_contains ~pat subj =
+  let rex = Pcre2.regexp ~flags:[] ("\\Q"^pat^"\\E") in
+  Pcre2.pmatch ~rex subj
