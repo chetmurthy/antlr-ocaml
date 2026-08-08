@@ -7,6 +7,7 @@ open Ppxutil
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 
 open Stringtemplate
+open Testharness
 
 let filename_to_testname file =
   Fpath.(file |> v |> rem_ext |> basename)
@@ -29,10 +30,9 @@ let select_tests ~onlytest ~file =
   let last = filename_to_testname file in 
   let prepend_last testname =
     Fpath.(to_string (append (v last) (v testname))) in
-  let open Testharness in
   let thl = Multi.load ~file in
   match onlytest with
-    None ->
+     None ->
      thl |> List.map (fun (testname, th) -> (prepend_last testname, th))
   | Some testname ->
      match List.assoc_opt testname thl with
@@ -81,7 +81,6 @@ module Generate = struct
 
 let one_test ~debug ~verbose ~force ~destroot ~testname th =
   if verbose then Fmt.(pf stderr "[generate %s]@." testname) ;
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   let destroot = Fpath.v destroot in
@@ -120,7 +119,6 @@ compile:
   ()
 
 let st4_test ~debug ~verbose ~force ~destroot ~onlytest ~multi ~testname file =
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
@@ -149,7 +147,6 @@ end
 module Compile = struct
 let one_test ~debug ~verbose ~destroot ~testname th =
   if verbose then Fmt.(pf stderr "[compile %s]@." testname) ;
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   let destroot = Fpath.v destroot in
@@ -161,7 +158,6 @@ let one_test ~debug ~verbose ~destroot ~testname th =
   ()
 
 let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
@@ -190,7 +186,6 @@ module Execute = struct
 
 let one_test ~debug ~verbose ~destroot ~testname th =
   if verbose then Fmt.(pf stderr "[execute %s]@." testname) ;
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   let destroot = Fpath.v destroot in
@@ -202,7 +197,6 @@ let one_test ~debug ~verbose ~destroot ~testname th =
   ()
 
 let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
@@ -229,7 +223,6 @@ end
 
 module Check = struct
 open Antlr
-open Testharness
 
 let error_ok th errors =
   if th.errorsContains = "" then
@@ -237,20 +230,33 @@ let error_ok th errors =
   else
     Util.string_contains ~pat:th.errorsContains errors
 
-let check ~testname ~output ~errors th =
-  let open Testharness in
+let check_run_output ~testname i (output, r) =
   let output =
     match [%match {|<RoNnIe\|(.*)\|RaYgUn>|} / strings !1 s] output with
       None -> Fmt.(failwithf "test %s: no output found" testname)
     | Some output -> output in
-  if output <> th.output then
-    Fmt.(pf stderr "st4_util check: test %s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-           testname th.output output) ;
+  if output <> r.output then
+    Fmt.(pf stderr "st4_util check: test %s/%d: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+           testname i r.output output) ;
+  (output <> r.output)
+
+let check ~testname ~output ~errors (th : t) =
+  let output_l =
+    output
+  |> [%split {|====|}]
+  |> List.filter [%match {|RoNnIe|} / pred s] in
+  if List.length output_l <> List.length th.runs then begin
+      Fmt.(pf stderr "check %s: #outputs (%d) <> #expected outputs (%d)@."
+             testname (List.length output_l) (List.length th.runs)) ;
+      failwith "output count mismatch"
+    end ;
+  let pairs = Std.combine output_l th.runs in
+  let output_mismatch = pairs |> List.mapi (check_run_output ~testname) |> List.exists (fun x -> x) in
   if not (error_ok th errors) then
     Fmt.(pf stderr "st4_util check: test %s: unexpected errors: {bar|%s|bar}@."
            testname errors) ;
 
-  let l = (if output <> th.output then  ["output"] else [])
+  let l = (if output_mismatch then ["output"] else [])
           @(if not(error_ok th errors) then  ["errors"] else []) in
   if l <> [] then
     Fmt.(failwithf "test %s: %a didn't match expected"
@@ -258,9 +264,9 @@ let check ~testname ~output ~errors th =
            (list ~sep:(const string ", ") string) l
     )
 
+
 let one_test ~debug ~verbose ~destroot ~testname th =
   if verbose then Fmt.(pf stderr "[check %s]@." testname) ;
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   let destroot = Fpath.v destroot in
@@ -274,7 +280,6 @@ let one_test ~debug ~verbose ~destroot ~testname th =
   check ~testname ~output:output_txt ~errors:errors_txt th
 
 let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then
@@ -309,7 +314,6 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
   ()
 
 let st4_test ~debug ~verbose ~destroot ~force ~onlytest ~multi ~testname file =
-  let open Testharness in
   if destroot = "" then
     failwith "must specify --dest-root|-d" ;
   if multi then

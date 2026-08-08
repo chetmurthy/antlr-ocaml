@@ -1,699 +1,942 @@
-(
- ("hello"
-  ((classname hello) (template_s "<{Hello, <name>!}>")
-   (attributes ((name (SV (STRING World)))))   (output "Hello, World!"))
-  )
- ("testNullAttr"
-  ((classname testNullAttr)
-   (template_s {|hi <name>!|})
-   (attributes ())
-   (output {bar|hi !|bar})
-   (errors "context [anonymous] 1:4 attribute name isn't defined\n")
+((hello
+  ((classname hello)
+   (runs
+    (((input "<{Hello, <name>!}>")
+      (output "Hello, World!")
+      (attributes ((name (SV (STRING World)))))
+      ))
+    )
    )
   )
- ("testAttrIsList"
-  ((classname hello)
-   (template_s {|hi <name>!|})
-   (attributes ((name (MV ((LIST ((STRING Ter) (STRING Tom))) (STRING Sumana))))))
-   (output {bar|hi TerTomSumana!|bar})))
- ("testAttr"
-  ((classname hello)
-   (template_s {|hi <name>!|})
-   (attributes ((name (SV (STRING "Ter")))))
-   (output {bar|hi Ter!|bar}))
+ (testNullAttr
+  ((classname testNullAttr)
+   (runs (((input "hi <name>!") (output "hi !"))))
+   (errors {|context [anonymous] 1:4 attribute name isn't defined
+|})
+   )
   )
- ("testBoolean1"
-  ((classname hello) (template_s "<{Hello, <name>!}>")
-   (attributes ((name (SV (BOOL true)))))   (output {bar|Hello, true!|bar}))
-  )
- ("testChainAttr"
+ (testAttrIsList
   ((classname hello)
-   (template_s {|<x>:<names>!|})
-   (attributes
-    ((names (MV ((STRING Ter) (STRING Tom))))
-     (x (SV (STRING "1")))
-     )
+   (runs
+    (((input "hi <name>!")
+      (output "hi TerTomSumana!")
+      (attributes
+       ((name (MV ((LIST ((STRING Ter) (STRING Tom))) (STRING Sumana)))))
+       )
+      ))
     )
-   (output {bar|1:TerTom!|bar}))
+   )
   )
- ("testSetUnknownAttr"
+ (testAttr
   ((classname hello)
-   (template_s {|<t()>|})
-   (attributes ())
+   (runs
+    (((input "hi <name>!")
+      (output "hi Ter!")
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
+  )
+ (testBoolean1
+  ((classname hello)
+   (runs
+    (((input "<{Hello, <name>!}>")
+      (output "Hello, true!")
+      (attributes ((name (SV (BOOL true)))))
+      ))
+    )
+   )
+  )
+ (testChainAttr
+  ((classname hello)
+   (runs
+    (((input "<x>:<names>!")
+      (output "1:TerTom!")
+      (attributes
+       ((names (MV ((STRING Ter) (STRING Tom)))) (x (SV (STRING 1))))
+       )
+      ))
+    )
+   )
+  )
+ (testSetUnknownAttr
+  ((classname hello)
    (groupfile (("a.stg" {|
 t() ::= <<hi <name>!>>
  |})))
-   (output "hi !")
-   (errors "context [anonymous /t] 1:4 attribute name isn't defined\n")
+   (runs (((input "<t()>") (output "hi !"))))
+   (errors {|context [anonymous /t] 1:4 attribute name isn't defined
+|})
    )
   )
- ("testInclude"
+ (testInclude
   ((classname hello)
-   (template_s {|load <box()>;|})
-   (attributes ())
    (groupfile (("a.stg" {| box() ::= "kewl
 daddy" |})))
-   (output {bar|load kewl
-daddy;|bar})
-   (errors {bar|a.stg 1:16: \n in string
-|bar})
+   (runs (((input "load <box()>;") (output {|load kewl
+daddy;|}))))
+   (errors {|a.stg 1:16: \n in string
+|})
    )
   )
- ("testIncludeWithArg2"
+ (testIncludeWithArg2
   ((classname hello)
-   (template_s {|load <box("arg", foo())>;|})
-   (attributes ((name (SV (STRING Ter)))))
-   (groupfile (("a.stg" 
-                {| box(x,y) ::= "kewl <x> <y> daddy"
-foo() ::= "blech" |})))
-   (output {bar|load kewl arg blech daddy;|bar}))
+   (groupfile
+    (("a.stg" {| box(x,y) ::= "kewl <x> <y> daddy"
+foo() ::= "blech" |}))
+    )
+   (runs
+    (((input "load <box(\"arg\", foo())>;")
+      (output "load kewl arg blech daddy;")
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
   )
- ("testIncludeWithArg"
+ (testIncludeWithArg
   ((classname hello)
-   (template_s {|load <box("arg")>;|})
-   (attributes ((name (SV (STRING Ter)))))
-   (groupfile (("a.stg" {| box(x) ::= "kewl <x> daddy" |})))
-   (output {bar|load kewl arg daddy;|bar}))
+   (groupfile (("a.stg" " box(x) ::= \"kewl <x> daddy\" ")))
+   (runs
+    (((input "load <box(\"arg\")>;")
+      (output "load kewl arg daddy;")
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
   )
- ("testIncludeWithEmptySubtemplateArg"
+ (testIncludeWithEmptySubtemplateArg
   ((classname hello)
-   (template_s {|load <box({})>;|})
-   (attributes ((name (SV (STRING Ter)))))
-   (groupfile (("a.stg" {| box(x) ::= "kewl <x> daddy" |})))
-   (output {bar|load kewl  daddy;|bar}))
+   (groupfile (("a.stg" " box(x) ::= \"kewl <x> daddy\" ")))
+   (runs
+    (((input "load <box({})>;")
+      (output "load kewl  daddy;")
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
   )
- ("testIncludeWithNestedArgs"
+ (testIncludeWithNestedArgs
   ((classname hello)
-   (template_s {|load <box(foo("arg"))>;|})
-   (attributes ((name (SV (STRING Ter)))))
-   (groupfile (("a.stg" 
-                {| box(y) ::= "kewl <y> daddy"
-foo(x) ::= "blech <x>" |})))
-   (output {bar|load kewl blech arg daddy;|bar}))
+   (groupfile
+    (("a.stg" {| box(y) ::= "kewl <y> daddy"
+foo(x) ::= "blech <x>" |}))
+    )
+   (runs
+    (((input "load <box(foo(\"arg\"))>;")
+      (output "load kewl blech arg daddy;")
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
   )
- ("testMapAcrossDictionaryUsesKeys"
+ (testMapAcrossDictionaryUsesKeys
   ((classname hello)
-   (template_s "<foo:{f | <f>}>")
-   (attributes ((foo (SV (DICT ((a (STRING b)) (c (STRING d))))))))
-   (output {bar|ac|bar}))
+   (runs
+    (((input "<foo:{f | <f>}>")
+      (output ac)
+      (attributes ((foo (SV (DICT ((a (STRING b)) (c (STRING d))))))))
+      ))
+    )
+   )
   )
- ("testNullAttrProp"
+ (testNullAttrProp
   ((classname hello)
-   (template_s {|<u.id>: <u.name>|})
-   (attributes ())
-   (output {bar|: |bar})
-   (errors {bar|context [anonymous] 1:1 attribute u isn't defined
+   (runs (((input "<u.id>: <u.name>") (output ": "))))
+   (errors
+    {|context [anonymous] 1:1 attribute u isn't defined
 context [anonymous] 1:9 attribute u isn't defined
-|bar})
+|}
+    )
    )
   )
- ("testNullAttr"
+ (testNullAttr
   ((classname testNullAttr)
-   (template_s {|hi <name>!|})
-   (attributes ())
-   (output {bar|hi !|bar})
-   (errors {bar|context [anonymous] 1:4 attribute name isn't defined
-|bar})
+   (runs (((input "hi <name>!") (output "hi !"))))
+   (errors {|context [anonymous] 1:4 attribute name isn't defined
+|})
    )
   )
- ("testPassThru"
+ (testPassThru
   ((classname hello)
-   (template_s {|<a("x","y")>|})
-   (attributes ())
-   (groupfile (("a.stg" 
-                {| 
+   (groupfile (("a.stg" {| 
 a(x,y) ::= "<b(...)>"
 b(x,y) ::= "<x><y>"
 |})))
-   (output {bar|xy|bar}))
+   (runs (((input "<a(\"x\",\"y\")>") (output xy))))
+   )
   )
- ("testPassThruWithDefaultValue"
+ (testPassThruWithDefaultValue
   ((classname hello)
-   (template_s {|<a(x="x")>|})
-   (attributes ())
-   (groupfile (("a.stg" 
-                {| 
+   (groupfile
+    (("a.stg" {| 
 a(x,y) ::= "<b(...)>"
 b(x,y={99}) ::= "<x><y>"
-|})))
-   (output {bar|x99|bar})
-   (errors {bar|context [anonymous] 1:1 passed 1 arg(s) to template /a with 2 declared arg(s)
-|bar})
+|}))
+    )
+   (runs (((input "<a(x=\"x\")>") (output x99))))
+   (errors
+    {|context [anonymous] 1:1 passed 1 arg(s) to template /a with 2 declared arg(s)
+|}
+    )
    )
   )
- ("testProp"
+ (testProp
   ((classname hello)
-   (template_s {|<u.id>: <u.name>|})
-   (attributes ())
-   (groupfile (("a.stg" {| u ::= [ "id":"1", "name": "parrt" ] |})))
-   (output {bar|1: parrt|bar}))
-  )
- ("testPropWithNoAttr"
-  ((classname hello)
-   (template_s {|<foo.a>: <ick>|})
-   (attributes ())
-   (groupfile (("a.stg" {| foo ::= [ "a":"b" ] |})))
-   (output {bar|b: |bar})
-   (errors {bar|context [anonymous] 1:10 attribute ick isn't defined
-|bar})
+   (groupfile (("a.stg" " u ::= [ \"id\":\"1\", \"name\": \"parrt\" ] ")))
+   (runs (((input "<u.id>: <u.name>") (output "1: parrt"))))
    )
   )
- ("testDefineTemplate"
+ (testPropWithNoAttr
   ((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
- (groupfile (("a.stg" 
-{| 
+   (groupfile (("a.stg" " foo ::= [ \"a\":\"b\" ] ")))
+   (runs (((input "<foo.a>: <ick>") (output "b: "))))
+   (errors {|context [anonymous] 1:10 attribute ick isn't defined
+|})
+   )
+  )
+ (testDefineTemplate
+  ((classname hello)
+   (groupfile
+    (("a.stg" {| 
    inc(x) ::= "<x>+1"
    test(name) ::= "hi <name>!"
- |})))
- (output {bar|hi TerTomSumana!|bar}))
+ |}))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "hi TerTomSumana!")
+      (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+      ))
+    )
+   )
   )
- ("testMap"
+ (testMap
   ((classname hello)
-   (template_s {|<test(name)>|})
-   (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
-   (groupfile (("a.stg" 
-                {| 
+   (groupfile
+    (("a.stg"
+      {| 
    inc(x) ::= "[<x>]"
    test(name) ::= "hi <name:inc()>!"
- |})))
-   (output {bar|hi [Ter][Tom][Sumana]!|bar}))
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "hi [Ter][Tom][Sumana]!")
+      (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+      ))
+    )
+   )
   )
- ("testPassThruNoMissingArgs"
+ (testPassThruNoMissingArgs
   ((classname hello)
-   (template_s {|<a(x="x",y="y")>|})
-   (attributes ())
-   (groupfile (("a.stg" 
-                {| 
+   (groupfile
+    (("a.stg"
+      {| 
    a(x,y) ::= "<b(y={99},x={1},...)>"
    b(x,y) ::= "<x><y>"
- |})))
-   (output {bar|199|bar}))
+ |}
+      ))
+    )
+   (runs (((input "<a(x=\"x\",y=\"y\")>") (output 199))))
+   )
   )
- ("testPassThruPartialArgs"
+ (testPassThruPartialArgs
   ((classname hello)
-   (template_s {|<a(x="x",y="y")>|})
-   (attributes ())
-   (groupfile (("a.stg" 
-                {| 
+   (groupfile
+    (("a.stg" {| 
   a(x,y) ::= "<b(y={99},...)>"
   b(x,y) ::= "<x><y>"
- |})))
-   (output {bar|x99|bar}))
+ |}))
+    )
+   (runs (((input "<a(x=\"x\",y=\"y\")>") (output x99))))
+   )
   )
- ("testPassThruWithDefaultValueThatLacksDefinitionAbove"
+ (testPassThruWithDefaultValueThatLacksDefinitionAbove
   ((classname hello)
-   (template_s {|<a(x="x")>|})
-   (attributes ())
-   (groupfile (("a.stg" 
-                {| 
+   (groupfile
+    (("a.stg" {| 
   a(x) ::= "<b(...)>"
   b(x,y={99}) ::= "<x><y>"
- |})))
-   (output {bar|x99|bar}))
+ |}))
+    )
+   (runs (((input "<a(x=\"x\")>") (output x99))))
+   )
   )
- ("testIndirectMap"
+ (testIndirectMap
   ((classname hello)
-   (template_s {|<test(t="inc",name=name)>|})
-   (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
-   (groupfile (("a.stg" 
-                {| 
+   (groupfile
+    (("a.stg"
+      {| 
    inc(x) ::= "[<x>]"
    test(t,name) ::= "<name:(t)()>!"
- |})))
-   (output "[Ter][Tom][Sumana]!"))
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(t=\"inc\",name=name)>")
+      (output "[Ter][Tom][Sumana]!")
+      (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+      ))
+    )
+   )
   )
-("testMapThenParallelMap"
- ((classname hello)
-  (template_s {|<test(names,phones)>|})
-  (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
-               (phones (MV ((STRING "x5001") (STRING "x5002"))))
-               ))
-  (groupfile (("a.stg" 
-{| 
+ (testMapThenParallelMap
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
   bold(x) ::= "[<x>]"
   test(name,phones) ::= "hi <[names:bold()],phones:{n,p | <n>:<p>;}>"
 
- |})))
- (output "hi [Ter]:x5001;[Tom]:x5002;[Sumana]:;"))
-)
-("testMapWithExprAsTemplateName"
- ((classname hello)
-  (template_s {|<test(name)>|})
-  (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
-  (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(names,phones)>")
+      (output "hi [Ter]:x5001;[Tom]:x5002;[Sumana]:;")
+      (attributes
+       ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+        (phones (MV ((STRING x5001) (STRING x5002))))
+        )
+       )
+      ))
+    )
+   )
+  )
+ (testMapWithExprAsTemplateName
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
  d ::= ["foo":"bold"]
  test(name) ::= "<name:(d.foo)()>"
  bold(x) ::= <<*<x>*>>
- |})))
- (output "*Ter**Tom**Sumana*"))
-)
-("testParallelMap"
- ((classname hello)
-  (template_s {|<test(names,phones)>|})
-  (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
-              (phones (MV ((STRING "x5001") (STRING "x5002") (STRING "x5003"))))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "*Ter**Tom**Sumana*")
+      (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+      ))
+    )
+   )
+  )
+ (testParallelMap
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
   test(name,phones) ::= "hi <names,phones:{n,p | <n>:<p>;}>"
 
-  |})))
- (output "hi Ter:x5001;Tom:x5002;Sumana:x5003;"))
-)
-("testParallelMapThenMap"
- ((classname hello)
-  (template_s {|<test(names,phones)>|})
-  (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
-              (phones (MV ((STRING "x5001") (STRING "x5002"))))
-             ))
-  (groupfile (("a.stg" 
-{| 
+  |}
+      ))
+    )
+   (runs
+    (((input "<test(names,phones)>")
+      (output "hi Ter:x5001;Tom:x5002;Sumana:x5003;")
+      (attributes
+       ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+        (phones (MV ((STRING x5001) (STRING x5002) (STRING x5003))))
+        )
+       )
+      ))
+    )
+   )
+  )
+ (testParallelMapThenMap
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
   bold(x) ::= "[<x>]"
   test(name,phones) ::= "hi <names,phones:{n,p | <n>:<p>;}:bold()>"
 
- |})))
- (output "hi [Ter:x5001;][Tom:x5002;][Sumana:;]"))
-)
-("testParallelMapWith3Versus2Elements"
- ((classname hello)
-  (template_s {|<test(names,phones)>|})
-  (attributes ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
-              (phones (MV ((STRING "x5001") (STRING "x5002"))))
-             ))
-  (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(names,phones)>")
+      (output "hi [Ter:x5001;][Tom:x5002;][Sumana:;]")
+      (attributes
+       ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+        (phones (MV ((STRING x5001) (STRING x5002))))
+        )
+       )
+      ))
+    )
+   )
+  )
+ (testParallelMapWith3Versus2Elements
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
   test(name,phones) ::= "hi <names,phones:{n,p | <n>:<p>;}>"
 
- |})))
-  (output "hi Ter:x5001;Tom:x5002;Sumana:;"))
-)
-("testMapIndexes2"
-((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(names,phones)>")
+      (output "hi Ter:x5001;Tom:x5002;Sumana:;")
+      (attributes
+       ((names (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
+        (phones (MV ((STRING x5001) (STRING x5002))))
+        )
+       )
+      ))
+    )
+   )
+  )
+ (testMapIndexes2
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
    test(name) ::= "<name:{n | <i>:<n>}; separator=\", \">"
- |})))
- (output "1:Ter, 2:Tom, 3:Sumana"))
-)
-("testMapIndexes"
-((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "1:Ter, 2:Tom, 3:Sumana")
+      (attributes
+       ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana)))))
+       )
+      ))
+    )
+   )
+  )
+ (testMapIndexes
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
    inc(x,i) ::= "<i>:<x>"
    test(name) ::= "<name:{n|<inc(n,i)>}; separator=\", \">"
- |})))
- (output "1:Ter, 2:Tom, 3:Sumana"))
-)
-("testMapNullValueInList"
-((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana))))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "1:Ter, 2:Tom, 3:Sumana")
+      (attributes
+       ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana)))))
+       )
+      ))
+    )
+   )
+  )
+ (testMapNullValueInList
+  ((classname hello)
+   (groupfile
+    (("a.stg" {| 
    test(name) ::= "<name; separator=\", \">"
- |})))
- (output "Ter, Tom, Sumana"))
-)
-("testMapNullValue"
-((classname hello)
- (template_s {|<test()>|})
- (attributes ())
- (groupfile (("a.stg" 
-{| 
+ |}))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "Ter, Tom, Sumana")
+      (attributes
+       ((name (MV ((STRING Ter) (STRING Tom) NULL (STRING Sumana)))))
+       )
+      ))
+    )
+   )
+  )
+ (testMapNullValue
+  ((classname hello)
+   (groupfile
+    (("a.stg" {| 
    a(x) ::= "[<x>]"
    test(name) ::= "hi <name:a()>!"
- |})))
- (output "hi !")
- (errors {bar|context [anonymous] 1:1 passed 0 arg(s) to template /test with 1 declared arg(s)
-|bar})
- )
-)
-("testMapSingleValue"
-((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (SV (STRING Ter)))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}))
+    )
+   (runs (((input "<test()>") (output "hi !"))))
+   (errors
+    {|context [anonymous] 1:1 passed 0 arg(s) to template /test with 1 declared arg(s)
+|}
+    )
+   )
+  )
+ (testMapSingleValue
+  ((classname hello)
+   (groupfile
+    (("a.stg" {| 
    a(x) ::= "[<x>]"
    test(name) ::= "hi <name:a()>!"
- |})))
- (output "hi [Ter]!"))
-)
-("testRepeatedMap"
-((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "hi [Ter]!")
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
+  )
+ (testRepeatedMap
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
    a(x) ::= "[<x>]"
    b(x) ::= "(<x>)"
    test(name) ::= "hi <name:a():b()>!"
- |})))
- (output "hi ([Ter])([Tom])([Sumana])!"))
-)
-("testRepeatedMapWithNullValueAndNullOption"
-((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (MV ((STRING Ter) NULL (STRING Sumana))))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "hi ([Ter])([Tom])([Sumana])!")
+      (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+      ))
+    )
+   )
+  )
+ (testRepeatedMapWithNullValueAndNullOption
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
    a(x) ::= "[<x>]"
    b(x) ::= "(<x>)"
    test(name) ::= "hi <name:a():b(); null={x}>!"
- |})))
- (output "hi ([Ter])x([Sumana])!"))
-)
-("testRepeatedMapWithNullValue"
-((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (MV ((STRING Ter) NULL (STRING Sumana))))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "hi ([Ter])x([Sumana])!")
+      (attributes ((name (MV ((STRING Ter) NULL (STRING Sumana))))))
+      ))
+    )
+   )
+  )
+ (testRepeatedMapWithNullValue
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
    a(x) ::= "[<x>]"
    b(x) ::= "(<x>)"
    test(name) ::= "hi <name:a():b()>!"
- |})))
- (output "hi ([Ter])([Sumana])!"))
-)
-("testRoundRobinMap"
-((classname hello)
- (template_s {|<test(name)>|})
- (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))
-             ))
- (groupfile (("a.stg" 
-{| 
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "hi ([Ter])([Sumana])!")
+      (attributes ((name (MV ((STRING Ter) NULL (STRING Sumana))))))
+      ))
+    )
+   )
+  )
+ (testRoundRobinMap
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
    a(x) ::= "[<x>]"
    b(x) ::= "(<x>)"
    test(name) ::= "hi <name:a(),b()>!"
- |})))
- (output "hi [Ter](Tom)[Sumana]!"))
-)
-("testTrueCond"
-((classname hello)
- (template_s "<if(name)>works<endif>")
- (attributes ((name (SV (STRING Ter)))
-             ))
- (output "works"))
-)
-("testCondParens"
-((classname hello)
- (template_s "<if(!(x||y)&&!z)>works<endif>")
- (attributes ())
- (output "works")
- (errors {bar|context [anonymous] 1:6 attribute x isn't defined
+ |}
+      ))
+    )
+   (runs
+    (((input "<test(name)>")
+      (output "hi [Ter](Tom)[Sumana]!")
+      (attributes ((name (MV ((STRING Ter) (STRING Tom) (STRING Sumana))))))
+      ))
+    )
+   )
+  )
+ (testTrueCond
+  ((classname hello)
+   (runs
+    (((input "<if(name)>works<endif>")
+      (output works)
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
+  )
+ (testCondParens
+  ((classname hello)
+   (runs (((input "<if(!(x||y)&&!z)>works<endif>") (output works))))
+   (errors
+    {|context [anonymous] 1:6 attribute x isn't defined
 context [anonymous] 1:9 attribute y isn't defined
 context [anonymous] 1:14 attribute z isn't defined
-|bar})
- )
-)
-("testElseIf2"
-((classname hello)
- (template_s "<if(x)>fail1<elseif(y)>fail2<elseif(z)>works<else>fail3<endif>")
- (attributes ((z (SV (STRING blort)))))
- (output "works")
- (errors {bar|context [anonymous] 1:4 attribute x isn't defined
+|}
+    )
+   )
+  )
+ (testElseIf2
+  ((classname hello)
+   (runs
+    (((input
+       "<if(x)>fail1<elseif(y)>fail2<elseif(z)>works<else>fail3<endif>"
+       )
+      (output works)
+      (attributes ((z (SV (STRING blort)))))
+      ))
+    )
+   (errors
+    {|context [anonymous] 1:4 attribute x isn't defined
 context [anonymous] 1:20 attribute y isn't defined
-|bar})
- )
-)
-("testElseIf3"
-((classname hello)
- (template_s "<if(x)><elseif(y)><elseif(z)>works<else><endif>")
- (attributes ((z (SV (STRING blort)))))
- (output "works")
- (errors {bar|context [anonymous] 1:4 attribute x isn't defined
+|}
+    )
+   )
+  )
+ (testElseIf3
+  ((classname hello)
+   (runs
+    (((input "<if(x)><elseif(y)><elseif(z)>works<else><endif>")
+      (output works)
+      (attributes ((z (SV (STRING blort)))))
+      ))
+    )
+   (errors
+    {|context [anonymous] 1:4 attribute x isn't defined
 context [anonymous] 1:15 attribute y isn't defined
-|bar})
- )
-)
-("testEmptyIFTemplate"
-((classname hello)
- (template_s "<if(x)>fail<elseif(name)><endif>")
- (attributes ((name (SV (STRING Ter)))
-             ))
- (output "")
- (errors {bar|context [anonymous] 1:4 attribute x isn't defined
-|bar})
- )
-)
-("testFalseCond2"
-((classname hello)
- (template_s "<if(name)>works<endif>")
- (attributes ((name (SV NULL))))
- (output ""))
-)
-("testFalseCond"
-((classname hello)
- (template_s "<if(name)>works<endif>")
- (attributes ())
- (output "")
- (errors {bar|context [anonymous] 1:4 attribute name isn't defined
-|bar})
- )
-)
-("testFalseCondWithFormalArgs"
-((classname hello)
- (template_s "<a()>")
- (attributes ((name (SV NULL))))
- (groupfile (("group.stg" 
-{| 
+|}
+    )
+   )
+  )
+ (testEmptyIFTemplate
+  ((classname hello)
+   (runs
+    (((input "<if(x)>fail<elseif(name)><endif>")
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   (errors {|context [anonymous] 1:4 attribute x isn't defined
+|})
+   )
+  )
+ (testFalseCond2
+  ((classname hello)
+   (runs
+    (((input "<if(name)>works<endif>") (attributes ((name (SV NULL))))))
+    )
+   )
+  )
+ (testFalseCond
+  ((classname hello)
+   (runs (((input "<if(name)>works<endif>"))))
+   (errors {|context [anonymous] 1:4 attribute name isn't defined
+|})
+   )
+  )
+ (testFalseCondWithFormalArgs
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
    a(scope) ::= <<
 foo
     <if(scope)>oops<endif>
 bar
 >>
- |})))
+ |}
+      ))
+    )
+   (runs
+    (((input "<a()>") (output "foo\nbar") (attributes ((name (SV NULL))))))
+    )
+   (errors
+    {|context [anonymous] 1:1 passed 0 arg(s) to template /a with 1 declared arg(s)
+|}
+    )
+   )
+  )
+ (testNotFalseCond
+  ((classname hello)
+   (runs (((input "<if(!name)>works<endif>") (output works))))
+   (errors {|context [anonymous] 1:5 attribute name isn't defined
+|})
+   )
+  )
+ (testNotTrueCond
+  ((classname hello)
+   (runs
+    (((input "<if(!name)>works<endif>")
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
+  )
+ (testParensInConditonal2
+  ((classname hello)
+   (runs
+    (((input "<if((!a||b)&&!(c||d))>broken<else>works<endif>")
+      (output works)
+      (attributes
+       ((a (SV (BOOL true)))
+        (b (SV (BOOL true)))
+        (c (SV (BOOL true)))
+        (d (SV (BOOL true)))
+        )
+       )
+      ))
+    )
+   )
+  )
+ (testParensInConditonal
+  ((classname hello)
+   (runs
+    (((input "<if((a||b)&&(c||d))>works<endif>")
+      (output works)
+      (attributes
+       ((a (SV (BOOL true)))
+        (b (SV (BOOL true)))
+        (c (SV (BOOL true)))
+        (d (SV (BOOL true)))
+        )
+       )
+      ))
+    )
+   )
+  )
+ (testElseIfAllExprFalse
+  ((classname hello)
+   (runs
+    (((input "<if(name)>fail<elseif(id)>fail<else>works<endif>")
+      (output works)
+      ))
+    )
+   (errors
+    {|context [anonymous] 1:4 attribute name isn't defined
+context [anonymous] 1:22 attribute id isn't defined
+|}
+    )
+   )
+  )
+ (testElseIfNoElseAllFalse
+  ((classname hello)
+   (runs (((input "<if(name)>fail<elseif(id)>fail<endif>"))))
+   (errors
+    {|context [anonymous] 1:4 attribute name isn't defined
+context [anonymous] 1:22 attribute id isn't defined
+|}
+    )
+   )
+  )
+ (testElseIf
+  ((classname hello)
+   (runs
+    (((input "<if(name)>fail<elseif(id)>works<else>fail<endif>")
+      (output works)
+      (attributes ((id (SV (STRING "2DF3DF")))))
+      ))
+    )
+   (errors {|context [anonymous] 1:4 attribute name isn't defined
+|})
+   )
+  )
+ (testFalseCondWithElse
+  ((classname hello)
+   (runs (((input "<if(name)>fail<else>works<endif>") (output works))))
+   (errors {|context [anonymous] 1:4 attribute name isn't defined
+|})
+   )
+  )
+ (testOr
+  ((classname hello)
+   (runs
+    (((input "<if(name||notThere)>works<else>fail<endif>")
+      (output works)
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   (errors {|context [anonymous] 1:10 attribute notThere isn't defined
+|})
+   )
+  )
+ (testTrueCondWithElse
+  ((classname hello)
+   (runs
+    (((input "<if(name)>works<else>fail<endif>")
+      (output works)
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   )
+  )
+ (testAndNot
+  ((classname hello)
+   (runs
+    (((input "<if(name&&!notThere)>works<else>fail<endif>")
+      (output works)
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   (errors {|context [anonymous] 1:11 attribute notThere isn't defined
+|})
+   )
+  )
+ (testAnd
+  ((classname hello)
+   (runs
+    (((input "<if(name&&notThere)>fail<else>works<endif>")
+      (output works)
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   (errors {|context [anonymous] 1:10 attribute notThere isn't defined
+|})
+   )
+  )
+ (testCharLiterals2
+  ((classname hello)
+   (runs (((input {|Foo <\n><\t> bar
+|}) (output {|Foo 
+	 bar
+|}))))
+   )
+  )
+ (testCharLiterals3
+  ((classname hello)
+   (runs (((input "Foo<\\ >bar<\\n>") (output "Foo bar\n"))))
+   )
+  )
+ (testCharLiterals
+  ((classname hello)
+   (runs (((input {|Foo <\n><\n><\t> bar
+|}) (output {|Foo 
 
- (output "foo\nbar")
- (errors {bar|context [anonymous] 1:1 passed 0 arg(s) to template /a with 1 declared arg(s)
-|bar})
- )
-)
-("testNotFalseCond"
-((classname hello)
- (template_s "<if(!name)>works<endif>")
- (attributes ())
- (output "works")
- (errors {bar|context [anonymous] 1:5 attribute name isn't defined
-|bar})
- )
-)
-("testNotTrueCond"
-((classname hello)
- (template_s "<if(!name)>works<endif>")
- (attributes ((name (SV (STRING Ter)))))
- (output ""))
-)
-("testParensInConditonal2"
-((classname hello)
- (template_s "<if((!a||b)&&!(c||d))>broken<else>works<endif>")
- (attributes ((a (SV (BOOL true)))
-              (b (SV (BOOL true)))
-              (c (SV (BOOL true)))
-              (d (SV (BOOL true)))
-             ))
- (output "works"))
-)
-("testParensInConditonal"
-((classname hello)
- (template_s "<if((a||b)&&(c||d))>works<endif>")
- (attributes ((a (SV (BOOL true)))
-              (b (SV (BOOL true)))
-              (c (SV (BOOL true)))
-              (d (SV (BOOL true)))
-             ))
- (output "works"))
-)
-("testElseIfAllExprFalse"
-((classname hello)
- (template_s "<if(name)>fail<elseif(id)>fail<else>works<endif>")
- (attributes ())
- (output "works")
- (errors {bar|context [anonymous] 1:4 attribute name isn't defined
-context [anonymous] 1:22 attribute id isn't defined
-|bar})
- )
-)
-("testElseIfNoElseAllFalse"
-((classname hello)
- (template_s "<if(name)>fail<elseif(id)>fail<endif>")
- (attributes ())
- (output "")
- (errors {bar|context [anonymous] 1:4 attribute name isn't defined
-context [anonymous] 1:22 attribute id isn't defined
-|bar})
- )
-)
-("testElseIf"
-((classname hello)
- (template_s "<if(name)>fail<elseif(id)>works<else>fail<endif>")
- (attributes ((id (SV (STRING "2DF3DF")))
-             ))
- (output "works")
- (errors {bar|context [anonymous] 1:4 attribute name isn't defined
-|bar})
- )
-)
-("testFalseCondWithElse"
-((classname hello)
- (template_s "<if(name)>fail<else>works<endif>")
- (attributes ())
- (output "works")
- (errors {bar|context [anonymous] 1:4 attribute name isn't defined
-|bar})
- )
-)
-("testOr"
-((classname hello)
- (template_s "<if(name||notThere)>works<else>fail<endif>")
- (attributes ((name (SV (STRING Ter)))))
- (output "works")
- (errors {bar|context [anonymous] 1:10 attribute notThere isn't defined
-|bar})
- )
-)
-("testTrueCondWithElse"
-((classname hello)
- (template_s "<if(name)>works<else>fail<endif>")
- (attributes ((name (SV (STRING Ter)))
-             ))
- (output "works"))
-)
-("testAndNot"
-((classname hello)
- (template_s "<if(name&&!notThere)>works<else>fail<endif>")
- (attributes ((name (SV (STRING Ter)))))
- (output "works")
- (errors {bar|context [anonymous] 1:11 attribute notThere isn't defined
-|bar})
- )
-)
-("testAnd"
-((classname hello)
- (template_s "<if(name&&notThere)>fail<else>works<endif>")
- (attributes ((name (SV (STRING Ter)))))
- (output "works")
- (errors {bar|context [anonymous] 1:10 attribute notThere isn't defined
-|bar})
- )
-)
-("testCharLiterals2"
-((classname hello)
- (template_s "Foo <\\n><\\t> bar\n")
- (attributes ())
- (output "Foo \n\t bar\n"))
-)
-("testCharLiterals3"
-((classname hello)
- (template_s "Foo<\\ >bar<\\n>")
- (attributes ())
- (output "Foo bar\n"))
-)
-("testCharLiterals"
-((classname hello)
- (template_s "Foo <\\n><\\n><\\t> bar\n")
- (attributes ())
- (output "Foo \n\n\t bar\n"))
-)
-("testMapConditionAndEscapeInside"
-((classname hello)
- (template_s "<if(m.name)>works \\\\<endif>")
- (attributes ((m (SV (DICT ((name (STRING Ter))))))))
- (output "works \\"))
-)
-("testOr"
-((classname hello)
- (template_s "<if(name||notThere)>works<else>fail<endif>")
- (attributes ((name (SV (STRING Ter)))))
- (output "works")
- (errors {bar|context [anonymous] 1:10 attribute notThere isn't defined
-|bar})
- )
-)
-("testSeparatorInIntList"
-((classname hello)
- (template_s "<test(names)>")
- (attributes ((names (SV (LIST ((INT 0) (INT 1)))))))
-   (groupfile (("a.stg" 
-                {| 
+	 bar
+|}))))
+   )
+  )
+ (testMapConditionAndEscapeInside
+  ((classname hello)
+   (runs
+    (((input "<if(m.name)>works \\\\<endif>")
+      (output "works \\")
+      (attributes ((m (SV (DICT ((name (STRING Ter))))))))
+      ))
+    )
+   )
+  )
+ (testOr
+  ((classname hello)
+   (runs
+    (((input "<if(name||notThere)>works<else>fail<endif>")
+      (output works)
+      (attributes ((name (SV (STRING Ter)))))
+      ))
+    )
+   (errors {|context [anonymous] 1:10 attribute notThere isn't defined
+|})
+   )
+  )
+ (testSeparatorInIntList
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
 test(names) ::= "<names:{n | case <n>}; separator=\", \">"
-|})))
- (output "case 0, case 1"))
-)
-("testSeparatorInList2"
-((classname hello)
- (template_s "<test(names)>")
- (attributes ((names (MV ((STRING Ter) (LIST ((STRING Tom) (STRING Sriram))))))))
-   (groupfile (("a.stg" 
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<test(names)>")
+      (output "case 0, case 1")
+      (attributes ((names (SV (LIST ((INT 0) (INT 1)))))))
+      ))
+    )
+   )
+  )
+ (testSeparatorInList2
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
 test(names) ::= "<names:{n | case <n>}; separator=\", \">"
-|})))
- (output "case Ter, case Tom, case Sriram"))
-)
-("testSeparatorInList"
-((classname hello)
- (template_s "<test(names)>")
- (attributes ((names (SV (LIST ((STRING Ter) (STRING Tom)))))))
-   (groupfile (("a.stg" 
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<test(names)>")
+      (output "case Ter, case Tom, case Sriram")
+      (attributes
+       ((names (MV ((STRING Ter) (LIST ((STRING Tom) (STRING Sriram)))))))
+       )
+      ))
+    )
+   )
+  )
+ (testSeparatorInList
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
 test(names) ::= "<names:{n | case <n>}; separator=\", \">"
-|})))
- (output "case Ter, case Tom"))
-)
-("testSeparator"
-((classname hello)
- (template_s "<test(names)>")
- (attributes ((names (MV ((STRING Ter) (STRING Tom))))))
-   (groupfile (("a.stg" 
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<test(names)>")
+      (output "case Ter, case Tom")
+      (attributes ((names (SV (LIST ((STRING Ter) (STRING Tom)))))))
+      ))
+    )
+   )
+  )
+ (testSeparator
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
 test(names) ::= "<names:{n | case <n>}; separator=\", \">"
+|}
+      ))
+    )
+   (runs
+    (((input "<test(names)>")
+      (output "case Ter, case Tom")
+      (attributes ((names (MV ((STRING Ter) (STRING Tom))))))
+      ))
+    )
+   )
+  )
+ (testSubtemplateExpr
+  ((classname hello) (runs (((input "<{name\n}>") (output "name\n")))))
+  )
+ (testUnicodeLiterals2
+  ((classname hello)
+   (runs
+    (((input {|Foo <\uFEA5><\n><\u00C2> bar
+|}) (output {|Foo ﺥ
+Â bar
 |})))
- (output "case Ter, case Tom"))
-)
-("testSubtemplateExpr"
-((classname hello)
- (template_s "<{name\n}>")
- (attributes ())
- (output "name\n"))
-)
-("testUnicodeLiterals2"
-((classname hello)
- (template_s "Foo <\\uFEA5><\\n><\\u00C2> bar\n")
- (attributes ())
- (output "Foo \u{fea5}\n\u{00C2} bar\n"))
-)
-("testUnicodeLiterals3"
-((classname hello)
- (template_s "Foo<\\ >bar<\\n>")
- (attributes ())
- (output "Foo bar\n"))
-)
-("testUnicodeLiterals"
-((classname hello)
- (template_s "Foo <\\uFEA5><\\n><\\u00C2> bar\n")
- (attributes ())
- (output "Foo \u{fea5}\n\u{00C2} bar\n"))
-)
-("testEarlyEvalIndent"
-((classname hello)
- (template_s "<main()>")
- (attributes ())
-   (groupfile (("t.stg" 
-                {| 
+    )
+   )
+  )
+ (testUnicodeLiterals3
+  ((classname hello)
+   (runs (((input "Foo<\\ >bar<\\n>") (output "Foo bar\n"))))
+   )
+  )
+ (testUnicodeLiterals
+  ((classname hello)
+   (runs
+    (((input {|Foo <\uFEA5><\n><\u00C2> bar
+|}) (output {|Foo ﺥ
+Â bar
+|})))
+    )
+   )
+  )
+ (testEarlyEvalIndent
+  ((classname hello)
+   (groupfile
+    (("t.stg"
+      {| 
 t() ::= <<  abc>>
 main() ::= <<
 <t()>
@@ -702,15 +945,20 @@ main() ::= <<
   <(t())>
 >>
 
-|})))
- (output "  abc\n  abc\n    abc\n    abc"))
-)
-("testEarlyEvalNoIndent"
-((classname hello)
- (template_s "<main()>")
- (attributes ())
-   (groupfile (("t.stg" 
-                {| 
+|}
+      ))
+    )
+   (runs (((input "<main()>") (output {|  abc
+  abc
+    abc
+    abc|}))))
+   )
+  )
+ (testEarlyEvalNoIndent
+  ((classname hello)
+   (groupfile
+    (("t.stg"
+      {| 
 t() ::= <<  abc>>
 main() ::= <<
 <t()>
@@ -719,21 +967,31 @@ main() ::= <<
   <(t())>
 >>
 
-|})))
- (output "abc\nabc\nabc\nabc")
- (indent false)
-)
-)
-("testSeparatorInIntList2"
-((classname hello)
- (template_s "<test(names)>")
- (attributes ((names (MV ((INT 0) (LIST ((INT 1) (INT 2))))))))
-   (groupfile (("a.stg" 
-                {| 
+|}
+      ))
+    )
+   (indent false)
+   (runs (((input "<main()>") (output {|abc
+abc
+abc
+abc|}))))
+   )
+  )
+ (testSeparatorInIntList2
+  ((classname hello)
+   (groupfile
+    (("a.stg"
+      {| 
 test(names) ::= "<names:{n | case <n>}; separator=\", \">"
-|})))
- (output "case 0, case 1, case 2"))
-)
-
+|}
+      ))
+    )
+   (runs
+    (((input "<test(names)>")
+      (output "case 0, case 1, case 2")
+      (attributes ((names (MV ((INT 0) (LIST ((INT 1) (INT 2))))))))
+      ))
+    )
+   )
+  )
  )
-

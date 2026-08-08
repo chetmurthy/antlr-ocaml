@@ -1,665 +1,693 @@
-(
-("testEscapeJavaRightShift2"
-((classname hello)
- (template_s "<a(x)>")
- (attributes ((x (SV (STRING parrt)))))
-   (groupfile (("test.stg" 
-                {| 
+((testEscapeJavaRightShift2
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= << >\> >>
 
 |})))
- (output " >> ")
-)
-)
-("testEscapeJavaRightShiftAtRightEdge2"
-((classname hello)
- (template_s "<a(x)>")
- (attributes ((x (SV (STRING parrt)))))
-   (groupfile (("test.stg" 
-                {| 
+   (runs
+    (((input "<a(x)>")
+      (output " >> ")
+      (attributes ((x (SV (STRING parrt)))))
+      ))
+    )
+   )
+  )
+ (testEscapeJavaRightShiftAtRightEdge2
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= <<>\>>>
 
 |})))
- (output ">>")
-)
-)
-("testEscapeJavaRightShiftAtRightEdge"
-((classname hello)
- (template_s "<a(x)>")
- (attributes ((x (SV (STRING parrt)))))
-   (groupfile (("test.stg" 
-                {| 
+   (runs
+    (((input "<a(x)>") (output ">>") (attributes ((x (SV (STRING parrt)))))))
+    )
+   )
+  )
+ (testEscapeJavaRightShiftAtRightEdge
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= <<\>>>
 
 |})))
- (output "\\>")
-)
-)
-("testEscapeJavaRightShift"
-((classname hello)
- (template_s "<a(x)>")
- (attributes ((x (SV (STRING parrt)))))
-   (groupfile (("test.stg" 
-                {| 
+   (runs
+    (((input "<a(x)>") (output "\\>") (attributes ((x (SV (STRING parrt)))))))
+    )
+   )
+  )
+ (testEscapeJavaRightShift
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= << \>> >>
 
 |})))
- (output " >> ")
-)
-)
-("testEscapeOneRightAngle2"
-((classname hello)
- (template_s "<a(x)>")
- (attributes ((x (SV (STRING parrt)))))
-   (groupfile (("test.stg" 
-                {| 
+   (runs
+    (((input "<a(x)>")
+      (output " >> ")
+      (attributes ((x (SV (STRING parrt)))))
+      ))
+    )
+   )
+  )
+ (testEscapeOneRightAngle2
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= << \> >>
 
 |})))
- (output " > ")
-)
-)
-("testEscapeOneRightAngle"
-((classname hello)
- (template_s "<a(x)>")
- (attributes ((x (SV (STRING parrt)))))
-   (groupfile (("test.stg" 
-                {| 
+   (runs
+    (((input "<a(x)>") (output " > ") (attributes ((x (SV (STRING parrt)))))))
+    )
+   )
+  )
+ (testEscapeOneRightAngle
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= << > >>
 
 |})))
- (output " > ")
-)
-)
-("testGroupWithTwoTemplates"
-((classname hello)
- (template_s "<a(x)><b()>")
- (attributes ((x (SV (STRING parrt)))))
-   (groupfile (("test.stg" 
-                {| 
+   (runs
+    (((input "<a(x)>") (output " > ") (attributes ((x (SV (STRING parrt)))))))
+    )
+   )
+  )
+ (testGroupWithTwoTemplates
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= <<foo>>
 b() ::= "bar"
 
 |})))
- (output "foobar")
-)
-)
-("testSimpleGroupFromString"
-((classname hello)
- (template_s "<a(x)>")
- (attributes ((x (SV (STRING parrt)))))
-   (groupfile (("test.stg" 
-                {| 
+   (runs
+    (((input "<a(x)><b()>")
+      (output foobar)
+      (attributes ((x (SV (STRING parrt)))))
+      ))
+    )
+   )
+  )
+ (testSimpleGroupFromString
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= <<foo>>
 b() ::= <<bar>>
 
 |})))
- (output "foo")
-)
-)
-("testSimpleGroup"
-((classname hello)
- (template_s "<a()>")
- (attributes ())
-   (groupfile (("test.stg" 
-                {| 
+   (runs
+    (((input "<a(x)>") (output foo) (attributes ((x (SV (STRING parrt)))))))
+    )
+   )
+  )
+ (testSimpleGroup
+  ((classname hello)
+   (groupfile (("test.stg" {| 
 
 a(x) ::= <<foo>>
 
 |})))
- (output "foo")
- (errors {bar|context [anonymous] 1:1 passed 0 arg(s) to template /a with 1 declared arg(s)
-|bar})
-)
-)
-("testSubdir2"
-((classname hello)
- (template_s "<subdir/b()>")
- (attributes ())
-   (groupfiles (("subdir/b.st" 
-                {| 
+   (runs (((input "<a()>") (output foo))))
+   (errors
+    {|context [anonymous] 1:1 passed 0 arg(s) to template /a with 1 declared arg(s)
+|}
+    )
+   )
+  )
+ (testSubdir2
+  ((classname hello)
+   (groupfiles (("subdir/b.st" {| 
 
 b() ::= "bar"
 
 |})))
- (output "bar")
-)
-)
-("testSubdir"
-((classname hello)
- (template_s "</subdir/b()>")
- (attributes ())
-   (groupfiles (("subdir/b.st" 
-                {| 
+   (runs (((input "<subdir/b()>") (output bar))))
+   )
+  )
+ (testSubdir
+  ((classname hello)
+   (groupfiles (("subdir/b.st" {| 
 
 b() ::= "bar"
 
 |})))
- (output "bar")
-)
-)
-("testSubdirWithSubtemplate2"
-((classname hello)
- (template_s "<x:/subdir/a()>")
- (attributes ((x (SV (LIST ((STRING "a") (STRING "b")))))))
-   (groupfiles (("subdir/a.st" 
-                {| 
+   (runs (((input "</subdir/b()>") (output bar))))
+   )
+  )
+ (testSubdirWithSubtemplate2
+  ((classname hello)
+   (groupfiles (("subdir/a.st" {| 
 
 a(x) ::= "<x:{y|<y>}>"
 
 |})))
- (output "ab")
-)
-)
-("testSubdirWithSubtemplate"
-((classname hello)
- (template_s "</subdir/a(x)>")
- (attributes ((x (SV (LIST ((STRING "a") (STRING "b")))))))
-   (groupfiles (("subdir/a.st" 
-                {| 
+   (runs
+    (((input "<x:/subdir/a()>")
+      (output ab)
+      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      ))
+    )
+   )
+  )
+ (testSubdirWithSubtemplate
+  ((classname hello)
+   (groupfiles (("subdir/a.st" {| 
 
 a(x) ::= "<x:{y|<y>}>"
 
 |})))
- (output "ab")
-)
-)
-
-("testAlias"
-((classname hello)
- (template_s {foo|<b()>|foo})
- (attributes ())
-   (groupfile (("group.stg"
-                {| 
+   (runs
+    (((input "</subdir/a(x)>")
+      (output ab)
+      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      ))
+    )
+   )
+  )
+ (testAlias
+  ((classname hello)
+   (groupfile (("group.stg" {| 
 a() ::= "bar"
 b ::= a
 |})))
- (output "bar")
-)
-)
-("testAliasWithArgs"
-((classname hello)
- (template_s {foo|<a(x,y)>|foo})
- (attributes ((x (SV (INT 1))) (y (SV (INT 2)))))
-   (groupfile (("group.stg"
-                {| 
+   (runs (((input "<b()>") (output bar))))
+   )
+  )
+ (testAliasWithArgs
+  ((classname hello)
+   (groupfile (("group.stg" {| 
 a(x,y) ::= "<x><y>"
 b ::= a
 |})))
- (output "12")
-)
-)
-("testBooleanDefaultArguments"
-((classname hello)
- (template_s {foo|<method(name)>|foo})
- (attributes ((name (SV (STRING foo)))))
-   (groupfile (("group.stg"
-                {| 
+   (runs
+    (((input "<a(x,y)>")
+      (output 12)
+      (attributes ((x (SV (INT 1))) (y (SV (INT 2)))))
+      ))
+    )
+   )
+  )
+ (testBooleanDefaultArguments
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 method(name) ::= <<
 <stat(name)>
 >>
 stat(name,x=true,y=false) ::= "<name>; <x> <y>"
 
-|})))
- (output "foo; true false")
-)
-)
-("testCantSeeGroupDirIfGroupFileOfSameName"
-((classname hello)
- (template_s {foo|<a()>|foo})
- (attributes ())
-   (groupfiles (
-     ("./group.stg" {|
+|}
+      ))
+    )
+   (runs
+    (((input "<method(name)>")
+      (output "foo; true false")
+      (attributes ((name (SV (STRING foo)))))
+      ))
+    )
+   )
+  )
+ (testCantSeeGroupDirIfGroupFileOfSameName
+  ((classname hello)
+   (groupfiles
+    (("./group.stg" {|
 "b() ::= "group file b"
 |})
-("group/a.st"
-                {| 
+     ("group/a.st" {| 
 a() ::= <<dir1 a>>
 |})
-    ))
- (output "")
- (errors {bar|context [anonymous] 1:1 no such template: /a
-|bar})
-)
-)
-("testDefaultArgument2"
-((classname hello)
- (template_s {foo|<stat(name)>|foo})
- (attributes ((name (SV (STRING foo)))))
-   (groupfile (("group.stg"
-                {| 
+     )
+    )
+   (runs (((input "<a()>"))))
+   (errors {|context [anonymous] 1:1 no such template: /a
+|})
+   )
+  )
+ (testDefaultArgument2
+  ((classname hello)
+   (groupfile
+    (("group.stg" {| 
 stat(name,value="99") ::= "x=<value>; // <name>"
-|})))
- (output "x=99; // foo")
-)
-)
-("testDefaultArgumentAsSimpleTemplate"
-((classname hello)
- (template_s {foo|<stat(name)>|foo})
- (attributes ((name (SV (STRING foo)))))
-   (groupfile (("group.stg"
-                {| 
+|}))
+    )
+   (runs
+    (((input "<stat(name)>")
+      (output "x=99; // foo")
+      (attributes ((name (SV (STRING foo)))))
+      ))
+    )
+   )
+  )
+ (testDefaultArgumentAsSimpleTemplate
+  ((classname hello)
+   (groupfile
+    (("group.stg" {| 
 stat(name,value={99}) ::= "x=<value>; // <name>"
-|})))
- (output "x=99; // foo")
-)
-)
-("testDefaultArgumentAsTemplate2"
-((classname hello)
- (template_s {foo|<method(name,size)>|foo})
- (attributes ((name (SV (STRING foo))) (size (SV (STRING 2)))))
-   (groupfile (("group.stg"
-                {| 
+|}))
+    )
+   (runs
+    (((input "<stat(name)>")
+      (output "x=99; // foo")
+      (attributes ((name (SV (STRING foo)))))
+      ))
+    )
+   )
+  )
+ (testDefaultArgumentAsTemplate2
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 method(name,size) ::= <<
 <stat(name)>
 >>
 stat(name,value={ [<name>] }) ::= "x=<value>; // <name>"
-|})))
- (output "x=[foo] ; // foo")
-)
-)
-("testDefaultArgumentAsTemplate"
-((classname hello)
- (template_s {foo|<method(name,size)>|foo})
- (attributes ((name (SV (STRING foo))) (size (SV (STRING 2)))))
-   (groupfile (("group.stg"
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<method(name,size)>")
+      (output "x=[foo] ; // foo")
+      (attributes ((name (SV (STRING foo))) (size (SV (STRING 2)))))
+      ))
+    )
+   )
+  )
+ (testDefaultArgumentAsTemplate
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 method(name,size) ::= <<
 <stat(name)>
 >>
 stat(name,value={<name>}) ::= "x=<value>; // <name>"
-|})))
- (output "x=foo; // foo")
-)
-)
-("testDefaultArgumentManuallySet"
-((classname hello)
- (template_s {foo|<stat(fields)>|foo})
- (attributes ((fields (SV (DICT ((name (STRING parrt)) (n (STRING 0))))))))
-   (groupfile (("group.stg"
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<method(name,size)>")
+      (output "x=foo; // foo")
+      (attributes ((name (SV (STRING foo))) (size (SV (STRING 2)))))
+      ))
+    )
+   )
+  )
+ (testDefaultArgumentManuallySet
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 method(fields) ::= <<
 <fields:{f | <stat(f)>}>
 >>
 stat(f,value={<f.name>}) ::= "x=<value>; // <f.name>"
-|})))
- (output "x=parrt; // parrt")
-)
-)
-("testDefaultArgumentSeesVarFromDynamicScoping"
-((classname hello)
- (template_s {foo|<method(fields)>|foo})
- (attributes ((fields (SV (DICT ((name (STRING parrt)) (n (STRING 0))))))))
-   (groupfile (("group.stg"
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<stat(fields)>")
+      (output "x=parrt; // parrt")
+      (attributes
+       ((fields (SV (DICT ((name (STRING parrt)) (n (STRING 0)))))))
+       )
+      ))
+    )
+   )
+  )
+ (testDefaultArgumentSeesVarFromDynamicScoping
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 method(f) ::= <<
 <stat()>
 >>
 stat(value={<f.name>}) ::= "x=<value>; // <f.name>"
-|})))
- (output "x=parrt; // parrt")
-)
-)
-("testDefaultArgument"
-((classname hello)
- (template_s {foo|<method(name)>|foo})
- (attributes ((name (SV (STRING foo)))))
-   (groupfile (("group.stg"
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<method(fields)>")
+      (output "x=parrt; // parrt")
+      (attributes
+       ((fields (SV (DICT ((name (STRING parrt)) (n (STRING 0)))))))
+       )
+      ))
+    )
+   )
+  )
+ (testDefaultArgument
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 method(name) ::= <<
 <stat(name)>
 >>
 stat(name,value="99") ::= "x=<value>; // <name>"
-|})))
- (output "x=99; // foo")
-)
-)
-("testDoNotUseDefaultArgument"
-((classname hello)
- (template_s {foo|<method(name)>|foo})
- (attributes ((name (SV (STRING foo)))))
-   (groupfile (("group.stg"
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<method(name)>")
+      (output "x=99; // foo")
+      (attributes ((name (SV (STRING foo)))))
+      ))
+    )
+   )
+  )
+ (testDoNotUseDefaultArgument
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 method(name) ::= <<
 <stat(name,"34")>
 >>
 stat(name,value="99") ::= "x=<value>; // <name>"
-|})))
- (output "x=34; // foo")
-)
-)
-("testDupDef"
-((classname hello)
- (template_s {foo||foo})
- (attributes ())
-   (groupfile (("group.stg"
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<method(name)>")
+      (output "x=34; // foo")
+      (attributes ((name (SV (STRING foo)))))
+      ))
+    )
+   )
+  )
+ (testDupDef
+  ((classname hello)
+   (groupfile (("group.stg" {| 
 b() ::= "bar"
 b() ::= "duh"
 |})))
- (output "")
- (errors {bar|group.stg 3:0: redefinition of template b
-|bar})
-)
-)
-("testEarlyEvalOfDefaultArgs"
-((classname hello)
- (template_s {foo|<s(x)>|foo})
- (attributes ((x (SV (STRING a)))))
-   (groupfile (("group.stg"
-                {| 
+   (runs (((input ""))))
+   (errors {|group.stg 3:0: redefinition of template b
+|})
+   )
+  )
+ (testEarlyEvalOfDefaultArgs
+  ((classname hello)
+   (groupfile (("group.stg" {| 
 s(x,y={<(x)>}) ::= "<x><y>"
 |})))
- (output "aa")
-)
-)
-("testGroupFileInDir2"
-((classname hello)
- (template_s {foo|</group/b()>|foo})
- (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
-     (groupfiles (
-     ("./group.stg" {|
+   (runs (((input "<s(x)>") (output aa) (attributes ((x (SV (STRING a))))))))
+   )
+  )
+ (testGroupFileInDir2
+  ((classname hello)
+   (groupfiles
+    (("./group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
 |})
-("a.st" 
-                {| 
+     ("a.st" {| 
 a(x) ::= <<foo>>
 |})
-    ))
- (output "bar")
-)
-)
-("testGroupFileInDir3"
-((classname hello)
- (template_s {foo|</group/c()>|foo})
- (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
-     (groupfiles (
-     ("./group.stg" {|
+     )
+    )
+   (runs
+    (((input "</group/b()>")
+      (output bar)
+      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      ))
+    )
+   )
+  )
+ (testGroupFileInDir3
+  ((classname hello)
+   (groupfiles
+    (("./group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
 |})
-("a.st" 
-                {| 
+     ("a.st" {| 
 a(x) ::= <<foo>>
 |})
-    ))
- (output "duh")
-)
-)
-("testGroupFileInDir"
-((classname hello)
- (template_s {foo|<"":a()>|foo})
- (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
-     (groupfiles (
-     ("./group.st" {|
+     )
+    )
+   (runs
+    (((input "</group/c()>")
+      (output duh)
+      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      ))
+    )
+   )
+  )
+ (testGroupFileInDir
+  ((classname hello)
+   (groupfiles
+    (("./group.st" {|
 b() ::= "bar"
 c() ::= "duh"
 |})
-("a.st" 
-                {| 
+     ("a.st" {| 
 a(x) ::= <<foo>>
 |})
-    ))
- (output "foo")
-)
-)
-("testGroupFileInSubDir"
-((classname hello)
- (template_s {foo|<"":a()><subdir/group/b()><subdir/group/c()>|foo})
- (attributes ())
-     (groupfiles (
-     ("subdir/group.stg" {|
+     )
+    )
+   (runs
+    (((input "<\"\":a()>")
+      (output foo)
+      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      ))
+    )
+   )
+  )
+ (testGroupFileInSubDir
+  ((classname hello)
+   (groupfiles
+    (("subdir/group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
 |})
-("./a.st" 
-                {| 
+     ("./a.st" {| 
 a(x) ::= <<foo>>
 |})
-    ))
- (output "foobarduh")
-)
-)
-("testMissingNamedArg"
-((classname hello)
- (template_s {foo||foo})
- (attributes ())
- (groupfile (("group.stg"
-                {| 
+     )
+    )
+   (runs
+    (((input "<\"\":a()><subdir/group/b()><subdir/group/c()>")
+      (output foobarduh)
+      ))
+    )
+   )
+  )
+ (testMissingNamedArg
+  ((classname hello)
+   (groupfile
+    (("group.stg" {| 
 f(x,y) ::= "<x><y>"
 g() ::= "<f(x={a},{b})>"
-|})))
- (output "")
- (errors {bar|group.stg 3:18: mismatched input '{' expecting ELLIPSIS
-|bar})
-)
-)
-("testNamedArgsInOrder"
-((classname hello)
- (template_s {foo|<g()>|foo})
- (attributes ())
-   (groupfile (("group.stg"
-                {| 
+|}))
+    )
+   (runs (((input ""))))
+   (errors {|group.stg 3:18: mismatched input '{' expecting ELLIPSIS
+|})
+   )
+  )
+ (testNamedArgsInOrder
+  ((classname hello)
+   (groupfile
+    (("group.stg" {| 
 f(x,y) ::= "<x><y>"
 g() ::= "<f(x={a},y={b})>"
-|})))
- (output "ab")
-)
-)
-("testNamedArgsNotAllowInIndirectInclude"
-((classname hello)
- (template_s {foo||foo})
- (attributes ())
- (groupfile (("group.stg"
-                {| 
+|}))
+    )
+   (runs (((input "<g()>") (output ab))))
+   )
+  )
+ (testNamedArgsNotAllowInIndirectInclude
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 f(x,y) ::= "<x><y>"
 g(name) ::= "<(name)(x={a},y={b})>"
-|})))
- (output "")
- (errors {bar|group.stg 3:22: '=' came as a complete surprise to me
-|bar})
-)
-)
-("testNamedArgsOutOfOrder"
-((classname hello)
- (template_s {foo|<g()>|foo})
- (attributes ())
- (groupfile (("group.stg"
-                {| 
+|}
+      ))
+    )
+   (runs (((input ""))))
+   (errors {|group.stg 3:22: '=' came as a complete surprise to me
+|})
+   )
+  )
+ (testNamedArgsOutOfOrder
+  ((classname hello)
+   (groupfile
+    (("group.stg" {| 
 f(x,y) ::= "<x><y>"
 g() ::= "<f(y={b},x={a})>"
-|})))
- (output "ab")
-)
-)
-("testSimpleDefaultArg"
-((classname hello)
- (template_s {foo|<a()>|foo})
- (attributes ())
-     (groupfiles (
-     ("./b.st" {|
+|}))
+    )
+   (runs (((input "<g()>") (output ab))))
+   )
+  )
+ (testSimpleDefaultArg
+  ((classname hello)
+   (groupfiles
+    (("./b.st" {|
 b(x="foo") ::= "<x>"
 |})
-("./a.st"
-                {| 
+     ("./a.st" {| 
 a() ::= << <b()> >>
 |})
-    ))
- (output " foo ")
-)
-)
-("testSubdir3"
-((classname hello)
- (template_s {foo|<subdir/b()>|foo})
- (attributes ())
-     (groupfiles (
-     ("subdir/b.st" {|
+     )
+    )
+   (runs (((input "<a()>") (output " foo "))))
+   )
+  )
+ (testSubdir3
+  ((classname hello)
+   (groupfiles
+    (("subdir/b.st" {|
+b() ::= "bar"
+|}) ("./a.st" {| 
+a(x) ::= <<foo>>
+|}))
+    )
+   (runs (((input "<subdir/b()>") (output bar))))
+   )
+  )
+ (testSubSubdir
+  ((classname hello)
+   (groupfiles
+    (("sub1/sub2/b.st" {|
 b() ::= "bar"
 |})
-("./a.st" 
-                {| 
+     ("./a.st" {| 
 a(x) ::= <<foo>>
 |})
-    ))
- (output "bar")
-)
-)
-("testSubSubdir"
-((classname hello)
- (template_s {foo|<"":a()></sub1/sub2/b()>|foo})
- (attributes ())
-     (groupfiles (
-     ("sub1/sub2/b.st" {|
-b() ::= "bar"
-|})
-("./a.st" 
-                {| 
-a(x) ::= <<foo>>
-|})
-    ))
- (output "foobar")
-)
-)
-("testSubtemplateAsDefaultArgSeesOtherArgs"
-((classname hello)
- (template_s {foo|<t(x)>|foo})
- (attributes ((x (SV (STRING a)))))
-   (groupfile (("group.stg"
-                {| 
+     )
+    )
+   (runs (((input "<\"\":a()></sub1/sub2/b()>") (output foobar))))
+   )
+  )
+ (testSubtemplateAsDefaultArgSeesOtherArgs
+  ((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
 t(x,y={<x:{s|<s><z>}>},z="foo") ::= <<
 x: <x>
 y: <y>
 >>
-|})))
- (output "x: a\ny: afoo")
-)
-)
-("testTrueFalseArgs"
-((classname hello)
- (template_s {foo|<g()>|foo})
- (attributes ())
-   (groupfile (("group.stg"
-                {| 
+|}
+      ))
+    )
+   (runs
+    (((input "<t(x)>")
+      (output {|x: a
+y: afoo|})
+      (attributes ((x (SV (STRING a)))))
+      ))
+    )
+   )
+  )
+ (testTrueFalseArgs
+  ((classname hello)
+   (groupfile
+    (("group.stg" {| 
 f(x,y) ::= "<x><y>"
 g() ::= "<f(true,{a})>"
-|})))
- (output "truea")
-)
-)
-("testUnknownNamedArg"
-((classname hello)
- (template_s {foo|<g()>|foo})
- (attributes ())
- (groupfile (("group.stg"
-                {| 
+|}))
+    )
+   (runs (((input "<g()>") (output truea))))
+   )
+  )
+ (testUnknownNamedArg
+  ((classname hello)
+   (groupfile
+    (("group.stg" {| 
 f(x,y) ::= "<x><y>"
 g() ::= "<f(x={a},z={b})>"
-|})))
- (output "a")
- (errors {bar|context [anonymous /g] 1:1 attribute z isn't defined
-|bar})
-)
-)
-
-("testGroupFileImport2"
-((classname hello)
- (template_s {foo|<"":a()>|foo})
- (attributes ())
- (groupfile (("./group1.stg"
-                {| 
+|}))
+    )
+   (runs (((input "<g()>") (output a))))
+   (errors {|context [anonymous /g] 1:1 attribute z isn't defined
+|})
+   )
+  )
+ (testGroupFileImport2
+  ((classname hello)
+   (groupfile
+    (("./group1.stg" {| 
 import "group2.stg"
 a(x) ::= <<
 foo<b()>
 >>
-|})))
-   (groupfiles (
-     ("./group2.stg" {|
+|}))
+    )
+   (groupfiles (("./group2.stg" {|
 b() ::= "bar"
-|})
-    ))
- (output "foobar")
- (errors "")
-)
-)
-("testGroupFileImport"
-((classname hello)
- (template_s {foo|<b()>|foo})
- (attributes ())
- (groupfile (("./group1.stg"
-                {| 
+|})))
+   (runs (((input "<\"\":a()>") (output foobar))))
+   )
+  )
+ (testGroupFileImport
+  ((classname hello)
+   (groupfile
+    (("./group1.stg" {| 
 import "group2.stg"
 a(x) ::= <<
 foo<b()>
 >>
-|})))
-   (groupfiles (
-     ("./group2.stg" {|
+|}))
+    )
+   (groupfiles (("./group2.stg" {|
 b() ::= "bar"
-|})
-    ))
- (output "bar")
- (errors "")
-)
-)
-("testLineBreakInGroup2"
-((classname hello)
- (template_s {foo|<t()>|foo})
- (attributes ())
- (groupfile (("t.stg"
-                {| 
+|})))
+   (runs (((input "<b()>") (output bar))))
+   )
+  )
+ (testLineBreakInGroup2
+  ((classname hello)
+   (groupfile (("t.stg" {| 
 t() ::= <<
 Foo <\\>       
   	  bar
 >>
 
 |})))
- (output "Foo bar")
-)
-)
-("testLineBreakInGroup"
-((classname hello)
- (template_s {foo|<t()>|foo})
- (attributes ())
- (groupfile (("t.stg"
-                {| 
+   (runs (((input "<t()>") (output "Foo bar"))))
+   )
+  )
+ (testLineBreakInGroup
+  ((classname hello)
+   (groupfile (("t.stg" {| 
 t() ::= <<
 Foo <\\>
   	  bar
 >>
 
 |})))
- (output "Foo bar")
-)
-)
-("testLineBreakMissingTrailingNewline"
-((classname hello)
- (template_s {foo|<a(x)>|foo})
- (attributes ((x (SV (STRING parrt)))))
- (groupfile (("t.stg" "a(x) ::= <<<\\\\>\r\n>>")))
- (output "")
- (errors {bar|t.stg 1:15: Missing newline after newline escape <\\>
-|bar})
-)
-)
-("testLineBreakWithScarfedTrailingNewline"
-((classname hello)
- (template_s {foo|<a(x)>|foo})
- (attributes ((x (SV (STRING parrt)))))
- (groupfile (("t.stg" "a(x) ::= <<<\\\\>\r\n>>")))
- (output "")
- (errors {bar|t.stg 1:15: Missing newline after newline escape <\\>
-|bar})
-)
-)
-)
-
-
+   (runs (((input "<t()>") (output "Foo bar"))))
+   )
+  )
+ (testLineBreakMissingTrailingNewline
+  ((classname hello)
+   (groupfile (("t.stg" {|a(x) ::= <<<\\>
+>>|})))
+   (runs (((input "<a(x)>") (attributes ((x (SV (STRING parrt))))))))
+   (errors {|t.stg 1:15: Missing newline after newline escape <\\>
+|})
+   )
+  )
+ (testLineBreakWithScarfedTrailingNewline
+  ((classname hello)
+   (groupfile (("t.stg" {|a(x) ::= <<<\\>
+>>|})))
+   (runs (((input "<a(x)>") (attributes ((x (SV (STRING parrt))))))))
+   (errors {|t.stg 1:15: Missing newline after newline escape <\\>
+|})
+   )
+  )
+ )

@@ -5,17 +5,50 @@ open Ppxutil
 
 open Eval
 
+type run_t = {
+    input : string
+  ; output : string
+    [@yojson.default ""]
+    [@located_yojson.default ""]
+    [@located_sexp.default ""]
+    [@located_sexp.sexp_drop_default (=)]
+  ; attributes : Environ.frame_t
+    [@yojson.default []]
+    [@located_yojson.default []]
+    [@located_sexp.default []]
+    [@located_sexp.sexp_drop_default (=)]
+  }
+[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+
 type t =
   {
     classname : string
-  ; template_s : string
-  ; attributes : Environ.frame_t
-  ; groupfile : (string * string) option[@yojson.default None][@located_yojson.default None][@located_sexp.default None]
-  ; groupfiles : (string * string) list[@yojson.default []][@located_yojson.default []][@located_sexp.default []]
-  ; output : string
-  ; errors : string[@yojson.default ""][@located_yojson.default ""][@located_sexp.default ""]
-  ; errorsContains : string[@yojson.default ""][@located_yojson.default ""][@located_sexp.default ""]
-  ; indent : bool[@yojson.default true][@located_yojson.default true][@located_sexp.default true]
+  ; groupfile : (string * string) option
+    [@yojson.default None]
+    [@located_yojson.default None]
+    [@located_sexp.default None]
+    [@located_sexp.sexp_drop_default (=)]
+  ; groupfiles : (string * string) list
+    [@yojson.default []]
+    [@located_yojson.default []]
+    [@located_sexp.default []]
+    [@located_sexp.sexp_drop_default (=)]
+  ; indent : bool
+    [@yojson.default true]
+    [@located_yojson.default true]
+    [@located_sexp.default true]
+    [@located_sexp.sexp_drop_default (=)]
+  ; runs : run_t list
+  ; errors : string
+    [@yojson.default ""]
+    [@located_yojson.default ""]
+    [@located_sexp.default ""]
+    [@located_sexp.sexp_drop_default (=)]
+  ; errorsContains : string
+    [@yojson.default ""]
+    [@located_yojson.default ""]
+    [@located_sexp.default ""]
+    [@located_sexp.sexp_drop_default (=)]
   }
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
 
@@ -85,72 +118,82 @@ open Value
 open Environ
 let eg1 = {
     classname = "hello"
-  ; template_s = "<{Hello, <name>!}>"
-  ; attributes = [
-      ("name", SV (STRING "World"))
-    ]
   ; groupfile = Some ("a.stg"," d() ::= << >> ")
   ; groupfiles = []
-  ; output = "Hello, World!"
+  ; runs = [{
+               input = "<{Hello, <name>!}>"
+             ; output = "Hello, World!"
+             ; attributes = [
+                 ("name", SV (STRING "World"))
+               ]
+           }]
+  ; indent = false
   ; errors = ""
   ; errorsContains = ""
-  ; indent = false
   }
 
 let eg2 = {
     classname = "hello"
-  ; template_s = "<{Hello, <name>!}>"
-  ; attributes = [
-        ("name", MV [STRING "World1"; STRING "World2"])
-                 ]
   ; groupfile = None
   ; groupfiles = []
-  ; output = "Hello, World!"
+  ; runs = [{
+               input = "<{Hello, <name>!}>"
+             ; output = "Hello, World!"
+             ; attributes = [
+                 ("name", MV [STRING "World1"; STRING "World2"])
+               ]
+           }]
+  ; indent = false
   ; errors = ""
   ; errorsContains = ""
-  ; indent = false
   }
 
 let eg3 = {
     classname = "hello"
-  ; template_s = "<{Hello, <name>!}>"
-  ; attributes = [
-      ("name", SV NULL)
-    ]
   ; groupfile = None
   ; groupfiles = []
-  ; output = "Hello, World!"
+  ; runs = [{
+               input = "<{Hello, <name>!}>"
+             ; output = "Hello, World!"
+             ; attributes = [
+                 ("name", SV NULL)
+               ]
+           }]
+  ; indent = false
   ; errors = ""
   ; errorsContains = ""
-  ; indent = false
   }
 
 let eg4 = {
     classname = "hello"
-  ; template_s = "<{Hello, <name>!}>"
-  ; attributes = [
-        ("name", SV (LIST [STRING "World1"; STRING "World2"]))
-                 ]
   ; groupfile = None
   ; groupfiles = []
-  ; output = "Hello, World!"
+  ; runs = [{
+               input = "<{Hello, <name>!}>"
+             ; output = "Hello, World!"
+             ; attributes = [
+                 ("name", SV (LIST [STRING "World1"; STRING "World2"]))
+               ]
+           }]
+  ; indent = false
   ; errors = ""
   ; errorsContains = ""
-  ; indent = false
   }
 
 let eg4 = {
     classname = "hello"
-  ; template_s = "<{Hello, <name>!}>"
-  ; attributes = [
-        ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))
-                 ]
   ; groupfile = None
   ; groupfiles = []
-  ; output = "Hello, World!"
+  ; runs = [{
+               input = "<{Hello, <name>!}>"
+             ; output = "Hello, World!"
+             ; attributes = [
+                 ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))
+               ]
+           }]
+  ; indent = false
   ; errors = ""
   ; errorsContains = ""
-  ; indent = false
   }
 
 let rec fmt_value pps v =
@@ -193,11 +236,6 @@ let emit pps th =
        Fmt.(pf pps "STGroupFile group = new STGroupFile(%a);\ngroup.load();\n"
               Dump.string fname)
   in
-  let stconstructor pps th =
-    if hasgroup then
-       Fmt.(pf pps "new ST(group, %a)" Dump.string th.template_s)
-    else
-      Fmt.(pf pps "new ST(%a)" Dump.string th.template_s) in
   let render_txt =
     if th.indent then
       "String output = st.render();"
@@ -207,7 +245,35 @@ let emit pps th =
         st.write(w);
         String output = sw.toString();"
   in
-
+  let strun pps r =
+    if hasgroup then
+      Fmt.(pf pps {|
+{
+ST st = new ST(group, %a) ;
+%a
+%s
+System.out.println("<RoNnIe|"+output+"|RaYgUn>") ;
+System.out.println("====") ;
+}
+|}
+           Dump.string r.input
+           (list add_binding) r.attributes
+           render_txt
+      )
+    else
+      Fmt.(pf pps {|
+{
+ST st = new ST(%a) ;
+%a
+%s
+System.out.println("<RoNnIe|"+output+"|RaYgUn>") ;
+System.out.println("====") ;
+}
+|}
+           Dump.string r.input
+           (list add_binding) r.attributes
+           render_txt
+      ) in
   Fmt.(pf pps {|
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -219,16 +285,11 @@ import org.stringtemplate.v4.*;
 public class %s {
     public static void main(String[] args) throws Exception {
         %a
-	ST st = %a;
 	%a
-	%s
-	System.out.println("<RoNnIe|"+output+"|RaYgUn>");
     }
 }
 |}
          th.classname
          stgroup th
-         stconstructor th
-         (list add_binding) th.attributes
-         render_txt
+         (list strun) th.runs
   )

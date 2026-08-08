@@ -23,8 +23,8 @@ ML=\
 	pa_st.ml st_ops.ml \
 	pa_stg.ml \
 	eval.ml \
-	testharness.ml
-
+	testharness.ml old_testharness.ml \
+	sexpio.ml
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)

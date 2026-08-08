@@ -100,10 +100,33 @@ open Pa_ppx_located_sexp ;;
 let prharness h =
   Fmt.(pf stdout "%a" Altsexp.pp_hum Testharness.(h |> located_sexp_of_t));;
 
+let prharness' h =
+  Fmt.(pf stdout "%a" Sexpio.Printing.pp_hum Testharness.(h |> located_sexp_of_t));;
+(*
 prharness Testharness.eg1 ;;
 prharness Testharness.eg2 ;;
 prharness Testharness.eg3 ;;
 prharness Testharness.eg4 ;;
+ *)
+
+"fixtures/TestCoreBasics.sexp" |> Altsexp.load_sexp |> Sexpio.Printing.to_string |> Bos.OS.File.write (Fpath.v "x1.sexp") ;;
+let s1 = "fixtures/TestCoreBasics.sexp" |> Altsexp.load_sexp ;;
+let s2 = "x1.sexp" |> Altsexp.load_sexp;;
+Sexp.ErasingLoc.equal s1 s2;;
+
+let upgrade_multi fromfile tofile =
+  Old_testharness.(Multi.load_sexp ~file:fromfile |> Multi.upgrade) |> Testharness.Multi.located_sexp_of_t |> Sexpio.Printing.to_string |> Bos.OS.File.write (Fpath.v tofile) ;;
+
+let upgrade_single fromfile tofile =
+  Old_testharness.(load_sexp ~file:fromfile |> upgrade) |> Testharness.located_sexp_of_t |> Sexpio.Printing.to_string |> Bos.OS.File.write (Fpath.v tofile) ;;
+
+upgrade_single "fixtures/st4-tests/testIndentBetweenLeftJustifiedLiterals.sexp" "fixtures/st4-tests.NEW/testIndentBetweenLeftJustifiedLiterals.sexp" ;;
+upgrade_single "fixtures/st4-tests/testIndentInFrontOfTwoExpr.sexp" "fixtures/st4-tests.NEW/testIndentInFrontOfTwoExpr.sexp" ;;
+upgrade_single "fixtures/st4-tests/testIndentOfMultilineAttributes.sexp" "fixtures/st4-tests.NEW/testIndentOfMultilineAttributes.sexp" ;;
+upgrade_single "fixtures/st4-tests/testIndentOfMultipleBlankLines.sexp" "fixtures/st4-tests.NEW/testIndentOfMultipleBlankLines.sexp" ;;
+upgrade_single "fixtures/st4-tests/testNestedIndent.sexp" "fixtures/st4-tests.NEW/testNestedIndent.sexp" ;;
+upgrade_single "fixtures/st4-tests/testSimpleIndentOfAttributeList.sexp" "fixtures/st4-tests.NEW/testSimpleIndentOfAttributeList.sexp" ;;
+
 
 (*
 ;;; Local Variables: ***

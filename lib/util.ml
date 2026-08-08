@@ -329,6 +329,6 @@ let unescape_string s =
 
 in unrec 0
 
-let string_contains ~pat subj =
+let string_contains ~pat =
   let rex = Pcre2.regexp ~flags:[] ("\\Q"^pat^"\\E") in
-  Pcre2.pmatch ~rex subj
+  Pcre2.pmatch ~rex

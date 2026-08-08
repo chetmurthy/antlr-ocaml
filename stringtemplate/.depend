@@ -1,4 +1,4 @@
-lexerBase.cmo st_util.cmo l_stg_constants.cmo l_st_constants.cmo actionFuns_st.cmo l_st.cmo l_stg.cmo st_types.cmo stg_types.cmo camlp5_adapter.cmo pa_st.cmo st_ops.cmo pa_stg.cmo eval.cmo testharness.cmo lexerBase.cmi st_util.cmi l_stg_constants.cmi l_st_constants.cmi actionFuns_st.cmi l_st.cmi l_stg.cmi st_types.cmi stg_types.cmi camlp5_adapter.cmi pa_st.cmi st_ops.cmi pa_stg.cmi eval.cmi testharness.cmi lexerBase.cmx st_util.cmx l_stg_constants.cmx l_st_constants.cmx actionFuns_st.cmx l_st.cmx l_stg.cmx st_types.cmx stg_types.cmx camlp5_adapter.cmx pa_st.cmx st_ops.cmx pa_stg.cmx eval.cmx testharness.cmx: ../local-install/lib/antlr/META
+lexerBase.cmo st_util.cmo l_stg_constants.cmo l_st_constants.cmo actionFuns_st.cmo l_st.cmo l_stg.cmo st_types.cmo stg_types.cmo camlp5_adapter.cmo pa_st.cmo st_ops.cmo pa_stg.cmo eval.cmo testharness.cmo old_testharness.cmo sexpio.cmo lexerBase.cmi st_util.cmi l_stg_constants.cmi l_st_constants.cmi actionFuns_st.cmi l_st.cmi l_stg.cmi st_types.cmi stg_types.cmi camlp5_adapter.cmi pa_st.cmi st_ops.cmi pa_stg.cmi eval.cmi testharness.cmi old_testharness.cmi sexpio.cmi lexerBase.cmx st_util.cmx l_stg_constants.cmx l_st_constants.cmx actionFuns_st.cmx l_st.cmx l_stg.cmx st_types.cmx stg_types.cmx camlp5_adapter.cmx pa_st.cmx st_ops.cmx pa_stg.cmx eval.cmx testharness.cmx old_testharness.cmx sexpio.cmx: ../local-install/lib/antlr/META
 lexerBase.cmo :
 lexerBase.cmx :
 st_util.cmo :
@@ -57,5 +57,13 @@ testharness.cmo : \
     eval.cmo
 testharness.cmx : \
     eval.cmx
+old_testharness.cmo : \
+    testharness.cmo \
+    eval.cmo
+old_testharness.cmx : \
+    testharness.cmx \
+    eval.cmx
+sexpio.cmo :
+sexpio.cmx :
 mk_meta.cmo :
 mk_meta.cmx :
