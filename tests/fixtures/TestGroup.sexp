@@ -216,7 +216,6 @@ stat(name,x=true,y=false) ::= "<name>; <x> <y>"
 ((classname hello)
  (template_s {foo|<a()>|foo})
  (attributes ())
- (groupfile ())
    (groupfiles (
      ("./group.stg" {|
 "b() ::= "group file b"
@@ -366,8 +365,7 @@ s(x,y={<(x)>}) ::= "<x><y>"
 ((classname hello)
  (template_s {foo|</group/b()>|foo})
  (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
-   (groupfile ())
-   (groupfiles (
+     (groupfiles (
      ("./group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
@@ -384,8 +382,7 @@ a(x) ::= <<foo>>
 ((classname hello)
  (template_s {foo|</group/c()>|foo})
  (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
-   (groupfile ())
-   (groupfiles (
+     (groupfiles (
      ("./group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
@@ -402,8 +399,7 @@ a(x) ::= <<foo>>
 ((classname hello)
  (template_s {foo|<"":a()>|foo})
  (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
-   (groupfile ())
-   (groupfiles (
+     (groupfiles (
      ("./group.st" {|
 b() ::= "bar"
 c() ::= "duh"
@@ -420,8 +416,7 @@ a(x) ::= <<foo>>
 ((classname hello)
  (template_s {foo|<"":a()><subdir/group/b()><subdir/group/c()>|foo})
  (attributes ())
-   (groupfile ())
-   (groupfiles (
+     (groupfiles (
      ("subdir/group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
@@ -490,8 +485,7 @@ g() ::= "<f(y={b},x={a})>"
 ((classname hello)
  (template_s {foo|<a()>|foo})
  (attributes ())
-   (groupfile ())
-   (groupfiles (
+     (groupfiles (
      ("./b.st" {|
 b(x="foo") ::= "<x>"
 |})
@@ -507,8 +501,7 @@ a() ::= << <b()> >>
 ((classname hello)
  (template_s {foo|<subdir/b()>|foo})
  (attributes ())
-   (groupfile ())
-   (groupfiles (
+     (groupfiles (
      ("subdir/b.st" {|
 b() ::= "bar"
 |})
@@ -524,8 +517,7 @@ a(x) ::= <<foo>>
 ((classname hello)
  (template_s {foo|<"":a()></sub1/sub2/b()>|foo})
  (attributes ())
-   (groupfile ())
-   (groupfiles (
+     (groupfiles (
      ("sub1/sub2/b.st" {|
 b() ::= "bar"
 |})

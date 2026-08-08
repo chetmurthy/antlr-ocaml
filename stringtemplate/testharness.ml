@@ -10,7 +10,7 @@ type t =
     classname : string
   ; template_s : string
   ; attributes : Environ.frame_t
-  ; groupfile : (string * string) option
+  ; groupfile : (string * string) option[@yojson.default None][@located_yojson.default None][@located_sexp.default None]
   ; groupfiles : (string * string) list[@yojson.default []][@located_yojson.default []][@located_sexp.default []]
   ; output : string
   ; errors : string[@yojson.default ""][@located_yojson.default ""][@located_sexp.default ""]

@@ -1,14 +1,12 @@
 (
  ("hello"
   ((classname hello) (template_s "<{Hello, <name>!}>")
-   (attributes ((name (SV (STRING World))))) (groupfile ())
-   (output "Hello, World!"))
+   (attributes ((name (SV (STRING World)))))   (output "Hello, World!"))
   )
  ("testNullAttr"
   ((classname testNullAttr)
    (template_s {|hi <name>!|})
    (attributes ())
-   (groupfile ())
    (output {bar|hi !|bar})
    (errors "context [anonymous] 1:4 attribute name isn't defined\n")
    )
@@ -17,19 +15,16 @@
   ((classname hello)
    (template_s {|hi <name>!|})
    (attributes ((name (MV ((LIST ((STRING Ter) (STRING Tom))) (STRING Sumana))))))
-   (groupfile ())
    (output {bar|hi TerTomSumana!|bar})))
  ("testAttr"
   ((classname hello)
    (template_s {|hi <name>!|})
    (attributes ((name (SV (STRING "Ter")))))
-   (groupfile ())
    (output {bar|hi Ter!|bar}))
   )
  ("testBoolean1"
   ((classname hello) (template_s "<{Hello, <name>!}>")
-   (attributes ((name (SV (BOOL true))))) (groupfile ())
-   (output {bar|Hello, true!|bar}))
+   (attributes ((name (SV (BOOL true)))))   (output {bar|Hello, true!|bar}))
   )
  ("testChainAttr"
   ((classname hello)
@@ -39,7 +34,6 @@
      (x (SV (STRING "1")))
      )
     )
-   (groupfile ())
    (output {bar|1:TerTom!|bar}))
   )
  ("testSetUnknownAttr"
@@ -101,14 +95,12 @@ foo(x) ::= "blech <x>" |})))
   ((classname hello)
    (template_s "<foo:{f | <f>}>")
    (attributes ((foo (SV (DICT ((a (STRING b)) (c (STRING d))))))))
-   (groupfile ())
    (output {bar|ac|bar}))
   )
  ("testNullAttrProp"
   ((classname hello)
    (template_s {|<u.id>: <u.name>|})
    (attributes ())
-   (groupfile ())
    (output {bar|: |bar})
    (errors {bar|context [anonymous] 1:1 attribute u isn't defined
 context [anonymous] 1:9 attribute u isn't defined
@@ -119,7 +111,6 @@ context [anonymous] 1:9 attribute u isn't defined
   ((classname testNullAttr)
    (template_s {|hi <name>!|})
    (attributes ())
-   (groupfile ())
    (output {bar|hi !|bar})
    (errors {bar|context [anonymous] 1:4 attribute name isn't defined
 |bar})
@@ -416,14 +407,12 @@ b(x,y={99}) ::= "<x><y>"
  (template_s "<if(name)>works<endif>")
  (attributes ((name (SV (STRING Ter)))
              ))
- (groupfile ())
  (output "works"))
 )
 ("testCondParens"
 ((classname hello)
  (template_s "<if(!(x||y)&&!z)>works<endif>")
  (attributes ())
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:6 attribute x isn't defined
 context [anonymous] 1:9 attribute y isn't defined
@@ -435,7 +424,6 @@ context [anonymous] 1:14 attribute z isn't defined
 ((classname hello)
  (template_s "<if(x)>fail1<elseif(y)>fail2<elseif(z)>works<else>fail3<endif>")
  (attributes ((z (SV (STRING blort)))))
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:4 attribute x isn't defined
 context [anonymous] 1:20 attribute y isn't defined
@@ -446,7 +434,6 @@ context [anonymous] 1:20 attribute y isn't defined
 ((classname hello)
  (template_s "<if(x)><elseif(y)><elseif(z)>works<else><endif>")
  (attributes ((z (SV (STRING blort)))))
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:4 attribute x isn't defined
 context [anonymous] 1:15 attribute y isn't defined
@@ -458,7 +445,6 @@ context [anonymous] 1:15 attribute y isn't defined
  (template_s "<if(x)>fail<elseif(name)><endif>")
  (attributes ((name (SV (STRING Ter)))
              ))
- (groupfile ())
  (output "")
  (errors {bar|context [anonymous] 1:4 attribute x isn't defined
 |bar})
@@ -468,14 +454,12 @@ context [anonymous] 1:15 attribute y isn't defined
 ((classname hello)
  (template_s "<if(name)>works<endif>")
  (attributes ((name (SV NULL))))
- (groupfile ())
  (output ""))
 )
 ("testFalseCond"
 ((classname hello)
  (template_s "<if(name)>works<endif>")
  (attributes ())
- (groupfile ())
  (output "")
  (errors {bar|context [anonymous] 1:4 attribute name isn't defined
 |bar})
@@ -503,7 +487,6 @@ bar
 ((classname hello)
  (template_s "<if(!name)>works<endif>")
  (attributes ())
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:5 attribute name isn't defined
 |bar})
@@ -513,7 +496,6 @@ bar
 ((classname hello)
  (template_s "<if(!name)>works<endif>")
  (attributes ((name (SV (STRING Ter)))))
- (groupfile ())
  (output ""))
 )
 ("testParensInConditonal2"
@@ -524,7 +506,6 @@ bar
               (c (SV (BOOL true)))
               (d (SV (BOOL true)))
              ))
- (groupfile ())
  (output "works"))
 )
 ("testParensInConditonal"
@@ -535,14 +516,12 @@ bar
               (c (SV (BOOL true)))
               (d (SV (BOOL true)))
              ))
- (groupfile ())
  (output "works"))
 )
 ("testElseIfAllExprFalse"
 ((classname hello)
  (template_s "<if(name)>fail<elseif(id)>fail<else>works<endif>")
  (attributes ())
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:4 attribute name isn't defined
 context [anonymous] 1:22 attribute id isn't defined
@@ -553,7 +532,6 @@ context [anonymous] 1:22 attribute id isn't defined
 ((classname hello)
  (template_s "<if(name)>fail<elseif(id)>fail<endif>")
  (attributes ())
- (groupfile ())
  (output "")
  (errors {bar|context [anonymous] 1:4 attribute name isn't defined
 context [anonymous] 1:22 attribute id isn't defined
@@ -565,7 +543,6 @@ context [anonymous] 1:22 attribute id isn't defined
  (template_s "<if(name)>fail<elseif(id)>works<else>fail<endif>")
  (attributes ((id (SV (STRING "2DF3DF")))
              ))
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:4 attribute name isn't defined
 |bar})
@@ -575,7 +552,6 @@ context [anonymous] 1:22 attribute id isn't defined
 ((classname hello)
  (template_s "<if(name)>fail<else>works<endif>")
  (attributes ())
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:4 attribute name isn't defined
 |bar})
@@ -585,7 +561,6 @@ context [anonymous] 1:22 attribute id isn't defined
 ((classname hello)
  (template_s "<if(name||notThere)>works<else>fail<endif>")
  (attributes ((name (SV (STRING Ter)))))
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:10 attribute notThere isn't defined
 |bar})
@@ -596,14 +571,12 @@ context [anonymous] 1:22 attribute id isn't defined
  (template_s "<if(name)>works<else>fail<endif>")
  (attributes ((name (SV (STRING Ter)))
              ))
- (groupfile ())
  (output "works"))
 )
 ("testAndNot"
 ((classname hello)
  (template_s "<if(name&&!notThere)>works<else>fail<endif>")
  (attributes ((name (SV (STRING Ter)))))
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:11 attribute notThere isn't defined
 |bar})
@@ -613,7 +586,6 @@ context [anonymous] 1:22 attribute id isn't defined
 ((classname hello)
  (template_s "<if(name&&notThere)>fail<else>works<endif>")
  (attributes ((name (SV (STRING Ter)))))
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:10 attribute notThere isn't defined
 |bar})
@@ -623,35 +595,30 @@ context [anonymous] 1:22 attribute id isn't defined
 ((classname hello)
  (template_s "Foo <\\n><\\t> bar\n")
  (attributes ())
- (groupfile ())
  (output "Foo \n\t bar\n"))
 )
 ("testCharLiterals3"
 ((classname hello)
  (template_s "Foo<\\ >bar<\\n>")
  (attributes ())
- (groupfile ())
  (output "Foo bar\n"))
 )
 ("testCharLiterals"
 ((classname hello)
  (template_s "Foo <\\n><\\n><\\t> bar\n")
  (attributes ())
- (groupfile ())
  (output "Foo \n\n\t bar\n"))
 )
 ("testMapConditionAndEscapeInside"
 ((classname hello)
  (template_s "<if(m.name)>works \\\\<endif>")
  (attributes ((m (SV (DICT ((name (STRING Ter))))))))
- (groupfile ())
  (output "works \\"))
 )
 ("testOr"
 ((classname hello)
  (template_s "<if(name||notThere)>works<else>fail<endif>")
  (attributes ((name (SV (STRING Ter)))))
- (groupfile ())
  (output "works")
  (errors {bar|context [anonymous] 1:10 attribute notThere isn't defined
 |bar})
@@ -701,28 +668,24 @@ test(names) ::= "<names:{n | case <n>}; separator=\", \">"
 ((classname hello)
  (template_s "<{name\n}>")
  (attributes ())
- (groupfile ())
  (output "name\n"))
 )
 ("testUnicodeLiterals2"
 ((classname hello)
  (template_s "Foo <\\uFEA5><\\n><\\u00C2> bar\n")
  (attributes ())
- (groupfile ())
  (output "Foo \u{fea5}\n\u{00C2} bar\n"))
 )
 ("testUnicodeLiterals3"
 ((classname hello)
  (template_s "Foo<\\ >bar<\\n>")
  (attributes ())
- (groupfile ())
  (output "Foo bar\n"))
 )
 ("testUnicodeLiterals"
 ((classname hello)
  (template_s "Foo <\\uFEA5><\\n><\\u00C2> bar\n")
  (attributes ())
- (groupfile ())
  (output "Foo \u{fea5}\n\u{00C2} bar\n"))
 )
 ("testEarlyEvalIndent"
