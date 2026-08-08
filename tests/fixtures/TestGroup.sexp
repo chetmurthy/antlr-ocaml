@@ -569,5 +569,97 @@ g() ::= "<f(x={a},z={b})>"
 |bar})
 )
 )
+
+("testGroupFileImport2"
+((classname hello)
+ (template_s {foo|<"":a()>|foo})
+ (attributes ())
+ (groupfile (("./group1.stg"
+                {| 
+import "group2.stg"
+a(x) ::= <<
+foo<b()>
+>>
+|})))
+   (groupfiles (
+     ("./group2.stg" {|
+b() ::= "bar"
+|})
+    ))
+ (output "foobar")
+ (errors "")
 )
+)
+("testGroupFileImport"
+((classname hello)
+ (template_s {foo|<b()>|foo})
+ (attributes ())
+ (groupfile (("./group1.stg"
+                {| 
+import "group2.stg"
+a(x) ::= <<
+foo<b()>
+>>
+|})))
+   (groupfiles (
+     ("./group2.stg" {|
+b() ::= "bar"
+|})
+    ))
+ (output "bar")
+ (errors "")
+)
+)
+("testLineBreakInGroup2"
+((classname hello)
+ (template_s {foo|<t()>|foo})
+ (attributes ())
+ (groupfile (("t.stg"
+                {| 
+t() ::= <<
+Foo <\\>       
+  	  bar
+>>
+
+|})))
+ (output "Foo bar")
+)
+)
+("testLineBreakInGroup"
+((classname hello)
+ (template_s {foo|<t()>|foo})
+ (attributes ())
+ (groupfile (("t.stg"
+                {| 
+t() ::= <<
+Foo <\\>
+  	  bar
+>>
+
+|})))
+ (output "Foo bar")
+)
+)
+("testLineBreakMissingTrailingNewline"
+((classname hello)
+ (template_s {foo|<a(x)>|foo})
+ (attributes ((x (SV (STRING parrt)))))
+ (groupfile (("t.stg" "a(x) ::= <<<\\\\>\r\n>>")))
+ (output "")
+ (errors {bar|t.stg 1:15: Missing newline after newline escape <\\>
+|bar})
+)
+)
+("testLineBreakWithScarfedTrailingNewline"
+((classname hello)
+ (template_s {foo|<a(x)>|foo})
+ (attributes ((x (SV (STRING parrt)))))
+ (groupfile (("t.stg" "a(x) ::= <<<\\\\>\r\n>>")))
+ (output "")
+ (errors {bar|t.stg 1:15: Missing newline after newline escape <\\>
+|bar})
+)
+)
+)
+
 
