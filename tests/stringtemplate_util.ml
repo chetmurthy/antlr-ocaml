@@ -94,8 +94,8 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
       Fmt.(failwithf "destdir %s must not already exist!" (Fpath.to_string destdir));
 
   destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg ;
-  th.groupfile
-  |> Option.map (fun (groupfilename, contents) ->
+  ((match th.groupfile with None -> [] | Some x -> [x])@th.groupfiles)
+  |> List.map (fun (groupfilename, contents) ->
          let full = Fpath.(append destdir (v groupfilename)) in
          let dir = Fpath.parent full in
          Bos.OS.Dir.create ~path:true ~mode:0o755 dir |> Rresult.R.failwith_error_msg ;
@@ -107,10 +107,13 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
 test:
 	java -cp classes:$(CLASSPATH) %s > output.NEW 2> errors.NEW && mv output.NEW output && mv errors.NEW errors
 
+test-manually:
+	java -cp classes:$(CLASSPATH) %s
+
 compile:
 	javac -d classes %s.java
 |}
-           th.classname th.classname) in
+           th.classname th.classname th.classname) in
   let makefile  = Fpath.(append destdir (v "Makefile")) in
   Bos.OS.File.write ~mode:0o644 makefile maketxt |> Rresult.R.failwith_error_msg ;
   

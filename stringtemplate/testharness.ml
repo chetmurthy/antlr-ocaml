@@ -11,6 +11,7 @@ type t =
   ; template_s : string
   ; attributes : Environ.frame_t
   ; groupfile : (string * string) option
+  ; groupfiles : (string * string) list[@yojson.default []][@located_yojson.default []][@located_sexp.default []]
   ; output : string
   ; errors : string[@yojson.default ""][@located_yojson.default ""][@located_sexp.default ""]
   ; indent : bool[@yojson.default true][@located_yojson.default true][@located_sexp.default true]
@@ -88,6 +89,7 @@ let eg1 = {
       ("name", SV (STRING "World"))
     ]
   ; groupfile = Some ("a.stg"," d() ::= << >> ")
+  ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
   ; indent = false
@@ -100,6 +102,7 @@ let eg2 = {
         ("name", MV [STRING "World1"; STRING "World2"])
                  ]
   ; groupfile = None
+  ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
   ; indent = false
@@ -112,6 +115,7 @@ let eg3 = {
       ("name", SV NULL)
     ]
   ; groupfile = None
+  ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
   ; indent = false
@@ -124,6 +128,7 @@ let eg4 = {
         ("name", SV (LIST [STRING "World1"; STRING "World2"]))
                  ]
   ; groupfile = None
+  ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
   ; indent = false
@@ -136,6 +141,7 @@ let eg4 = {
         ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))
                  ]
   ; groupfile = None
+  ; groupfiles = []
   ; output = "Hello, World!"
   ; errors = ""
   ; indent = false
@@ -170,16 +176,23 @@ let add_binding pps (n,rhs) =
        Fmt.(pf pps "%a" (list add1) l)
 
 let emit pps th =
+  let groupfiles = (match th.groupfile with None -> [] | Some x -> [x])@th.groupfiles in
+  let hasgroup = groupfiles <> [] in
+  let stgroup pps th =
+    match groupfiles with
+      [] -> Fmt.(pf pps "")
+    | [(fname, _)] when String.contains fname '/' ->
+       Fmt.(pf pps "STGroup group = new STGroupDir(\".\");\n")
+    | [(fname, _)] ->
+       Fmt.(pf pps "STGroupFile group = new STGroupFile(%a);\ngroup.load();\n"
+              Dump.string fname)
+    | _::_::_ ->
+       Fmt.(pf pps "STGroup group = new STGroupDir(\".\");\n") in
   let stconstructor pps th =
-    match th.groupfile with
-      None -> Fmt.(pf pps "new ST(%a)" Dump.string th.template_s)
-    | Some (fname, _) when String.contains fname '/' ->
-       Fmt.(pf pps "new ST(new STGroupDir(\".\"), %a)"
-              Dump.string th.template_s)
-    | Some (fname, _) ->
-       Fmt.(pf pps "new ST(new STGroupFile(%a), %a)"
-              Dump.string fname
-              Dump.string th.template_s) in
+    if hasgroup then
+       Fmt.(pf pps "new ST(group, %a)" Dump.string th.template_s)
+    else
+      Fmt.(pf pps "new ST(%a)" Dump.string th.template_s) in
   let render_txt =
     if th.indent then
       "String output = st.render();"
@@ -200,6 +213,7 @@ import org.stringtemplate.v4.*;
 
 public class %s {
     public static void main(String[] args) throws Exception {
+        %a
 	ST st = %a;
 	%a
 	%s
@@ -208,6 +222,7 @@ public class %s {
 }
 |}
          th.classname
+         stgroup th
          stconstructor th
          (list add_binding) th.attributes
          render_txt

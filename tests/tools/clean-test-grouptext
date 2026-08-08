@@ -5,6 +5,7 @@ use strict ;
 {
   my @l = <STDIN> ;
   my $txt = join('',@l);
+  $txt =~ s,"\s*\+\s*newline,\\n",gm ;
   $txt =~ s,^\s+",,gm ;
   $txt =~ s,\\n"\s*\+$,,gm ;
   $txt =~ s,\\n";,,m;
