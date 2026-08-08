@@ -179,15 +179,14 @@ let emit pps th =
   let groupfiles = (match th.groupfile with None -> [] | Some x -> [x])@th.groupfiles in
   let hasgroup = groupfiles <> [] in
   let stgroup pps th =
-    match groupfiles with
-      [] -> Fmt.(pf pps "")
-    | [(fname, _)] when String.contains fname '/' ->
+    match (th.groupfile, th.groupfiles) with
+      (None, []) -> Fmt.(pf pps "")
+    | (None, _::_) ->
        Fmt.(pf pps "STGroup group = new STGroupDir(\".\");\n")
-    | [(fname, _)] ->
+    | (Some(fname, _), _) ->
        Fmt.(pf pps "STGroupFile group = new STGroupFile(%a);\ngroup.load();\n"
               Dump.string fname)
-    | _::_::_ ->
-       Fmt.(pf pps "STGroup group = new STGroupDir(\".\");\n") in
+  in
   let stconstructor pps th =
     if hasgroup then
        Fmt.(pf pps "new ST(group, %a)" Dump.string th.template_s)

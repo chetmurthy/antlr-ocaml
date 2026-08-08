@@ -124,7 +124,7 @@ a(x) ::= <<foo>>
 ((classname hello)
  (template_s "<subdir/b()>")
  (attributes ())
-   (groupfile (("subdir/b.st" 
+   (groupfiles (("subdir/b.st" 
                 {| 
 
 b() ::= "bar"
@@ -137,7 +137,7 @@ b() ::= "bar"
 ((classname hello)
  (template_s "</subdir/b()>")
  (attributes ())
-   (groupfile (("subdir/b.st" 
+   (groupfiles (("subdir/b.st" 
                 {| 
 
 b() ::= "bar"
@@ -150,7 +150,7 @@ b() ::= "bar"
 ((classname hello)
  (template_s "<x:/subdir/a()>")
  (attributes ((x (SV (LIST ((STRING "a") (STRING "b")))))))
-   (groupfile (("subdir/a.st" 
+   (groupfiles (("subdir/a.st" 
                 {| 
 
 a(x) ::= "<x:{y|<y>}>"
@@ -163,7 +163,7 @@ a(x) ::= "<x:{y|<y>}>"
 ((classname hello)
  (template_s "</subdir/a(x)>")
  (attributes ((x (SV (LIST ((STRING "a") (STRING "b")))))))
-   (groupfile (("subdir/a.st" 
+   (groupfiles (("subdir/a.st" 
                 {| 
 
 a(x) ::= "<x:{y|<y>}>"
