@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -147,13 +147,13 @@ open Coll
 
 type _t =
   (string * string) list
-    [@@deriving yojson { exn = true }]
+    [@@deriving located_yojson { exn = true }]
 
 type t = (string, string) MHM.t
 
 let load file =
-  let j = Yojson.Safe.from_file file in
-  let l = j |> _t_of_yojson_exn in
+  let j = Pa_ppx_located_yojson.Json.JsonEOI.load ~file in
+  let l = j |> _t_of_located_yojson_exn in
   MHM.ofList 23 l
 
 let map t lhs =

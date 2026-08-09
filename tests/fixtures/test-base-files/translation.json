@@ -130,5 +130,7 @@
     ["{ print(\"SA3.3\") }",
      "output_string stdout \"SA3.3\\n\""],
     ["{ print(\"SA3.4\") }",
-     "output_string stdout \"SA3.4\\n\""]
+     "output_string stdout \"SA3.4\\n\""],
+    [{|{print("line %s:%s: '\\n' in string" % (self._tokenStartLine, self._tokenStartColumn), file=sys.stderr)}|},
+     {|Printf.fprintf stderr "line %d:%d: '\\n' in string\n" self._tokenStartLine self._tokenStartColumn|}]
 ]
