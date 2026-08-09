@@ -202,8 +202,11 @@ let rec fmt_value pps v =
   | STRING s -> Fmt.(pf pps "%a" Dump.string s)
   | INT s -> Fmt.(pf pps "%d" s)
   | BOOL b -> Fmt.(pf pps "%b" b)
-  | LIST l when List.for_all isSTRING l ->
-     let pp1 pps (STRING s) = Fmt.(pf pps "add(%a);" Dump.string s) in
+  | LIST l when List.for_all isSTRINGorNULL l ->
+     let pp1 pps = function
+         (STRING s) -> Fmt.(pf pps "add(%a);" Dump.string s)
+       | NULL -> Fmt.(pf pps "add(null);")
+     in
      Fmt.(pf pps "new ArrayList<String>() {{%a}}" (list pp1) l)
   | LIST l when List.for_all isINT l ->
      let pp1 pps (INT s) = Fmt.(pf pps "add(%d);" s) in

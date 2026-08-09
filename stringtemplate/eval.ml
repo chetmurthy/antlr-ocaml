@@ -14,6 +14,7 @@ type t =
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
 
 let isSTRING = function STRING _ -> true | _ -> false
+let isSTRINGorNULL = function (STRING _|NULL) -> true | _ -> false
 let isINT = function INT _ -> true | _ -> false
 
 end
