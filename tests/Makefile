@@ -184,6 +184,9 @@ sttest-multi::
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestGroup.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestIndentation.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestLists.sexp
+	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestNoNewlineTemplates.sexp
+	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestOptions.sexp
+	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestSubtemplates.sexp
 
 sttest-all: $(STJSONALL:.json=.STTEST) $(STSEXPALL:.sexp=.STTEST)
 
