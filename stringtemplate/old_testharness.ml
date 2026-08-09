@@ -59,6 +59,7 @@ let upgrade th =
              ; output = th.output
              ; attributes = th.attributes
            }]
+  ; ignore = false
   }
 
 module Multi = struct

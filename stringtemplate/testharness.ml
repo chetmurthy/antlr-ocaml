@@ -49,6 +49,11 @@ type t =
     [@located_yojson.default ""]
     [@located_sexp.default ""]
     [@located_sexp.sexp_drop_default (=)]
+  ; ignore : bool
+    [@yojson.default false]
+    [@located_yojson.default false]
+    [@located_sexp.default false]
+    [@located_sexp.sexp_drop_default (=)]
   }
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
 
@@ -130,6 +135,7 @@ let eg1 = {
   ; indent = false
   ; errors = ""
   ; errorsContains = ""
+  ; ignore = false
   }
 
 let eg2 = {
@@ -146,6 +152,7 @@ let eg2 = {
   ; indent = false
   ; errors = ""
   ; errorsContains = ""
+  ; ignore = false
   }
 
 let eg3 = {
@@ -162,6 +169,7 @@ let eg3 = {
   ; indent = false
   ; errors = ""
   ; errorsContains = ""
+  ; ignore = false
   }
 
 let eg4 = {
@@ -178,9 +186,10 @@ let eg4 = {
   ; indent = false
   ; errors = ""
   ; errorsContains = ""
+  ; ignore = false
   }
 
-let eg4 = {
+let eg5 = {
     classname = "hello"
   ; groupfile = None
   ; groupfiles = []
@@ -194,6 +203,7 @@ let eg4 = {
   ; indent = false
   ; errors = ""
   ; errorsContains = ""
+  ; ignore = false
   }
 
 let rec fmt_value pps v =

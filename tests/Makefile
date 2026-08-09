@@ -12,7 +12,8 @@ ML= \
 	lib_test.ml antlr_test.ml atn_util.ml mimick_test.ml \
 	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
 	replay_util.ml parser_test.ml grammar_tools_test.ml \
-	stringtemplate_test.ml stringtemplate_util.ml
+	stringtemplate_test.ml stringtemplate_util.ml \
+	testmatrix.ml
 
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
@@ -21,7 +22,8 @@ EXE=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
 	antlrtest_test.exe antlrtest_util.exe \
 	deserialize_jsonlog.exe replay_util.exe \
 	parser_test.exe grammar_tools_test.exe \
-	stringtemplate_test.exe stringtemplate_util.exe
+	stringtemplate_test.exe stringtemplate_util.exe \
+	testmatrix.exe
 
 TESTML=$(shell ls *_test.ml)
 
@@ -178,7 +180,7 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) execute -d $(ST4GEN) $<
 	$(ST4UTIL) check -d $(ST4GEN) $<
 
-sttest-multi::
+sttest-multi:: fixtures/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestCoreBasics.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestDictionaries.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestGroup.sexp
@@ -187,6 +189,11 @@ sttest-multi::
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestNoNewlineTemplates.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestOptions.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestSubtemplates.sexp
+	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestWhitespace.sexp
+	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestNullEmptyMatrix.sexp
+
+fixtures/TestNullEmptyMatrix.sexp: testmatrix.exe
+	./testmatrix.exe > $@.NEW && mv $@.NEW $@
 
 sttest-all: $(STJSONALL:.json=.STTEST) $(STSEXPALL:.sexp=.STTEST)
 

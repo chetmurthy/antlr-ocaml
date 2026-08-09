@@ -80,43 +80,46 @@ let multi =
 module Generate = struct
 
 let one_test ~debug ~verbose ~force ~destroot ~testname th =
-  if verbose then Fmt.(pf stderr "[generate %s]@." testname) ;
-  if destroot = "" then
-    failwith "must specify --dest-root|-d" ;
-  let destroot = Fpath.v destroot in
-  let testfilename = th.classname^".java" in
-  let destdir = Fpath.(append destroot (v testname)) in
-  if destdir |> Bos.OS.Dir.exists |> Result.get_ok then
-    if force then
-      destdir |> Bos.OS.Dir.delete ~must_exist:true ~recurse:true |> Rresult.R.failwith_error_msg
-    else
-      Fmt.(failwithf "destdir %s must not already exist!" (Fpath.to_string destdir));
+  if th.ignore then
+    Fmt.(pf stderr "[ignore %s]@." testname)
+  else begin
+      if verbose then Fmt.(pf stderr "[generate %s]@." testname) ;
+      if destroot = "" then
+        failwith "must specify --dest-root|-d" ;
+      let destroot = Fpath.v destroot in
+      let testfilename = th.classname^".java" in
+      let destdir = Fpath.(append destroot (v testname)) in
+      if destdir |> Bos.OS.Dir.exists |> Result.get_ok then
+        if force then
+          destdir |> Bos.OS.Dir.delete ~must_exist:true ~recurse:true |> Rresult.R.failwith_error_msg
+        else
+          Fmt.(failwithf "destdir %s must not already exist!" (Fpath.to_string destdir));
 
-  destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg ;
-  ((match th.groupfile with None -> [] | Some x -> [x])@th.groupfiles)
-  |> List.map (fun (groupfilename, contents) ->
-         let full = Fpath.(append destdir (v groupfilename)) in
-         let dir = Fpath.parent full in
-         Bos.OS.Dir.create ~path:true ~mode:0o755 dir |> Rresult.R.failwith_error_msg ;
-         Bos.OS.File.write ~mode:0o644 full contents |> Rresult.R.failwith_error_msg) ;
-  let javafile  = Fpath.(append destdir (v testfilename)) in
-  Bos.OS.File.write ~mode:0o644 javafile Fmt.(str "%a" emit th) |> Rresult.R.failwith_error_msg ;
-  let maketxt =
-    Fmt.(str {|
-test:
-	java -cp classes:$(CLASSPATH) %s > output.NEW 2> errors.NEW && mv output.NEW output && mv errors.NEW errors
+      destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg ;
+      ((match th.groupfile with None -> [] | Some x -> [x])@th.groupfiles)
+      |> List.map (fun (groupfilename, contents) ->
+             let full = Fpath.(append destdir (v groupfilename)) in
+             let dir = Fpath.parent full in
+             Bos.OS.Dir.create ~path:true ~mode:0o755 dir |> Rresult.R.failwith_error_msg ;
+             Bos.OS.File.write ~mode:0o644 full contents |> Rresult.R.failwith_error_msg) ;
+      let javafile  = Fpath.(append destdir (v testfilename)) in
+      Bos.OS.File.write ~mode:0o644 javafile Fmt.(str "%a" emit th) |> Rresult.R.failwith_error_msg ;
+      let maketxt =
+        Fmt.(str {|
+                  test:
+	          java -cp classes:$(CLASSPATH) %s > output.NEW 2> errors.NEW && mv output.NEW output && mv errors.NEW errors
 
-test-manually:
-	java -cp classes:$(CLASSPATH) %s
+                  test-manually:
+	          java -cp classes:$(CLASSPATH) %s
 
-compile:
-	javac -d classes %s.java
-|}
-           th.classname th.classname th.classname) in
-  let makefile  = Fpath.(append destdir (v "Makefile")) in
-  Bos.OS.File.write ~mode:0o644 makefile maketxt |> Rresult.R.failwith_error_msg ;
-  
-  ()
+                  compile:
+	          javac -d classes %s.java
+                  |}
+               th.classname th.classname th.classname) in
+      let makefile  = Fpath.(append destdir (v "Makefile")) in
+      Bos.OS.File.write ~mode:0o644 makefile maketxt |> Rresult.R.failwith_error_msg ;
+      ()
+    end
 
 let st4_test ~debug ~verbose ~force ~destroot ~onlytest ~multi ~testname file =
   if destroot = "" then
@@ -146,16 +149,20 @@ end
 
 module Compile = struct
 let one_test ~debug ~verbose ~destroot ~testname th =
-  if verbose then Fmt.(pf stderr "[compile %s]@." testname) ;
-  if destroot = "" then
-    failwith "must specify --dest-root|-d" ;
-  let destroot = Fpath.v destroot in
-  let destdir = Fpath.(append destroot (v testname)) in
-  if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
-      Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
-  let cmd = Fmt.(str "make -C %s compile" (Fpath.to_string destdir)) in
-  cmd |> system |> Rresult.R.failwith_error_msg ;
-  ()
+  if th.ignore then
+    Fmt.(pf stderr "[ignore %s]@." testname)
+  else begin
+      if verbose then Fmt.(pf stderr "[compile %s]@." testname) ;
+      if destroot = "" then
+        failwith "must specify --dest-root|-d" ;
+      let destroot = Fpath.v destroot in
+      let destdir = Fpath.(append destroot (v testname)) in
+      if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
+        Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
+      let cmd = Fmt.(str "make -C %s compile" (Fpath.to_string destdir)) in
+      cmd |> system |> Rresult.R.failwith_error_msg ;
+      ()
+    end
 
 let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
   if destroot = "" then
@@ -185,16 +192,20 @@ end
 module Execute = struct
 
 let one_test ~debug ~verbose ~destroot ~testname th =
-  if verbose then Fmt.(pf stderr "[execute %s]@." testname) ;
-  if destroot = "" then
-    failwith "must specify --dest-root|-d" ;
-  let destroot = Fpath.v destroot in
-  let destdir = Fpath.(append destroot (v testname)) in
-  if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
-      Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
-  let cmd = Fmt.(str "make -C %s test" (Fpath.to_string destdir)) in
-  cmd |> system |> Rresult.R.failwith_error_msg ;
-  ()
+  if th.ignore then
+    Fmt.(pf stderr "[ignore %s]@." testname)
+  else begin
+      if verbose then Fmt.(pf stderr "[execute %s]@." testname) ;
+      if destroot = "" then
+        failwith "must specify --dest-root|-d" ;
+      let destroot = Fpath.v destroot in
+      let destdir = Fpath.(append destroot (v testname)) in
+      if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
+        Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
+      let cmd = Fmt.(str "make -C %s test" (Fpath.to_string destdir)) in
+      cmd |> system |> Rresult.R.failwith_error_msg ;
+      ()
+    end
 
 let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
   if destroot = "" then
@@ -266,18 +277,22 @@ let check ~testname ~output ~errors (th : t) =
 
 
 let one_test ~debug ~verbose ~destroot ~testname th =
-  if verbose then Fmt.(pf stderr "[check %s]@." testname) ;
-  if destroot = "" then
-    failwith "must specify --dest-root|-d" ;
-  let destroot = Fpath.v destroot in
-  let destdir = Fpath.(append destroot (v testname)) in
-  if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
-      Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
-  let outputfile = Fpath.(append destdir (v "output")) in
-  let output_txt = outputfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
-  let errorsfile = Fpath.(append destdir (v "errors")) in
-  let errors_txt = errorsfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
-  check ~testname ~output:output_txt ~errors:errors_txt th
+  if th.ignore then
+    Fmt.(pf stderr "[ignore %s]@." testname)
+  else begin
+      if verbose then Fmt.(pf stderr "[check %s]@." testname) ;
+      if destroot = "" then
+        failwith "must specify --dest-root|-d" ;
+      let destroot = Fpath.v destroot in
+      let destdir = Fpath.(append destroot (v testname)) in
+      if not (destdir |> Bos.OS.Dir.exists |> Result.get_ok) then
+        Fmt.(failwithf "destdir %s must already exist!" (Fpath.to_string destdir));
+      let outputfile = Fpath.(append destdir (v "output")) in
+      let output_txt = outputfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
+      let errorsfile = Fpath.(append destdir (v "errors")) in
+      let errors_txt = errorsfile |> Bos.OS.File.read |> Rresult.R.failwith_error_msg in
+      check ~testname ~output:output_txt ~errors:errors_txt th
+    end
 
 let st4_test ~debug ~verbose ~destroot ~onlytest ~multi ~testname file =
   if destroot = "" then
@@ -307,11 +322,15 @@ end
 module Full = struct
 
 let one_test ~debug ~verbose ~force ~destroot ~testname th =
-  Generate.one_test ~debug ~verbose ~force ~destroot ~testname th ;
-  Compile.one_test ~debug ~verbose ~destroot ~testname th ;
-  Execute.one_test ~debug ~verbose ~destroot ~testname th ;
-  Check.one_test ~debug ~verbose ~destroot ~testname th ;
-  ()
+  if th.ignore then
+    Fmt.(pf stderr "[ignore %s]@." testname)
+  else begin
+      Generate.one_test ~debug ~verbose ~force ~destroot ~testname th ;
+      Compile.one_test ~debug ~verbose ~destroot ~testname th ;
+      Execute.one_test ~debug ~verbose ~destroot ~testname th ;
+      Check.one_test ~debug ~verbose ~destroot ~testname th ;
+      ()
+    end
 
 let st4_test ~debug ~verbose ~destroot ~force ~onlytest ~multi ~testname file =
   if destroot = "" then
