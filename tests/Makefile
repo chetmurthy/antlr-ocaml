@@ -191,6 +191,7 @@ sttest-multi:: fixtures/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestSubtemplates.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestWhitespace.sexp
 	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestNullEmptyMatrix.sexp
+	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestIndirectionAndEarlyEval.sexp
 
 fixtures/TestNullEmptyMatrix.sexp: testmatrix.exe
 	./testmatrix.exe > $@.NEW && mv $@.NEW $@
