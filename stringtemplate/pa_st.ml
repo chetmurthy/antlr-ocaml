@@ -198,7 +198,7 @@ not_conditional: [ [
   ;
 
 subtemplate: [ [
-      "{" ; lopt = OPT [ ids = LIST1 ID SEP "," ; "|" -> ids ] ; t = limited_template ; "}" ->
+      "{" ; lopt = OPT [ ids = LIST1 ID SEP "," ; "|" -> ids ] ; t = [ -> [] | l = limited_template -> l ] ; "}" ->
       let l = match lopt with [ None -> [] | Some l -> l ] in
       (l, t)
   ] ]

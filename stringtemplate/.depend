@@ -54,8 +54,12 @@ eval.cmo : \
 eval.cmx : \
     st_types.cmx
 testharness.cmo : \
+    pa_stg.cmo \
+    pa_st.cmo \
     eval.cmo
 testharness.cmx : \
+    pa_stg.cmx \
+    pa_st.cmx \
     eval.cmx
 old_testharness.cmo : \
     testharness.cmo \

@@ -20,6 +20,7 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore ({|{<InitIntMember("i","0")>}|} |> Pa_st.Template.of_string))
   ; assert_equal () (ignore ({|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|} |> Pa_st.Template.of_string))
   ; assert_equal () (ignore ({|<TreeNodeWithAltNumField(X="T")>|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore ("load <box({})>;" |> Pa_st.Template.of_string))
 
   ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
   ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
