@@ -180,18 +180,19 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) execute -d $(ST4GEN) $<
 	$(ST4UTIL) check -d $(ST4GEN) $<
 
+STTESTCMD=full -f -d $(ST4GEN)
 sttest-multi:: fixtures/TestNullEmptyMatrix.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestCoreBasics.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestDictionaries.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestGroup.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestIndentation.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestLists.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestNoNewlineTemplates.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestOptions.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestSubtemplates.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestWhitespace.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestNullEmptyMatrix.sexp
-	$(ST4UTIL) full -f -d $(ST4GEN) -m fixtures/TestIndirectionAndEarlyEval.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestCoreBasics.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestDictionaries.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestGroup.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestIndentation.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestLists.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestNoNewlineTemplates.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestOptions.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestSubtemplates.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestWhitespace.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestNullEmptyMatrix.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestIndirectionAndEarlyEval.sexp
 
 fixtures/TestNullEmptyMatrix.sexp: testmatrix.exe
 	./testmatrix.exe > $@.NEW && mv $@.NEW $@

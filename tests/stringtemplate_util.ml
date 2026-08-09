@@ -3,8 +3,12 @@
 open Pa_ppx_utils
 open Pa_ppx_base
 open Ppxutil
+open Antlr
 
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
+
+let caches = Simulate.Caches.mk () ;;
+Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
 open Stringtemplate
 open Testharness
@@ -319,12 +323,46 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
+module Verify = struct
+open Antlr
+
+let one_test ~debug ~verbose ~testname th =
+  if th.ignore then
+    Fmt.(pf stderr "[ignore %s]@." testname)
+  else begin
+      if verbose then Fmt.(pf stderr "[verify %s]@." testname) ;
+      verify th
+    end
+
+let st4_test ~debug ~verbose ~onlytest ~multi ~testname file =
+  if multi then
+    let thl = select_tests ~onlytest ~file in
+    thl
+    |> List.iter (fun (testname,th) ->
+           one_test ~debug ~verbose ~testname th)
+  else
+  let th = load ~file in
+  one_test ~debug ~verbose ~testname th
+
+let cmd =
+  let doc = "verify a Stringtemplate4 test" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "verify" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ debug and+ verbose and+ onlytest and+ multi and+ testname in
+  st4_test ~debug ~verbose ~onlytest ~multi ~testname file ;
+  Cmdliner.Cmd.Exit.ok
+end
+
 module Full = struct
 
 let one_test ~debug ~verbose ~force ~destroot ~testname th =
   if th.ignore then
     Fmt.(pf stderr "[ignore %s]@." testname)
   else begin
+      Verify.one_test ~debug ~verbose ~testname th ;
       Generate.one_test ~debug ~verbose ~force ~destroot ~testname th ;
       Compile.one_test ~debug ~verbose ~destroot ~testname th ;
       Execute.one_test ~debug ~verbose ~destroot ~testname th ;
@@ -360,7 +398,7 @@ end
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [Generate.cmd; Compile.cmd; Execute.cmd; Check.cmd; Full.cmd]
+  [Generate.cmd; Compile.cmd; Execute.cmd; Check.cmd; Verify.cmd; Full.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())

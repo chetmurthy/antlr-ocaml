@@ -84,6 +84,12 @@ let load ~file =
     load_sexp ~file
   else Fmt.(failwithf "TH.load: file %s is neither .json nor .sexp" file)
 
+let verify th =
+  List.map (fun r -> Pa_st.Template.of_string r.input) th.runs ;
+  Option.map (fun (_,txt) -> Pa_stg.Group.of_string txt) th.groupfile ;
+  List.map (fun (_,txt) -> Pa_stg.Group.of_string txt) th.groupfiles ;
+  ()
+
 module Multi = struct
 type _t = (string * t) list
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]

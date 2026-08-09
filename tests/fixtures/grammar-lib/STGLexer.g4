@@ -60,7 +60,18 @@ TMPL_COMMENT: LBang .? RBang -> channel(OFF_CHANNEL);
 HORZ_WS : Hws+ -> channel(OFF_CHANNEL);
 VERT_WS : Vws+ -> channel(OFF_CHANNEL);
 
-STRING          : DQuoteLiteral;
+//STRING          : DQuoteLiteral;
+STRING
+	:	'"'
+		(	'\\' '"'
+		|	'\\' ~'"'
+		|	{print("line %s:%s: '\\n' in string" % (self._tokenStartLine, self._tokenStartColumn), file=sys.stderr)}
+			'\n'
+		|	~('\\'|'"'|'\n')
+		)*
+		'"'
+	;
+
 BIGSTRING       : LDAngle .*? RDAngle;
 BIGSTRING_NO_NL : LPct .*? RPct;
 ANON_TEMPLATE   : LBrace .*? RBrace;
