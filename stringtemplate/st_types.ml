@@ -40,9 +40,11 @@ and primary_t =
 | PRIMARY_STRING of string
 | PRIMARY_BOOL of bool
 | PRIMARY_SUBTEMPLATE of subtemplate_t
-| PRIMARY_LIST of arg_expr_list_t option
+| PRIMARY_LIST of list_element_t list
 | PRIMARY_CONDITIONAL of conditional_t
 | PRIMARY_INCLUDE_IND of expr_t * arg_expr_list_t option
+
+and list_element_t = expr_t option
 
 and conditional_t =
   OR of conditional_t list

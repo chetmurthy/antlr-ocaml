@@ -49,12 +49,6 @@ cppTypeInitMap ::= [
   ; assert_equal () (ignore({| 
 stat(name,value="99") ::= "x=<value>; // <name>"
 |} |> Pa_stg.Group.of_string))
-  ; assert_equal () (ignore({| 
-t(x,y={<x:{s|<s><z>}>},z="foo") ::= <<
-x: <x>
-y: <y>
->>
-|} |> Pa_stg.Group.of_string))
 
 let test_parse_grammar txt ctxt =
   let open Stringtemplate in

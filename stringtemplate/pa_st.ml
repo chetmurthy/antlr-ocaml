@@ -23,6 +23,7 @@ value top_map_template_ref = Grammar.Entry.create g "top_map_template_ref";
 value top_member_expr = Grammar.Entry.create g "top_member_expr";
 value top_include_expr = Grammar.Entry.create g "top_include_expr";
 value top_subtemplate = Grammar.Entry.create g "top_subtemplate";
+value top_expr_options = Grammar.Entry.create g "top_expr_options";
 
 
 value real_include_expr = Grammar.Entry.create g "real_include_expr";
@@ -141,6 +142,7 @@ EXTEND
           named_arg real_named_arg
 
           top_map_template_ref top_member_expr top_include_expr top_subtemplate
+          top_expr_options
 
           check_qid_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
           check_id_equals check_not_comma_id_equals
@@ -154,6 +156,7 @@ top_member_expr: [ [ "#inside" ; x = member_expr ; EOI -> x ] ] ;
 top_include_expr: [ [ "#inside" ; x = include_expr ; EOI -> x ] ] ;
 top_subtemplate: [ [ "#inside" ; x = subtemplate ; EOI -> x ] ] ;
 top_args: [ [ "#inside" ; x = args ; EOI -> x ] ] ;
+top_expr_options: [ [ "#inside" ; x = expr_options ; EOI -> x ] ] ;
 
 template: [ [
       l = LIST0 [ l = limited_template -> l | x = "}" -> [TEXT x] ] -> List.concat l
@@ -255,7 +258,9 @@ primary: [ [
   ] ]
   ;
 
-list_: [ [ "[" ; lopt = OPT arg_expr_list ; "]" -> lopt ] ] ;
+list_: [ [ "[" ; l = LIST0 (OPT list_element) SEP "," ; "]" -> l ] ] ;
+
+list_element: [ [ e = expr_no_comma -> e ] ] ;
 
 conditional: [ [ l = LIST1 and_conditional SEP "||" -> OR l ] ] ;
 and_conditional: [ [ l = LIST1 not_conditional SEP "&&" -> AND l ] ] ;
@@ -285,7 +290,7 @@ expr_no_comma: [ [
 ;
 
 expr_options: [ [
-      l = LIST0 [ "," ; eo = expr_option -> eo ] ->  (l : list expr_option_t)
+      l = LIST0 expr_option SEP "," ->  (l : list expr_option_t)
   ] ]
   ;
 
@@ -342,6 +347,11 @@ module Subtemplate = Pa_json.PAHelper(struct
 module Args = Pa_json.PAHelper(struct
                      type t = args_t ;
                      value entry = top_args ;
+                   end) ;
+
+module Expr_Options = Pa_json.PAHelper(struct
+                     type t = expr_options_t ;
+                     value entry = top_expr_options ;
                    end) ;
 
 value tokens_of_string s =

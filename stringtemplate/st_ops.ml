@@ -34,6 +34,7 @@ let _migrate_list subrw0 __dt__ l =
           ; expr_tag_t
           ; include_expr_arg_t
           ; include_expr_t
+          ; list_element_t
           ; map_expr_t
           ; map_template_ref_t
           ; member_expr_t

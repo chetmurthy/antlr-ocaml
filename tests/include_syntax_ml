@@ -113,7 +113,7 @@ let upgrade_single fromfile tofile =
 #trace Pa_st.check_not_comma_id_equals_f ;;
 
 {|#inside a(x="x",y="y") |} |> Pa_st.Member_Expr.of_string ;;
- *)
+
 
 let truncate_at_EOI strm =
   Util.truncate_stream (function ("EOI",_) -> true | _ -> false) strm ;;
@@ -126,33 +126,12 @@ let truncate_at_EOI strm =
  |> Std.stream_of_list
  |>  Pa_st.check_qid_lparen_f ;;
 
-#trace Pa_st.Template.of_string;;
-#trace Pa_stg.Group.of_string ;;
+ *)
 
-{foo|
-((classname hello)
-   (groupfile
-    (("group.stg"
-      {| 
-t(x,y={<x:{s|<s><z>}>},z="foo") ::= <<
-x: <x>
-y: <y>
->>
-|}
-      ))
-    )
-   (runs
-    (((input "<t(x)>")
-      (output {|x: a
-y: afoo|})
-      (attributes ((x (SV (STRING a)))))
-      ))
-    )
-   )
- |foo}
-|> Testharness.of_sexp_string |> Testharness.verify;;
+#trace Pa_st.map_expr_f ;;
+"<[\"Ter\",,\"Jesse\"]:{n | <i>:<n>}; separator=\", \", null={foo}>" |> Pa_st.Template.of_string ;;
 
-;;
+
 
 (*
 ;;; Local Variables: ***
