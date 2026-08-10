@@ -18,9 +18,11 @@ ML=\
 	l_stg_constants.ml l_st_constants.ml \
 	actionFuns_st.ml \
 	 l_st.ml l_stg.ml \
-	st_types.ml stg_types.ml \
+	st_types.ml sttypes2.ml stg_types.ml \
 	camlp5_adapter.ml \
-	pa_st.ml st_ops.ml \
+	pa_st.ml \
+	pa_st2.ml \
+	st_ops.ml \
 	pa_stg.ml \
 	eval.ml \
 	testharness.ml old_testharness.ml \
