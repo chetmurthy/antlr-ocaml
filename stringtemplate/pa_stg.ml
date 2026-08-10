@@ -145,7 +145,7 @@ key_value: [ [
     | s = "true" -> KEYVAL_BOOL True
     | s = "false" -> KEYVAL_BOOL False
     | "[" ; "]" -> KEYVAL_MT_DICT
-    | "key" -> KEYVAL_KEY
+    | ID "key" -> KEYVAL_KEY
   ] ]
   ;
 

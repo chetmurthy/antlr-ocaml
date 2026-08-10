@@ -35,18 +35,7 @@ let _SEMI = 24
 let _DELIMITERS = 25
 let _IMPORT = 26
 let _DEFAULT = 27
-let _KEY = 28
-let _VALUE = 29
-let _FIRST = 30
-let _LAST = 31
-let _REST = 32
-let _TRUNC = 33
-let _STRIP = 34
-let _TRIM = 35
-let _LENGTH = 36
-let _STRLEN = 37
-let _REVERSE = 38
-let _GROUP = 39
-let _ID = 40
+let _GROUP = 28
+let _ID = 29
  end
  

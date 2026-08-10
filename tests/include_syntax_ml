@@ -126,13 +126,33 @@ let truncate_at_EOI strm =
  |> Std.stream_of_list
  |>  Pa_st.check_qid_lparen_f ;;
 
-#trace Pa_st.map_expr_f ;;
-#trace Pa_st.args_f ;;
-#trace Pa_st.named_arg_f ;;
-#trace Pa_st.check_not_comma_id_equals_f ;;
-#trace Pa_st.include_expr_f ;;
+#trace Pa_st.Template.of_string;;
+#trace Pa_stg.Group.of_string ;;
 
-"<subdir/b()>" |> Pa_st.Template.of_string;;
+{foo|
+((classname hello)
+   (groupfile
+    (("group.stg"
+      {| 
+t(x,y={<x:{s|<s><z>}>},z="foo") ::= <<
+x: <x>
+y: <y>
+>>
+|}
+      ))
+    )
+   (runs
+    (((input "<t(x)>")
+      (output {|x: a
+y: afoo|})
+      (attributes ((x (SV (STRING a)))))
+      ))
+    )
+   )
+ |foo}
+|> Testharness.of_sexp_string |> Testharness.verify;;
+
+;;
 
 (*
 ;;; Local Variables: ***
