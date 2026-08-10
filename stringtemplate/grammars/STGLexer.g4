@@ -72,7 +72,7 @@ STRING
 		'"'
 	;
 
-BIGSTRING       : LDAngle .*? RDAngle;
+BIGSTRING       : LDAngle ( ('\\' .) | ~'\\' )*? RDAngle;
 BIGSTRING_NO_NL : LPct .*? RPct;
 ANON_TEMPLATE   : LBrace .*? RBrace;
 
