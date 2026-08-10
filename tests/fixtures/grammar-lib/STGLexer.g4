@@ -101,18 +101,18 @@ SEMI     : Semi;
 DELIMITERS : 'delimiters';
 IMPORT     : 'import';
 DEFAULT    : 'default';
-KEY        : 'key';
-VALUE      : 'value';
+// KEY        : 'key';
+// VALUE      : 'value';
 
-FIRST   : 'first';
-LAST    : 'last';
-REST    : 'rest';
-TRUNC   : 'trunc';
-STRIP   : 'strip';
-TRIM    : 'trim';
-LENGTH  : 'length';
-STRLEN  : 'strlen';
-REVERSE : 'reverse';
+// FIRST   : 'first';
+// LAST    : 'last';
+// REST    : 'rest';
+// TRUNC   : 'trunc';
+// STRIP   : 'strip';
+// TRIM    : 'trim';
+// LENGTH  : 'length';
+// STRLEN  : 'strlen';
+// REVERSE : 'reverse';
 
 GROUP     : 'group'; // not used by parser?
 // WRAP      : 'wrap';

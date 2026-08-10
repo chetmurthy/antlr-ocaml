@@ -45,7 +45,9 @@ cppTypeInitMap ::= [
     default: "nullptr" // anything other than a primitive type is an object
 ]
 
- |} |> Pa_stg.Group.of_string))
+ |} |> Pa_stg.Group.of_string))  ; assert_equal () (ignore({| 
+stat(name,value="99") ::= "x=<value>; // <name>"
+|} |> Pa_stg.Group.of_string))
 
 let test_parse_grammar txt ctxt =
   let open Stringtemplate in
