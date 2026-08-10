@@ -84,15 +84,15 @@ let load ~file =
     load_sexp ~file
   else Fmt.(failwithf "TH.load: file %s is neither .json nor .sexp" file)
 
-let verify th =
+let verify ~verbose th =
   List.map (fun r ->
-      Fmt.(pf stderr "\t[input %a]@." Dump.string r.input) ;
+      if verbose then Fmt.(pf stderr "\t[input %a]@." Dump.string r.input) ;
       Pa_st.Template.of_string r.input) th.runs ;
   Option.map (fun (fname,txt) ->
-      Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
+      if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
       Pa_stg.Group.of_string txt) th.groupfile ;
   List.map (fun (fname,txt) ->
-      Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
+      if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
       Pa_stg.Group.of_string txt) th.groupfiles ;
   ()
 

@@ -332,7 +332,7 @@ let one_test ~debug ~verbose ~testname th =
   else begin
       if verbose then Fmt.(pf stderr "[verify %s]@." testname) ;
       try
-        verify th
+        verify ~verbose th
       with ex ->
         let rbt = Printexc.get_raw_backtrace() in
         Fmt.(pf stderr "====@.verify %s: exception@.%a@.====@."
