@@ -2,6 +2,7 @@
 
 open Pa_ppx_utils ;
 open Pa_ppx_located_yojson ;
+open Antlr ;
 open St_types ;
 
 value stream_npeek n s = (Stream.npeek n s : list (string * string)) ;
@@ -16,22 +17,71 @@ value g = Grammar.gcreate lexer;
 value template = Grammar.Entry.create g "template";
 value template_eoi = Grammar.Entry.create g "template_eoi";
 
-value top_map_expr = Grammar.Entry.create g "top_map_expr";
+value top_args = Grammar.Entry.create g "top_args";
+value top_map_expr = Grammar.Entry.create g "top_map_expr" ;
 value top_map_template_ref = Grammar.Entry.create g "top_map_template_ref";
 value top_member_expr = Grammar.Entry.create g "top_member_expr";
 value top_include_expr = Grammar.Entry.create g "top_include_expr";
 value top_subtemplate = Grammar.Entry.create g "top_subtemplate";
 
-value check_id_lparen_f strm =
-  match stream_npeek 2 strm with [
-    [(("ID"), _); ("", "(")] -> ()
-  | _ -> raise Stream.Failure
+
+value real_include_expr = Grammar.Entry.create g "real_include_expr";
+value include_expr_f strm = Grammar.Entry.parse_token_stream real_include_expr strm ;
+value include_expr = Grammar.Entry.of_parser g "include_expr" include_expr_f ;
+
+value real_args = Grammar.Entry.create g "real_args";
+value args_f strm = Grammar.Entry.parse_token_stream real_args strm ;
+value args = Grammar.Entry.of_parser g "args" args_f ;
+
+value real_named_arg = Grammar.Entry.create g "real_named_arg";
+value named_arg_f strm = Grammar.Entry.parse_token_stream real_named_arg strm ;
+value named_arg = Grammar.Entry.of_parser g "named_arg" named_arg_f ;
+
+value real_map_expr = Grammar.Entry.create g "real_map_expr" ;
+value map_expr_f strm = Grammar.Entry.parse_token_stream real_map_expr strm ;
+value map_expr = Grammar.Entry.of_parser g "map_expr" map_expr_f ;
+
+value pa_ID = parser [: `("ID",id) :] -> id ;
+value pa_SLASH = parser [: `("","/") :] -> () ;
+
+value qid = parser [
+    [: _=pa_SLASH ; _=Util.plist_with_sep pa_ID pa_SLASH :] -> ()
+  | [: _=Util.plist_with_sep pa_ID pa_SLASH :] -> ()
   ]
 ;
 
-value check_id_lparen =
-  Grammar.Entry.of_parser g "check_id_lparen"
-    check_id_lparen_f
+value qid_lparen = parser [
+    [: _=qid ; `("","(") :] -> ()
+  ]
+;
+
+value peek_until pred strm =
+  let rec prec n =
+    let l = Stream.npeek n strm in
+    if List.length l < n then l
+    else if pred (Std.last l) then l
+    else prec (n+1)
+  in
+  prec 1
+;
+
+value peek_until_EOI_lparen strm =
+  let _EOI_or_lparen = fun [
+      (("EOI",_)|("","(")) -> True
+    | _ -> False
+      ]
+  in peek_until _EOI_or_lparen strm
+;
+
+value check_qid_lparen_f strm =
+  let l = peek_until_EOI_lparen strm in
+  try do { qid_lparen (Std.stream_of_list l) ; () }
+  with _ -> raise Stream.Failure
+;
+
+value check_qid_lparen =
+  Grammar.Entry.of_parser g "check_qid_lparen"
+    check_qid_lparen_f
 ;
 
 value check_id_comma_or_bar_f strm =
@@ -71,12 +121,29 @@ value check_not_lt_if_elseif_else_endif =
     check_not_lt_if_elseif_else_endif_f
 ;
 
+value check_not_comma_id_equals_f strm =
+  match stream_npeek 3 strm with [
+    [("", ","); ("ID",_); ("", "=")] -> raise Stream.Failure
+  | _ -> ()
+  ]
+;
+
+value check_not_comma_id_equals =
+  Grammar.Entry.of_parser g "check_not_comma_id_equals"
+    check_not_comma_id_equals_f
+;
+
 EXTEND
   GLOBAL: template template_eoi
-          top_map_expr top_map_template_ref top_member_expr top_include_expr
-          top_subtemplate
-          check_id_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
-          check_id_equals
+          map_expr real_map_expr top_map_expr
+          args real_args top_args
+          include_expr real_include_expr top_include_expr
+          named_arg real_named_arg
+
+          top_map_template_ref top_member_expr top_include_expr top_subtemplate
+
+          check_qid_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
+          check_id_equals check_not_comma_id_equals
   ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
@@ -86,6 +153,7 @@ top_map_template_ref: [ [ "#inside" ; x = map_template_ref ; EOI -> x ] ] ;
 top_member_expr: [ [ "#inside" ; x = member_expr ; EOI -> x ] ] ;
 top_include_expr: [ [ "#inside" ; x = include_expr ; EOI -> x ] ] ;
 top_subtemplate: [ [ "#inside" ; x = subtemplate ; EOI -> x ] ] ;
+top_args: [ [ "#inside" ; x = args ; EOI -> x ] ] ;
 
 template: [ [
       l = LIST0 [ l = limited_template -> l | x = "}" -> [TEXT x] ] -> List.concat l
@@ -123,9 +191,9 @@ expr_tag: [ [
   ] ]
   ;
 
-map_expr: [ [
+real_map_expr: [ [
       me = member_expr ;
-      melopt = OPT [ mel = LIST1 [ "," ; me = member_expr -> me ] ; ":" ; mtr = map_template_ref -> (mel, mtr) ] ;
+      melopt = OPT [ mel = LIST1 [ check_not_comma_id_equals ; "," ; me = member_expr -> me ] ; ":" ; mtr = map_template_ref -> (mel, mtr) ] ;
       mtrll = LIST0 [ ":" ; mtrl = LIST1 map_template_ref SEP "," -> mtrl ] ->
       (me, melopt, mtrll)
   ] ]
@@ -146,7 +214,7 @@ map_template_ref: [ [
   ] ]
   ;
 
-args: [ [
+real_args: [ [
       check_id_equals ;
       l = LIST1 named_arg SEP "," ; ellipsis = [ "," ; "..." -> True | -> False] ->
       ARGS_NAMED l ellipsis
@@ -155,18 +223,18 @@ args: [ [
   ] ]
   ;
 
-named_arg: [ [ id = ID ; "=" ; e = expr -> (id,e) ] ] ;  
+real_named_arg: [ [ id = ID ; "=" ; e = expr -> (id,e) ] ] ;  
 
 expr: [ [ me = map_expr -> me ] ] ;
 
-include_expr: [ [
+real_include_expr: [ [
 (*
       check_id_lparen ;
       id = ID ; "(" ; eopt = OPT expr ; ")" -> EXEC_FUNC id eopt
     | *)
 
       SUPER ; "." ; id = ID ; "(" ; l = args ; ")" -> INCLUDE_SUPER id l
-    | check_id_lparen ;
+    | check_qid_lparen ;
       qid = qualified_id ; "(" ; l = args ; ")" -> INCLUDE qid l
     | "@" ; SUPER ; "." ; id = ID ; "(" ; ")" -> INCLUDE_SUPER_REGION id
     | "@" ; id = ID ; "(" ; ")" -> INCLUDE_REGION id
@@ -224,7 +292,7 @@ expr_options: [ [
 expr_option: [ [ id = ID ; "=" ; e = expr -> (id,e) ] ] ;
 
 qualified_id: [ [
-      rooted = FLAG SLASH ; id = ID ; l = LIST0 [ SLASH ; id = ID -> id] ->
+      rooted = FLAG "/" ; id = ID ; l = LIST0 [ "/" ; id = ID -> id] ->
       if rooted then QID_ROOTED [id::l] else QID [id::l]
   ] ]
   ;
@@ -270,3 +338,12 @@ module Subtemplate = Pa_json.PAHelper(struct
                      type t = subtemplate_t ;
                      value entry = top_subtemplate ;
                    end) ;
+
+module Args = Pa_json.PAHelper(struct
+                     type t = args_t ;
+                     value entry = top_args ;
+                   end) ;
+
+value tokens_of_string s =
+  s |> Stream.of_string |> lexer.Plexing.tok_func |> fst
+;

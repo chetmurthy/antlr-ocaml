@@ -217,7 +217,7 @@ stat(name,x=true,y=false) ::= "<name>; <x> <y>"
   ((classname hello)
    (groupfiles
     (("./group.stg" {|
-"b() ::= "group file b"
+b() ::= "group file b"
 |})
      ("group/a.st" {| 
 a() ::= <<dir1 a>>

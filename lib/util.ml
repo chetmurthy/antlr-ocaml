@@ -4,11 +4,25 @@ open Pa_ppx_utils
 open Pa_ppx_base
 open Ppxutil
 
+let truncate_stream pred strm =
+  let rec trec = parser
+    [< 't ; strm >] ->
+      if pred t then [< 't >] else [< 't ; trec strm >]
+  | [< >] -> [< >]
+  in trec strm
+
 let plisti elem i = 
   let rec plist_rec accum i = parser
      [< e = elem i; strm >] -> plist_rec (e::accum) (i+1) strm
    | [< >]                         -> (List.rev accum)
   in plist_rec [] i
+
+let plist_with_sep elemf sepf =
+  let rec plistrec acc = parser
+    [< _=sepf ; e=elemf ; l=plistrec (e::acc) >] -> l
+  | [< >] -> List.rev acc in
+  parser
+    [< h=elemf ; l=plistrec [h] >] -> l
 
 let plistn elem i = 
   let rec plist_rec accum i strm =

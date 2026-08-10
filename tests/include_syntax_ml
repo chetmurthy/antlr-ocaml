@@ -97,36 +97,42 @@ open Pa_ppx_located_yojson.Json ;;
 #require "pa_ppx.located_sexp";;
 open Pa_ppx_located_sexp ;;
 
-let prharness h =
-  Fmt.(pf stdout "%a" Altsexp.pp_hum Testharness.(h |> located_sexp_of_t));;
-
-let prharness' h =
-  Fmt.(pf stdout "%a" Sexpio.Printing.pp_hum Testharness.(h |> located_sexp_of_t));;
 (*
-prharness Testharness.eg1 ;;
-prharness Testharness.eg2 ;;
-prharness Testharness.eg3 ;;
-prharness Testharness.eg4 ;;
- *)
-
-"fixtures/TestCoreBasics.sexp" |> Altsexp.load_sexp |> Sexpio.Printing.to_string |> Bos.OS.File.write (Fpath.v "x1.sexp") ;;
-let s1 = "fixtures/TestCoreBasics.sexp" |> Altsexp.load_sexp ;;
-let s2 = "x1.sexp" |> Altsexp.load_sexp;;
-Sexp.ErasingLoc.equal s1 s2;;
-
 let upgrade_multi fromfile tofile =
   Old_testharness.(Multi.load_sexp ~file:fromfile |> Multi.upgrade) |> Testharness.Multi.located_sexp_of_t |> Sexpio.Printing.to_string |> Bos.OS.File.write (Fpath.v tofile) ;;
 
 let upgrade_single fromfile tofile =
   Old_testharness.(load_sexp ~file:fromfile |> upgrade) |> Testharness.located_sexp_of_t |> Sexpio.Printing.to_string |> Bos.OS.File.write (Fpath.v tofile) ;;
+ *)
+(*
+{|#inside a(x="x") |} |> Pa_st.Member_Expr.of_string ;;
 
-upgrade_single "fixtures/st4-tests/testIndentBetweenLeftJustifiedLiterals.sexp" "fixtures/st4-tests.NEW/testIndentBetweenLeftJustifiedLiterals.sexp" ;;
-upgrade_single "fixtures/st4-tests/testIndentInFrontOfTwoExpr.sexp" "fixtures/st4-tests.NEW/testIndentInFrontOfTwoExpr.sexp" ;;
-upgrade_single "fixtures/st4-tests/testIndentOfMultilineAttributes.sexp" "fixtures/st4-tests.NEW/testIndentOfMultilineAttributes.sexp" ;;
-upgrade_single "fixtures/st4-tests/testIndentOfMultipleBlankLines.sexp" "fixtures/st4-tests.NEW/testIndentOfMultipleBlankLines.sexp" ;;
-upgrade_single "fixtures/st4-tests/testNestedIndent.sexp" "fixtures/st4-tests.NEW/testNestedIndent.sexp" ;;
-upgrade_single "fixtures/st4-tests/testSimpleIndentOfAttributeList.sexp" "fixtures/st4-tests.NEW/testSimpleIndentOfAttributeList.sexp" ;;
+#trace Pa_st.map_expr_f ;;
+#trace Pa_st.args_f ;;
+#trace Pa_st.named_arg_f ;;
+#trace Pa_st.check_not_comma_id_equals_f ;;
 
+{|#inside a(x="x",y="y") |} |> Pa_st.Member_Expr.of_string ;;
+ *)
+
+let truncate_at_EOI strm =
+  Util.truncate_stream (function ("EOI",_) -> true | _ -> false) strm ;;
+
+{|#inside subdir/b(|}
+ |> Pa_st.tokens_of_string
+ |> truncate_at_EOI
+ |> Std.list_of_stream
+ |> List.tl
+ |> Std.stream_of_list
+ |>  Pa_st.check_qid_lparen_f ;;
+
+#trace Pa_st.map_expr_f ;;
+#trace Pa_st.args_f ;;
+#trace Pa_st.named_arg_f ;;
+#trace Pa_st.check_not_comma_id_equals_f ;;
+#trace Pa_st.include_expr_f ;;
+
+"<subdir/b()>" |> Pa_st.Template.of_string;;
 
 (*
 ;;; Local Variables: ***

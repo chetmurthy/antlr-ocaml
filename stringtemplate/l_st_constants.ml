@@ -46,7 +46,8 @@ let _LBRACK = 33
 let _RBRACK = 34
 let _EQUALS = 35
 let _BANG = 36
-let _ID = 37
-let _PIPE = 38
+let _SLASH = 37
+let _ID = 38
+let _PIPE = 39
  end
  

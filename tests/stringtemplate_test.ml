@@ -21,6 +21,9 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore ({|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|} |> Pa_st.Template.of_string))
   ; assert_equal () (ignore ({|<TreeNodeWithAltNumField(X="T")>|} |> Pa_st.Template.of_string))
   ; assert_equal () (ignore ("load <box({})>;" |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore ({|<a(x="x",y="y")>|} |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore ("Foo<\\ >bar<\\n>" |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore ("<subdir/b()>" |> Pa_st.Template.of_string))
 
   ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
   ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Test.py"))

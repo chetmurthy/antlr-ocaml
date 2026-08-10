@@ -155,3 +155,7 @@ module Group = Pa_json.PAHelper(struct
                      type t = group_t ;
                      value entry = group_eoi ;
                    end) ;
+
+value tokens_of_string s =
+  s |> Stream.of_string |> lexer.Plexing.tok_func |> fst
+;

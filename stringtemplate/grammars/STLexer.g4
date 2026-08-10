@@ -106,6 +106,7 @@ LBRACK   : LBrack;
 RBRACK   : RBrack;
 EQUALS   : Equal;
 BANG     : Bang;
+SLASH    : Slash;
 ID : NameStartChar NameChar*;
 
 // -----------------------------------

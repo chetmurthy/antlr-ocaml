@@ -110,6 +110,7 @@ let renaming = [
   ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
   ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
   ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
+  ; ((Some "SLASH", None), (Some "SLASH",Some "/"))
   ; ((Some "DOT", None), (Some "DOT",Some "."))
   ; ((Some "BANG", None), (Some "BANG",Some "!"))
   ; ((Some "AND", None), (Some "AND",Some "&&"))

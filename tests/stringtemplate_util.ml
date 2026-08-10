@@ -331,7 +331,12 @@ let one_test ~debug ~verbose ~testname th =
     Fmt.(pf stderr "[ignore %s]@." testname)
   else begin
       if verbose then Fmt.(pf stderr "[verify %s]@." testname) ;
-      verify th
+      try
+        verify th
+      with ex ->
+        let rbt = Printexc.get_raw_backtrace() in
+        Fmt.(pf stderr "====@.verify %s: exception@.%a@.====@."
+               testname exn_backtrace (ex, rbt))
     end
 
 let st4_test ~debug ~verbose ~onlytest ~multi ~testname file =
