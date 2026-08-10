@@ -218,7 +218,6 @@ map_template_ref: [ [
   ;
 
 real_args: [ [
-      check_id_equals ;
       l = LIST1 named_arg SEP "," ; ellipsis = [ "," ; "..." -> True | -> False] ->
       ARGS_NAMED l ellipsis
     | l = arg_expr_list -> ARGS_LIST l
@@ -226,7 +225,7 @@ real_args: [ [
   ] ]
   ;
 
-real_named_arg: [ [ id = ID ; "=" ; e = expr -> (id,e) ] ] ;  
+real_named_arg: [ [ id = ID ; "=" ; e = arg -> (id,e) ] ] ;  
 
 expr: [ [ me = map_expr -> me ] ] ;
 

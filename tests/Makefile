@@ -194,6 +194,9 @@ sttest-multi:: fixtures/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestIndirectionAndEarlyEval.sexp
 
+sttest-multi-verify:
+	$(MAKE) STTESTCMD="verify -v" sttest-multi
+
 fixtures/TestNullEmptyMatrix.sexp: testmatrix.exe
 	./testmatrix.exe > $@.NEW && mv $@.NEW $@
 
