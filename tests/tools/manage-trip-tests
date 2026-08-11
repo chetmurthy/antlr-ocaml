@@ -80,6 +80,8 @@ $ENV{'TOP'} = ".." ;
     else { last ; }
   }
 
+  die "no subcomamnd specified" unless defined $subcommand ;
+
   my @full1 = qw(python-prepare python-test compare-atns update-pertest) ;
   my @full2 = qw(ocaml-compile ocaml-test ocaml-compare) ;
 

@@ -6,14 +6,77 @@ open Pa_ppx_utils
 open Std
 open Stg
 
-let clean_triple_quotes txt =
-  [%subst {|"""(.*?)""".*|} / {|$1|} / pcre2 s] txt
+module Pos = struct
+  type t = {
+      filename  : string
+    ; line : int
+    ; bol_pos : int
+    ; first_pos : int
+    }
 
-let clean_stanza s =
-  let s = [%subst {|^\n|} / "" / s] s in
-  [%subst {|\n\n$|} / "" / s] s
+  type pos_string = t * string
 
-let split_stanzas txt = [%split {|^\[(notes|type|grammar|slaveGrammar|start|input|output|errors|flags|skip)([^\]]*)\]$|} / pcre2 m strings (!1, !2)] txt
+  let mk ~file = {
+      filename = file
+    ; line = 1
+    ; bol_pos = 0
+    ; first_pos = 0
+    }
+
+  let mt = mk ~file:""
+
+  let of_loc loc = {
+      filename = Ploc.file_name loc
+    ; line = Ploc.line_nb loc
+    ; bol_pos = Ploc.bol_pos loc
+    ; first_pos = Ploc.first_pos loc
+    }
+
+  let to_loc pos =
+    Ploc.make_loc pos.filename pos.line pos.bol_pos (pos.first_pos, pos.first_pos) ""
+
+  let to_loc_string (pos, s) = (to_loc pos, s)
+
+  let update_char pos c =
+    if c = '\n' then
+      { (pos) with line = pos.line + 1 ; bol_pos = pos.bol_pos+1 ; first_pos = pos.first_pos + 1 }
+  else { (pos) with first_pos = pos.first_pos + 1 }
+
+  let update pos txt =
+    String.fold_left update_char pos txt
+
+end
+
+
+
+let clean_triple_quotes (pos, txt) =
+  match [%match {|^(\s*""")(.*?)""".*|} / pcre2 strings (!1,!2) s] txt with
+    None -> (pos, txt)
+  | Some (quotes, txt) ->
+     (Pos.update pos quotes, txt)
+
+let clean_stanza (pos, s) =
+  let (pos, s) = 
+    match [%match {|^(\n*)(.*)$|} / pcre2 strings (!1,!2) s] s with
+    None -> (pos, s)
+  | Some (nls, s) -> (Pos.update pos nls, s) in
+  (pos, [%subst {|\n\n$|} / "" / s] s)
+
+let split_stanzas txt = [%split {|^\[(notes|type|grammar|slaveGrammar|start|input|output|errors|flags|skip)([^\]]*)\]$|} / pcre2 m strings (!0, !1, !2)] txt
+
+let position_stanzas pos l =
+  l
+  |> List.fold_left (fun (pos,acc) x ->
+         match x with
+           `Text s ->
+            let pos' = Pos.update pos s in
+            (pos', (pos,x)::acc)
+         | `Delim (full, _, _) ->
+            let pos' = Pos.update pos full in
+            (pos', (pos,x)::acc)
+       ) (pos, [])
+  |> snd
+  |> List.rev
 
 let parse_stanza_params txt =
   txt
@@ -21,19 +84,23 @@ let parse_stanza_params txt =
   |> List.filter_map [%match {|^([^=]+)=([^=]+)$|} / pcre2 strings (!1,!2)]
 
 
-let parse txt : (string * ((string * string) list * string)) list =
+let parse pos txt : (string * ((string * string) list * Pos.pos_string)) list =
   let l = split_stanzas txt in
+  let l = position_stanzas pos l in
+
   let rec parec acc = function
-      (`Text s)::tl when is_ws s ->
+      (_, `Text s)::tl when is_ws s ->
       parec acc tl
-    | (`Text s)::_ ->
-       Fmt.(failwithf "Descriptor.parse: text encountered before stanza: %a" Dump.string s)
-    | (`Delim (name,params))::(`Text body)::tl ->
+    | (pos, `Text s)::_ ->
+       let loc = Pos.to_loc pos in
+       Fmt.(raise_failwithf loc "Descriptor.parse: text encountered before stanza: %a" Dump.string s)
+    | (_, `Delim (full_delim, name,params))::(pos, `Text body)::tl ->
        let params = parse_stanza_params params in
-       let body = clean_stanza body in
-       parec ((name,(params,body))::acc) tl
-    | (`Delim (n,_))::[] -> 
-       Fmt.(failwithf "Descriptor.parse: trailing stanza name: %s" n)
+       let (pos, body) = clean_stanza (pos, body) in
+       parec ((name,(params,(pos, body)))::acc) tl
+    | (pos, `Delim (_, n,_))::[] -> 
+       let loc = Pos.to_loc pos in
+       Fmt.(raise_failwithf loc "Descriptor.parse: trailing stanza name: %s" n)
     | [] -> List.rev acc in
   parec [] l
 
@@ -58,13 +125,18 @@ let pa_flags txt =
 
 type params_t = (string * string) list
 
+type grammar_t = {
+    name : string
+  ; loc : Ploc.t
+  ; txt : string
+  }
+
 type t = {
     is_lexer : bool
   ; is_composite : bool
-  ; grammar_name : string
-  ; grammar : string
-  ; slaveGrammars : (params_t * string) list
-  ; stanzas : (string * (params_t *string)) list
+  ; grammar : grammar_t
+  ; slaveGrammars : (params_t * grammar_t) list
+  ; stanzas : (string * (params_t * (Ploc.t * string))) list
   ; filename : string
   ; testname : string
   ; flags : flags_t
@@ -86,74 +158,99 @@ let stanza d name =
   | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.stanza: no descriptor-%s stanza" d.filename name)
 
-let grammar_name ~file txt =
+let grammar_name (pos, txt) =
   match [%match {|.*grammar\s+([a-z][a-z0-9_]*)\s*;|} / pcre2 i s strings !1] txt with
     Some n -> n
-  | None -> Fmt.(failwithf "%s: no grammar-name found in grammar" file)
+  | None ->
+     let loc = Pos.to_loc pos in
+     Fmt.(raise_failwith loc "no grammar-name found in grammar")
+
+let mk_grammar (pos, txt) =
+  let name = grammar_name (pos, txt) in
+  {
+    name = name
+  ; loc = Pos.to_loc pos
+  ; txt
+  }
 
 let _mk ~testname ~file stanzas =
   let (is_lexer, is_composite) = match List.assoc "type" stanzas with
-      (_,"Lexer") -> (true, false)
-    | (_,"CompositeLexer") -> (true, true)
-    | (_,"Parser") -> (false, false)
-    | (_,"CompositeParser") -> (false, true)
-    | (_,t) -> Fmt.(failwithf "%s: Descriptor.mk: descriptor-type was %a (not {,Composite}{Lexer,Parser})"
+      (_,(_, "Lexer")) -> (true, false)
+    | (_,(_, "CompositeLexer")) -> (true, true)
+    | (_,(_, "Parser")) -> (false, false)
+    | (_,(_, "CompositeParser")) -> (false, true)
+    | (_,(pos, t)) ->
+       let loc = Pos.to_loc pos in
+       Fmt.(raise_failwithf loc "%s: Descriptor.mk: descriptor-type was %a (not {,Composite}{Lexer,Parser})"
                   file Dump.string t)
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no descriptor-type stanza" file) in
+  let stanzas =
+    List.map (fun ((n,(pl,(pos,txt))) as x) ->
+        if List.mem n ["input";"output";"errors";"grammar";"slaveGrammar"] then
+          (n,(pl,clean_triple_quotes (pos,txt)))
+        else x) stanzas in
+                           
   let grammar = match List.assoc "grammar" stanzas with
-      (_,x) -> clean_triple_quotes x
+      (_,x) -> mk_grammar x
     | exception Not_found ->
        Fmt.(failwithf "%s: Descriptor.mk: no grammar stanza" file) in
 
   let slaveGrammars =
     stanzas
     |> List.filter_map (function
-             ("slaveGrammar",(params, txt)) -> Some(params, clean_triple_quotes txt)
+             ("slaveGrammar",(pl, x)) -> Some (pl, mk_grammar x)
            | _ -> None) in
 
   let flags_txt =
     match List.assoc "flags" stanzas with
-      (_,x) -> x
+      (_,(_, x)) -> x
     | exception Not_found -> "" in
   let flags = pa_flags flags_txt in
 
   let startRule =
     match List.assoc "start" stanzas with
-      (_,x) -> Some x
+      (_,(_, x)) -> Some x
     | exception Not_found -> None in
 
-  let grammar_name = grammar_name ~file grammar in
   {
     is_lexer
   ; is_composite
-  ; grammar_name
   ; grammar
   ; slaveGrammars
-  ; stanzas
+  ; stanzas = List.map (fun (n,(pl,ps)) -> (n,(pl,Pos.to_loc_string ps))) stanzas
   ; filename = file
   ; testname
   ; flags
   ; startRule
   }
 
+
+let _of_string pos ~testname txt =
+  let stanzas = parse pos txt in
+  _mk ~testname ~file:pos.Pos.filename stanzas
+
+let of_string ?startloc ~testname txt =
+  let pos = match startloc with None -> Pos.mk "" | Some loc -> Pos.of_loc loc in
+  _of_string pos ~testname txt
+
 let load ~testname file =
   let txt = file |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok in
-  let stanzas = parse txt in
-  _mk ~testname ~file stanzas
+  let pos = Pos.mk file in
+  _of_string pos ~testname txt
 
 let to_env d =
   let attributes = [
       ("testName",d.testname)
-     ;("grammarName",d.grammar_name)
+     ;("grammarName",d.grammar.name)
      ;("python3","")] in
   let attributes =
     if d.is_lexer then
-      let lexerName = d.grammar_name in
+      let lexerName = d.grammar.name in
       ("lexerName",lexerName)::attributes
   else
-    let lexerName = Fmt.(str "%sLexer" d.grammar_name) in
-    let parserName = Fmt.(str "%sParser" d.grammar_name) in
+    let lexerName = Fmt.(str "%sLexer" d.grammar.name) in
+    let parserName = Fmt.(str "%sParser" d.grammar.name) in
     ("lexerName",lexerName)::("parserName",parserName):: attributes in
 
   let attributes = ("predictionMode", d.flags.predictionMode)::attributes in

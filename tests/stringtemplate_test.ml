@@ -15,19 +15,19 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore([%here_string {|abc def|}] |> Pa_st2.Template.of_here_string))
   ; assert_equal () (ignore([%here_string {|Hello, <name>!|}] |> Pa_st2.Template.of_here_string))
   ; assert_equal () (ignore([%here_string {|{<writeln("\"I\"")>}|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore([%here_string {|{<name>}|}] |> Pa_st.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|{<ToStringTree("$ctx"):writeln()>}|}] |> Pa_st.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|{<InitIntMember("i","0")>}|}] |> Pa_st.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|}] |> Pa_st.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|<TreeNodeWithAltNumField(X="T")>|}] |> Pa_st.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string "load <box({})>;"] |> Pa_st.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|<a(x="x",y="y")>|}] |> Pa_st.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string "Foo<\\ >bar<\\n>"] |> Pa_st.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string "<subdir/b()>"] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore([%here_string {|{<name>}|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<ToStringTree("$ctx"):writeln()>}|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<InitIntMember("i","0")>}|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|<TreeNodeWithAltNumField(X="T")>|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "load <box({})>;"] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|<a(x="x",y="y")>|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "Foo<\\ >bar<\\n>"] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "<subdir/b()>"] |> Pa_st2.Template.of_here_string))
 
-  ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
-  ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
-  ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
+  ; assert_equal () (ignore (Pa_st2.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
+  ; assert_equal () (ignore (Pa_st2.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
+  ; assert_equal () (ignore (Pa_st2.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
 
 let test_parse_stg ctxt =
   let open Stringtemplate in
@@ -50,9 +50,10 @@ cppTypeInitMap ::= [
 stat(name,value="99") ::= "x=<value>; // <name>"
 |} |> Pa_stg.Group.of_string))
 
-let test_parse_grammar txt ctxt =
+let test_parse_grammar g ctxt =
   let open Stringtemplate in
-  ignore(Pa_st.Template.of_string txt)
+  let module D = Descriptor in
+  ignore(Pa_st2.Template.of_string ~startloc:g.D.loc g.D.txt)
 
 let test_parse_descriptor file ctxt =
   let open Stringtemplate in
@@ -83,7 +84,7 @@ let test_parse_all_descriptors ctxt =
 let test_parse_st_file file ctxt =
   let open Stringtemplate in
   ()
-  ; assert_equal () (ignore (Pa_st.Template.load ~file))
+  ; assert_equal () (ignore (Pa_st2.Template.load ~file))
 
 let parse_fixed_files = 
   [

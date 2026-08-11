@@ -48,13 +48,13 @@ let test_stg ctxt =
 
 let test_descriptor ctxt =
   let module D = Descriptor in
-  let printer = [%show: [ `Delim of string * string | `Text of string ] list] in
+  let printer = [%show: [ `Delim of string * string * string | `Text of string ] list] in
   ()
   ; assert_equal ~printer [] (D.split_stanzas {||})
-  ; assert_equal ~printer [`Delim ("type","")] (D.split_stanzas {|[type]|})
-  ; assert_equal ~printer [`Delim ("notes","")] (D.split_stanzas {|[notes]|})
-  ; assert_equal ~printer [`Delim ("input","")] (D.split_stanzas {|[input]|})
-  ; assert_equal ~printer [`Delim ("input"," name=A type=B")] (D.split_stanzas {|[input name=A type=B]|})
+  ; assert_equal ~printer [`Delim ({|[type]|}, "type","")] (D.split_stanzas {|[type]|})
+  ; assert_equal ~printer [`Delim ({|[notes]|}, "notes","")] (D.split_stanzas {|[notes]|})
+  ; assert_equal ~printer [`Delim ({|[input]|}, "input","")] (D.split_stanzas {|[input]|})
+  ; assert_equal ~printer [`Delim ({|[input name=A type=B]|}, "input"," name=A type=B")] (D.split_stanzas {|[input name=A type=B]|})
 
 let suite = "Test Antlrtest" >::: [
       "template"   >:: test_template

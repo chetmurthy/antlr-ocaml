@@ -14,7 +14,7 @@ ML=\
 	stg.ml descriptor.ml
 
 TOOLSML = mk_meta.ml
-ALLSRC=$(ML) $(TOOLSML)
+ALLSRC=$(ML) $(MLI) $(TOOLSML)
 ALLPACKAGES=$(PACKAGES)
 
 OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Antlrtest

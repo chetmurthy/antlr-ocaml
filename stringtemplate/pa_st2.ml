@@ -109,40 +109,28 @@ value check_comma_id_equals =
     check_comma_id_equals_f
 ;
 
+value mexpr = Grammar.Entry.create g "mexpr";
+value mexpr_basic = Grammar.Entry.create g "mexpr_basic";
+value mexpr_template_ref = Grammar.Entry.create g "mexpr_template_ref";
+
 value top_mexpr_template_ref = Grammar.Entry.create g "top_mexpr_template_ref";
-
-value real_mexpr = Grammar.Entry.create g "real_mexpr";
-value mexpr_f strm = Grammar.Entry.parse_token_stream real_mexpr strm ;
-value mexpr = Grammar.Entry.of_parser g "mexpr" mexpr_f ;
-
-value real_qualified_id = Grammar.Entry.create g "real_qualified_id";
-value qualified_id_f strm = Grammar.Entry.parse_token_stream real_qualified_id strm ;
-value qualified_id = Grammar.Entry.of_parser g "qualified_id" qualified_id_f ;
-
-value real_mexpr_template_ref = Grammar.Entry.create g "real_mexpr_template_ref";
-value mexpr_template_ref_f strm = Grammar.Entry.parse_token_stream real_mexpr_template_ref strm ;
-value mexpr_template_ref = Grammar.Entry.of_parser g "mexpr_template_ref" mexpr_template_ref_f ;
-
-value real_mexpr_basic = Grammar.Entry.create g "real_mexpr_basic";
-value mexpr_basic_f strm = Grammar.Entry.parse_token_stream real_mexpr_basic strm ;
-value mexpr_basic = Grammar.Entry.of_parser g "mexpr_basic" mexpr_basic_f ;
+value top_mexpr_basic = Grammar.Entry.create g "top_mexpr_basic";
 
 EXTEND
   GLOBAL: template template_eoi
 
           top_mexpr_template_ref
-          real_mexpr mexpr
-          real_mexpr_template_ref mexpr_template_ref
-          real_qualified_id qualified_id
-          real_mexpr_basic mexpr_basic
-          
+          top_mexpr_basic
 
           check_qid_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
           check_id_equals check_comma_id_equals
 
+          mexpr mexpr_basic mexpr_template_ref
+
   ;
 
 top_mexpr_template_ref: [ [ "#inside" ; x = mexpr_template_ref ; EOI -> x ] ] ;
+top_mexpr_basic: [ [ "#inside" ; x = mexpr_basic ; EOI -> x ] ] ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
 
@@ -189,7 +177,7 @@ expr_options: [ [
 
 expr_option: [ [ id = ID ; "=" ; e = mexpr -> (id,e) ] ] ;
 
-real_mexpr:
+mexpr:
   [ "top" LEFTA
     [ e1 = SELF ; ":" ; t = mexpr_template_ref -> ME_MAP e1 t ]
   | "comma" RIGHTA
@@ -202,26 +190,33 @@ real_mexpr:
   ]
   ;
 
-real_mexpr_basic: [
+mexpr_basic: [
     [ mt = mexpr_template_ref -> ME_TEMPLATE mt
-    | id = ID -> ME_PRIMARY (ME_ID id)
-    | s = STRING -> ME_PRIMARY (ME_STRING s)
-    | "true" -> ME_PRIMARY(ME_BOOL True)
-    | "false" -> ME_PRIMARY(ME_BOOL False)
-    | "[" ; l = LIST0 (OPT mexpr_no_comma) SEP "," ; "]" -> ME_PRIMARY(ME_LIST l)
-    | "(" ; c = me_cond ; ")" -> ME_PRIMARY(ME_COND c)
+    | p = mexpr_primary -> ME_PRIMARY p
+    ]
+  ]
+  ;
+
+mexpr_primary: [
+    [ id = ID -> ME_ID id
+    | s = STRING -> ME_STRING s
+    | "true" -> ME_BOOL True
+    | "false" -> ME_BOOL False
+    | "[" ; l = LIST0 (OPT mexpr_no_comma) SEP "," ; "]" -> ME_LIST l
+    | "(" ; c = me_cond ; ")" -> ME_COND c
     ]
   ]
   ;
 
 me_cond: [
     "OR" RIGHTA [ e1 = SELF ; "||" ; e2 = SELF -> COND_OR e1 e2 ]
-  | "AND" RIGHTA [ e1 = SELF ; "||" ; e2 = SELF -> COND_OR e1 e2 ]
-  | "NOT" [ "~" ; e = SELF -> COND_NOT e ]
+  | "AND" RIGHTA [ e1 = SELF ; "&&" ; e2 = SELF -> COND_OR e1 e2 ]
+  | "NOT" [ "!" ; e = SELF -> COND_NOT e ]
   | "ATOM" [ e = mexpr LEVEL "dot" -> COND_ATOM e ] 
   ]
   ;
-real_mexpr_template_ref: [ [
+mexpr_template_ref: [ [
+      check_qid_lparen ;
       qid = qualified_id ; "(" ; a = args ; ")" -> ME_INCLUDE qid a
     | st = subtemplate -> ME_SUB st
     | "(" ; me = mexpr ; ")" ; "(" ; l = LIST0 mexpr_no_comma SEP "," ; ")" -> ME_INCLUDE_IND me l
@@ -235,15 +230,16 @@ subtemplate: [ [
   ] ]
   ;
 
-real_qualified_id: [ [
-      rooted = FLAG "/" ; ids = LIST1 ID SEP "/" ->
-      { rooted = rooted ; ids = ids }
+qualified_id: [ [
+      rooted = FLAG "/" ;
+      ids = LIST1 ID SEP "/" ->
+      { rooted = False ; ids = ids }
   ] ]
   ;
 
 args: [ [
-      check_comma_id_equals ;
-      a1 = named_arg ; al = LIST0 [ "," ; a = named_arg -> a ] ; 
+      check_id_equals ;
+      a1 = named_arg ; al = LIST0 [ check_comma_id_equals ; "," ; a = named_arg -> a ] ; 
       ellipsis = [ "," ; "..." -> True | -> False] ->
       ARGS_NAMED [a1::al] ellipsis
     | l = LIST1 mexpr_no_comma SEP "," -> ARGS_LIST l
@@ -284,6 +280,12 @@ module Mexpr_Template_Ref = St_util.PAHelper(struct
                      type t = mexpr_template_ref_t ;
                      value start_location = start_location ;
                      value entry = top_mexpr_template_ref ;
+                   end) ;
+
+module Mexpr_Basic = St_util.PAHelper(struct
+                     type t = mexpr_t ;
+                     value start_location = start_location ;
+                     value entry = top_mexpr_basic ;
                    end) ;
 
 

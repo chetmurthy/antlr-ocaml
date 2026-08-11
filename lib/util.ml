@@ -210,7 +210,13 @@ let array_of_string loc s =
 
 let finally f finf arg =
   let open Std in
-  let rv = try Inl(f arg) with e -> Inr (e, Printexc.get_raw_backtrace ())
+  let rv = try Inl(f arg)
+           with e ->
+             let eb = (e, Printexc.get_raw_backtrace ()) in
+(*
+             Fmt.(pf stderr "Util.finally: exception@.%a@." exn_backtrace eb) ;
+ *)
+             Inr eb
   in (try finf arg (match rv with Inl v -> Some v | Inr _ -> None) with e -> ());
 	match rv with
 		Inl v -> v
