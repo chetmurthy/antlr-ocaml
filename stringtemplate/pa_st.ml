@@ -313,46 +313,66 @@ region: [ [ ] ] ;
 
 END ;
 
-module Template = Pa_json.PAHelper(struct
+value start_location = Camlp5_adapter.ST.start_location ;
+module Template = St_util.PAHelper(struct
                      type t = template_t ;
+                     value start_location = start_location ;
                      value entry = template_eoi ;
                    end) ;
 
-module Map_Expr = Pa_json.PAHelper(struct
+module Map_Expr = St_util.PAHelper(struct
                      type t = map_expr_t ;
+                     value start_location = start_location ;
                      value entry = top_map_expr ;
                    end) ;
 
-module Map_Template_Ref = Pa_json.PAHelper(struct
+module Map_Template_Ref = St_util.PAHelper(struct
                      type t = map_template_ref_t ;
+                     value start_location = start_location ;
                      value entry = top_map_template_ref ;
                    end) ;
 
-module Member_Expr = Pa_json.PAHelper(struct
+module Member_Expr = St_util.PAHelper(struct
                      type t = member_expr_t ;
+                     value start_location = start_location ;
                      value entry = top_member_expr ;
                    end) ;
 
-module Include_Expr = Pa_json.PAHelper(struct
+module Include_Expr = St_util.PAHelper(struct
                      type t = include_expr_t ;
+                     value start_location = start_location ;
                      value entry = top_include_expr ;
                    end) ;
 
-module Subtemplate = Pa_json.PAHelper(struct
+module Subtemplate = St_util.PAHelper(struct
                      type t = subtemplate_t ;
+                     value start_location = start_location ;
                      value entry = top_subtemplate ;
                    end) ;
 
-module Args = Pa_json.PAHelper(struct
+module Args = St_util.PAHelper(struct
                      type t = args_t ;
+                     value start_location = start_location ;
                      value entry = top_args ;
                    end) ;
 
-module Expr_Options = Pa_json.PAHelper(struct
+module Expr_Options = St_util.PAHelper(struct
                      type t = expr_options_t ;
+                     value start_location = start_location ;
                      value entry = top_expr_options ;
                    end) ;
 
-value tokens_of_string s =
-  s |> Stream.of_string |> lexer.Plexing.tok_func |> fst
+value lexfunc_of_string ?{startloc} s =
+  St_util.with_location start_location ?{startloc} (fun s ->
+      s |> Stream.of_string |> lexer.Plexing.tok_func) s
+;
+
+value tokens_of_string ?{startloc} s =
+  let x = lexfunc_of_string ?{startloc} s in
+  fst x
+;
+
+value tokens_of_here_string (pos, s) =
+  let startloc = Util.ploc_of_position pos in
+  tokens_of_string ~{startloc=startloc} s
 ;

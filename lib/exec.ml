@@ -1177,11 +1177,12 @@ let _execute self recog c input startIndex =
                        end
                   ) ;
                   LA.execute lexerAction recog c)
-    ) ()
+    )
     (fun _ _ ->
       if !requiresSeek then
         IS.seek input stopIndex
     )
+    ()
 
 let execute self recog c input startIndex =
   [%trace (LexerActionExecutor_ENTER_execute (to_mimick self, IS.to_mimick input, startIndex))] ;
@@ -2491,13 +2492,13 @@ let _evaluatePredicate self input ruleIndex predIndex speculative : bool =
         consume self input ;
         R.sempred self.recog self.cursor None ruleIndex predIndex
       )
-      ()
       (fun _ _ ->
         self.cursor.LASC.column <- savedcolumn ;
         self.cursor.LASC.line <- savedline ;
         IS.seek input index ;
         IS.release input marker
       )
+      ()
 
 let evaluatePredicate self input ruleIndex predIndex speculative =
   [%trace
@@ -2796,8 +2797,8 @@ let __match self is mode =
           None -> matchATN self dfa is
         | Some s0 -> execATN self dfa is s0
       )
-      ()
       (fun _ _ -> IS.release is mark)
+      ()
 
 
 let _match self is mode =
@@ -3016,9 +3017,9 @@ let _nextToken self : T.t =
           end
       done
     )
-    ()
     (fun _ _ ->
       IS.release self.recog._input tokenStartMarker)
+    ()
   with (EarlyExit topt) -> topt
 
 let nextToken self : T.t =

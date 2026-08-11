@@ -208,7 +208,7 @@ let array_of_string loc s =
   let l = uchars_of_string loc s in
   Array.of_list (List.map Uchar.to_int l)
 
-let finally f arg finf =
+let finally f finf arg =
   let open Std in
   let rv = try Inl(f arg) with e -> Inr (e, Printexc.get_raw_backtrace ())
   in (try finf arg (match rv with Inl v -> Some v | Inr _ -> None) with e -> ());
@@ -346,3 +346,12 @@ in unrec 0
 let string_contains ~pat =
   let rex = Pcre2.regexp ~flags:[] ("\\Q"^pat^"\\E") in
   Pcre2.pmatch ~rex
+
+let ploc_of_location loc =
+  let open Location in
+  let open Lexing in
+  Ploc.make_loc loc.loc_start.pos_fname loc.loc_start.pos_lnum loc.loc_start.pos_bol (loc.loc_start.pos_cnum, loc.loc_end.pos_cnum) ""
+
+let ploc_of_position pos =
+  let open Lexing in
+  Ploc.make_loc pos.pos_fname pos.pos_lnum pos.pos_bol (pos.pos_cnum, pos.pos_cnum) ""

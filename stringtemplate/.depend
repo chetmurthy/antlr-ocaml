@@ -42,12 +42,12 @@ pa_st.cmx : \
     st_types.cmx \
     camlp5_adapter.cmx
 pa_st2.cmo : \
+    sttypes2.cmo \
     st_util.cmo \
-    st_types.cmo \
     camlp5_adapter.cmo
 pa_st2.cmx : \
+    sttypes2.cmx \
     st_util.cmx \
-    st_types.cmx \
     camlp5_adapter.cmx
 st_ops.cmo : \
     st_types.cmo

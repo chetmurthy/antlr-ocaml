@@ -1,3 +1,4 @@
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_utils
 open Antlr
@@ -10,26 +11,32 @@ module type TOKEN_CUSTOMIZATION = sig
   val renaming : ((string option * string option) * (string option * string option)) list
 end
 
-
-
-module Make(AF : ACTION_FUNS)(TC : TOKEN_CUSTOMIZATION)(Lex : Exec.FULL_LEXER) = struct
-
-let ploc_of_token ~file t =
+let ploc_of_token ~startloc t =
   let open Antlr in
   let open Exec in
   let open T in
   let open Std in
+  let file = Ploc.file_name startloc in
+  let sl_line = Ploc.line_nb startloc in
+  let sl_bol_pos = Ploc.bol_pos startloc in
+  let sl_bp = Ploc.first_pos startloc in
+  let sl_ep = Ploc.last_pos startloc in
+
   let line = outSome t.line in
   let column = outSome t.column in
   let bp = outSome t.start in
   let ep = 1 + (outSome t.stop) in
   let bol_pos = bp-column in
-  Ploc.make_loc file line bol_pos (bp,ep) ""
+  Ploc.make_loc file (sl_line + line - 1)
+    (if line <> 1 then bol_pos else sl_bol_pos + bol_pos)
+    (sl_bp + bp,sl_ep + ep) ""
 
 let string_of_char_stream cs =
   let b = Buffer.create 23 in
   Stream.iter (Buffer.add_char b) cs ;
   Buffer.contents b
+
+module Make(AF : ACTION_FUNS)(TC : TOKEN_CUSTOMIZATION)(Lex : Exec.FULL_LEXER) = struct
 
 let rename x =
   match List.assoc_opt x TC.renaming with
@@ -71,13 +78,14 @@ let pattern_of_token self : Plexing.pattern =
              else assert false in
         (ty, txt)
 
-let located_pattern_of_token ~file self : (Plexing.pattern * Ploc.t) =
-  let loc = ploc_of_token ~file self in
+let located_pattern_of_token ~startloc self : (Plexing.pattern * Ploc.t) =
+  let loc = ploc_of_token ~startloc self in
   let tok = pattern_of_token self in
   (tok,loc)
 
-let input_file = Plexing.input_file
+let start_location = ref Ploc.dummy
 let lexer cs =
+  let startloc = !start_location in
   let open Antlr in
   let txt = string_of_char_stream cs in
   let input : Exec.IS.t =
@@ -92,7 +100,7 @@ let lexer cs =
     assert(Std.isSome t.channel) ;
     if (Std.outSome t.channel) <> 0 then next_token()
     else
-      located_pattern_of_token ~file:!input_file t in
+      located_pattern_of_token ~startloc t in
   Plexing.make_stream_and_location next_token
 
 end

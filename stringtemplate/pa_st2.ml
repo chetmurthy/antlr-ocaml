@@ -14,7 +14,7 @@ value lexer = {Plexing.tok_func = Camlp5_adapter.ST.lexer;
  Plexing.tok_comm = None ; Plexing.kwds = Hashtbl.create 23 } ;
 
 value g = Grammar.gcreate lexer;
-value (template : Grammar.Entry.e template_t) = Grammar.Entry.create g "template";
+value template = Grammar.Entry.create g "template";
 value template_eoi = Grammar.Entry.create g "template_eoi";
 
 value pa_ID = parser [: `("ID",id) :] -> id ;
@@ -109,12 +109,40 @@ value check_comma_id_equals =
     check_comma_id_equals_f
 ;
 
+value top_mexpr_template_ref = Grammar.Entry.create g "top_mexpr_template_ref";
+
+value real_mexpr = Grammar.Entry.create g "real_mexpr";
+value mexpr_f strm = Grammar.Entry.parse_token_stream real_mexpr strm ;
+value mexpr = Grammar.Entry.of_parser g "mexpr" mexpr_f ;
+
+value real_qualified_id = Grammar.Entry.create g "real_qualified_id";
+value qualified_id_f strm = Grammar.Entry.parse_token_stream real_qualified_id strm ;
+value qualified_id = Grammar.Entry.of_parser g "qualified_id" qualified_id_f ;
+
+value real_mexpr_template_ref = Grammar.Entry.create g "real_mexpr_template_ref";
+value mexpr_template_ref_f strm = Grammar.Entry.parse_token_stream real_mexpr_template_ref strm ;
+value mexpr_template_ref = Grammar.Entry.of_parser g "mexpr_template_ref" mexpr_template_ref_f ;
+
+value real_mexpr_basic = Grammar.Entry.create g "real_mexpr_basic";
+value mexpr_basic_f strm = Grammar.Entry.parse_token_stream real_mexpr_basic strm ;
+value mexpr_basic = Grammar.Entry.of_parser g "mexpr_basic" mexpr_basic_f ;
+
 EXTEND
   GLOBAL: template template_eoi
 
+          top_mexpr_template_ref
+          real_mexpr mexpr
+          real_mexpr_template_ref mexpr_template_ref
+          real_qualified_id qualified_id
+          real_mexpr_basic mexpr_basic
+          
+
           check_qid_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
           check_id_equals check_comma_id_equals
+
   ;
+
+top_mexpr_template_ref: [ [ "#inside" ; x = mexpr_template_ref ; EOI -> x ] ] ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
 
@@ -161,15 +189,20 @@ expr_options: [ [
 
 expr_option: [ [ id = ID ; "=" ; e = mexpr -> (id,e) ] ] ;
 
-mexpr:
+real_mexpr:
   [ "top" LEFTA
     [ e1 = SELF ; ":" ; t = mexpr_template_ref -> ME_MAP e1 t ]
   | "comma" RIGHTA
     [ e1 = SELF ; "," ; e2 = SELF -> ME_CAT e1 e2 ]
-  | "dot" RIGHTA
+  | "dot" LEFTA
     [ e1 = SELF ; "." ; id = ID -> ME_PROP e1 id
     | e1 = SELF ; "." ; "(" ; e2 = mexpr ; ")" -> ME_PROP_IND e1 e2 ]
   | "basic"
+    [ me = mexpr_basic -> me ]
+  ]
+  ;
+
+real_mexpr_basic: [
     [ mt = mexpr_template_ref -> ME_TEMPLATE mt
     | id = ID -> ME_PRIMARY (ME_ID id)
     | s = STRING -> ME_PRIMARY (ME_STRING s)
@@ -188,7 +221,7 @@ me_cond: [
   | "ATOM" [ e = mexpr LEVEL "dot" -> COND_ATOM e ] 
   ]
   ;
-mexpr_template_ref: [ [
+real_mexpr_template_ref: [ [
       qid = qualified_id ; "(" ; a = args ; ")" -> ME_INCLUDE qid a
     | st = subtemplate -> ME_SUB st
     | "(" ; me = mexpr ; ")" ; "(" ; l = LIST0 mexpr_no_comma SEP "," ; ")" -> ME_INCLUDE_IND me l
@@ -202,7 +235,7 @@ subtemplate: [ [
   ] ]
   ;
 
-qualified_id: [ [
+real_qualified_id: [ [
       rooted = FLAG "/" ; ids = LIST1 ID SEP "/" ->
       { rooted = rooted ; ids = ids }
   ] ]
@@ -240,11 +273,31 @@ region: [ [ ] ] ;
 
 END ;
 
-module Template = Pa_json.PAHelper(struct
+value start_location = Camlp5_adapter.ST.start_location ;
+module Template = St_util.PAHelper(struct
                      type t = template_t ;
+                     value start_location = start_location ;
                      value entry = template_eoi ;
                    end) ;
 
-value tokens_of_string s =
-  s |> Stream.of_string |> lexer.Plexing.tok_func |> fst
+module Mexpr_Template_Ref = St_util.PAHelper(struct
+                     type t = mexpr_template_ref_t ;
+                     value start_location = start_location ;
+                     value entry = top_mexpr_template_ref ;
+                   end) ;
+
+
+value lexfunc_of_string ?{startloc} s =
+  St_util.with_location start_location ?{startloc} (fun s ->
+      s |> Stream.of_string |> lexer.Plexing.tok_func) s
+;
+
+value tokens_of_string ?{startloc} s =
+  let x = lexfunc_of_string ?{startloc} s in
+  fst x
+;
+
+value tokens_of_here_string (pos, s) =
+  let startloc = Util.ploc_of_position pos in
+  tokens_of_string ~{startloc=startloc} s
 ;

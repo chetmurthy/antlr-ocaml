@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std,pa_ppx.here *)
 
 open OUnit2
 open Antlr
@@ -12,18 +12,18 @@ Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.
 let test_parse_st ctxt =
   let open Stringtemplate in
   ()
-  ; assert_equal () (ignore({|abc def|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore({|Hello, <name>!|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore({|{<writeln("\"I\"")>}|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore({|{<name>}|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore ({|{<ToStringTree("$ctx"):writeln()>}|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore ({|{<InitIntMember("i","0")>}|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore ({|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore ({|<TreeNodeWithAltNumField(X="T")>|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore ("load <box({})>;" |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore ({|<a(x="x",y="y")>|} |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore ("Foo<\\ >bar<\\n>" |> Pa_st.Template.of_string))
-  ; assert_equal () (ignore ("<subdir/b()>" |> Pa_st.Template.of_string))
+  ; assert_equal () (ignore([%here_string {|abc def|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore([%here_string {|Hello, <name>!|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore([%here_string {|{<writeln("\"I\"")>}|}] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore([%here_string {|{<name>}|}] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<ToStringTree("$ctx"):writeln()>}|}] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<InitIntMember("i","0")>}|}] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|}] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|<TreeNodeWithAltNumField(X="T")>|}] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "load <box({})>;"] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|<a(x="x",y="y")>|}] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "Foo<\\ >bar<\\n>"] |> Pa_st.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "<subdir/b()>"] |> Pa_st.Template.of_here_string))
 
   ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
   ; assert_equal () (ignore (Pa_st.Template.load ~file:"fixtures/antlrtest.7/Test.py"))

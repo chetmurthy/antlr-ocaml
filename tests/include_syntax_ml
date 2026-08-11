@@ -94,6 +94,7 @@ open Stringtemplate_test ;;
 
 open Pa_ppx_located_yojson.Json ;;
 
+#require "pa_ppx.here";;
 #require "pa_ppx.located_sexp";;
 open Pa_ppx_located_sexp ;;
 
@@ -128,10 +129,11 @@ let truncate_at_EOI strm =
 
  *)
 
-#trace Pa_st.map_expr_f ;;
-"<[\"Ter\",,\"Jesse\"]:{n | <i>:<n>}; separator=\", \", null={foo}>" |> Pa_st.Template.of_string ;;
-
-
+#trace Pa_st2.mexpr_f ;;
+#trace Pa_st2.mexpr_basic_f ;;
+#trace Pa_st2.mexpr_template_ref_f ;;
+#trace Pa_st2.qualified_id_f ;;
+[%here_string {|{<writeln("\"I\"")>}|}] |> Pa_st2.Template.of_here_string ;;
 
 (*
 ;;; Local Variables: ***
