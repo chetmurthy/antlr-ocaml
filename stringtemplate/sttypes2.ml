@@ -37,10 +37,13 @@ and args_t =
 and subtemplate_t =
   string list * elements_t
 
-and element_t =
+and literal_t =
   TEXT of string
 | HORZ_WS of string
 | VERT_WS of string
+
+and element_t =
+  LIT of literal_t
 | EXPR_TAG of expr_tag_t
 | IFSTAT of mexpr_cond_t * elements_t * (mexpr_cond_t * elements_t) list * elements_t option
 | REGION of string * elements_t

@@ -39,8 +39,8 @@ module Pos = struct
 
   let update_char pos c =
     if c = '\n' then
-      { (pos) with line = pos.line + 1 ; bol_pos = pos.bol_pos+1 ; first_pos = pos.first_pos + 1 }
-  else { (pos) with first_pos = pos.first_pos + 1 }
+      { (pos) with line = pos.line + 1 ; bol_pos = pos.first_pos+1 ; first_pos = pos.first_pos + 1 }
+    else { (pos) with first_pos = pos.first_pos + 1 }
 
   let update pos txt =
     String.fold_left update_char pos txt
@@ -62,9 +62,12 @@ let clean_stanza (pos, s) =
   | Some (nls, s) -> (Pos.update pos nls, s) in
   (pos, [%subst {|\n\n$|} / "" / s] s)
 
-let split_stanzas txt = [%split {|^\[(notes|type|grammar|slaveGrammar|start|input|output|errors|flags|skip)([^\]]*)\]$|} / pcre2 m strings (!0, !1, !2)] txt
+type split_elem_t = [ `Text of string | `Delim of string * string * string ]
+type split_t = (Pos.t * split_elem_t) list
 
-let position_stanzas pos l =
+let split_stanzas txt : split_elem_t list = [%split {|^\[(notes|type|grammar|slaveGrammar|start|input|output|errors|flags|skip)([^\]]*)\]$|} / pcre2 m strings (!0, !1, !2)] txt
+
+let position_stanzas pos l : split_t =
   l
   |> List.fold_left (fun (pos,acc) x ->
          match x with

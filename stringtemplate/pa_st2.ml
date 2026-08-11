@@ -135,7 +135,7 @@ top_mexpr_basic: [ [ "#inside" ; x = mexpr_basic ; EOI -> x ] ] ;
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
 
 template: [ [
-      l = LIST0 [ l = limited_template -> l | x = "}" -> [TEXT x] ] -> List.concat l
+      l = LIST0 [ l = limited_template -> l | x = "}" -> [LIT(TEXT x)] ] -> List.concat l
   ] ]
   ;
 
@@ -150,10 +150,10 @@ element: [ [
 
 single_element: [ [
       x = expr_tag -> EXPR_TAG x
-    | x = TEXT -> TEXT x
-    | x = ESCAPE -> TEXT (St_util.unescape x)
-    | x = HORZ_WS -> HORZ_WS x
-    | x = VERT_WS -> VERT_WS x
+    | x = TEXT -> LIT (TEXT x)
+    | x = ESCAPE -> LIT(TEXT (St_util.unescape x))
+    | x = HORZ_WS -> LIT(HORZ_WS x)
+    | x = VERT_WS -> LIT(VERT_WS x)
   ] ]
   ;
 

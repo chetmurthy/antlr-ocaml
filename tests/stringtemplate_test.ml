@@ -76,10 +76,8 @@ let list_all_descriptors () =
 
 let test_parse_all_descriptors ctxt =
   (list_all_descriptors())
-  |>
-    List.iter (fun f ->
-        Fmt.(pf stderr "[%s]@." f) ;
-        (test_parse_descriptor f ()))
+  |> List.iter (fun f ->
+         test_parse_descriptor f ())
 
 let test_parse_st_file file ctxt =
   let open Stringtemplate in

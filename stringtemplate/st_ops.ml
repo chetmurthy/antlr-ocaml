@@ -1,6 +1,6 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx_migrate,pa_ppx.import *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.import,pa_ppx_migrate *)
 
-open St_types
+open Sttypes2
 
 module Migrate = struct
 exception Migration_error of string
@@ -12,34 +12,26 @@ let _migrate_list subrw0 __dt__ l =
   List.map (subrw0 __dt__) l
 
 [%%typedecls
-  [%%import: St_types.template_t]
-  [%%import: St_types.qualified_id_t]
+  [%%import: Sttypes2.template_t]
+  [%%import: Sttypes2.qualified_id_t]
 ]
 [@@deriving migrate
     { dispatch_type = dispatch_table_t
     ; dispatch_table_constructor = make_dt
     ; default_dispatchers = [
         {
-          srcmod = St_types
-        ; dstmod = St_types
+          srcmod = Sttypes2
+        ; dstmod = Sttypes2
         ; types = [
-            arg_expr_list_t
-          ; args_t
-          ; conditional_t
+            args_t
           ; elements_t
           ; element_t
-          ; expr_options_t
-          ; expr_option_t
-          ; expr_t
           ; expr_tag_t
-          ; include_expr_arg_t
-          ; include_expr_t
-          ; list_element_t
-          ; map_expr_t
-          ; map_template_ref_t
-          ; member_expr_t
-          ; named_arg_t
-          ; primary_t
+          ; literal_t
+          ; mexpr_cond_t
+          ; mexpr_primary_t
+          ; mexpr_t
+          ; mexpr_template_ref_t
           ; qualified_id_t
           ; subtemplate_t
           ; template_t
@@ -71,13 +63,13 @@ let coalesce1 (l : template_t) : template_t =
       [] -> tacc
     | strl ->
        let s = String.concat "" (List.rev strl) in
-        (TEXT s)::tacc in
+        (LIT (TEXT s))::tacc in
 
   let rec corec tacc stracc = function
       [] ->
        let tacc = finish_stracc tacc stracc in
        List.rev tacc
-    | (TEXT s)::l -> corec tacc (s::stracc) l
+    | (LIT (TEXT s))::l -> corec tacc (s::stracc) l
     | h::l ->
        let tacc = finish_stracc tacc stracc in
        corec (h::tacc) [] l
