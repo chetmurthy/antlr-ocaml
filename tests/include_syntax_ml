@@ -22,6 +22,7 @@ let pp_char_stream strm =
 #require "pa_ppx.base" ;;
 #require "pa_ppx.utils" ;;
 #require "pa_ppx_regexp";;
+#require "pa_ppx_fmtformat";;
 #require "pa_ppx.runtime";;
 #require "pa_ppx.runtime_fat";;
 #require "pa_ppx.located_yojson";;

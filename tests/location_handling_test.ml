@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std,pa_ppx.here *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std,pa_ppx.here,pa_ppx_fmtformat *)
 
 open OUnit2
 
@@ -119,7 +119,7 @@ end
 
     -- checking zeroth location --
 
-    (1) check loc[0] = startloc
+    (1) check loc[0] = startloc [except for "ep" field]
 
     -- checking individual raw tokens --
 
@@ -130,9 +130,9 @@ end
     -- checking individual locations --
 
     (1) loc.bp = raw.start + start_loc.bp
-    (2) loc.ep = raw.start + start_loc.ep
+    (2) loc.ep = raw.stop + 1 + loc.bp
     (3) loc.line = startloc.line + raw.line - 1
-    (4) loc.bol_pos = raw.line->bol_pos
+    (4) loc.bol_pos = startloc.bol_pos + raw.line->bol_pos
 
     -- checking raw token pairs --
 
@@ -193,6 +193,30 @@ bol_pos+column: %d
                  start line column bol_pos (bol_pos+column)) in
   assert_equal ~msg (bol_pos + column) start
 
+let check_location startloc bpmap i t =
+  let open Exec.T in
+  let open St_util in
+  let startloc = Ploc.Internal.of_t startloc in
+  let raw = triple2raw t in
+  let raw_start = Std.outSome raw.start in
+  let raw_stop = Std.outSome raw.stop in
+  let raw_line = Std.outSome raw.line in
+  let ploc = triple2ploc t in
+  let ploc = Ploc.Internal.of_t ploc in
+  let printer = string_of_int in
+  let msg = {%fmt_str|$(t|pp_triple)|} in
+  assert_equal ~msg:{%fmt_str|loc[$(i|%d)].bp
+$(msg|%s)|} ~printer (raw_start + startloc.bp) ploc.bp ;
+  assert_equal ~msg:{%fmt_str|loc[$(i|%d)].ep
+$(msg|%s)|} ~printer (raw_stop + 1 + ploc.bp) ploc.ep ;
+  assert_equal ~msg:{%fmt_str|loc[$(i|%d)].line
+$(msg|%s)|} ~printer (raw_line + startloc.line_nb - 1) ploc.line_nb ;
+  assert_equal ~msg:{%fmt_str|loc[$(i|%d)].bol_pos
+$(msg|%s)|} ~printer
+    (startloc.bol_pos + (Bol_pos.linenum2bol_pos bpmap raw_line)) ploc.bol_pos ;
+  ()
+
+
 let check_pairs_i f l =
   let rec checkrec i l =
     match l with
@@ -214,6 +238,7 @@ let check_locations tokenizer (pos, txt) =
   check_zeroth_raw startloc (List.hd triples) ;
   check_zeroth_location startloc (List.hd triples) ;
   List.iteri (check_raw startloc bpmap) triples ;
+  List.iteri (check_location startloc bpmap) triples ;
   check_pairs_i (check_raw_pair startloc) triples
 
 let test_raw_tokens ctxt =

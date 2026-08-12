@@ -35,7 +35,7 @@ all: $(EXE) $(OPT)
 
 test:: all $(TESTML:.ml=.TEST)
 
-%.TEST: %.opt
+%.TEST: %.opt %.exe
 	mkdir -p _build && ./$< -runner sequential -shards 1
 
 MANAGETRIP=./tools/manage-trip-tests
