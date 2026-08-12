@@ -369,3 +369,35 @@ module PlocInternal = struct
 [%%import: Ploc.Internal.t]
 [@@deriving show { with_path = false }]
 end
+
+let foldmap_left f acc l =
+  let rec frec acclist acc = function
+      [] -> (List.rev acclist, acc)
+    | h::t ->
+       let (h', acc) = f acc h in
+       frec (h' :: acclist) acc t
+  in
+  frec [] acc l
+
+let bsearch arr key =
+  let arrlen = Array.length arr in
+  if key < fst arr.(0) then
+    failwith "bsearch: key is less than zeroth entry in array"
+  else if key > fst arr.(arrlen-1) then
+    failwith "bsearch: key is less than last entry in array"
+  else if key = fst arr.(0) then 0
+  else if key = fst arr.(arrlen-1) then arrlen-1
+  else
+    let rec brec lo hi =
+      assert ((fst arr.(lo)) <= key && key < (fst arr.(hi))) ;
+      if lo+1 = hi then lo
+      else
+        let mid = (hi+lo)/2 in
+        if fst arr.(mid) <= key && key < fst arr.(mid+1) then mid
+        else if key < fst arr.(mid) then
+          brec lo mid
+        else brec mid hi
+    in
+    brec 0 (arrlen - 1)
+
+    
