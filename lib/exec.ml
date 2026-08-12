@@ -285,7 +285,7 @@ module InputStream = IS
 module T = struct
 
 type token_t = {
-    _input : IS.t
+    _input : (IS.t [@printer fun fmt _ -> Format.fprintf fmt "#<IS.t>"])
   ; type_ : int option
   ; channel : int option
   ; start : int option
@@ -295,6 +295,7 @@ type token_t = {
   ; mutable column : int option
   ; mutable _text : string option
   }
+[@@deriving show { with_path = false }]
 
 let to_mimick t =
   M.Token {

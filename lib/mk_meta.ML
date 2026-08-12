@@ -20,4 +20,10 @@ description = "OCaml ANTLR support"
   archive(native) = "antlr.cmxa"
 
   requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils,yojson,pa_ppx.located_yojson,ocamlgraph"
+package "pp" (
+  requires(syntax,preprocessor) = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils,yojson,pa_ppx.located_yojson,ocamlgraph"
+  archive(syntax,preprocessor,-native) = "antlr.cma"
+  archive(syntax,preprocessor,native) = "antlr.cmxa"
+)
+
 |} version)

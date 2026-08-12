@@ -26,10 +26,12 @@ sttypes2.cmx :
 stg_types.cmo :
 stg_types.cmx :
 camlp5_adapter.cmo : \
+    st_util.cmo \
     l_stg.cmo \
     l_st.cmo \
     actionFuns_st.cmo
 camlp5_adapter.cmx : \
+    st_util.cmx \
     l_stg.cmx \
     l_st.cmx \
     actionFuns_st.cmx
@@ -50,19 +52,21 @@ pa_st2.cmx : \
     st_util.cmx \
     camlp5_adapter.cmx
 st_ops.cmo : \
-    st_types.cmo
+    sttypes2.cmo
 st_ops.cmx : \
-    st_types.cmx
+    sttypes2.cmx
 pa_stg.cmo : \
     stg_types.cmo \
+    st_util.cmo \
     camlp5_adapter.cmo
 pa_stg.cmx : \
     stg_types.cmx \
+    st_util.cmx \
     camlp5_adapter.cmx
 eval.cmo : \
-    st_types.cmo
+    sttypes2.cmo
 eval.cmx : \
-    st_types.cmx
+    sttypes2.cmx
 testharness.cmo : \
     pa_stg.cmo \
     pa_st.cmo \

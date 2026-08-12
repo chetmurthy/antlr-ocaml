@@ -2,6 +2,7 @@
 
 open Pa_ppx_utils ;
 open Pa_ppx_located_yojson ;
+open Antlr ;
 open Stg_types ;
 
 value stream_npeek n s = (Stream.npeek n s : list (string * string)) ;
@@ -151,11 +152,9 @@ key_value: [ [
 
 END ;
 
-module Group = Pa_json.PAHelper(struct
+value start_location = Camlp5_adapter.STG.start_location ;
+module Group = St_util.PAHelper(struct
                      type t = group_t ;
+                     value start_location = start_location ;
                      value entry = group_eoi ;
                    end) ;
-
-value tokens_of_string s =
-  s |> Stream.of_string |> lexer.Plexing.tok_func |> fst
-;

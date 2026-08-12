@@ -32,8 +32,8 @@ let test_parse_st ctxt =
 let test_parse_stg ctxt =
   let open Stringtemplate in
   ()
-  ; assert_equal () (ignore({| import "foo" |} |> Pa_stg.Group.of_string))
-  ; assert_equal () (ignore({| 
+  ; assert_equal () (ignore([%here_string {| import "foo" |}] |> Pa_stg.Group.of_here_string))
+  ; assert_equal () (ignore([%here_string {| 
 cppTypeInitMap ::= [
     "int":"0",
     "long":"0",
@@ -45,10 +45,10 @@ cppTypeInitMap ::= [
     default: "nullptr" // anything other than a primitive type is an object
 ]
 
- |} |> Pa_stg.Group.of_string))
-  ; assert_equal () (ignore({| 
+ |}] |> Pa_stg.Group.of_here_string))
+  ; assert_equal () (ignore([%here_string {| 
 stat(name,value="99") ::= "x=<value>; // <name>"
-|} |> Pa_stg.Group.of_string))
+|}] |> Pa_stg.Group.of_here_string))
 
 let test_parse_grammar g ctxt =
   let open Stringtemplate in
@@ -99,6 +99,7 @@ let list_all_stg () =
   ; "/home/chet/Hack/Antlr/src/antlr4/tool/resources/org/antlr/v4/tool/templates/codegen"
   ; "/home/chet/Hack/Antlr/src/antlr4/tool/resources/org/antlr/v4/tool/templates"
   ; "/home/chet/Hack/Github/antlr/stringtemplate4/"
+  ; "fixtures"
   ]
   |> List.map Fpath.v
   |> Bos.OS.Path.fold (fun a b -> a::b) []

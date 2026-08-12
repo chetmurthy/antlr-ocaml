@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx_regexp *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx_regexp,pa_ppx.import *)
 
 open Pa_ppx_utils
 open Pa_ppx_base
@@ -10,6 +10,9 @@ let truncate_stream pred strm =
       if pred t then [< 't >] else [< 't ; trec strm >]
   | [< >] -> [< >]
   in trec strm
+
+let pattern_is_EOI = function ("EOI",_) -> true | _ -> false
+let located_pattern_is_EOI = function (("EOI",_),_) -> true | _ -> false
 
 let plisti elem i = 
   let rec plist_rec accum i = parser
@@ -361,3 +364,8 @@ let ploc_of_location loc =
 let ploc_of_position pos =
   let open Lexing in
   Ploc.make_loc pos.pos_fname pos.pos_lnum pos.pos_bol (pos.pos_cnum, pos.pos_cnum) ""
+
+module PlocInternal = struct
+[%%import: Ploc.Internal.t]
+[@@deriving show { with_path = false }]
+end

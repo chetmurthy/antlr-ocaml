@@ -269,7 +269,8 @@ region: [ [ ] ] ;
 
 END ;
 
-value start_location = Camlp5_adapter.ST.start_location ;
+module ST = Camlp5_adapter.ST ;
+value start_location = ST.start_location ;
 module Template = St_util.PAHelper(struct
                      type t = template_t ;
                      value start_location = start_location ;
@@ -288,18 +289,32 @@ module Mexpr_Basic = St_util.PAHelper(struct
                      value entry = top_mexpr_basic ;
                    end) ;
 
-
-value lexfunc_of_string ?{startloc} s =
-  St_util.with_location start_location ?{startloc} (fun s ->
-      s |> Stream.of_string |> lexer.Plexing.tok_func) s
-;
-
+(*
 value tokens_of_string ?{startloc} s =
-  let x = lexfunc_of_string ?{startloc} s in
-  fst x
+  s
+|> lexfunc_of_string ?{startloc}
+|> fst
+|> Util.truncate_at_EOI
 ;
 
 value tokens_of_here_string (pos, s) =
   let startloc = Util.ploc_of_position pos in
   tokens_of_string ~{startloc=startloc} s
 ;
+
+value loc_tokens_of_here_string (pos,s)  =
+  let startloc = Util.ploc_of_position pos in
+  let (tokstrm, locations) = lexfunc_of_string ~{startloc=startloc} s in
+  let tokstrm = Util.truncate_at_EOI tokstrm in
+  let l = Std.list_of_stream tokstrm in
+  List.mapi (fun i tok -> (Plexing.Locations.lookup locations i, tok)) l
+;
+
+value raw_tokens_of_string ?{all_channels} s =
+  s
+|> Stream.of_string
+|> Camlp5_adapter.ST.raw_lexer ?{all_channels}
+|> Camlp5_adapter.ST.stream_of_lexer
+|> Util.truncate_stream (fun t -> Exec.(t.T.type_ = Some C._EOF))
+;
+ *)

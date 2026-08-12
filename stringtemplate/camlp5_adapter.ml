@@ -20,16 +20,18 @@ let ploc_of_token ~startloc t =
   let sl_line = Ploc.line_nb startloc in
   let sl_bol_pos = Ploc.bol_pos startloc in
   let sl_bp = Ploc.first_pos startloc in
-  let sl_ep = Ploc.last_pos startloc in
 
-  let line = outSome t.line in
-  let column = outSome t.column in
-  let bp = outSome t.start in
-  let ep = 1 + (outSome t.stop) in
-  let bol_pos = bp-column in
-  Ploc.make_loc file (sl_line + line - 1)
-    (if line <> 1 then bol_pos else sl_bol_pos + bol_pos)
-    (sl_bp + bp,sl_ep + ep) ""
+  let tok_line = outSome t.line in
+  let tok_column = outSome t.column in
+  let tok_bp = outSome t.start in
+  let tok_ep = 1 + (outSome t.stop) in
+
+  let line = sl_line + tok_line - 1 in
+  let bp = sl_bp + tok_bp in
+  let ep = sl_bp + tok_ep in
+  let bol_pos = bp - tok_column in
+
+  Ploc.make_loc file line bol_pos (bp,ep) ""
 
 let string_of_char_stream cs =
   let b = Buffer.create 23 in
@@ -84,8 +86,8 @@ let located_pattern_of_token ~startloc self : (Plexing.pattern * Ploc.t) =
   (tok,loc)
 
 let start_location = ref Ploc.dummy
-let lexer cs =
-  let startloc = !start_location in
+
+let raw_lexer ?(all_channels=false) cs =
   let open Antlr in
   let txt = string_of_char_stream cs in
   let input : Exec.IS.t =
@@ -98,10 +100,65 @@ let lexer cs =
   let rec next_token () =
     let t = Lex.nextToken lex in
     assert(Std.isSome t.channel) ;
-    if (Std.outSome t.channel) <> 0 then next_token()
+    if not all_channels && (Std.outSome t.channel) <> 0 then next_token()
     else
-      located_pattern_of_token ~startloc t in
-  Plexing.make_stream_and_location next_token
+      t in
+  next_token
+
+let located_pattern_lexer ?(all_channels=false) cs =
+  let startloc = !start_location in
+  let next_token = raw_lexer ~all_channels cs in
+  let next_token () =
+    let t = next_token () in
+    located_pattern_of_token ~startloc t in
+  next_token
+
+let triple_lexer ?(all_channels=false) cs =
+  let startloc = !start_location in
+  let next_token = raw_lexer ~all_channels cs in
+  let next_token () =
+    let t = next_token () in
+    (t, located_pattern_of_token ~startloc t) in
+  next_token
+
+let stream_of_lexer f =
+  Stream.from (fun _ -> Some (f()))
+
+let lexer cs =
+  Plexing.make_stream_and_location (located_pattern_lexer cs)
+
+let raw_of_string ?all_channels s =
+  s
+  |> Stream.of_string
+  |> raw_lexer ?all_channels
+  |> stream_of_lexer
+  |> Util.truncate_stream St_util.raw_is_EOF
+
+let located_patterns_of_string ?startloc ?all_channels s =
+  St_util.with_location start_location ?startloc (fun s ->
+      s
+      |> Stream.of_string
+      |> located_pattern_lexer ?all_channels
+      |> stream_of_lexer
+      |> Util.(truncate_stream located_pattern_is_EOI)
+    ) s
+
+let located_patterns_of_here_string ?all_channels (pos,s)  =
+  let startloc = Util.ploc_of_position pos in
+  located_patterns_of_string  ~startloc ?all_channels s
+
+let triple_of_string ?startloc ?all_channels s =
+  St_util.with_location start_location ?startloc (fun s ->
+      s
+      |> Stream.of_string
+      |> triple_lexer ?all_channels
+      |> stream_of_lexer
+      |> Util.truncate_stream St_util.triple_is_EOI
+    ) s
+
+let triple_of_here_string ?all_channels (pos,s)  =
+  let startloc = Util.ploc_of_position pos in
+  triple_of_string  ~startloc ?all_channels s
 
 end
 
@@ -138,7 +195,6 @@ end
 module STG = Make(ActionFuns_stg)(struct
 let renaming = [
     ((Some "TMPL_ASSIGN", None), (Some "TMPL_ASSIGN", Some "::="))
-  ; ((Some "TMPL_ASSIGN", None), (Some "TMPL_ASSIGN", Some "::="))
   ; ((Some "ASSIGN", None), (Some "ASSIGN", Some "="))
   ; ((Some "DOT", None), (Some "DOT",Some "."))
   ; ((Some "COMMA", None), (Some "COMMA",Some ","))

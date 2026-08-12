@@ -7,8 +7,9 @@
 
 let pp_ploc_t pps (loc : Ploc.t) = Fmt.(pf pps "<%s>" (Ploc.string_of_location loc)) ;;
 
+(*
 #install_printer pp_ploc_t ;;
-
+ *)
 let pp_location_t pps (loc : Location.t) = Fmt.(pf pps "<loc>") ;;
 
 let pp_char_stream strm =
@@ -38,6 +39,10 @@ open Antlr ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
+let pp_fully_ploc_t pps (loc : Ploc.t) =
+  let intloc = Ploc.Internal.of_t loc in
+ Fmt.(pf pps "#<:loc< %a>>" Util.PlocInternal.pp intloc) ;;
+#install_printer pp_fully_ploc_t ;;
 
 #install_printer Fpath.pp ;;
 
@@ -89,8 +94,6 @@ open Stringtemplate ;;
  *)
 
 #require "antlrtest" ;;
-#load "stringtemplate_test.cmo";;
-open Stringtemplate_test ;;
 
 open Pa_ppx_located_yojson.Json ;;
 
@@ -98,42 +101,11 @@ open Pa_ppx_located_yojson.Json ;;
 #require "pa_ppx.located_sexp";;
 open Pa_ppx_located_sexp ;;
 
-(*
-let upgrade_multi fromfile tofile =
-  Old_testharness.(Multi.load_sexp ~file:fromfile |> Multi.upgrade) |> Testharness.Multi.located_sexp_of_t |> Sexpio.Printing.to_string |> Bos.OS.File.write (Fpath.v tofile) ;;
+open Camlp5_adapter ;;
 
-let upgrade_single fromfile tofile =
-  Old_testharness.(load_sexp ~file:fromfile |> upgrade) |> Testharness.located_sexp_of_t |> Sexpio.Printing.to_string |> Bos.OS.File.write (Fpath.v tofile) ;;
- *)
-(*
-{|#inside a(x="x") |} |> Pa_st.Member_Expr.of_string ;;
+#load "location_handling_test.cmo";;
+open Location_handling_test ;;
 
-#trace Pa_st.map_expr_f ;;
-#trace Pa_st.args_f ;;
-#trace Pa_st.named_arg_f ;;
-#trace Pa_st.check_not_comma_id_equals_f ;;
-
-{|#inside a(x="x",y="y") |} |> Pa_st.Member_Expr.of_string ;;
-
-
-let truncate_at_EOI strm =
-  Util.truncate_stream (function ("EOI",_) -> true | _ -> false) strm ;;
-
-{|#inside subdir/b(|}
- |> Pa_st.tokens_of_string
- |> truncate_at_EOI
- |> Std.list_of_stream
- |> List.tl
- |> Std.stream_of_list
- |>  Pa_st.check_qid_lparen_f ;;
-
- *)
-
-#trace Pa_st2.mexpr_f ;;
-#trace Pa_st2.mexpr_basic_f ;;
-#trace Pa_st2.mexpr_template_ref_f ;;
-#trace Pa_st2.qualified_id_f ;;
-[%here_string {|{<writeln("\"I\"")>}|}] |> Pa_st2.Template.of_here_string ;;
 
 (*
 ;;; Local Variables: ***

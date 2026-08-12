@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std,pa_ppx.import *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -77,3 +77,25 @@ module PAHelper(M : sig type t
       (fun _ _ -> close_in ic)
       ic
 end
+
+type raw = Antlr.Exec.T.token_t
+[@@deriving show { with_path = false }]
+
+
+type ploc_t = Ploc.t
+let pp_ploc_t pps loc =
+  let intloc = Ploc.Internal.of_t loc in
+  Util.PlocInternal.pp pps intloc
+
+type located_pattern = (string * string) * ploc_t
+[@@deriving show { with_path = false }]
+
+type triple = raw * located_pattern
+[@@deriving show { with_path = false }]
+
+let raw_is_EOF t = Exec.(t.T.type_ = Some C._EOF)
+let triple_is_EOI (_,(p,_)) = fst p = "EOI"
+
+let triple2raw (raw, _) = raw
+let triple2pattern (_,(pat,_)) = pat
+let triple2ploc (_,(_,ploc)) = ploc
