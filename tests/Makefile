@@ -223,7 +223,7 @@ compare-one:: antlrtest_test.exe
 %.exe: %.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
-%.opt: %.cmx
+%.opt: %.cmx %.cmi
 	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 SHELL := /bin/bash

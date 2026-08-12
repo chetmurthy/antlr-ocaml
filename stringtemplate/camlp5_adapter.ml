@@ -29,7 +29,7 @@ let ploc_of_token ~startloc t =
   let line = sl_line + tok_line - 1 in
   let bp = sl_bp + tok_bp in
   let ep = sl_bp + tok_ep in
-  let bol_pos = bp - tok_column in
+  let bol_pos = if tok_line = 1 then sl_bol_pos else bp - tok_column in
 
   Ploc.make_loc file line bol_pos (bp,ep) ""
 

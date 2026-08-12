@@ -105,7 +105,17 @@ open Camlp5_adapter ;;
 
 #load "location_handling_test.cmo";;
 open Location_handling_test ;;
+open Lexing ;;
 
+#trace ploc_of_token ;;
+#trace check_zeroth_location ;;
+
+  check_locations (ST.triple_of_here_string ~all_channels:true)
+    ({pos_fname = "location_handling_test.ml"; pos_lnum = 205;
+             pos_bol = 6173; pos_cnum = 6252},
+     "< writeln()>") ;;
+
+check_locations (ST.triple_of_here_string ~all_channels:true) [%here_string "< writeln()>"] ;;
 
 (*
 ;;; Local Variables: ***

@@ -16,6 +16,49 @@ Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
+let assert_equal_field name pp v1 v2 msg =
+  let msg = Fmt.(str "field %s; %a <> %a\n%s" name pp v1 pp v2 msg) in
+  assert_equal ~msg v1 v2
+
+let assert_equal_locations ?(except=[]) ~msg exp loc =
+  let exp = Ploc.Internal.of_t exp in
+  let loc = Ploc.Internal.of_t loc in
+  ()
+  ; if not(List.mem  "fname" except) then
+      assert_equal_field "fname" Fmt.Dump.string exp.fname loc.fname msg
+  ; if not(List.mem  "line_nb" except) then
+      assert_equal_field "line_nb" Fmt.int exp.line_nb loc.line_nb msg
+  ; if not(List.mem  "bol_pos" except) then
+      assert_equal_field "bol_pos" Fmt.int exp.bol_pos loc.bol_pos msg
+  ; if not(List.mem  "line_nb_last" except) then
+      assert_equal_field "line_nb_last" Fmt.int exp.line_nb_last loc.line_nb_last msg
+  ; if not(List.mem  "bol_pos_last" except) then
+      assert_equal_field "bol_pos_last" Fmt.int exp.bol_pos_last loc.bol_pos_last msg
+  ; if not(List.mem  "bp" except) then
+      assert_equal_field "bp" Fmt.int exp.bp loc.bp msg
+  ; if not(List.mem  "ep" except) then
+      assert_equal_field "ep" Fmt.int exp.ep loc.ep msg
+  ; if not(List.mem  "comm" except) then
+      assert_equal_field "comm" Fmt.string exp.comm loc.comm msg
+  ; if not(List.mem  "ecomm" except) then
+      assert_equal_field "ecomm" Fmt.string exp.ecomm loc.ecomm msg
+
+let test_position_to_ploc ctxt =
+  let open Lexing in
+  let pos = {pos_fname = "location_handling_test.ml"; pos_lnum = 205;
+             pos_bol = 6173; pos_cnum = 6252} in
+  let wanted_ploc = Ploc.make_loc pos.pos_fname pos.pos_lnum pos.pos_bol (pos.pos_cnum, pos.pos_cnum) "" in
+  let ploc = Util.ploc_of_position pos in
+  let msg =
+    Fmt.(str {|hand-constructed location not as expected
+expected:%a
+built]: %a
+@.|}
+         Util.PlocInternal.pp (Ploc.Internal.of_t wanted_ploc)
+         Util.PlocInternal.pp (Ploc.Internal.of_t ploc)) in
+
+  assert_equal_locations ~msg wanted_ploc ploc
+
 module Bol_pos = struct
 
 type maps = {
@@ -67,11 +110,29 @@ end
 
 (** checking location integrity
 
+    ASSUMPTION: text will always be presented as raw-strings.
+
+    -- checking zeroth raw token --
+
+    (1) check raw[0].start = 0
+    (2) check raw[0].line = 1
+
+    -- checking zeroth location --
+
+    (1) check loc[0] = startloc
+
     -- checking individual raw tokens --
 
     (1) check that the start, column, and line number are consistent:
 
        line number allows to compute bol_pos: bol_pos + column = start
+
+    -- checking individual locations --
+
+    (1) loc.bp = raw.start + start_loc.bp
+    (2) loc.ep = raw.start + start_loc.ep
+    (3) loc.line = startloc.line + raw.line - 1
+    (4) loc.bol_pos = raw.line->bol_pos
 
     -- checking raw token pairs --
 
@@ -79,7 +140,28 @@ end
 
  *)
 
-let check_raw_pair i a b =
+let check_zeroth_raw startloc t =
+  let open Exec.T in
+  let open St_util in
+  let raw = triple2raw t in
+  assert_equal ~msg:"zeroth raw.start <> 0" 0 (Std.outSome raw.start)
+; assert_equal ~msg:"zeroth raw.line <> 1" 1 (Std.outSome raw.line)
+
+let check_zeroth_location startloc t =
+  let open Exec.T in
+  let open St_util in
+  let raw = triple2raw t in
+  let ploc = triple2ploc t in
+  let msg =
+    Fmt.(str {|zeroth location not equal to startloc
+startloc:%a
+triple[0]: %a
+@.|}
+         Util.PlocInternal.pp (Ploc.Internal.of_t startloc)
+         pp_triple t) in
+  assert_equal_locations ~except:["ep"] ~msg startloc ploc
+
+let check_raw_pair startloc i a b =
   let open Exec.T in
   let open St_util in
   let raw_a = triple2raw a in
@@ -90,7 +172,7 @@ let check_raw_pair i a b =
                 ) in
   assert_equal ~msg ((Std.outSome raw_a.stop) + 1) (Std.outSome raw_b.start)
 
-let check_raw bpmap i t =
+let check_raw startloc bpmap i t =
   let open Exec.T in
   let open St_util in
   let raw = triple2raw t in
@@ -120,21 +202,28 @@ let check_pairs_i f l =
          checkrec (i+1) (t::l)
   in checkrec 0 l
 
-let check_locations tokenizer txt pred =
+let check_locations tokenizer (pos, txt) =
+  let startloc = Util.ploc_of_position pos in
   let triples =
-    txt
+    (pos, txt)
     |> tokenizer 
     |>  Std.list_of_stream in
 
   if triples = [] then failwith "check_locations: no tokens" ;
   let bpmap = Bol_pos.init txt in
-  List.iteri (check_raw bpmap) triples ;
-  check_pairs_i check_raw_pair triples
+  check_zeroth_raw startloc (List.hd triples) ;
+  check_zeroth_location startloc (List.hd triples) ;
+  List.iteri (check_raw startloc bpmap) triples ;
+  check_pairs_i (check_raw_pair startloc) triples
 
 let test_raw_tokens ctxt =
-  check_locations (ST.triple_of_string ~all_channels:true) "< writeln()>" ;
-  check_locations (STG.triple_of_string ~all_channels:true) {| 
-import "foo" |} ;
+  check_locations (ST.triple_of_here_string ~all_channels:true)
+    ({pos_fname = "location_handling_test.ml"; pos_lnum = 205;
+             pos_bol = 6173; pos_cnum = 6252},
+     "< writeln()>") ;
+  check_locations (ST.triple_of_here_string ~all_channels:true) [%here_string "< writeln()>"] ;
+  check_locations (STG.triple_of_here_string ~all_channels:true) [%here_string {| 
+import "foo" |}] ;
   ()
 
 let test_pa_st2 ctxt =
@@ -146,7 +235,8 @@ let test_pa_stg ctxt =
   ; assert_equal () (ignore([%here_string {| import "foo" |}] |> STG.located_patterns_of_here_string |> Std.list_of_stream))
 
 let suite = "Test location handling" >::: [
-      "raw tokens"   >:: test_raw_tokens
+      "position->ploc"   >:: test_position_to_ploc
+    ; "raw tokens"   >:: test_raw_tokens
     ; "parse st2"   >:: test_pa_st2
     ]
 
