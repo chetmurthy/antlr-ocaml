@@ -67,30 +67,30 @@ end
 
 (** checking location integrity
 
-    -- checking individual triples --
+    -- checking individual raw tokens --
 
     (1) check that the start, column, and line number are consistent:
 
        line number allows to compute bol_pos: bol_pos + column = start
 
-    -- checking triple pairs --
+    -- checking raw token pairs --
 
     (1) check that end of each token is the same as the start of the next
 
  *)
 
-let check_triple_pair i a b =
+let check_raw_pair i a b =
   let open Exec.T in
   let open St_util in
   let raw_a = triple2raw a in
   let raw_b = triple2raw b in
-  let msg = Fmt.(str "check_triple_pair: mismatched raw start/end.@.a: %a@. b: %a@."
+  let msg = Fmt.(str "check_raw_pair: mismatched raw start/end.@.a: %a@. b: %a@."
                    pp_triple a
                    pp_triple b
                 ) in
   assert_equal ~msg ((Std.outSome raw_a.stop) + 1) (Std.outSome raw_b.start)
 
-let check_triple bpmap i t =
+let check_raw bpmap i t =
   let open Exec.T in
   let open St_util in
   let raw = triple2raw t in
@@ -99,7 +99,7 @@ let check_triple bpmap i t =
   let start = Std.outSome raw.start in
   let bol_pos = Bol_pos.linenum2bol_pos bpmap line in
   let msg = Fmt.(str
-{|check_triple: token %d
+{|check_raw: token %d
 %a
 start: %d
 line: %d
@@ -128,8 +128,8 @@ let check_locations tokenizer txt pred =
 
   if triples = [] then failwith "check_locations: no tokens" ;
   let bpmap = Bol_pos.init txt in
-  List.iteri (check_triple bpmap) triples ;
-  check_pairs_i check_triple_pair triples
+  List.iteri (check_raw bpmap) triples ;
+  check_pairs_i check_raw_pair triples
 
 let test_raw_tokens ctxt =
   check_locations (ST.triple_of_string ~all_channels:true) "< writeln()>" ;
