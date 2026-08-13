@@ -11,6 +11,11 @@ module type TOKEN_CUSTOMIZATION = sig
   val renaming : ((string option * string option) * (string option * string option)) list
 end
 
+module type AFTER_INIT = sig
+  module Lex : Exec.FULL_LEXER
+  val after_init : Lex.t -> unit
+end
+
 let ploc_of_token ~startloc t =
   let open Antlr in
   let open Exec in
@@ -38,7 +43,12 @@ let string_of_char_stream cs =
   Stream.iter (Buffer.add_char b) cs ;
   Buffer.contents b
 
-module Make(AF : ACTION_FUNS)(TC : TOKEN_CUSTOMIZATION)(Lex : Exec.FULL_LEXER) = struct
+module Make
+         (AF : ACTION_FUNS)
+         (TC : TOKEN_CUSTOMIZATION)
+         (Lex : Exec.FULL_LEXER)
+         (AfterInit : AFTER_INIT with module Lex = Lex)
+  = struct
 
 let rename x =
   match List.assoc_opt x TC.renaming with
@@ -97,6 +107,7 @@ let raw_lexer ?(all_channels=false) cs =
   in
   AF.reset() ;
   let lex = Lex.full_init ~input ~output:stdout in
+  AfterInit.after_init lex ;
   let rec next_token () =
     let t = Lex.nextToken lex in
     assert(Std.isSome t.channel) ;
@@ -162,6 +173,14 @@ let triple_of_here_string ?all_channels (pos,s)  =
 
 end
 
+module STAfterInit = struct
+  module Lex = L_st.Full
+  let after_init lex =
+(*
+    Exec.(R.mode lex.L.recog L_st_constants.Modes._Outside) ;
+ *)
+    ()
+end
 module ST = Make(ActionFuns_st)(struct
 let renaming = [
     ((Some "LDELIM", None), (Some "LDELIM",Some "<"))
@@ -186,10 +205,15 @@ let renaming = [
   ; ((Some "TRUE", None), (Some "TRUE", Some "true"))
   ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
   ]
-              end)(L_st.Full)
+              end)(L_st.Full)(STAfterInit)
 
 module ActionFuns_stg = struct
 let reset () = ()
+end
+
+module STGAfterInit = struct
+  module Lex = L_stg.Full
+  let after_init lex = ()
 end
 
 module STG = Make(ActionFuns_stg)(struct
@@ -209,4 +233,4 @@ let renaming = [
   ; ((Some "COLON", None), (Some "COLON",Some ":"))
   ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
   ]
-              end)(L_stg.Full)
+              end)(L_stg.Full)(STGAfterInit)
