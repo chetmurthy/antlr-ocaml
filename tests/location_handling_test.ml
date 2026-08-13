@@ -204,16 +204,19 @@ let check_location startloc bpmap i t =
   let ploc = triple2ploc t in
   let ploc = Ploc.Internal.of_t ploc in
   let printer = string_of_int in
-  let msg = {%fmt_str|$(t|pp_triple)|} in
+  let msg = {%fmt_str|startloc: $(startloc|Util.PlocInternal.pp)@.
+t: $(t|pp_triple)|} in
   assert_equal ~msg:{%fmt_str|loc[$(i|%d)].bp
 $(msg|%s)|} ~printer (raw_start + startloc.bp) ploc.bp ;
   assert_equal ~msg:{%fmt_str|loc[$(i|%d)].ep
-$(msg|%s)|} ~printer (raw_stop + 1 + ploc.bp) ploc.ep ;
+$(msg|%s)|} ~printer (raw_stop + 1 + startloc.bp) ploc.ep ;
   assert_equal ~msg:{%fmt_str|loc[$(i|%d)].line
 $(msg|%s)|} ~printer (raw_line + startloc.line_nb - 1) ploc.line_nb ;
+let raw_bol_pos = Bol_pos.linenum2bol_pos bpmap raw_line in
   assert_equal ~msg:{%fmt_str|loc[$(i|%d)].bol_pos
+linenum2bol_pos[raw_line=$(raw_line|%d)]: $(raw_bol_pos|%d)@.
 $(msg|%s)|} ~printer
-    (startloc.bol_pos + (Bol_pos.linenum2bol_pos bpmap raw_line)) ploc.bol_pos ;
+    (if raw_line = 1 then startloc.bol_pos else startloc.bp + raw_bol_pos) ploc.bol_pos ;
   ()
 
 
@@ -242,10 +245,6 @@ let check_locations tokenizer (pos, txt) =
   check_pairs_i (check_raw_pair startloc) triples
 
 let test_raw_tokens ctxt =
-  check_locations (ST.triple_of_here_string ~all_channels:true)
-    ({pos_fname = "location_handling_test.ml"; pos_lnum = 205;
-             pos_bol = 6173; pos_cnum = 6252},
-     "< writeln()>") ;
   check_locations (ST.triple_of_here_string ~all_channels:true) [%here_string "< writeln()>"] ;
   check_locations (STG.triple_of_here_string ~all_channels:true) [%here_string {| 
 import "foo" |}] ;
