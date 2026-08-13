@@ -95,6 +95,7 @@ open Stringtemplate ;;
  *)
 
 #require "antlrtest" ;;
+open Antlrtest ;;
 
 open Pa_ppx_located_yojson.Json ;;
 
@@ -104,24 +105,17 @@ open Pa_ppx_located_sexp ;;
 
 open Camlp5_adapter ;;
 
-#load "location_handling_test.cmo";;
-open Location_handling_test ;;
-open Lexing ;;
+#load "stringtemplate_test.cmo";;
+open Stringtemplate_test ;;
+open Stringtemplate ;;
+module D = Descriptor ;;
+let file = "fixtures/descriptors/SemPredEvalParser/PredFromAltTestedInLoopBack_1.txt" ;;
+let testname = "SemPredEvalParser/PredFromAltTestedInLoopBack_1" ;;
+let d = D.load ~testname file ;;
+let g = d.grammar ;;
+Pa_st2.Template.of_string ~startloc:g.D.loc g.D.txt;;
 
-#trace ploc_of_token ;;
-#trace check_zeroth_location ;;
-#trace Bol_pos.init ;;
-#trace Bol_pos.linenum2bol_pos ;;
-(*
-  check_locations (ST.triple_of_here_string ~all_channels:true)
-    ({pos_fname = "location_handling_test.ml"; pos_lnum = 205;
-             pos_bol = 6173; pos_cnum = 6252},
-     "< writeln()>") ;;
- *)
-check_locations (ST.triple_of_here_string ~all_channels:true) [%here_string "< writeln()>"] ;;
 
-check_locations (STG.triple_of_here_string ~all_channels:true) [%here_string {| 
-import "foo" |}] ;;
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***
