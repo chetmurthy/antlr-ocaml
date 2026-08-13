@@ -116,7 +116,6 @@ let test_parse_all_stg ctxt =
   (list_all_stg())
   |>
     List.iter (fun f ->
-        Fmt.(pf stderr "[%s]@." f) ;
         (test_parse_stg_file f ()))
 
 let suite = "Test Stringtemplate" >::: [
