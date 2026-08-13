@@ -21,7 +21,6 @@ let test ~show_dfa ~disable_logging ~json_log_file file =
       ) ()
   in
   let lex = Lex.full_init ~input ~output:stdout in
-  Exec.(R.mode lex.L.recog L_constants.Modes._Outside) ;
   let strm : Exec.T.t Stream.t = TS.init lex in
   let l = Std.list_of_stream strm in
   l |> List.iter (fun t -> Fmt.(pf stdout "%s\n" (Exec.T.__str__ t))) ;

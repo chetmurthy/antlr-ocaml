@@ -1,1 +1,14 @@
 ML=lexerBase.ml l_constants.ml actionFuns_st.ml l.ml test.ml
+
+all-tests::
+	$(MAKE) clean python-test
+	$(MAKE) NAME=B named-python-test
+	$(MAKE) NAME=C named-python-test
+	$(MAKE) NAME=D named-python-test
+	$(MAKE) NAME=E named-python-test
+	$(MAKE) NAME=F named-python-test
+	$(MAKE) NAME=G named-python-test
+	$(MAKE) NAME=H named-python-test
+	$(MAKE) NAME=I named-python-test
+
+test.cmo: l_constants.cmo
