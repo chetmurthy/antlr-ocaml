@@ -50,12 +50,13 @@ clean::
 
 bootstrap:: ../tests/atn_util.opt
 	cp $(TOP)/tests/fixtures/grammar-lib/Lex* grammars/
-	cp $(TOP)/tests/fixtures/grammar-lib/ST*.g4 grammars/
+	cp $(TOP)/tests/fixtures/grammar-lib/ST0Lexer.g4 grammars/
+	cp $(TOP)/tests/fixtures/grammar-lib/STGLexer.g4 grammars/
 	cp $(TOP)/tests/fixtures/pertest-files/antlr4/ST1/translation.json st-translation.json
 	cp $(TOP)/tests/fixtures/pertest-files/antlr4/ST1/actionFuns_st.ml actionFuns_st.ml 
 	cp $(TOP)/tests/fixtures/pertest-files/antlr4/STG1/translation.json stg-translation.json
 	(cd grammars && antlr4 -Dlanguage=Python3 STGLexer.g4)
-	(cd grammars && antlr4 -Dlanguage=Python3 STLexer.g4)
+	(cd grammars && antlr4 -Dlanguage=Python3 ST0Lexer.g4)
 	$(TOP)/tests/atn_util.opt emit-ocaml-lexer \
 	  -i grammars/STGLexer.interp \
 	  --grammar-lib grammars \
@@ -65,12 +66,12 @@ bootstrap:: ../tests/atn_util.opt
 	  grammars/STGLexer.interp > l_stg_constants.ml.NEW && \
 	  mv l_stg_constants.ml.NEW l_stg_constants.ml
 	$(TOP)/tests/atn_util.opt emit-ocaml-lexer \
-	  -i grammars/STLexer.interp \
+	  -i grammars/ST0Lexer.interp \
 	  --grammar-lib grammars \
 	  -t st-translation.json \
-	  grammars/STLexer.g4 > l_st.ml.NEW && mv l_st.ml.NEW l_st.ml
+	  grammars/ST0Lexer.g4 > l_st.ml.NEW && mv l_st.ml.NEW l_st.ml
 	$(TOP)/tests/atn_util.opt emit-ocaml-constants \
-	  grammars/STLexer.interp > l_st_constants.ml.NEW && \
+	  grammars/ST0Lexer.interp > l_st_constants.ml.NEW && \
 	  mv l_st_constants.ml.NEW l_st_constants.ml
 
 
