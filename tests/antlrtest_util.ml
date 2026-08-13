@@ -82,8 +82,16 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
     let input_l = D.stanza_all d "input" in
     let output_l = D.stanza_all d "output" in
     let errors_l = D.stanza_all d "errors" in
-    input_l 
-    |> List.concat_map (fun (p,(_, input_txt)) ->
+    let params_l =
+      (input_l @ output_l @ errors_l)
+      |> List.map fst
+      |> Std2.hash_uniq in
+    params_l
+    |> List.concat_map (fun p ->
+           let input_txt =
+             match List.assoc_opt p input_l with
+               Some (_, txt) -> txt
+             | None -> "" in
            let output_txt =
              match List.assoc_opt p output_l with
                Some (_, txt) -> txt

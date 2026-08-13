@@ -219,6 +219,11 @@ $ENV{'TOP'} = ".." ;
   }
   elsif ($subcommand eq 'full') {
     foreach my $tf (@testfiles) {
+      my $txt = f_read($tf) ;
+      if ($txt =~ m,\[skip\].*Python3,s) {
+	print STDERR "SKIP $tf\n";
+	next ;
+      }
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       v_systemx([0], ["rm", "-rf", $dir]) ;
@@ -279,3 +284,10 @@ sub v_systemx {
   return runx($codes, @cmd) unless $noexecute ;
 }
 
+sub f_read {
+  my $f = shift;
+  open(F,"<$f") || die "cannot open $f for reading";
+  my @l = <F>;
+  close(F);
+  return (wantarray ? @l : join('', @l)) ;
+}

@@ -35,6 +35,8 @@ all: $(EXE) $(OPT)
 
 test:: all $(TESTML:.ml=.TEST)
 
+test-fully:: test dtest-all sttest-multi sttest-multi-verify
+
 %.TEST: %.opt %.exe
 	mkdir -p _build && ./$< -runner sequential -shards 1
 
@@ -151,6 +153,8 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 
+DTEST := \
+	fixtures/descriptors/LexerExec/EscapeTargetStringLiteral.txt \
 
 DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)
 
