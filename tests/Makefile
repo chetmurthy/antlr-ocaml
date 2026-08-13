@@ -150,8 +150,11 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/A3.txt \
 
 DTEST := \
+	fixtures/descriptors/ParserExec/Basic.txt \
+	fixtures/descriptors/LexerExec/CharSet.txt \
 	fixtures/custom-descriptors/antlr4/ST0.txt \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
+	fixtures/custom-descriptors/antlr4/ST2.txt \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 
 DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)

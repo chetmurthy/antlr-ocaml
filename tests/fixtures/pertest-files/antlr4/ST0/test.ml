@@ -7,9 +7,35 @@ open Cmdliner.Term.Syntax
 
 module TestLexer(Lex : Exec.FULL_LEXER with type lexer_t = Exec.L.lexer_t) = struct
 
+let type2string lexer n =
+  let ty2name = (fst Lex.full_atn).Interp.Raw.token_symbolic_names in
+  if n < 0 then Some "EOF"
+  else ty2name.(n)
+
+let _Token_named_type__str__ lexer (self : Exec.T.t) =
+  let open Exec.T in
+  let open Lex in
+  let fmt_int pps n = Fmt.(pf pps "%d" n) in
+  let fmt_option ppsub pps nopt =
+    match nopt with
+      None -> Fmt.(pf pps "None")
+    | Some n -> Fmt.(pf pps "%a" ppsub n) in
+  let fmt_channel pps c =
+    if c > 0 then Fmt.(pf pps ",channel=%d" c) else Fmt.(pf pps "") in
+  let esc_text = Util.escape_string (Exec.R.text lexer.recog lexer._interp.Exec.LAS.cursor) in
+  Fmt.(str "[%@%a,%a:%a='%s',<%a>%a,%a:%a]"
+         (fmt_option fmt_int) self.tokenIndex
+         (fmt_option fmt_int) self.start
+         (fmt_option fmt_int) self.stop
+         esc_text
+         (fmt_option string) (type2string lexer (Std.outSome self.type_))
+         (fmt_option fmt_channel) self.channel
+         (fmt_option fmt_int) self.line
+         (fmt_option fmt_int) self.column)
+
 module TS = Exec.TokenStreamFunctor(Lex)
 
-let test ~show_dfa ~disable_logging ~json_log_file file =
+let test ~show_dfa ~disable_logging ~named_types ~json_log_file file =
   json_log_file |> Option.iter Tracelog.set_log_file ;
   if disable_logging then
     Tracelog._enabled := false ;
@@ -43,6 +69,10 @@ let disable_logging =
   let doc = "disable JSON logging." in
   Arg.(value & flag & info ["disable-logging"] ~doc)
 
+let named_types =
+  let doc = "print tokens with named types." in
+  Arg.(value & flag & info ["named-types"] ~doc)
+
 let show_dfa =
   let doc = "show DFA after run." in
   Arg.(value & flag & info ["show-dfa"] ~doc)
@@ -54,8 +84,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "test" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ disable_logging and+ show_dfa and+ json_log_file in
-  Test.test ~disable_logging ~json_log_file ~show_dfa file ;
+  let+ file and+ disable_logging and+ named_types and+ show_dfa and+ json_log_file in
+  Test.test ~disable_logging ~named_types ~json_log_file ~show_dfa file ;
   Cmdliner.Cmd.Exit.ok
 end
 

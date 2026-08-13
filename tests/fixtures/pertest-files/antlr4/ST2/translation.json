@@ -1,0 +1,27 @@
+[
+    ["{ False }",
+     "false"],
+    ["{Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}",
+     "assert false"],
+    ["{ self.subTemplateHasIDs() }",
+     "ActionFuns_st.subTemplateHasIDs self cu"],
+    ["{ not self.subTemplateHasIDs() }",
+     "not (ActionFuns_st.subTemplateHasIDs self cu)"],
+    ["{ self.enterSubTemplate() }",
+     "ActionFuns_st.enterSubTemplate self cu"],
+    ["{ self.exitSubTemplate(); }",
+     "ActionFuns_st.exitSubTemplate self cu"],
+    ["{ self.adjText(); }",
+     "ActionFuns_st.adjText self cu"],
+    ["{ self.isLDelimNotComment() }",
+     "ActionFuns_st.isLDelimNotComment self cu"],
+    ["{ self.isRDelim() }",
+     "ActionFuns_st.isRDelim self cu"],
+    ["{ self.isLTmplComment() }",
+     "ActionFuns_st.isLTmplComment self cu"],
+    ["{ self.isRTmplComment() }",
+     "ActionFuns_st.isRTmplComment self cu"]
+]
+
+
+
