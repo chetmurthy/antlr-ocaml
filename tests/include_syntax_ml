@@ -109,12 +109,7 @@ open Camlp5_adapter ;;
 open Stringtemplate_test ;;
 open Stringtemplate ;;
 module D = Descriptor ;;
-let file = "fixtures/descriptors/SemPredEvalParser/PredFromAltTestedInLoopBack_1.txt" ;;
-let testname = "SemPredEvalParser/PredFromAltTestedInLoopBack_1" ;;
-let d = D.load ~testname file ;;
-let g = d.grammar ;;
-Pa_st2.Template.of_string ~startloc:g.D.loc g.D.txt;;
-
+Pa_st2.Template.load ~file:"gram.txt" ;;
 
 (*
 ;;; Local Variables: ***
