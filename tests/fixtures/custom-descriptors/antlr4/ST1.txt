@@ -52,7 +52,7 @@ def subTemplateHasIDs(self):
 
 }
 
-import STLexer;
+import ST1Lexer;
 
 
 [input]
