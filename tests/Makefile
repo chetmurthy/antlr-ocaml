@@ -168,8 +168,8 @@ dtest-selected: $(DTEST:.txt=.DTEST)
 
 dtest-all: $(DALL:.txt=.DTEST)
 
-STJSONALL=$(shell ls fixtures/st4-tests/*.json)
-STSEXPALL=$(shell ls fixtures/st4-tests/*.sexp)
+STJSONALL=$(shell ls fixtures/st4-single/*.json)
+STSEXPALL=$(shell ls fixtures/st4-single/*.sexp)
 
 ST4UTIL=$(TOP)/tests/stringtemplate_util.opt
 ST4GEN=_generated/st4
@@ -187,23 +187,23 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) check -d $(ST4GEN) $<
 
 STTESTCMD=full -f -d $(ST4GEN)
-sttest-multi:: fixtures/TestNullEmptyMatrix.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestCoreBasics.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestDictionaries.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestGroup.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestIndentation.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestLists.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestNoNewlineTemplates.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestOptions.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestSubtemplates.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestWhitespace.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestNullEmptyMatrix.sexp
-	$(ST4UTIL) $(STTESTCMD) -m fixtures/TestIndirectionAndEarlyEval.sexp
+sttest-multi:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestCoreBasics.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestDictionaries.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestGroup.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestIndentation.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestLists.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestNoNewlineTemplates.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestOptions.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestSubtemplates.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestWhitespace.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestNullEmptyMatrix.sexp
+	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestIndirectionAndEarlyEval.sexp
 
 sttest-multi-verify:
 	$(MAKE) STTESTCMD="verify" sttest-multi
 
-fixtures/TestNullEmptyMatrix.sexp: testmatrix.exe
+fixtures/st4-multi/TestNullEmptyMatrix.sexp: testmatrix.exe
 	./testmatrix.exe > $@.NEW && mv $@.NEW $@
 
 sttest-all: $(STJSONALL:.json=.STTEST) $(STSEXPALL:.sexp=.STTEST)
