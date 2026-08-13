@@ -72,6 +72,12 @@ named-python-test:: M.py
 	diff -Bwiu output.$(NAME) output.$(NAME).NEW
 	diff -Bwiu errors.$(NAME) errors.$(NAME).NEW
 
+python-test-named-output::
+	env JSONLOGGING=0 PYTHONPATH=$(PYTHONPATH) python3 Test.py --named-types $(RUNARGS) input > output-named-types.NEW
+
+named-python-test-named-output::
+	env JSONLOGGING=0 PYTHONPATH=$(PYTHONPATH) python3 Test.py --named-types $(RUNARGS) input.$(NAME) > output-named-types.$(NAME).NEW
+
 lexer-output.NEW lexer-errors.NEW lexer-json.log:: <lexerName>.py
 	env PYTHONPATH=$(PYTHONPATH) python3 TestLexer.py $(RUNARGS) input > lexer-output.NEW 2> lexer-errors.NEW
 	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW lexer-json.log

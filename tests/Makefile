@@ -154,9 +154,6 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 
-DTEST := \
-	fixtures/descriptors/LexerExec/EscapeTargetStringLiteral.txt \
-
 DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)
 
 %.DTEST: %.txt

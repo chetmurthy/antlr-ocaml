@@ -41,6 +41,7 @@ def main(argv):
                     epilog='Test')
     parser.add_argument('input')
     parser.add_argument('--disable-logging',action='store_true')
+    parser.add_argument('--named-types',action='store_true')
     args = parser.parse_args()
     if args.disable_logging: Trace.disable()
     txt = Util.file_contents(args.input, encoding='utf-8', errors='replace')
@@ -60,11 +61,27 @@ def main(argv):
     ParseTreeWalker.DEFAULT.walk(TreeShapeListener(), tree)
 <else>
     stream.fill()
-    [ print(<if(python3)>t<else>unicode(t)<endif>) for t in stream.tokens ]
+    if args.named_types:
+        [ print(Token__str(lexer, t)) for t in stream.tokens ]
+    else:
+        [ print(<if(python3)>t<else>unicode(t)<endif>) for t in stream.tokens ]
 <if(showDFA)>
     print(lexer._interp.decisionToDFA[Lexer.DEFAULT_MODE].toLexerString(), end='')
 <endif>
 <endif>
+
+
+def Token__str(lexer, t):
+    txt = t.text
+    if txt is not None:
+        txt = txt.replace("\n","\\n")
+        txt = txt.replace("\r","\\r")
+        txt = txt.replace("\t","\\t")
+    else:
+        txt = "\<no text>"
+    type_string = lexer.symbolicNames[t.type]
+    return ("[@%s,%s:%s='%s',\<%s>,channel=%s,%s:%s]" %
+            (t.tokenIndex, t.start, t.stop, txt, type_string,t.channel,t.line,t.column))
 
 if __name__ == '__main__':
     main(sys.argv)

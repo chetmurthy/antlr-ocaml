@@ -1,1 +1,14 @@
 ML=lexerBase.ml l_constants.ml l.ml test.ml
+
+all-tests::
+	$(MAKE) clean python-test || true
+#	$(MAKE) NAME=B named-python-test || true
+
+all-tests-named-output::
+	$(MAKE) python-test-named-output || true
+#	$(MAKE) NAME=B named-python-test-named-output || true
+
+test.cmo: l_constants.cmo
+
+clean::
+	rm -f *-named-types.*

@@ -50,7 +50,10 @@ channels {
     OFF_CHANNEL // non-default channel for whitespace and comments
 }
 
+NOTHING : ;
+
 // -----------------------------------
+mode Outside ;
 // default mode = Outside
 
 INSIDE : '#inside' -> mode(Inside) ;
@@ -77,8 +80,8 @@ INS_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
 INS_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
 
 LBRACE : LBrace { self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> mode(SubTemplate);
-LBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), mode(DEFAULT_MODE);
-RDELIM : .      { self.isRDelim() }? -> mode(DEFAULT_MODE);
+LBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), mode(Outside);
+RDELIM : .      { self.isRDelim() }? -> mode(Outside);
 
 STRING: DQuoteLiteral;
 
@@ -122,7 +125,7 @@ SUB_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
 
 SUB_ID    : NameStartChar NameChar* -> type(ID) ;
 SUB_COMMA : Comma -> type(COMMA);
-PIPE      : Pipe  -> mode(DEFAULT_MODE);
+PIPE      : Pipe  -> mode(Outside);
 
 // -----------------------------------
 // Grammar specific fragments

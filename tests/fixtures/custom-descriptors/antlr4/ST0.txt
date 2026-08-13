@@ -38,7 +38,7 @@ def exitSubTemplate(self):
         self.subtemplateDepth = 0
     if self.subtemplateDepth > 0:
         self.subtemplateDepth -= 1
-        self.mode(1)
+        self.mode(self.Inside)
 
 def subTemplateHasIDs(self):
     i = 1
