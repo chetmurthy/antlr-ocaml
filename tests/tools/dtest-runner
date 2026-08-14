@@ -1,0 +1,122 @@
+#!/usr/bin/perl
+
+use strict ;
+use warnings ;
+use Carp 'croak'; 
+
+use File::Basename;
+use IPC::System::Simple qw(systemx runx capturex $EXITVAL);
+use String::ShellQuote ;
+
+our $verbose ;
+our $noexecute ;
+our $lexeronly ;
+our $namedtypes ;
+our $ocaml ;
+our $subcommand ;
+our $testcase ;
+our $showdfa ;
+
+{
+  while (@ARGV) {
+    if ($ARGV[0] eq '-v') {
+      shift @ARGV ;
+      $verbose = 1;
+    }
+    elsif ($ARGV[0] eq '-n') {
+      shift @ARGV ;
+      $noexecute = 1;
+    }
+    elsif ($ARGV[0] eq '--lexer-only') {
+      shift @ARGV ; 
+      $lexeronly = 1 ;
+    }
+    elsif ($ARGV[0] eq '--ocaml') {
+      shift @ARGV ; 
+      $ocaml = 1 ;
+    }
+    elsif ($ARGV[0] eq '--named-types') {
+      shift @ARGV ; 
+      $namedtypes = 1 ;
+    }
+    elsif ($ARGV[0] eq '--show-dfa') {
+      shift @ARGV ; 
+      $showdfa = 1 ;
+    }
+    elsif ($ARGV[0] eq 'run') {
+      $subcommand = shift @ARGV ;
+    }
+    elsif ($ARGV[0] eq 'compare') {
+      $subcommand = shift @ARGV ;
+    }
+    else { last ; }
+  }
+
+  die "no subcomamnd specified" unless defined $subcommand ;
+
+  die "subcommand must be either {run,compare}"
+      unless ($subcommand eq 'run' || $subcommand eq 'compare') ;
+
+  if (@ARGV) {
+    $testcase = shift @ARGV ;
+  }
+  else {
+    $testcase = 'DEFAULT' ;
+  }
+
+  print STDERR "testcase is $testcase\n" if ($verbose) ;
+
+  my $testsuff = "" ;
+  if ($ocaml) {
+    $testsuff .= "-ocaml" ;
+  }
+  else {
+    $testsuff .= "-python" ;
+  }
+  $testsuff .= "-lexer-only" if ($lexeronly) ;
+  $testsuff .= "-named-types" if ($namedtypes) ;
+
+  my $testdir = "_build/${testcase}${testsuff}" ;
+
+  v_system("rm -rf $testdir") ;
+  v_system("mkdir -p $testdir") ;
+  if ($subcommand eq 'run') {
+    runtest($testdir) ;
+  }
+  else {
+  }
+
+}
+
+sub runtest {
+  my $testdir = shift ;
+  if ($main::ocaml) {
+    
+  }
+}
+
+sub v_systemx {
+  croak( "v_systemx: must specify exit codes") unless (ref($_[0]) eq 'ARRAY') ;
+  my $codes = shift ;
+  my @cmd = @{ shift @_ } ;
+  my %args = @_ ;
+
+
+  print STDERR join(' ', "$0:", map { shell_quote($_) } @cmd)."\n" if $main::verbose > 0;
+
+  return runx($codes, @cmd) unless $noexecute ;
+}
+
+sub f_read {
+  my $f = shift;
+  open(F,"<$f") || die "cannot open $f for reading";
+  my @l = <F>;
+  close(F);
+  return (wantarray ? @l : join('', @l)) ;
+}
+
+sub v_system {
+  my $cmd = shift;
+  print STDERR "<<$cmd>>\n" if ($main::verbose);
+  system $cmd unless ($main::noexecute) ;
+}

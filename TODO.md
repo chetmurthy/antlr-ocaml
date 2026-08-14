@@ -30,6 +30,8 @@ a test-runner that:
   * named-types
   * [when parser grammar] full or lexer-only
 
+(d') for ocaml only, 
+
 (e) diffs between expected and python for named-types=false,  lexer-only=false
 
 (f) diffs between ocaml and python for each case
@@ -45,6 +47,7 @@ run
  --ocaml / --python
  --lexer-only
  --named-types
+ --show-dfa
 
 
 compare
