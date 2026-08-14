@@ -295,3 +295,5 @@ end
 ;
 
 module ST0Pa = Pa(ST0Lexer.Full)(ST0) ;
+module ST1Pa = Pa(ST1Lexer.Full)(ST1) ;
+module ST2Pa = Pa(ST2Lexer.Full)(ST2) ;

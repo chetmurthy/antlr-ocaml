@@ -52,6 +52,8 @@ module type CAMLP5LEXER = sig
     ?all_channels:bool ->
     Lexing.position * string ->
     (Antlr.Exec.T.t * (Plexing.pattern * Ploc.t)) Stream.t
+  val watch_mode : (string * int * int list) -> unit
+  val watch_mode0 : (string * string * string list) -> unit
 end
 
 
@@ -82,6 +84,8 @@ let string_of_char_stream cs =
   Stream.iter (Buffer.add_char b) cs ;
   Buffer.contents b
 
+let watch_pattern (x : (string * string)) = ()
+
 module Make
          (AF : ACTION_FUNS)
          (TC : TOKEN_CUSTOMIZATION)
@@ -89,6 +93,13 @@ module Make
          (AfterInit : AFTER_INIT with module Lex = Lex) : (CAMLP5LEXER with module Lex = Lex)
   = struct
 module Lex = Lex
+
+let watch_mode0 ((s:string), (mode : string), (modeStack : string list)) = ()
+
+let watch_mode ((s:string), (mode : int), (modeStack : int list)) =
+  let mode2string n = 
+    List.nth (fst Lex.full_atn).Interp.Raw.mode_names n in
+  watch_mode0 (s, mode2string mode,  List.map mode2string modeStack)
 
 let rename x =
   match List.assoc_opt x TC.renaming with
@@ -133,6 +144,7 @@ let pattern_of_token self : Plexing.pattern =
 let located_pattern_of_token ~startloc self : (Plexing.pattern * Ploc.t) =
   let loc = ploc_of_token ~startloc self in
   let tok = pattern_of_token self in
+  watch_pattern tok ;
   (tok,loc)
 
 let start_location = ref Ploc.dummy
@@ -149,7 +161,9 @@ let raw_lexer ?(all_channels=false) cs =
   let lex = Lex.full_init ~input ~output:stdout in
   AfterInit.after_init lex ;
   let rec next_token () =
+    watch_mode ("before",lex.recog._mode, lex.recog._modeStack) ;
     let t = Lex.nextToken lex in
+    watch_mode ("after",lex.recog._mode, lex.recog._modeStack) ;
     assert(Std.isSome t.channel) ;
     if not all_channels && (Std.outSome t.channel) <> 0 then next_token()
     else
@@ -169,7 +183,8 @@ let triple_lexer ?(all_channels=false) cs =
   let next_token = raw_lexer ~all_channels cs in
   let next_token () =
     let t = next_token () in
-    (t, located_pattern_of_token ~startloc t) in
+    let locpat = located_pattern_of_token ~startloc t in
+    (t, locpat) in
   next_token
 
 let stream_of_lexer f =

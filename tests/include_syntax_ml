@@ -60,8 +60,10 @@ let pp_token_stream strm =
 
 let pp_atn pps (x : Atn.t) = Fmt.(pf pps "#<atn>") ;;
 #install_printer pp_atn ;;
-let pp_dfa pps (x : Exec.DFA.t) = Fmt.(pf pps "#<atn>") ;;
+let pp_dfa pps (x : Exec.DFA.t) = Fmt.(pf pps "#<dfa>") ;;
 #install_printer pp_dfa ;;
+let pp_dfastate pps (x : Exec.DFASt.t) = Fmt.(pf pps "#<dfastate>") ;;
+#install_printer pp_dfastate ;;
 let pp_is pps (x : Exec.IS.t) = Fmt.(pf pps "#<is>") ;;
 #install_printer pp_is ;;
 
@@ -108,7 +110,25 @@ open Camlp5_adapter ;;
 #load "stringtemplate_test.cmo";;
 open Stringtemplate_test ;;
 open Stringtemplate ;;
-
+(*
+#trace Exec.L.nextToken;;
+ *)
+(*
+#trace Exec.R.mode ;;
+#trace Exec.R.pushMode ;;
+#trace Exec.R.popMode ;;
+ *)
+#trace ST1.watch_mode0 ;;
+#trace ST2.watch_mode0 ;;
+#trace watch_pattern ;;
+(*
+#trace ST2.located_pattern_of_token ;;
+ *)
+#trace ActionFuns_st.enterSubTemplate ;;
+#trace ActionFuns_st.exitSubTemplate ;;
+#trace ActionFuns_st.watch_subtemplateDepth ;;
+[%here_string {|{<F({<G()>})>}|}] |> ST1.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst;;
+[%here_string {|{<F({<G()>})>}|}] |> ST2.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst;;
 
 (*
 ;;; Local Variables: ***
