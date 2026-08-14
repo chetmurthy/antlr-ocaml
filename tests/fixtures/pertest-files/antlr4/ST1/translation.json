@@ -20,7 +20,11 @@
     ["{ self.isLTmplComment() }",
      "ActionFuns_st.isLTmplComment self cu"],
     ["{ self.isRTmplComment() }",
-     "ActionFuns_st.isRTmplComment self cu"]
+     "ActionFuns_st.isRTmplComment self cu"],
+    ["{ True }",
+     "true"],
+    [{|{print("line %s:%s: '\\n' in string" % (self._tokenStartLine, self._tokenStartColumn), file=sys.stderr)}|},
+     {|Printf.fprintf stderr "line %d:%d: '\\n' in string\n" self._tokenStartLine self._tokenStartColumn|}]
 ]
 
 

@@ -4,10 +4,13 @@ open Pa_ppx_utils ;
 open Pa_ppx_located_yojson ;
 open Antlr ;
 open Sttypes2 ;
+open Camlp5_adapter ;
+
+module Pa(Lex : Exec.FULL_LEXER)(C5Lex : CAMLP5LEXER) = struct
 
 value stream_npeek n s = (Stream.npeek n s : list (string * string)) ;
 
-value lexer = {Plexing.tok_func = Camlp5_adapter.ST.lexer;
+value lexer = {Plexing.tok_func = C5Lex.lexer;
  Plexing.tok_using _ = (); Plexing.tok_removing _ = ();
  Plexing.tok_match = Plexing.default_match;
  Plexing.tok_text = Plexing.lexer_text;
@@ -269,8 +272,7 @@ region: [ [ ] ] ;
 
 END ;
 
-module ST = Camlp5_adapter.ST ;
-value start_location = ST.start_location ;
+value start_location = C5Lex.start_location ;
 module Template = St_util.PAHelper(struct
                      type t = template_t ;
                      value start_location = start_location ;
@@ -289,32 +291,7 @@ module Mexpr_Basic = St_util.PAHelper(struct
                      value entry = top_mexpr_basic ;
                    end) ;
 
-(*
-value tokens_of_string ?{startloc} s =
-  s
-|> lexfunc_of_string ?{startloc}
-|> fst
-|> Util.truncate_at_EOI
+end
 ;
 
-value tokens_of_here_string (pos, s) =
-  let startloc = Util.ploc_of_position pos in
-  tokens_of_string ~{startloc=startloc} s
-;
-
-value loc_tokens_of_here_string (pos,s)  =
-  let startloc = Util.ploc_of_position pos in
-  let (tokstrm, locations) = lexfunc_of_string ~{startloc=startloc} s in
-  let tokstrm = Util.truncate_at_EOI tokstrm in
-  let l = Std.list_of_stream tokstrm in
-  List.mapi (fun i tok -> (Plexing.Locations.lookup locations i, tok)) l
-;
-
-value raw_tokens_of_string ?{all_channels} s =
-  s
-|> Stream.of_string
-|> Camlp5_adapter.ST.raw_lexer ?{all_channels}
-|> Camlp5_adapter.ST.stream_of_lexer
-|> Util.truncate_stream (fun t -> Exec.(t.T.type_ = Some C._EOF))
-;
- *)
+module ST0Pa = Pa(ST0Lexer.Full)(ST0) ;

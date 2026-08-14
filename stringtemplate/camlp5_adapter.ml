@@ -16,6 +16,45 @@ module type AFTER_INIT = sig
   val after_init : Lex.t -> unit
 end
 
+module type CAMLP5LEXER = sig
+  module Lex : Exec.FULL_LEXER
+  val rename :
+    string option * string option -> string option * string option
+  val names : (string option * string option) array
+  val pattern_of_token : Antlr.Exec.T.token_t -> Plexing.pattern
+  val located_pattern_of_token :
+    startloc:Ploc.t -> Antlr.Exec.T.token_t -> Plexing.pattern * Ploc.t
+  val start_location : Ploc.t ref
+  val raw_lexer :
+    ?all_channels:bool -> char Stream.t -> unit -> Antlr.Exec.T.t
+  val located_pattern_lexer :
+    ?all_channels:bool ->
+    char Stream.t -> unit -> Plexing.pattern * Ploc.t
+  val triple_lexer :
+    ?all_channels:bool ->
+    char Stream.t -> unit -> Antlr.Exec.T.t * (Plexing.pattern * Ploc.t)
+  val stream_of_lexer : (unit -> 'a) -> 'a Stream.t
+  val lexer :
+    char Stream.t -> Plexing.pattern Stream.t * Plexing.Locations.t
+  val raw_of_string :
+    ?all_channels:bool -> string -> Antlr.Exec.T.t Stream.t
+  val located_patterns_of_string :
+    ?startloc:Ploc.t ->
+    ?all_channels:bool -> string -> (Plexing.pattern * Ploc.t) Stream.t
+  val located_patterns_of_here_string :
+    ?all_channels:bool ->
+    Lexing.position * string -> (Plexing.pattern * Ploc.t) Stream.t
+  val triple_of_string :
+    ?startloc:Ploc.t ->
+    ?all_channels:bool ->
+    string -> (Antlr.Exec.T.t * (Plexing.pattern * Ploc.t)) Stream.t
+  val triple_of_here_string :
+    ?all_channels:bool ->
+    Lexing.position * string ->
+    (Antlr.Exec.T.t * (Plexing.pattern * Ploc.t)) Stream.t
+end
+
+
 let ploc_of_token ~startloc t =
   let open Antlr in
   let open Exec in
@@ -47,8 +86,9 @@ module Make
          (AF : ACTION_FUNS)
          (TC : TOKEN_CUSTOMIZATION)
          (Lex : Exec.FULL_LEXER)
-         (AfterInit : AFTER_INIT with module Lex = Lex)
+         (AfterInit : AFTER_INIT with module Lex = Lex) : (CAMLP5LEXER with module Lex = Lex)
   = struct
+module Lex = Lex
 
 let rename x =
   match List.assoc_opt x TC.renaming with
@@ -173,15 +213,7 @@ let triple_of_here_string ?all_channels (pos,s)  =
 
 end
 
-module STAfterInit = struct
-  module Lex = L_st.Full
-  let after_init lex =
-(*
-    Exec.(R.mode lex.L.recog L_st_constants.Modes._Outside) ;
- *)
-    ()
-end
-module ST = Make(ActionFuns_st)(struct
+module STRenaming = struct
 let renaming = [
     ((Some "LDELIM", None), (Some "LDELIM",Some "<"))
   ; ((Some "RDELIM", None), (Some "RDELIM",Some ">"))
@@ -205,14 +237,40 @@ let renaming = [
   ; ((Some "TRUE", None), (Some "TRUE", Some "true"))
   ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
   ]
-              end)(L_st.Full)(STAfterInit)
+end
+
+module ST0AfterInit = struct
+  module Lex = ST0Lexer.Full
+  let after_init lex =
+    (*
+    Exec.(R.mode lex.L.recog L_st_constants.Modes._Outside) ;
+ *)
+    ()
+end
+module ST1AfterInit = struct
+  module Lex = ST1Lexer.Full
+  let after_init lex =
+    (*
+    Exec.(R.mode lex.L.recog L_st_constants.Modes._Outside) ;
+ *)
+    ()
+end
+module ST2AfterInit = struct
+  module Lex = ST2Lexer.Full
+  let after_init lex =
+    Exec.(R.mode lex.L.recog ST2Lexer_constants.Modes._Outside) ;
+    ()
+end
+module ST0 = Make(ActionFuns_st)(STRenaming)(ST0Lexer.Full)(ST0AfterInit)
+module ST1 = Make(ActionFuns_st)(STRenaming)(ST1Lexer.Full)(ST1AfterInit)
+module ST2 = Make(ActionFuns_st)(STRenaming)(ST2Lexer.Full)(ST2AfterInit)
 
 module ActionFuns_stg = struct
 let reset () = ()
 end
 
 module STGAfterInit = struct
-  module Lex = L_stg.Full
+  module Lex = STGLexer.Full
   let after_init lex = ()
 end
 
@@ -233,4 +291,4 @@ let renaming = [
   ; ((Some "COLON", None), (Some "COLON",Some ":"))
   ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
   ]
-              end)(L_stg.Full)(STGAfterInit)
+              end)(STGLexer.Full)(STGAfterInit)

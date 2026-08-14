@@ -7,7 +7,7 @@ open St_types ;
 
 value stream_npeek n s = (Stream.npeek n s : list (string * string)) ;
 
-value lexer = {Plexing.tok_func = Camlp5_adapter.ST.lexer;
+value lexer = {Plexing.tok_func = Camlp5_adapter.ST0.lexer;
  Plexing.tok_using _ = (); Plexing.tok_removing _ = ();
  Plexing.tok_match = Plexing.default_match;
  Plexing.tok_text = Plexing.lexer_text;
@@ -313,7 +313,7 @@ region: [ [ ] ] ;
 
 END ;
 
-value start_location = Camlp5_adapter.ST.start_location ;
+value start_location = Camlp5_adapter.ST0.start_location ;
 module Template = St_util.PAHelper(struct
                      type t = template_t ;
                      value start_location = start_location ;

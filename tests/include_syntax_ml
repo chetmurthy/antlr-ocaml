@@ -108,8 +108,7 @@ open Camlp5_adapter ;;
 #load "stringtemplate_test.cmo";;
 open Stringtemplate_test ;;
 open Stringtemplate ;;
-module D = Descriptor ;;
-Pa_st2.Template.load ~file:"gram.txt" ;;
+
 
 (*
 ;;; Local Variables: ***

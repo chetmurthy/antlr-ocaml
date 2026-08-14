@@ -15,13 +15,13 @@ TARGET = $(TARGET_PACKAGE).cma
 ML=\
 	lexerBase.ml \
 	st_util.ml \
-	l_stg_constants.ml l_st_constants.ml \
+	ST0Lexer_constants.ml ST1Lexer_constants.ml ST2Lexer_constants.ml STGLexer_constants.ml \
 	actionFuns_st.ml \
-	 l_st.ml l_stg.ml \
+	ST0Lexer.ml ST1Lexer.ml ST2Lexer.ml STGLexer.ml \
 	st_types.ml sttypes2.ml stg_types.ml \
 	camlp5_adapter.ml \
 	pa_st.ml \
-	pa_st2.ml \
+	pa.ml \
 	st_ops.ml \
 	pa_stg.ml \
 	eval.ml \
@@ -48,35 +48,10 @@ local-install::
 clean::
 	rm -rf META mk_meta mk_meta.ml
 
-LEXER=ST0Lexer
+LEXERS=ST0Lexer ST1Lexer ST2Lexer
 
 bootstrap:: ../tests/atn_util.opt
-	cp $(TOP)/tests/fixtures/grammar-lib/Lex* grammars/
-	cp $(TOP)/tests/fixtures/grammar-lib/$(LEXER).g4 grammars/
-	cp $(TOP)/tests/fixtures/grammar-lib/STGLexer.g4 grammars/
-	cp $(TOP)/tests/fixtures/pertest-files/antlr4/ST1/translation.json st-translation.json
-	cp $(TOP)/tests/fixtures/pertest-files/antlr4/ST1/actionFuns_st.ml actionFuns_st.ml 
-	cp $(TOP)/tests/fixtures/pertest-files/antlr4/STG1/translation.json stg-translation.json
-	(cd grammars && antlr4 -Dlanguage=Python3 STGLexer.g4)
-	(cd grammars && antlr4 -Dlanguage=Python3 $(LEXER).g4)
-	$(TOP)/tests/atn_util.opt emit-ocaml-lexer \
-	  -i grammars/STGLexer.interp \
-	  --grammar-lib grammars \
-	  -t stg-translation.json \
-	  grammars/STGLexer.g4 > l_stg.ml.NEW && mv l_stg.ml.NEW l_stg.ml
-	$(TOP)/tests/atn_util.opt emit-ocaml-constants \
-	  grammars/STGLexer.interp > l_stg_constants.ml.NEW && \
-	  mv l_stg_constants.ml.NEW l_stg_constants.ml
-	$(TOP)/tests/atn_util.opt emit-ocaml-lexer \
-	  -i grammars/$(LEXER).interp \
-	  --grammar-lib grammars \
-	  -t st-translation.json \
-	  grammars/$(LEXER).g4 > l_st.ml.NEW && mv l_st.ml.NEW l_st.ml
-	$(TOP)/tests/atn_util.opt emit-ocaml-constants \
-	  grammars/$(LEXER).interp > l_st_constants.ml.NEW && \
-	  mv l_st_constants.ml.NEW l_st_constants.ml
-
-
+	env TOP=$(TOP) ./bootstrap-lexers
 
 #	$(TOP)/tests/atn_util.opt emit-ocaml-atn grammars/Lexer.interp > ANTLRv4Lexer_atn.ml.NEW && mv ANTLRv4Lexer_atn.ml.NEW ANTLRv4Lexer_atn.ml
 

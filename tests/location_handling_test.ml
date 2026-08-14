@@ -13,6 +13,8 @@ open Camlp5_adapter
 
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 
+module ST = ST0
+
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 

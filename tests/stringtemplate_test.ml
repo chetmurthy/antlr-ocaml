@@ -9,25 +9,27 @@ Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
+module STPa = Stringtemplate.Pa.ST0Pa
+
 let test_parse_st ctxt =
   let open Stringtemplate in
   ()
-  ; assert_equal () (ignore([%here_string {|abc def|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore([%here_string {|Hello, <name>!|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore([%here_string {|{<writeln("\"I\"")>}|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore([%here_string {|{<name>}|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|{<ToStringTree("$ctx"):writeln()>}|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|{<InitIntMember("i","0")>}|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|<TreeNodeWithAltNumField(X="T")>|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string "load <box({})>;"] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string {|<a(x="x",y="y")>|}] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string "Foo<\\ >bar<\\n>"] |> Pa_st2.Template.of_here_string))
-  ; assert_equal () (ignore ([%here_string "<subdir/b()>"] |> Pa_st2.Template.of_here_string))
+  ; assert_equal () (ignore([%here_string {|abc def|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore([%here_string {|Hello, <name>!|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore([%here_string {|{<writeln("\"I\"")>}|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore([%here_string {|{<name>}|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<ToStringTree("$ctx"):writeln()>}|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<InitIntMember("i","0")>}|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|{<LANotEquals("2",{T<ParserToken("Parser", "NL")>})>}|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|<TreeNodeWithAltNumField(X="T")>|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "load <box({})>;"] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|<a(x="x",y="y")>|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "Foo<\\ >bar<\\n>"] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string "<subdir/b()>"] |> STPa.Template.of_here_string))
 
-  ; assert_equal () (ignore (Pa_st2.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
-  ; assert_equal () (ignore (Pa_st2.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
-  ; assert_equal () (ignore (Pa_st2.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
+  ; assert_equal () (ignore (STPa.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
+  ; assert_equal () (ignore (STPa.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
+  ; assert_equal () (ignore (STPa.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
 
 let test_parse_stg ctxt =
   let open Stringtemplate in
@@ -53,7 +55,7 @@ stat(name,value="99") ::= "x=<value>; // <name>"
 let test_parse_grammar g ctxt =
   let open Stringtemplate in
   let module D = Descriptor in
-  ignore(Pa_st2.Template.of_string ~startloc:g.D.loc g.D.txt)
+  ignore(STPa.Template.of_string ~startloc:g.D.loc g.D.txt)
 
 let test_parse_descriptor file ctxt =
   let open Stringtemplate in
@@ -80,9 +82,8 @@ let test_parse_all_descriptors ctxt =
          test_parse_descriptor f ())
 
 let test_parse_st_file file ctxt =
-  let open Stringtemplate in
   ()
-  ; assert_equal () (ignore (Pa_st2.Template.load ~file))
+  ; assert_equal () (ignore (STPa.Template.load ~file))
 
 let parse_fixed_files = 
   [
