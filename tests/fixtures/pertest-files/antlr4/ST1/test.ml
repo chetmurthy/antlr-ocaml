@@ -21,8 +21,11 @@ let _Token_named_type__str__ lexer (self : Exec.T.t) =
       None -> Fmt.(pf pps "None")
     | Some n -> Fmt.(pf pps "%a" ppsub n) in
   let fmt_channel pps c =
-    if c > 0 then Fmt.(pf pps ",channel=%d" c) else Fmt.(pf pps "") in
-  let esc_text = Util.escape_string (Exec.R.text lexer.recog lexer._interp.Exec.LAS.cursor) in
+    (*    if c > 0 then *)
+ Fmt.(pf pps ",channel=%d" c)
+  (* else Fmt.(pf pps "") *)
+ in
+  let esc_text = Util.escape_string (Exec.T.text self) in
   Fmt.(str "[%@%a,%a:%a='%s',<%a>%a,%a:%a]"
          (fmt_option fmt_int) self.tokenIndex
          (fmt_option fmt_int) self.start
@@ -49,7 +52,8 @@ let test ~show_dfa ~disable_logging ~named_types ~json_log_file file =
   let lex = Lex.full_init ~input ~output:stdout in
   let strm : Exec.T.t Stream.t = TS.init lex in
   let l = Std.list_of_stream strm in
-  l |> List.iter (fun t -> Fmt.(pf stdout "%s\n" (Exec.T.__str__ t))) ;
+  let __str__ = if named_types then _Token_named_type__str__ lex else Exec.T.__str__ in
+  l |> List.iter (fun t -> Fmt.(pf stdout "%s\n" (__str__ t))) ;
   if show_dfa then
     let open Exec in
     Fmt.(pf stdout "%s" (DFA.toLexerString lex.Lex._interp.LAS.decisionToDFA.(C._DEFAULT_MODE)))
