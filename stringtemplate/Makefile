@@ -51,7 +51,7 @@ clean::
 LEXERS=ST0Lexer ST1Lexer ST2Lexer
 
 bootstrap:: ../tests/atn_util.opt
-	#env TOP=$(TOP) ./bootstrap-lexers
+	env TOP=$(TOP) ./bootstrap-lexers
 	env TOP=$(TOP) ./regenerate-lexers
 #	$(TOP)/tests/atn_util.opt emit-ocaml-atn grammars/Lexer.interp > ANTLRv4Lexer_atn.ml.NEW && mv ANTLRv4Lexer_atn.ml.NEW ANTLRv4Lexer_atn.ml
 
