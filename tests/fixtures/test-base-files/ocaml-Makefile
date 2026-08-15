@@ -19,28 +19,28 @@ endif
 EEARGS=$(LOCARG) $(MAXDEPTHARG)
 
 ocaml-test:: ocaml-compile
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run --ocaml $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" --ocaml $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run --ocaml --lexer-only $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" --ocaml $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run $(VERBOSE) --ocaml $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit $(VERBOSE) --ee-args "$(EEARGS)" --ocaml $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run $(VERBOSE) --ocaml --lexer-only $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit $(VERBOSE) --lexer-only --ee-args "$(EEARGS)" --ocaml $(SHOWARGS)
 
 ocaml-test-named-output:: ocaml-compile
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run --ocaml --named-types $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run --ocaml --lexer-only --named-types $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run $(VERBOSE) --ocaml --named-types $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit $(VERBOSE) --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run $(VERBOSE) --ocaml --lexer-only --named-types $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit $(VERBOSE) --lexer-only --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS)
 
 named-ocaml-test:: ocaml-compile
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run --ocaml $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" --ocaml $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run --ocaml --lexer-only $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" --ocaml $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run $(VERBOSE) --ocaml $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit $(VERBOSE) --ee-args "$(EEARGS)" --ocaml $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run $(VERBOSE) --ocaml --lexer-only $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit $(VERBOSE) --lexer-only --ee-args "$(EEARGS)" --ocaml $(SHOWARGS) $(NAME)
 
 named-ocaml-test-named-output:: ocaml-compile
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run --ocaml --named-types $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run --ocaml --named-types --lexer-only $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run $(VERBOSE) --ocaml --named-types $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit $(VERBOSE) --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) run $(VERBOSE) --ocaml --named-types --lexer-only $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) $(RUNNER) json-entry-exit $(VERBOSE) --lexer-only --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS) $(NAME)
 
 ocaml-compile:: $(TESTS) $(TESTSOPT)
 

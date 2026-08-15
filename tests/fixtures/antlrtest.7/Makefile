@@ -13,7 +13,10 @@ LIBDIR=$(TOP)/tests/fixtures/grammar-lib
 LIBARG=-lib $(LIBDIR)
 RUNNER=$(TOP)/tests/tools/dtest-runner
 WD=`pwd`
-NOVERBOSE=@
+
+ifeq ($(NOVERBOSE),)
+VERBOSE=-v
+endif
 
 ifndef JSONLOGGING
 export JSONLOGGING=0
@@ -35,24 +38,24 @@ compile::
 
 python-prepare:: <lexerName>.py update-pertest
 <if(parserName)>
-	$(ADJUST) <grammarName>Lexer.py
-	$(ADJUST) <grammarName>Parser.py
-	cp <grammarName>Lexer.interp Lexer.interp
-	cp <grammarName>.interp Parser.interp
+	$(NOVERBOSE) $(ADJUST) <grammarName>Lexer.py
+	$(NOVERBOSE) $(ADJUST) <grammarName>Parser.py
+	$(NOVERBOSE) cp <grammarName>Lexer.interp Lexer.interp
+	$(NOVERBOSE) cp <grammarName>.interp Parser.interp
 <else>
-	$(ADJUST) <lexerName>.py
-	cp <grammarName>.interp Lexer.interp
+	$(NOVERBOSE) $(ADJUST) <lexerName>.py
+	$(NOVERBOSE) cp <grammarName>.interp Lexer.interp
 <endif>
 
 update-pertest::
-	cp $(TESTBASEDIR)/* .
-	if [ -d $(PERTESTDIR) ]; then cp -r $(PERTESTDIR)/. .; fi
+	$(NOVERBOSE) cp $(TESTBASEDIR)/* .
+	$(NOVERBOSE) if [ -d $(PERTESTDIR) ]; then cp -r $(PERTESTDIR)/. .; fi
 
 compare::
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) compare
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) compare $(VERBOSE)
 
 all-tests::
-	$(MAKE) {python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) {python,ocaml}-test{,-named-output} || true
 
 save-json-log: json.log
 	cp json.log json.log.SAVED
@@ -64,7 +67,7 @@ compare-json-log:: json.log.SAVED json.log
 VISITOR=-visitor
 <endif>
 <lexerName>.py: <grammarName>.g4
-	antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Python3 <grammarName>.g4
+	$(NOVERBOSE) antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Python3 <grammarName>.g4
 
 l.ml:
 	$(TOP)/tests/atn_util.opt emit-ocaml-lexer -i Lexer.interp --grammar-lib $(TOP)/tests/fixtures/grammar-lib -t translation.json --constants-module L_constants <grammarName>.g4 > l.ml.NEW && mv l.ml.NEW l.ml
@@ -73,24 +76,24 @@ l_constants.ml:
 	$(TOP)/tests/atn_util.opt emit-ocaml-constants Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
 
 python-test:: <lexerName>.py
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run --lexer-only $(SHOWARGS)
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit $(VERBOSE) --ee-args "$(EEARGS)" $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) --lexer-only $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit $(VERBOSE) --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS)
 
 named-python-test:: <lexerName>.py
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run --lexer-only $(SHOWARGS) $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit $(VERBOSE) --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) --lexer-only $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit $(VERBOSE) --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
 
 python-test-named-output::
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --named-types
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --lexer-only --named-types
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) $(SHOWARGS) --named-types
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) $(SHOWARGS) --lexer-only --named-types
 
 named-python-test-named-output::
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --named-types $(NAME)
-	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --lexer-only --named-types $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) $(SHOWARGS) --named-types $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) $(SHOWARGS) --lexer-only --named-types $(NAME)
 
 <if(parserName)>
 GENPAFILES=<grammarName>Parser.py <grammarName>Listener.py <grammarName>Visitor.py

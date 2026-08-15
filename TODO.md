@@ -11,7 +11,11 @@
 
 4. and update DTESTs and STTESTs to run with this enabled, update error text.
 
-5. a new dtest-runner:
+5. Find and fix problem in dtest CompositeParsers/BringInLiteralsFromDelegate
+
+================================================================
+
+5. [DONE] a new dtest-runner:
 
 a test-runner that:
 

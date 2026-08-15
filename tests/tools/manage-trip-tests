@@ -11,6 +11,7 @@ use String::ShellQuote ;
 our $verbose = 0 ;
 our $noexecute ;
 our @genargs = ("--template-dir=fixtures/antlrtest.7") ;
+our @make = ("make") ;
 
 $ENV{'TOP'} = ".." ;
 
@@ -85,6 +86,8 @@ $ENV{'TOP'} = ".." ;
 
   die "no subcomamnd specified" unless defined $subcommand ;
 
+  @make = ("make", "--no-print-directory") unless ($verbose) ;
+
   my @full1 = qw(python-prepare compare-atns update-pertest) ;
   my @full2 = qw(all-tests compare) ;
 
@@ -127,7 +130,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "clean"]) ;
+      v_systemx([0], [@make, "-C", $dir, "clean"]) ;
     }
   }
   elsif ($subcommand eq 'python-prepare') {
@@ -135,7 +138,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "python-prepare"]) ;
+      v_systemx([0], [@make, "-C", $dir, "python-prepare"]) ;
     }
   }
   elsif ($subcommand eq 'depend') {
@@ -143,7 +146,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "depend"]) ;
+      v_systemx([0], [@make, "-C", $dir, "depend"]) ;
     }
   }
   elsif ($subcommand eq 'compile') {
@@ -151,7 +154,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "compile"]) ;
+      v_systemx([0], [@make, "-C", $dir, "compile"]) ;
     }
   }
   elsif ($subcommand eq 'python-test') {
@@ -159,7 +162,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "python-test"]) ;
+      v_systemx([0], [@make, "-C", $dir, "python-test"]) ;
     }
   }
   elsif ($subcommand eq 'compare-atns') {
@@ -167,7 +170,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "compare-atns"]) ;
+      v_systemx([0], [@make, "-C", $dir, "compare-atns"]) ;
     }
   }
 
@@ -176,7 +179,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "save-json-log"]) ;
+      v_systemx([0], [@make, "-C", $dir, "save-json-log"]) ;
     }
   }
 
@@ -185,7 +188,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "compare-json-log"]) ;
+      v_systemx([0], [@make, "-C", $dir, "compare-json-log"]) ;
     }
   }
   elsif ($subcommand eq 'update-pertest') {
@@ -193,7 +196,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "update-pertest"]) ;
+      v_systemx([0], [@make, "-C", $dir, "update-pertest"]) ;
     }
   }
   elsif ($subcommand eq 'ocaml-compile') {
@@ -201,7 +204,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "ocaml-compile"]) ;
+      v_systemx([0], [@make, "-C", $dir, "ocaml-compile"]) ;
     }
   }
   elsif ($subcommand eq 'all-tests') {
@@ -209,7 +212,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "all-tests"]) ;
+      v_systemx([0], [@make, "-C", $dir, "all-tests"]) ;
     }
   }
   elsif ($subcommand eq 'compare') {
@@ -217,7 +220,7 @@ $ENV{'TOP'} = ".." ;
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "compare"]) ;
+      v_systemx([0], [@make, "-C", $dir, "compare"]) ;
     }
   }
   elsif ($subcommand eq 'full') {
@@ -231,8 +234,8 @@ $ENV{'TOP'} = ".." ;
       my $dir = "_generated/$p" ;
       v_systemx([0], ["rm", "-rf", $dir]) ;
       generate($tf) ;
-      v_systemx([0], ["make", "-C", $dir, @full1]) ;
-      v_systemx([0], ["make", "-C", $dir, @full2]) ;
+      v_systemx([0], [@make, "-C", $dir, @full1]) ;
+      v_systemx([0], [@make, "-C", $dir, @full2]) ;
     }
   }
 

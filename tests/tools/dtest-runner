@@ -101,6 +101,11 @@ unless (defined $ENV{TOP}) {
   my $testdir = "_build/${testcase}${testsuff}" ;
   $args->{testdir} = $testdir ;
 
+  unless (-f $args->{'inputfile'}) {
+    carp "compare: testdir $testdir: input <<$args->{'inputfile'}>> non-existent (assuming /dev/null suffices)" if ($main::verbose) ;
+    $args->{'inputfile'} = "/dev/null" ;
+  }
+
   v_system("mkdir -p $testdir") unless -d $testdir ;
   if ($subcommand eq 'run') {
     runtest($args) ;
@@ -130,10 +135,16 @@ sub runtest {
   $cmd .= "--show-dfa " if ($main::showdfa) ;
   $cmd .= "--named-types " if ($main::namedtypes) ;
   
-  $cmd .= " ../../$inputfile" ;
+  if ($inputfile =~ m,^/,) {
+    $cmd .= " $inputfile" ;
+  }
+  else {
+    $cmd .= " ../../$inputfile" ;
+  }
   $cmd = "(cd $testdir && $cmd > output 2> errors)" ;
   v_system($cmd) ;
   v_system("(cd $testdir && jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log)") ;
+  v_system("cat $testdir/errors") ;
 }
 
 sub entry_exit {

@@ -6,9 +6,10 @@ camlp5VERSION=$(shell camlp5 -version)
 
 RM=rm
 
+NOVERBOSE=@
 DEBUG=-g
 NOT_OCAMLFIND=not-ocamlfind
-LAUNCH=env TOP=$(TOP) ocamlfind camlp5-buildscripts/LAUNCH $(DEBUG_LAUNCH) --
+LAUNCH=$(NOVERBOSE) env TOP=$(TOP) ocamlfind camlp5-buildscripts/LAUNCH $(DEBUG_LAUNCH) --
 OCAMLFIND=ocamlfind
 JOINMETA=ocamlfind camlp5-buildscripts/join_meta
 YAWRAP=ocamlfind camlp5-buildscripts/ya-wrap-ocamlfind
@@ -19,6 +20,12 @@ MKCAMLP5OPT=mkcamlp5.opt -verbose -I +dynlink
 INCLUDES=
 OCAMLCFLAGS= $(INCLUDES)
 PRPACKAGE = camlp5.pr_o
+
+ifeq ($(NOVERBOSE),)
+else
+MAKEFLAGS=--no-print-directory
+endif
+
 
 CMO = $(ML:.ml=.cmo)
 CMI = $(ML:.ml=.cmi)
