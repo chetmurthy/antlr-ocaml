@@ -144,9 +144,11 @@ end
 module EmitLexer = struct
 open Parse_antlrv4
 
-let emit ~debug ~grammar_lib ~interp_file ~translation_file file =
+let emit ~debug ~grammar_lib ~interp_file ~translation_file ~constants_module file =
+  if constants_module = "" then
+    failwith "must specify constants-moodule" ;
   EmitATN.emit ~debug interp_file ;
-  Grammar_tools.generate_lexer ~path:[Fpath.v grammar_lib] ~translation_file file
+  Grammar_tools.generate_lexer ~path:[Fpath.v grammar_lib] ~translation_file ~constants_module file
 
 let cmd =
 let file =
@@ -162,6 +164,10 @@ let translation_file =
   let docv = "translation-file: JSON file containing translations for actions/sempreds." in
   Arg.(value & opt file "" & info ["t"; "translation-file"] ~docv) in
 
+let constants_module =
+  let docv = "constants-module: module mame into which emitted constants were written." in
+  Arg.(value & opt string "" & info ["constants-module"] ~docv) in
+
 let grammar_lib =
   let docv = "grammar-lib: directory for looking up grammar files." in
   Arg.(value & opt dir "" & info ["grammar-lib"] ~docv) in
@@ -176,8 +182,8 @@ let debug =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "emit-ocaml-lexer" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ translation_file and+ interp_file and+ grammar_lib in
-  emit ~debug ~grammar_lib ~interp_file:(Fpath.v interp_file) ~translation_file:(Fpath.v translation_file) (Fpath.v file) ;
+  let+ file and+ debug and+ translation_file and+ constants_module and+ interp_file and+ grammar_lib in
+  emit ~debug ~grammar_lib ~interp_file:(Fpath.v interp_file) ~translation_file:(Fpath.v translation_file) ~constants_module (Fpath.v file) ;
   Cmdliner.Cmd.Exit.ok
 
 end

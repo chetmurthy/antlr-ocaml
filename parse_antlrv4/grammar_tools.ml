@@ -172,7 +172,7 @@ let map_sempred t = function
 end
 module TranslationFile = TF
 
-let generate_lexer ~path ~translation_file gramfile =
+let generate_lexer ~path ~translation_file ~constants_module gramfile =
   let tf = TF.load (Fpath.to_string translation_file) in
   let g =
     gramfile
@@ -238,6 +238,7 @@ else |}
 
   Fmt.(pf stdout 
 {|
+ module Constants = %s
  open Pa_ppx_utils
  open Pa_ppx_base
  open Ppxutil
@@ -256,6 +257,7 @@ let full_init ~input ~output =
   LexerBase.init ~atn ~actions ~sempreds ~input ~output
 end
 |}
+         constants_module
          (list pp_action_func) actions
          (list pp_sempred_func) sempreds
          pp_action_bindings actions
