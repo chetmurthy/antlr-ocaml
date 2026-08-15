@@ -1,3 +1,4 @@
+module L_constants = ST1Lexer_constants
 open Antlr
 open Exec
 
@@ -16,7 +17,7 @@ let exitSubTemplate self cu =
   watch_subtemplateDepth !subtemplateDepth;
   if !subtemplateDepth > 0 then begin
       decr subtemplateDepth ;
-      R.mode self 1
+      R.mode self L_constants.Modes._Inside
     end
 
 let subTemplateHasIDs self cu =

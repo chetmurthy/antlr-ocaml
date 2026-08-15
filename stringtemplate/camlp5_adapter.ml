@@ -27,9 +27,13 @@ module type CAMLP5LEXER = sig
   val start_location : Ploc.t ref
   val raw_lexer :
     ?all_channels:bool -> char Stream.t -> unit -> Antlr.Exec.T.t
+  val raw_modes_lexer :
+    char Stream.t -> unit -> (string list * Antlr.Exec.T.t * string list)
   val located_pattern_lexer :
     ?all_channels:bool ->
     char Stream.t -> unit -> Plexing.pattern * Ploc.t
+  val pattern_modes_lexer :
+    char Stream.t -> unit -> (string list * Plexing.pattern * string list)
   val triple_lexer :
     ?all_channels:bool ->
     char Stream.t -> unit -> Antlr.Exec.T.t * (Plexing.pattern * Ploc.t)
@@ -38,9 +42,13 @@ module type CAMLP5LEXER = sig
     char Stream.t -> Plexing.pattern Stream.t * Plexing.Locations.t
   val raw_of_string :
     ?all_channels:bool -> string -> Antlr.Exec.T.t Stream.t
+  val raw_modes_of_string :
+    string -> (string list * Antlr.Exec.T.t * string list) Stream.t
   val located_patterns_of_string :
     ?startloc:Ploc.t ->
     ?all_channels:bool -> string -> (Plexing.pattern * Ploc.t) Stream.t
+  val pattern_modes_of_string :
+    string -> (string list * Plexing.pattern * string list) Stream.t
   val located_patterns_of_here_string :
     ?all_channels:bool ->
     Lexing.position * string -> (Plexing.pattern * Ploc.t) Stream.t
@@ -94,11 +102,12 @@ module Make
   = struct
 module Lex = Lex
 
+let mode2string n = 
+  List.nth (fst Lex.full_atn).Interp.Raw.mode_names n
+
 let watch_mode0 ((s:string), (mode : string), (modeStack : string list)) = ()
 
 let watch_mode ((s:string), (mode : int), (modeStack : int list)) =
-  let mode2string n = 
-    List.nth (fst Lex.full_atn).Interp.Raw.mode_names n in
   watch_mode0 (s, mode2string mode,  List.map mode2string modeStack)
 
 let rename x =
@@ -170,12 +179,38 @@ let raw_lexer ?(all_channels=false) cs =
       t in
   next_token
 
+let raw_modes_lexer cs =
+  let open Antlr in
+  let txt = string_of_char_stream cs in
+  let input : Exec.IS.t =
+    Tracelog.with_disabled (fun () ->
+        Exec.IS.init txt ()
+      ) ()
+  in
+  AF.reset() ;
+  let lex = Lex.full_init ~input ~output:stdout in
+  AfterInit.after_init lex ;
+  let rec next_token () =
+    let modes1 = (lex.recog._mode :: lex.recog._modeStack) in
+    let t = Lex.nextToken lex in
+    let modes2 = (lex.recog._mode :: lex.recog._modeStack) in
+    assert(Std.isSome t.channel) ;
+    (List.map mode2string modes1, t, List.map mode2string modes2) in
+  next_token
+
 let located_pattern_lexer ?(all_channels=false) cs =
   let startloc = !start_location in
   let next_token = raw_lexer ~all_channels cs in
   let next_token () =
     let t = next_token () in
     located_pattern_of_token ~startloc t in
+  next_token
+
+let pattern_modes_lexer cs =
+  let next_token = raw_modes_lexer cs in
+  let next_token () =
+    let (m1,t,m2) = next_token () in
+    (m1, pattern_of_token t, m2) in
   next_token
 
 let triple_lexer ?(all_channels=false) cs =
@@ -200,6 +235,16 @@ let raw_of_string ?all_channels s =
   |> stream_of_lexer
   |> Util.truncate_stream St_util.raw_is_EOF
 
+let raw_modes_is_EOF (_,t,_) =
+  St_util.raw_is_EOF t
+
+let raw_modes_of_string s =
+  s
+  |> Stream.of_string
+  |> raw_modes_lexer
+  |> stream_of_lexer
+  |> Util.truncate_stream raw_modes_is_EOF
+
 let located_patterns_of_string ?startloc ?all_channels s =
   St_util.with_location start_location ?startloc (fun s ->
       s
@@ -208,6 +253,15 @@ let located_patterns_of_string ?startloc ?all_channels s =
       |> stream_of_lexer
       |> Util.(truncate_stream located_pattern_is_EOI)
     ) s
+
+let pattern_modes_is_EOI (_,p,_) = Util.pattern_is_EOI p
+
+let pattern_modes_of_string s =
+  s
+  |> Stream.of_string
+  |> pattern_modes_lexer
+  |> stream_of_lexer
+  |> Util.(truncate_stream pattern_modes_is_EOI)
 
 let located_patterns_of_here_string ?all_channels (pos,s)  =
   let startloc = Util.ploc_of_position pos in
@@ -276,9 +330,9 @@ module ST2AfterInit = struct
     Exec.(R.mode lex.L.recog ST2Lexer_constants.Modes._Outside) ;
     ()
 end
-module ST0 = Make(ActionFuns_st)(STRenaming)(ST0Lexer.Full)(ST0AfterInit)
-module ST1 = Make(ActionFuns_st)(STRenaming)(ST1Lexer.Full)(ST1AfterInit)
-module ST2 = Make(ActionFuns_st)(STRenaming)(ST2Lexer.Full)(ST2AfterInit)
+module ST0 = Make(ActionFuns_ST0)(STRenaming)(ST0Lexer.Full)(ST0AfterInit)
+module ST1 = Make(ActionFuns_ST1)(STRenaming)(ST1Lexer.Full)(ST1AfterInit)
+module ST2 = Make(ActionFuns_ST2)(STRenaming)(ST2Lexer.Full)(ST2AfterInit)
 
 module ActionFuns_stg = struct
 let reset () = ()

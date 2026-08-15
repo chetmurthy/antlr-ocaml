@@ -16,7 +16,7 @@ ML=\
 	lexerBase.ml \
 	st_util.ml \
 	ST0Lexer_constants.ml ST1Lexer_constants.ml ST2Lexer_constants.ml STGLexer_constants.ml \
-	actionFuns_st.ml \
+	ActionFuns_ST0.ml ActionFuns_ST1.ml ActionFuns_ST2.ml \
 	ST0Lexer.ml ST1Lexer.ml ST2Lexer.ml STGLexer.ml \
 	st_types.ml sttypes2.ml stg_types.ml \
 	camlp5_adapter.ml \
