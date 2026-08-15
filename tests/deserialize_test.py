@@ -22,7 +22,6 @@ def extract_atn(txt):
 
 def main(args):
     fname = args[1]
-    sys.stderr.write("Filename: %s\n" % fname)
     with open(fname) as f: s = f.read()
     ser_atn = extract_atn(s)
     des = ATNDeserializer()

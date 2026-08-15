@@ -2,7 +2,7 @@
 
 use strict ;
 use warnings ;
-use Carp 'croak'; 
+use Carp 'croak', 'carp'; 
 
 use File::Basename;
 use IPC::System::Simple qw(systemx runx capturex $EXITVAL);
@@ -18,8 +18,11 @@ our $testcase ;
 our $showdfa ;
 our $eeargs ; 
 
-die "must set env var TOP" unless defined $ENV{TOP} ;
-die "TOP must be absolute path (fix this!)" unless ($ENV{TOP} =~ m,^/,) ;
+unless (defined $ENV{TOP}) {
+  my $p = $0 ;
+  $p =~ s,/tests/tools/dtest-runner,,;
+  $ENV{TOP} = $p ;
+}
 
 {
   while (@ARGV) {
@@ -142,34 +145,63 @@ sub entry_exit {
   v_system($cmd) ;
 }
 
-
 sub compare {
   my @l = glob("_build/*") ;
   foreach my $testdir (@l) {
     my $expectedoutput ;
     my $expectederrors ;
+    # compare -ocaml to -python
     if ($testdir =~ /ocaml/) {
       my $comparedir = $testdir ;
       $comparedir =~ s,ocaml,python, ;
       $expectedoutput = "$comparedir/output" ;
       $expectederrors = "$comparedir/errors" ;
+
+      unless (-f $expectedoutput && -f $expectederrors) {
+	carp "compare: testdir $testdir couldn't be diffed b/c comparedir $comparedir didn't have both {output,errors}" ;
+	next ;
+      }
     }
-    elsif ($testdir =~ /lexer-only/ || $testdir =~ /named-types/) {
-      print STDERR "SKIP $testdir (b/c python AND (lexer-only or named-types))\n" ;
-      next ;
-    }
-    elsif ($testdir =~ /DEFAULT/) {
+    # DEFAULT-python has expected-files
+    elsif ($testdir =~ m,^_build/DEFAULT-python$,) {
       $expectedoutput = "expected/output" ;
       $expectederrors = "expected/errors" ;
     }
-    elsif ($testdir =~ m,^_build/([^-]+)-,) {
+    # {NAME}-python has expected-files
+    elsif ($testdir =~ m,^_build/([^-]+)-python$,) {
       $expectedoutput = "expected/output.$1" ;
       $expectederrors = "expected/errors.$1" ;
     }
-    else {
-      print STDERR "SKIP $testdir (don't know what to do with it!\n" ;
-      next ;
+    # any other python -might- have expected-files
+    # if it doesn't, then skip
+    elsif ($testdir =~ m,^_build/([^-]+)-python(.*)$,) {
+      my $name = $1 ;
+      my $type = $2 ;
+      $name = "" if $name eq 'DEFAULT' ;
+      my $namesuff = "" ;
+      $namesuff = ".$name" if $name ne "" ;
+      $expectedoutput = "expected/output${type}${namesuff}"
+	  if (-f "expected/output${type}${namesuff}") ;
+      $expectederrors = "expected/errors${type}${namesuff}"
+	  if (-f "expected/errors${type}${namesuff}") ;
+
+      unless (defined $expectedoutput || defined $expectederrors) {
+	print STDERR "SKIP $testdir (neither expected-{output,errors} specified)!\n" ;
+	next ;
+      }
+      $expectedoutput = "" unless (defined $expectedoutput) ;
+      $expectederrors = "" unless (defined $expectederrors) ;
     }
+
+    unless (-f $expectedoutput) {
+      carp "compare: testdir $testdir: expected-output <<$expectedoutput>> non-existent (assuming /dev/null suffices)" if ($main::verbose) ;
+      $expectedoutput = "/dev/null" ;
+    }
+    unless (-f $expectederrors) {
+      carp "compare: testdir $testdir: expected-errors <<$expectederrors>> non-existent (assuming /dev/null suffices)" if ($main::verbose)  ;
+      $expectederrors = "/dev/null" ;
+    }
+
     print STDERR "DIFF $testdir\n" ;
     v_system("diff -Bwiu $expectedoutput ${testdir}/output") ;
     v_system("diff -Bwiu $expectederrors ${testdir}/errors") ;

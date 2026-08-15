@@ -79,43 +79,38 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
     [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar.name))),
      Stg.transform ~file:Fmt.(str "%s grammar %s" file d.grammar.name) env d.D.grammar.txt
     ]@generated_files in
-  let input_generated_files =
+
+  let expected_generated_files =
     let input_l = D.stanza_all d "input" in
     let output_l = D.stanza_all d "output" in
     let errors_l = D.stanza_all d "errors" in
-    let params_l =
-      (input_l @ output_l @ errors_l)
-      |> List.map fst
-      |> Std2.hash_uniq in
-    params_l
-    |> List.concat_map (fun p ->
-           let input_txt =
-             match List.assoc_opt p input_l with
-               Some (_, txt) -> txt
-             | None -> "" in
-           let output_txt =
-             match List.assoc_opt p output_l with
-               Some (_, txt) -> txt
-             | None -> "" in
-           let errors_txt =
-             match List.assoc_opt p errors_l with
-               Some (_, txt) -> txt
-             | None -> "" in
-           let file_name prefix =
-               if p = [] then prefix
-               else
-                 match List.assoc_opt "name" p with
-                   Some x -> prefix^"."^x
-                 | None ->
-                    Fmt.(failwithf "no 'name' in params %a"
-                           [%pp: (string * string) list] p) in
 
-           [Fpath.(append destexpected_dir (v (file_name "input"))), input_txt
-           ;Fpath.(append destexpected_dir (v (file_name "output"))), output_txt
-           ;Fpath.(append destexpected_dir (v (file_name "errors"))), errors_txt
-         ]) in
+    let file_name root p =
+      let namesuff = match List.assoc_opt "name" p with
+          Some suff -> "."^suff
+        | None -> "" in
+      let typesuff = match List.assoc_opt "type" p with
+          Some suff -> "-"^suff
+        | None -> "" in
+      root^typesuff^namesuff in
 
-  let generated_files = input_generated_files@generated_files in
+    let generate_files kind files_l =
+      files_l
+      |> List.filter_map (fun (p,(_, txt)) ->
+             if txt = "" then None
+             else
+               Some (Fpath.(append destexpected_dir (v (file_name kind p))), txt)
+           ) in
+      
+
+    let input_files = generate_files "input" input_l in
+    let output_files = generate_files "output" output_l in
+    let errors_files = generate_files "errors" errors_l in
+
+    input_files@output_files@errors_files
+  in
+
+  let generated_files = expected_generated_files@generated_files in
   let generated_files =
     if d.D.is_composite then
       let l =
@@ -135,8 +130,8 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
              (f, Stg.clean_blank_lines txt)
            else (f,txt)) in
 
-  destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok ;
-  destexpected_dir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok ;
+  ignore(destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok : bool) ;
+  ignore(destexpected_dir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok : bool);
   generated_files
   |> List.iter
        (fun (full, txt) ->

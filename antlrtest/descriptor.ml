@@ -234,12 +234,12 @@ let _of_string pos ~testname txt =
   _mk ~testname ~file:pos.Pos.filename stanzas
 
 let of_string ?startloc ~testname txt =
-  let pos = match startloc with None -> Pos.mk "" | Some loc -> Pos.of_loc loc in
+  let pos = match startloc with None -> Pos.mk ~file:"" | Some loc -> Pos.of_loc loc in
   _of_string pos ~testname txt
 
 let load ~testname file =
   let txt = file |> Fpath.v |>  Bos.OS.File.read |> Result.get_ok in
-  let pos = Pos.mk file in
+  let pos = Pos.mk ~file in
   _of_string pos ~testname txt
 
 let to_env d =

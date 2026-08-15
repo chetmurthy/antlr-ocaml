@@ -222,7 +222,6 @@ let dump ~json ~debug ~disable_verify ~check_rule_separation:check file =
     |> Result.get_ok
     |> Antlr.Interp_syntax.read_raw
     |> Antlr.Atn.deser ~verify:(not disable_verify) in
-    Fmt.(pf stderr "Filename: %s@." file) ;
   if json then
     Fmt.(pf stdout "%a@." (Yojson.Safe.pretty_print ~std:true) (Yojson.Safe.sort (Antlr.Atn.to_yojson atn)))
   else

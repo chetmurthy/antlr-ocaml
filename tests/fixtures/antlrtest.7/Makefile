@@ -13,6 +13,7 @@ LIBDIR=$(TOP)/tests/fixtures/grammar-lib
 LIBARG=-lib $(LIBDIR)
 RUNNER=$(TOP)/tests/tools/dtest-runner
 WD=`pwd`
+NOVERBOSE=@
 
 ifndef JSONLOGGING
 export JSONLOGGING=0
@@ -48,7 +49,7 @@ update-pertest::
 	if [ -d $(PERTESTDIR) ]; then cp -r $(PERTESTDIR)/. .; fi
 
 compare::
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) compare
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) compare
 
 all-tests::
 	$(MAKE) {python,ocaml}-test{,-named-output} || true
@@ -72,24 +73,24 @@ l_constants.ml:
 	$(TOP)/tests/atn_util.opt emit-ocaml-constants Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
 
 python-test:: <lexerName>.py
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS)
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" $(SHOWARGS)
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run --lexer-only $(SHOWARGS)
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run --lexer-only $(SHOWARGS)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS)
 
 named-python-test:: <lexerName>.py
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) $(NAME)
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run --lexer-only $(SHOWARGS) $(NAME)
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run --lexer-only $(SHOWARGS) $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
 
 python-test-named-output::
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --named-types
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --lexer-only --named-types
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --named-types
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --lexer-only --named-types
 
 named-python-test-named-output::
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --named-types $(NAME)
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --lexer-only --named-types $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --named-types $(NAME)
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --lexer-only --named-types $(NAME)
 
 <if(parserName)>
 GENPAFILES=<grammarName>Parser.py <grammarName>Listener.py <grammarName>Visitor.py
