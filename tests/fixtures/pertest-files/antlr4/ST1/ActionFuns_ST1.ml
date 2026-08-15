@@ -1,3 +1,4 @@
+
 open Antlr
 open Exec
 
@@ -6,13 +7,17 @@ let rDelim = Char.code '>'
 
 let subtemplateDepth = ref 0
 
+let watch_subtemplateDepth (n : int) = ()
+
 let enterSubTemplate self cu =
-  incr subtemplateDepth
+  incr subtemplateDepth ;
+  watch_subtemplateDepth !subtemplateDepth
 
 let exitSubTemplate self cu =
+  watch_subtemplateDepth !subtemplateDepth;
   if !subtemplateDepth > 0 then begin
       decr subtemplateDepth ;
-      R.mode self 1
+      ignore (R.popMode self : int)
     end
 
 let subTemplateHasIDs self cu =

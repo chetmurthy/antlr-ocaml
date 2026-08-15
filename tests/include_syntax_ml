@@ -126,12 +126,20 @@ open Stringtemplate ;;
 #trace ActionFuns_ST1.watch_subtemplateDepth ;;
  *)
 
-let lst0 = {|{<F({<G()>})>}|} |> ST0.pattern_modes_of_string |> Std.list_of_stream ;;
-let lst1 = {|{<F({<G()>})>}|} |> ST1.pattern_modes_of_string |> Std.list_of_stream ;;
-let lst2 = {|{<F({<G()>})>}|} |> ST2.pattern_modes_of_string |> Std.list_of_stream;;
+let heres = [%here_string {|{<F({<G()>})>}|}] ;;
+let heres = [%here_string {|\<{<writeln("\"I\"")>}|}] ;;
+let heres = [%here_string {|<{id | foo}>|}] ;;
 
-[%here_string {|{<F({<G()>})>}|}] |> ST0.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst ;;
-[%here_string {|{<F({<G()>})>}|}] |> ST1.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst ;;
+
+let lst0 = heres |> snd |> ST0.pattern_modes_of_string |> Std.list_of_stream ;;
+let lst1 = heres |> snd |> ST1.pattern_modes_of_string |> Std.list_of_stream ;;
+let lst2 = heres |> snd |> ST2.pattern_modes_of_string |> Std.list_of_stream;;
+(List.map Std.snd3 lst0) = (List.map Std.snd3 lst1) ;;
+(List.map Std.snd3 lst0) = (List.map Std.snd3 lst2) ;;
+
+heres |> ST0.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst ;;
+heres |> ST1.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst ;;
+heres |> ST2.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst ;;
 
 (*
 ;;; Local Variables: ***

@@ -1,4 +1,4 @@
-ML=lexerBase.ml l_constants.ml actionFuns_st.ml l.ml test.ml
+ML=lexerBase.ml l_constants.ml ActionFuns_ST1.ml l.ml test.ml
 
 all-tests::
 	$(MAKE) NAME=B named-{python,ocaml}-test{,-named-output} || true

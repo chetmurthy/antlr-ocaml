@@ -12,7 +12,7 @@ let enterSubTemplate self cu =
 let exitSubTemplate self cu =
   if !subtemplateDepth > 0 then begin
       decr subtemplateDepth ;
-      R.mode self 1
+      R.mode self 2
     end
 
 let subTemplateHasIDs self cu =
