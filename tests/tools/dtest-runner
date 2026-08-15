@@ -76,15 +76,11 @@ die "TOP must be absolute path (fix this!)" unless ($ENV{TOP} =~ m,^/,) ;
   my $args = {} ;
   if (@ARGV) {
     $testcase = shift @ARGV ;
-    $args->{'inputfile'} = "input.$testcase" ;
-    $args->{'expected-output'} = "output.$testcase" ;
-    $args->{'expected-errors'} = "errors.$testcase" ;
+    $args->{'inputfile'} = "expected/input.$testcase" ;
   }
   else {
     $testcase = 'DEFAULT' ;
-    $args->{'inputfile'} = "input" ;
-    $args->{'expected-output'} = "output" ;
-    $args->{'expected-errors'} = "errors" ;
+    $args->{'inputfile'} = "expected/input" ;
   }
 
   print STDERR "testcase is $testcase\n" if ($verbose) ;
@@ -163,12 +159,12 @@ sub compare {
       next ;
     }
     elsif ($testdir =~ /DEFAULT/) {
-      $expectedoutput = "output" ;
-      $expectederrors = "errors" ;
+      $expectedoutput = "expected/output" ;
+      $expectederrors = "expected/errors" ;
     }
     elsif ($testdir =~ m,^_build/([^-]+)-,) {
-      $expectedoutput = "output.$1" ;
-      $expectederrors = "errors.$1" ;
+      $expectedoutput = "expected/output.$1" ;
+      $expectederrors = "expected/errors.$1" ;
     }
     else {
       print STDERR "SKIP $testdir (don't know what to do with it!\n" ;

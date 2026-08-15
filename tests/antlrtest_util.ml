@@ -54,6 +54,7 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
   let destdir = Fpath.(append destroot (v testname)) in
   if destdir |> Bos.OS.Dir.exists |> Result.get_ok then
     Fmt.(failwithf "destdir %s must not already exist!" (Fpath.to_string destdir));
+  let destexpected_dir = Fpath.(append destdir (v "expected")) in
 
   let module D = Descriptor in
   let d = D.load ~testname file in
@@ -109,9 +110,9 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
                     Fmt.(failwithf "no 'name' in params %a"
                            [%pp: (string * string) list] p) in
 
-           [Fpath.(append destdir (v (file_name "input"))), input_txt
-           ;Fpath.(append destdir (v (file_name "output"))), output_txt
-           ;Fpath.(append destdir (v (file_name "errors"))), errors_txt
+           [Fpath.(append destexpected_dir (v (file_name "input"))), input_txt
+           ;Fpath.(append destexpected_dir (v (file_name "output"))), output_txt
+           ;Fpath.(append destexpected_dir (v (file_name "errors"))), errors_txt
          ]) in
 
   let generated_files = input_generated_files@generated_files in
@@ -135,6 +136,7 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
            else (f,txt)) in
 
   destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok ;
+  destexpected_dir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok ;
   generated_files
   |> List.iter
        (fun (full, txt) ->

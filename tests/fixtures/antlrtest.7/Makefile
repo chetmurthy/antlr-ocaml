@@ -124,9 +124,11 @@ deserialize-ocaml::
 <endif>
 
 compare-atns:: <lexerName>.py
+	rm -f json.log
 	diff -bBwi -u10 \
 	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp | jq '.' ) \
 	<( $(TOP)/tests/atn_util.opt dump --json <grammarName>.interp | jq '.' )
+	mv json.log lexer-atn-json.log
 <if(parserName)>
 	diff -bBwi -u10 \
 	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp | jq '.' ) \
