@@ -42,6 +42,7 @@ def main(argv):
     parser.add_argument('input')
     parser.add_argument('--disable-logging',action='store_true')
     parser.add_argument('--named-types',action='store_true')
+    parser.add_argument('--show-dfa',action='store_true')
     args = parser.parse_args()
     if args.disable_logging: Trace.disable()
     txt = Util.file_contents(args.input, encoding='utf-8', errors='replace')
@@ -65,9 +66,8 @@ def main(argv):
         [ print(Token__str(lexer, t)) for t in stream.tokens ]
     else:
         [ print(<if(python3)>t<else>unicode(t)<endif>) for t in stream.tokens ]
-<if(showDFA)>
-    print(lexer._interp.decisionToDFA[Lexer.DEFAULT_MODE].toLexerString(), end='')
-<endif>
+    if args.show_dfa:
+        print(lexer._interp.decisionToDFA[Lexer.DEFAULT_MODE].toLexerString(), end='')
 <endif>
 
 

@@ -18,56 +18,29 @@ endif
 
 EEARGS=$(LOCARG) $(MAXDEPTHARG)
 
-ocaml-compare:: output.NEW errors.NEW
-	diff -Bwiu output output.NEW
-	diff -Bwiu errors errors.NEW
-	jq -S . ocaml-json.log.RAW > ocaml-json.log.NEW && mv ocaml-json.log.NEW ocaml-json.log
-	$(REPLAYTEST) entry-exit-depth $(EEARGS) ocaml-json.log > ocaml-json.ee.log
-	$(REPLAYTEST) entry-exit-depth $(EEARGS) json.log > json.ee.log
-	$(REPLAYTEST) entry-exit-depth $(EEARGS) lexer-json.log > lexer-json.ee.log
-ifdef NONSTOP
-	diff -Bwiu lexer-errors.NEW ocaml-errors.NEW || true
-	diff -Bwiu lexer-output.NEW ocaml-output.NEW || true
-	diff -Bwiu lexer-json.log ocaml-json.log || true
-#	diff -Bwiu errors.NEW ocaml-errors.NEW || true
-#	diff -Bwiu output.NEW ocaml-output.NEW || true
-#	diff -Bwiu json.log ocaml-json.log || true
-else
-	diff -Bwiu lexer-errors.NEW ocaml-errors.NEW
-	diff -Bwiu lexer-output.NEW ocaml-output.NEW
-	diff -Bwiu lexer-json.log ocaml-json.log
-#	diff -Bwiu errors.NEW ocaml-errors.NEW
-#	diff -Bwiu output.NEW ocaml-output.NEW
-#	diff -Bwiu json.log ocaml-json.log
-endif
-
-ocaml-json.ee.log: ocaml-json.log
-	$(REPLAYTEST) entry-exit-depth $(EEARGS) ocaml-json.log > ocaml-json.ee.log
-
-json.ee.log: json.log
-	$(REPLAYTEST) entry-exit-depth $(EEARGS) json.log > json.ee.log
-
-lexer-json.ee.log: lexer-json.log
-	$(REPLAYTEST) entry-exit-depth $(EEARGS) lexer-json.log > lexer-json.ee.log
-
-
-ifdef SHOWDFA
-SHOWARGS=--show-dfa
-endif
-
 ocaml-test:: ocaml-compile
-	./test.opt test $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input > ocaml-output.NEW 2> ocaml-errors.NEW
+	env TOP=$(TOP) $(RUNNER) run --ocaml $(SHOWARGS)
+	env TOP=$(TOP) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" --ocaml $(SHOWARGS)
+	env TOP=$(TOP) $(RUNNER) run --ocaml --lexer-only $(SHOWARGS)
+	env TOP=$(TOP) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" --ocaml $(SHOWARGS)
 
 ocaml-test-named-output:: ocaml-compile
-	env JSONLOGGING=0 ./test.opt test --named-types $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input > ocaml-output-named-types.NEW
+	env TOP=$(TOP) $(RUNNER) run --ocaml --named-types $(SHOWARGS)
+	env TOP=$(TOP) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS)
+	env TOP=$(TOP) $(RUNNER) run --ocaml --lexer-only --named-types $(SHOWARGS)
+	env TOP=$(TOP) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS)
 
 named-ocaml-test:: ocaml-compile
-	./test.opt test $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input.$(NAME) > ocaml-output.$(NAME).NEW 2> ocaml-errors.$(NAME).NEW
-	diff -Bwiu lexer-errors.$(NAME).NEW ocaml-errors.$(NAME).NEW || true
-	diff -Bwiu lexer-output.$(NAME).NEW ocaml-output.$(NAME).NEW || true
+	env TOP=$(TOP) $(RUNNER) run --ocaml $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" --ocaml $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) $(RUNNER) run --ocaml --lexer-only $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" --ocaml $(SHOWARGS) $(NAME)
 
 named-ocaml-test-named-output:: ocaml-compile
-	env JSONLOGGING=0 ./test.opt test --named-types $(SHOWARGS) --json-log-file=ocaml-json.log.RAW input.$(NAME) > ocaml-output-named-types.$(NAME).NEW
+	env TOP=$(TOP) $(RUNNER) run --ocaml --named-types $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) $(RUNNER) run --ocaml --named-types --lexer-only $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" --ocaml --named-types $(SHOWARGS) $(NAME)
 
 ocaml-compile:: $(TESTS) $(TESTSOPT)
 

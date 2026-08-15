@@ -66,3 +66,17 @@ _build/<test-name>/
 
     - output, errors
     - json.log.RAW, json.log
+
+How does compare work?
+
+(1) there's a list of flags:
+
+  (name, lexer-only, named-types, python/ocaml)
+
+  * For any particular run, these yield a directory.  When the
+    directory contains "ocaml", replace that with "python" and that
+    gives you the two directories to compare.
+
+  * when the directory contains "python", if named-types or lexer-only is true, don't compare
+
+  * otherwise, for (name, false, false, python), compare with expected-{output,errors}

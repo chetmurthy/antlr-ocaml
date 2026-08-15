@@ -8,7 +8,7 @@ use File::Basename;
 use IPC::System::Simple qw(systemx runx capturex $EXITVAL);
 use String::ShellQuote ;
 
-our $verbose ;
+our $verbose = 0 ;
 our $noexecute ;
 our @genargs = ("--template-dir=fixtures/antlrtest.7") ;
 
@@ -50,7 +50,7 @@ $ENV{'TOP'} = ".." ;
     elsif ($ARGV[0] eq 'compile') {
       $subcommand = shift @ARGV ;
     }
-    elsif ($ARGV[0] eq 'python-test') {
+    elsif ($ARGV[0] eq 'all-tests') {
       $subcommand = shift @ARGV ;
     }
     elsif ($ARGV[0] eq 'clean') {
@@ -74,7 +74,7 @@ $ENV{'TOP'} = ".." ;
     elsif ($ARGV[0] eq 'ocaml-test') {
       $subcommand = shift @ARGV ;
     }
-    elsif ($ARGV[0] eq 'ocaml-compare') {
+    elsif ($ARGV[0] eq 'compare') {
       $subcommand = shift @ARGV ;
     }
     elsif ($ARGV[0] eq 'full') {
@@ -85,8 +85,8 @@ $ENV{'TOP'} = ".." ;
 
   die "no subcomamnd specified" unless defined $subcommand ;
 
-  my @full1 = qw(python-prepare python-test compare-atns update-pertest) ;
-  my @full2 = qw(ocaml-compile ocaml-test ocaml-compare python-test-named-output ocaml-test-named-output all-tests all-tests-named-output) ;
+  my @full1 = qw(python-prepare compare-atns update-pertest) ;
+  my @full2 = qw(all-tests compare) ;
 
   my @testfiles = @ARGV ;
 
@@ -204,20 +204,20 @@ $ENV{'TOP'} = ".." ;
       v_systemx([0], ["make", "-C", $dir, "ocaml-compile"]) ;
     }
   }
-  elsif ($subcommand eq 'ocaml-test') {
+  elsif ($subcommand eq 'all-tests') {
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "ocaml-test"]) ;
+      v_systemx([0], ["make", "-C", $dir, "all-tests"]) ;
     }
   }
-  elsif ($subcommand eq 'ocaml-compare') {
+  elsif ($subcommand eq 'compare') {
     foreach my $tf (@testfiles) {
       my $p = test_name($tf) ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
-      v_systemx([0], ["make", "-C", $dir, "ocaml-compare"]) ;
+      v_systemx([0], ["make", "-C", $dir, "compare"]) ;
     }
   }
   elsif ($subcommand eq 'full') {

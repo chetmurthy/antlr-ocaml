@@ -150,8 +150,8 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/A3.txt \
 
 DTEST := \
+	fixtures/custom-descriptors/antlr4/DTestTest.txt \
 	fixtures/descriptors/ParserExec/Basic.txt \
-	fixtures/descriptors/LexerExec/CharSet.txt \
 	fixtures/custom-descriptors/antlr4/ST0.txt \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
 	fixtures/custom-descriptors/antlr4/ST2.txt \
@@ -160,11 +160,13 @@ DTEST := \
 
 DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)
 
+DTESTCMD=full -v
+
 %.DTEST: %.txt
-	$(MANAGETRIP) full -v $<
+	$(MANAGETRIP) $(DTESTCMD) $<
 
 full-selected:: antlrtest_test.exe
-	$(MANAGETRIP) full -v $(DTEST)
+	$(MANAGETRIP) $(DTESTCMD) $(DTEST)
 
 dtest-selected: $(DTEST:.txt=.DTEST)
 

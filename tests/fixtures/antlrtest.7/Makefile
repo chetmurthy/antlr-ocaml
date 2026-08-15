@@ -11,16 +11,24 @@ PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/<testName>
 REPLAYTEST=$(TOP)/tests/replay_util.opt
 LIBDIR=$(TOP)/tests/fixtures/grammar-lib
 LIBARG=-lib $(LIBDIR)
+RUNNER=$(TOP)/tests/tools/dtest-runner
+WD=`pwd`
 
 ifndef JSONLOGGING
 export JSONLOGGING=0
 endif
 
 <if(showDFA)>
-SHOWDFA=1
+SHOWARGS=--show-dfa
 <endif>
 
-python-test: python-compare lexer-output.NEW
+LOCARG=-n
+
+ifdef MAXDEPTH
+  MAXDEPTHARG := -m $(MAXDEPTH)
+endif
+
+EEARGS=$(LOCARG) $(MAXDEPTHARG)
 
 compile::
 
@@ -39,9 +47,11 @@ update-pertest::
 	cp $(TESTBASEDIR)/* .
 	if [ -d $(PERTESTDIR) ]; then cp -r $(PERTESTDIR)/. .; fi
 
-python-compare:: output.NEW errors.NEW
-	diff -Bwiu output output.NEW
-	diff -Bwiu errors errors.NEW
+compare::
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) compare -v
+
+all-tests::
+	$(MAKE) {python,ocaml}-test{,-named-output} || true
 
 save-json-log: json.log
 	cp json.log json.log.SAVED
@@ -61,26 +71,25 @@ l.ml:
 l_constants.ml:
 	$(TOP)/tests/atn_util.opt emit-ocaml-constants Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
 
-output.NEW errors.NEW json.log:: <lexerName>.py
-	env PYTHONPATH=$(PYTHONPATH) python3 Test.py $(RUNARGS) input > output.NEW 2> errors.NEW
-	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log
+python-test:: <lexerName>.py
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS)
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" $(SHOWARGS)
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run --lexer-only $(SHOWARGS)
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS)
 
-named-python-test:: M.py
-	env PYTHONPATH=$(PYTHONPATH) python3 Test.py $(RUNARGS) input.$(NAME) > output.$(NAME).NEW 2> errors.$(NAME).NEW
-	env PYTHONPATH=$(PYTHONPATH) python3 TestLexer.py $(RUNARGS) input.$(NAME) > lexer-output.$(NAME).NEW 2> lexer-errors.$(NAME).NEW
-	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log
-	diff -Bwiu output.$(NAME) output.$(NAME).NEW
-	diff -Bwiu errors.$(NAME) errors.$(NAME).NEW
+named-python-test:: <lexerName>.py
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run --lexer-only $(SHOWARGS) $(NAME)
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) json-entry-exit --lexer-only --ee-args "$(EEARGS)" $(SHOWARGS) $(NAME)
 
 python-test-named-output::
-	env JSONLOGGING=0 PYTHONPATH=$(PYTHONPATH) python3 Test.py --named-types $(RUNARGS) input > output-named-types.NEW
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --named-types
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --lexer-only --named-types
 
 named-python-test-named-output::
-	env JSONLOGGING=0 PYTHONPATH=$(PYTHONPATH) python3 Test.py --named-types $(RUNARGS) input.$(NAME) > output-named-types.$(NAME).NEW
-
-lexer-output.NEW lexer-errors.NEW lexer-json.log:: <lexerName>.py
-	env PYTHONPATH=$(PYTHONPATH) python3 TestLexer.py $(RUNARGS) input > lexer-output.NEW 2> lexer-errors.NEW
-	jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW lexer-json.log
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --named-types $(NAME)
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(SHOWARGS) --lexer-only --named-types $(NAME)
 
 <if(parserName)>
 GENPAFILES=<grammarName>Parser.py <grammarName>Listener.py <grammarName>Visitor.py

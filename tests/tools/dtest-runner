@@ -16,6 +16,10 @@ our $ocaml ;
 our $subcommand ;
 our $testcase ;
 our $showdfa ;
+our $eeargs ; 
+
+die "must set env var TOP" unless defined $ENV{TOP} ;
+die "TOP must be absolute path (fix this!)" unless ($ENV{TOP} =~ m,^/,) ;
 
 {
   while (@ARGV) {
@@ -43,10 +47,17 @@ our $showdfa ;
       shift @ARGV ; 
       $showdfa = 1 ;
     }
+    elsif ($ARGV[0] eq '--ee-args') {
+      shift @ARGV ; 
+      $eeargs = shift @ARGV ;
+    }
     elsif ($ARGV[0] eq 'run') {
       $subcommand = shift @ARGV ;
     }
     elsif ($ARGV[0] eq 'compare') {
+      $subcommand = shift @ARGV ;
+    }
+    elsif ($ARGV[0] eq 'json-entry-exit') {
       $subcommand = shift @ARGV ;
     }
     else { last ; }
@@ -54,14 +65,26 @@ our $showdfa ;
 
   die "no subcomamnd specified" unless defined $subcommand ;
 
-  die "subcommand must be either {run,compare}"
-      unless ($subcommand eq 'run' || $subcommand eq 'compare') ;
+  die "subcommand must be either {run,compare,json-entry-exit}"
+      unless ($subcommand eq 'run' || $subcommand eq 'compare' || $subcommand eq 'json-entry-exit') ;
 
+  if ($subcommand eq 'compare') {
+    compare() ;
+    exit ;
+  }
+
+  my $args = {} ;
   if (@ARGV) {
     $testcase = shift @ARGV ;
+    $args->{'inputfile'} = "input.$testcase" ;
+    $args->{'expected-output'} = "output.$testcase" ;
+    $args->{'expected-errors'} = "errors.$testcase" ;
   }
   else {
     $testcase = 'DEFAULT' ;
+    $args->{'inputfile'} = "input" ;
+    $args->{'expected-output'} = "output" ;
+    $args->{'expected-errors'} = "errors" ;
   }
 
   print STDERR "testcase is $testcase\n" if ($verbose) ;
@@ -77,21 +100,82 @@ our $showdfa ;
   $testsuff .= "-named-types" if ($namedtypes) ;
 
   my $testdir = "_build/${testcase}${testsuff}" ;
+  $args->{testdir} = $testdir ;
 
-  v_system("rm -rf $testdir") ;
-  v_system("mkdir -p $testdir") ;
+  v_system("mkdir -p $testdir") unless -d $testdir ;
   if ($subcommand eq 'run') {
-    runtest($testdir) ;
+    runtest($args) ;
   }
-  else {
+  elsif ($subcommand eq 'json-entry-exit') {
+    entry_exit($args) ;
   }
-
 }
 
 sub runtest {
-  my $testdir = shift ;
+  my $h = shift ;
+  my $testdir = $h->{testdir} ;
+  my $inputfile = $h->{inputfile};
+  my $cmd = "" ;
   if ($main::ocaml) {
-    
+    $cmd .= "../../test.opt test --json-log-file=json.log.RAW " ;
+#    $cmd .= "--lexer-only " if ($main::lexeronly) ;
+
+  }
+  elsif ($main::lexeronly) {
+    $cmd .= "python3 ../../TestLexer.py " ;
+  }
+  else {
+    $cmd .= "python3 ../../Test.py " ;
+  }
+
+  $cmd .= "--show-dfa " if ($main::showdfa) ;
+  $cmd .= "--named-types " if ($main::namedtypes) ;
+  
+  $cmd .= " ../../$inputfile" ;
+  $cmd = "(cd $testdir && $cmd > output 2> errors)" ;
+  v_system($cmd) ;
+  v_system("(cd $testdir && jq -S . json.log.RAW > json.log.NEW && mv json.log.NEW json.log)") ;
+}
+
+sub entry_exit {
+  my $h = shift ;
+  my $testdir = $h->{testdir} ;
+
+  my $cmd = "$ENV{TOP}/tests/replay_util.opt entry-exit-depth $eeargs json.log > json.ee.log" ;
+  $cmd = "(cd $testdir && $cmd)" ;
+  v_system($cmd) ;
+}
+
+
+sub compare {
+  my @l = glob("_build/*") ;
+  foreach my $testdir (@l) {
+    my $expectedoutput ;
+    my $expectederrors ;
+    if ($testdir =~ /ocaml/) {
+      my $comparedir = $testdir ;
+      $comparedir =~ s,ocaml,python, ;
+      $expectedoutput = "$comparedir/output" ;
+      $expectederrors = "$comparedir/errors" ;
+    }
+    elsif ($testdir =~ /lexer-only/ || $testdir =~ /named-types/) {
+      print STDERR "SKIP $testdir (b/c python AND (lexer-only or named-types))\n" ;
+      next ;
+    }
+    elsif ($testdir =~ /DEFAULT/) {
+      $expectedoutput = "output" ;
+      $expectederrors = "errors" ;
+    }
+    elsif ($testdir =~ m,^_build/([^-]+)-,) {
+      $expectedoutput = "output.$1" ;
+      $expectederrors = "errors.$1" ;
+    }
+    else {
+      print STDERR "SKIP $testdir (don't know what to do with it!\n" ;
+      next ;
+    }
+    v_system("diff -Bwiu $expectedoutput ${testdir}/output") ;
+    v_system("diff -Bwiu $expectederrors ${testdir}/errors") ;
   }
 }
 

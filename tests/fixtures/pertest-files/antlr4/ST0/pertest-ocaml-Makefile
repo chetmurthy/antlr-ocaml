@@ -1,28 +1,15 @@
 ML=lexerBase.ml l_constants.ml actionFuns_st.ml l.ml test.ml
 
 all-tests::
-	$(MAKE) clean python-test || true
-	$(MAKE) NAME=B named-{python,ocaml}-test || true
-	$(MAKE) NAME=C named-{python,ocaml}-test || true
-	$(MAKE) NAME=D named-{python,ocaml}-test || true
-	$(MAKE) NAME=E named-{python,ocaml}-test || true
-	$(MAKE) NAME=F named-{python,ocaml}-test || true
-	$(MAKE) NAME=G named-{python,ocaml}-test || true
-	$(MAKE) NAME=H named-{python,ocaml}-test || true
-	$(MAKE) NAME=I named-{python,ocaml}-test || true
-	$(MAKE) NAME=J named-{python,ocaml}-test || true
-
-all-tests-named-output::
-	$(MAKE) {python,ocaml}-test-named-output || true
-	$(MAKE) NAME=B named-{python,ocaml}-test-named-output || true
-	$(MAKE) NAME=C named-{python,ocaml}-test-named-output || true
-	$(MAKE) NAME=D named-{python,ocaml}-test-named-output || true
-	$(MAKE) NAME=E named-{python,ocaml}-test-named-output || true
-	$(MAKE) NAME=F named-{python,ocaml}-test-named-output || true
-	$(MAKE) NAME=G named-{python,ocaml}-test-named-output || true
-	$(MAKE) NAME=H named-{python,ocaml}-test-named-output || true
-	$(MAKE) NAME=I named-{python,ocaml}-test-named-output || true
-	$(MAKE) NAME=J named-{python,ocaml}-test-named-output || true
+	$(MAKE) NAME=B named-{python,ocaml}-test{,-named-output} || true
+	$(MAKE) NAME=C named-{python,ocaml}-test{,-named-output} || true
+	$(MAKE) NAME=D named-{python,ocaml}-test{,-named-output} || true
+	$(MAKE) NAME=E named-{python,ocaml}-test{,-named-output} || true
+	$(MAKE) NAME=F named-{python,ocaml}-test{,-named-output} || true
+	$(MAKE) NAME=G named-{python,ocaml}-test{,-named-output} || true
+	$(MAKE) NAME=H named-{python,ocaml}-test{,-named-output} || true
+	$(MAKE) NAME=I named-{python,ocaml}-test{,-named-output} || true
+	$(MAKE) NAME=J named-{python,ocaml}-test{,-named-output} || true
 
 test.cmo: l_constants.cmo
 
