@@ -518,6 +518,7 @@ Some "OFF_CHANNEL"]
 
  }
  
+ module Constants = STGLexer_constants
  open Pa_ppx_utils
  open Pa_ppx_base
  open Ppxutil

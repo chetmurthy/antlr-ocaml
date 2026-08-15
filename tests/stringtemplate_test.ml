@@ -9,7 +9,7 @@ Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
-module STPa = Stringtemplate.Pa.ST2Pa
+module STPa = Stringtemplate.Pa.ST1Pa
 
 let test_parse_st ctxt =
   let open Stringtemplate in

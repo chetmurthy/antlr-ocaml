@@ -112,23 +112,26 @@ open Stringtemplate_test ;;
 open Stringtemplate ;;
 (*
 #trace Exec.L.nextToken;;
- *)
-(*
+#trace ST2.located_pattern_of_token ;;
+
 #trace Exec.R.mode ;;
 #trace Exec.R.pushMode ;;
 #trace Exec.R.popMode ;;
-#trace ST2.located_pattern_of_token ;;
 
 #trace ST1.watch_mode0 ;;
 #trace ST2.watch_mode0 ;;
 #trace watch_pattern ;;
-#trace ActionFuns_st.enterSubTemplate ;;
-#trace ActionFuns_st.exitSubTemplate ;;
-#trace ActionFuns_st.watch_subtemplateDepth ;;
+#trace ActionFuns_ST1.enterSubTemplate ;;
+#trace ActionFuns_ST1.exitSubTemplate ;;
+#trace ActionFuns_ST1.watch_subtemplateDepth ;;
  *)
+
 let lst0 = {|{<F({<G()>})>}|} |> ST0.pattern_modes_of_string |> Std.list_of_stream ;;
 let lst1 = {|{<F({<G()>})>}|} |> ST1.pattern_modes_of_string |> Std.list_of_stream ;;
 let lst2 = {|{<F({<G()>})>}|} |> ST2.pattern_modes_of_string |> Std.list_of_stream;;
+
+[%here_string {|{<F({<G()>})>}|}] |> ST0.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst ;;
+[%here_string {|{<F({<G()>})>}|}] |> ST1.located_patterns_of_here_string |> Std.list_of_stream |> List.map fst ;;
 
 (*
 ;;; Local Variables: ***
