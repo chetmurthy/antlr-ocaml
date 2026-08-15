@@ -4,7 +4,7 @@ Lexer
 [grammar]
 lexer grammar M;
 
-import STGLexer;
+import STG0Lexer;
 
 [input]
 typeInit ::= ["int":"0", "float":"0.0"]

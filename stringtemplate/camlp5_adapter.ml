@@ -339,7 +339,7 @@ let reset () = ()
 end
 
 module STGAfterInit = struct
-  module Lex = STGLexer.Full
+  module Lex = STG0Lexer.Full
   let after_init lex = ()
 end
 
@@ -360,4 +360,4 @@ let renaming = [
   ; ((Some "COLON", None), (Some "COLON",Some ":"))
   ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
   ]
-              end)(STGLexer.Full)(STGAfterInit)
+              end)(STG0Lexer.Full)(STGAfterInit)

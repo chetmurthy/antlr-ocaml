@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-for L in ST{0,1,2}Lexer STGLexer
+for L in ST{0,1,2}Lexer STG0Lexer
 do
 (cd grammars && antlr4 -Dlanguage=Python3 ${L}.g4)
 ${TOP}/tests/atn_util.opt emit-ocaml-lexer \

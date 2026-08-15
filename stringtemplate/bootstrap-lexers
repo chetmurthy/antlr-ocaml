@@ -4,7 +4,7 @@ echo "TOP: " ${TOP}
 
 cp ${TOP}/tests/fixtures/grammar-lib/Lex* grammars/
 cp ${TOP}/tests/fixtures/grammar-lib/ST[012]Lexer.g4 grammars/
-cp ${TOP}/tests/fixtures/grammar-lib/STGLexer.g4 grammars/
+cp ${TOP}/tests/fixtures/grammar-lib/STG0Lexer.g4 grammars/
 
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST0/translation.json grammars/ST0Lexer-translation.json
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST0/actionFuns_ST0.ml ActionFuns_ST0.ml 
@@ -15,4 +15,4 @@ cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST1/actionFuns_ST1.ml ActionFuns_S
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST2/translation.json grammars/ST2Lexer-translation.json
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST2/actionFuns_ST2.ml ActionFuns_ST2.ml 
 
-cp ${TOP}/tests/fixtures/pertest-files/antlr4/STG1/translation.json grammars/STGLexer-translation.json
+cp ${TOP}/tests/fixtures/pertest-files/antlr4/STG0/translation.json grammars/STG0Lexer-translation.json
