@@ -48,7 +48,7 @@ update-pertest::
 	if [ -d $(PERTESTDIR) ]; then cp -r $(PERTESTDIR)/. .; fi
 
 compare::
-	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) compare -v
+	env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) compare
 
 all-tests::
 	$(MAKE) {python,ocaml}-test{,-named-output} || true

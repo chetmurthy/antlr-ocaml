@@ -71,6 +71,7 @@ def main(argv):
 <endif>
 
 
+
 def Token__str(lexer, t):
     txt = t.text
     if txt is not None:
@@ -79,7 +80,10 @@ def Token__str(lexer, t):
         txt = txt.replace("\t","\\t")
     else:
         txt = "\<no text>"
-    type_string = lexer.symbolicNames[t.type]
+    if t.type == -1:
+        type_string = "EOF"
+    else:
+        type_string = lexer.symbolicNames[t.type]
     return ("[@%s,%s:%s='%s',\<%s>,channel=%s,%s:%s]" %
             (t.tokenIndex, t.start, t.stop, txt, type_string,t.channel,t.line,t.column))
 
