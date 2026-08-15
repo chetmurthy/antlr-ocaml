@@ -16,17 +16,3 @@ cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST2/translation.json grammars/ST2L
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST2/actionFuns_ST2.ml ActionFuns_ST2.ml 
 
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/STG1/translation.json grammars/STGLexer-translation.json
-
-for L in ST{0,1,2}Lexer STGLexer
-do
-(cd grammars && antlr4 -Dlanguage=Python3 ${L}.g4)
-${TOP}/tests/atn_util.opt emit-ocaml-lexer \
-  -i grammars/${L}.interp \
-  --grammar-lib grammars \
-  -t grammars/${L}-translation.json \
-  --constants-module ${L}_constants \
-  grammars/${L}.g4 > ${L}.ml.NEW && mv ${L}.ml.NEW ${L}.ml
-${TOP}/tests/atn_util.opt emit-ocaml-constants \
-  grammars/${L}.interp > ${L}_constants.ml.NEW && \
-  mv ${L}_constants.ml.NEW ${L}_constants.ml
-done

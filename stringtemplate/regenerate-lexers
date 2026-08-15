@@ -1,0 +1,15 @@
+#!/bin/bash -x
+
+for L in ST{0,1,2}Lexer STGLexer
+do
+(cd grammars && antlr4 -Dlanguage=Python3 ${L}.g4)
+${TOP}/tests/atn_util.opt emit-ocaml-lexer \
+  -i grammars/${L}.interp \
+  --grammar-lib grammars \
+  -t grammars/${L}-translation.json \
+  --constants-module ${L}_constants \
+  grammars/${L}.g4 > ${L}.ml.NEW && mv ${L}.ml.NEW ${L}.ml
+${TOP}/tests/atn_util.opt emit-ocaml-constants \
+  grammars/${L}.interp > ${L}_constants.ml.NEW && \
+  mv ${L}_constants.ml.NEW ${L}_constants.ml
+done

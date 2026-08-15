@@ -158,6 +158,14 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 	fixtures/descriptors/SemPredEvalLexer/Indent.txt \
 
+DTEST := \
+	fixtures/custom-descriptors/antlr4/DTestTest.txt \
+	fixtures/custom-descriptors/antlr4/ST0.txt \
+	fixtures/custom-descriptors/antlr4/ST1.txt \
+	fixtures/custom-descriptors/antlr4/ST2.txt \
+	fixtures/custom-descriptors/antlr4/STG1.txt \
+	fixtures/descriptors/SemPredEvalLexer/Indent.txt \
+
 DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)
 
 DTESTCMD=full -v

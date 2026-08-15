@@ -17,7 +17,7 @@ let exitSubTemplate self cu =
   watch_subtemplateDepth !subtemplateDepth;
   if !subtemplateDepth > 0 then begin
       decr subtemplateDepth ;
-      R.mode self L_constants.Modes._Inside
+      ignore(R.popMode self : int)
     end
 
 let subTemplateHasIDs self cu =
