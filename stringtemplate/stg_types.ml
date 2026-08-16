@@ -7,6 +7,7 @@ type template_rhs_t =
 type formal_arg_default_t =
   FORMAL_STRING of string
 | FORMAL_ANON_TEMPLATE of string
+| FORMAL_SUBTEMPLATE of Sttypes2.subtemplate_t
 | FORMAL_BOOL of bool
 | FORMAL_MT_DICT
 

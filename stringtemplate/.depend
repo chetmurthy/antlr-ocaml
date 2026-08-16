@@ -71,8 +71,10 @@ st_types.cmo :
 st_types.cmx :
 sttypes2.cmo :
 sttypes2.cmx :
-stg_types.cmo :
-stg_types.cmx :
+stg_types.cmo : \
+    sttypes2.cmo
+stg_types.cmx : \
+    sttypes2.cmx
 camlp5_adapter.cmo : \
     st_util.cmo \
     STG2Lexer_constants.cmo \

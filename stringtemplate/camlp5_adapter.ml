@@ -356,3 +356,12 @@ module STG2_ST_AfterInit = struct
 end
 
 module STG2_ST = Make(ActionFuns_STG2)(STRenaming)(STG2Lexer.Full)(STG2_ST_AfterInit)
+
+module STG2_STG_AfterInit = struct
+  module Lex = STG2Lexer.Full
+  let after_init lex =
+    Exec.(R.mode lex.L.recog STG2Lexer_constants.Modes._Group) ;
+    ()
+end
+
+module STG2_STG = Make(ActionFuns_STG2)(STRenaming)(STG2Lexer.Full)(STG2_STG_AfterInit)

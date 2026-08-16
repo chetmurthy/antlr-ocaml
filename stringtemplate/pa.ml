@@ -366,7 +366,7 @@ formal_arg: [ [
 
 formal_arg_default: [ [
       s = STRING -> FORMAL_STRING s
-    | s = ANON_TEMPLATE -> FORMAL_ANON_TEMPLATE s
+    | s = subtemplate -> FORMAL_SUBTEMPLATE s
     | s = "true" -> FORMAL_BOOL True
     | s = "false" -> FORMAL_BOOL False
     | "[" ; "]" -> FORMAL_MT_DICT
@@ -436,3 +436,4 @@ module ST0Pa = Pa(ST0Lexer.Full)(ST0) ;
 module ST1Pa = Pa(ST1Lexer.Full)(ST1) ;
 module ST2Pa = Pa(ST2Lexer.Full)(ST2) ;
 module STG2_STPa = Pa(STG2Lexer.Full)(STG2_ST) ;
+module STG2_STGPa = Pa(STG2Lexer.Full)(STG2_STG) ;

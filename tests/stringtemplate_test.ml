@@ -10,6 +10,10 @@ let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
 module STPa = Stringtemplate.Pa.STG2_STPa
+(*
+module STGPa = Stringtemplate.Pa_stg
+ *)
+module STGPa = Stringtemplate.Pa.STG2_STGPa
 
 let test_parse_st ctxt =
   let open Stringtemplate in
@@ -77,7 +81,7 @@ let parse_fixed_files =
 let test_parse_stg ctxt =
   let open Stringtemplate in
   ()
-  ; assert_equal () (ignore([%here_string {| import "foo" |}] |> Pa_stg.Group.of_here_string))
+  ; assert_equal () (ignore([%here_string {| import "foo" |}] |> STGPa.Group.of_here_string))
   ; assert_equal () (ignore([%here_string {| 
 cppTypeInitMap ::= [
     "int":"0",
@@ -90,10 +94,13 @@ cppTypeInitMap ::= [
     default: "nullptr" // anything other than a primitive type is an object
 ]
 
- |}] |> Pa_stg.Group.of_here_string))
+ |}] |> STGPa.Group.of_here_string))
   ; assert_equal () (ignore([%here_string {| 
 stat(name,value="99") ::= "x=<value>; // <name>"
-|}] |> Pa_stg.Group.of_here_string))
+|}] |> STGPa.Group.of_here_string))
+  ; assert_equal () (ignore([%here_string {| 
+stat(name,value={<x>}) ::= "x=<value>; // <name>"
+|}] |> STGPa.Group.of_here_string))
 
 let list_all_stg () =
   [
@@ -112,7 +119,7 @@ let list_all_stg () =
 let test_parse_stg_file file ctxt =
   let open Stringtemplate in
   ()
-  ; assert_equal () (ignore (Pa_stg.Group.load ~file))
+  ; assert_equal () (ignore (STGPa.Group.load ~file))
 
 let test_parse_all_stg ctxt =
   (list_all_stg())
