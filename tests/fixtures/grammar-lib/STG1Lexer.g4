@@ -51,6 +51,10 @@ channels {
 // ------------------------------------------------------------------------------
 // mode default
 
+NOTHING : ;
+
+mode Group ;
+
 DOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL);
 BLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL);
 LINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL);
