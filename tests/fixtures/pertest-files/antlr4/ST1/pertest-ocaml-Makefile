@@ -10,6 +10,8 @@ all-tests::
 	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=H named-{python,ocaml}-test{,-named-output} || true
 	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=I named-{python,ocaml}-test{,-named-output} || true
 	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=J named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=K named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=L named-{python,ocaml}-test{,-named-output} || true
 
 test.cmo: l_constants.cmo
 
