@@ -26,6 +26,8 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore ([%here_string {|<a(x="x",y="y")>|}] |> STPa.Template.of_here_string))
   ; assert_equal () (ignore ([%here_string "Foo<\\ >bar<\\n>"] |> STPa.Template.of_here_string))
   ; assert_equal () (ignore ([%here_string "<subdir/b()>"] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|<{<x>}>|}] |> STPa.Template.of_here_string))
+  ; assert_equal () (ignore ([%here_string {|<{<x:{s|<s><s>}>}>|}] |> STPa.Template.of_here_string))
 
   ; assert_equal () (ignore (STPa.Template.load ~file:"fixtures/antlrtest.7/Makefile"))
   ; assert_equal () (ignore (STPa.Template.load ~file:"fixtures/antlrtest.7/Test.py"))

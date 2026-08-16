@@ -7,12 +7,15 @@ cp ${TOP}/tests/fixtures/grammar-lib/ST[012]Lexer.g4 grammars/
 cp ${TOP}/tests/fixtures/grammar-lib/STG0Lexer.g4 grammars/
 
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST0/translation.json grammars/ST0Lexer-translation.json
-cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST0/actionFuns_ST0.ml ActionFuns_ST0.ml 
+echo "module L_constants = ST0Lexer_constants" > ActionFuns_ST0.ml 
+cat ${TOP}/tests/fixtures/pertest-files/antlr4/ST0/ActionFuns_ST0.ml >> ActionFuns_ST0.ml 
 
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST1/translation.json grammars/ST1Lexer-translation.json
-cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST1/actionFuns_ST1.ml ActionFuns_ST1.ml 
+echo "module L_constants = ST1Lexer_constants" > ActionFuns_ST1.ml 
+cat ${TOP}/tests/fixtures/pertest-files/antlr4/ST1/ActionFuns_ST1.ml >> ActionFuns_ST1.ml 
 
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST2/translation.json grammars/ST2Lexer-translation.json
-cp ${TOP}/tests/fixtures/pertest-files/antlr4/ST2/actionFuns_ST2.ml ActionFuns_ST2.ml 
+echo "module L_constants = ST2Lexer_constants" > ActionFuns_ST2.ml 
+cat ${TOP}/tests/fixtures/pertest-files/antlr4/ST2/ActionFuns_ST2.ml >> ActionFuns_ST2.ml 
 
 cp ${TOP}/tests/fixtures/pertest-files/antlr4/STG0/translation.json grammars/STG0Lexer-translation.json
