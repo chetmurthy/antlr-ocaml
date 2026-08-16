@@ -1,0 +1,63 @@
+
+ module Channels = struct
+ let _DEFAULT_TOKEN_CHANNEL = 0
+let _HIDDEN = 1
+let _OFF_CHANNEL = 2
+ end
+ module Modes = struct
+ let _DEFAULT_MODE = 0
+let _Group = 1
+let _Outside = 2
+let _Inside = 3
+let _SubTemplate = 4
+ end
+ module Tokens = struct
+ let _NOTHING = 1
+let _BIGSTRING = 2
+let _BIGSTRING_NO_NL = 3
+let _TMPL_ASSIGN = 4
+let _DELIMITERS = 5
+let _IMPORT = 6
+let _DEFAULT = 7
+let _GROUP = 8
+let _INSIDE = 9
+let _DOC_COMMENT = 10
+let _BLOCK_COMMENT = 11
+let _LINE_COMMENT = 12
+let _TMPL_COMMENT = 13
+let _HORZ_WS = 14
+let _VERT_WS = 15
+let _ESCAPE = 16
+let _LDELIM = 17
+let _RBRACE = 18
+let _TEXT = 19
+let _LBRACE = 20
+let _RDELIM = 21
+let _STRING = 22
+let _IF = 23
+let _ELSEIF = 24
+let _ELSE = 25
+let _ENDIF = 26
+let _SUPER = 27
+let _END = 28
+let _TRUE = 29
+let _FALSE = 30
+let _AT = 31
+let _ELLIPSIS = 32
+let _DOT = 33
+let _COMMA = 34
+let _COLON = 35
+let _SEMI = 36
+let _AND = 37
+let _OR = 38
+let _LPAREN = 39
+let _RPAREN = 40
+let _LBRACK = 41
+let _RBRACK = 42
+let _EQUALS = 43
+let _BANG = 44
+let _SLASH = 45
+let _ID = 46
+let _PIPE = 47
+ end
+ 

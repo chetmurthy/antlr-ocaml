@@ -7,7 +7,7 @@ open Stg_types ;
 
 value stream_npeek n s = (Stream.npeek n s : list (string * string)) ;
 
-value lexer = {Plexing.tok_func = Camlp5_adapter.STG.lexer;
+value lexer = {Plexing.tok_func = Camlp5_adapter.STG0.lexer;
  Plexing.tok_using _ = (); Plexing.tok_removing _ = ();
  Plexing.tok_match = Plexing.default_match;
  Plexing.tok_text = Plexing.lexer_text;
@@ -152,7 +152,7 @@ key_value: [ [
 
 END ;
 
-value start_location = Camlp5_adapter.STG.start_location ;
+value start_location = Camlp5_adapter.STG0.start_location ;
 module Group = St_util.PAHelper(struct
                      type t = group_t ;
                      value start_location = start_location ;

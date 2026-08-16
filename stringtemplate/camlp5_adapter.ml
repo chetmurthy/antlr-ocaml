@@ -284,27 +284,30 @@ end
 
 module STRenaming = struct
 let renaming = [
-    ((Some "LDELIM", None), (Some "LDELIM",Some "<"))
-  ; ((Some "RDELIM", None), (Some "RDELIM",Some ">"))
-  ; ((Some "LBRACE", None), (Some "LBRACE",Some "{"))
-  ; ((Some "RBRACE", None), (Some "RBRACE",Some "}"))
+    ((Some "AND", None), (Some "AND",Some "&&"))
+  ; ((Some "ASSIGN", None), (Some "ASSIGN", Some "="))
+  ; ((Some "AT", None), (Some "AT", Some "@"))
+  ; ((Some "BANG", None), (Some "BANG",Some "!"))
   ; ((Some "COLON", None), (Some "COLON",Some ":"))
   ; ((Some "COMMA", None), (Some "COMMA",Some ","))
-  ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
-  ; ((Some "LPAREN", None), (Some "LPAREN",Some "("))
-  ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
-  ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
-  ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
-  ; ((Some "SLASH", None), (Some "SLASH",Some "/"))
   ; ((Some "DOT", None), (Some "DOT",Some "."))
-  ; ((Some "BANG", None), (Some "BANG",Some "!"))
-  ; ((Some "AND", None), (Some "AND",Some "&&"))
+  ; ((Some "ELLIPSIS", None), (Some "ELLIPSIS", Some "..."))
+  ; ((Some "EQUALS", None), (Some "EQUALS", Some "="))
+  ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
+  ; ((Some "LBRACE", None), (Some "LBRACE",Some "{"))
+  ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
+  ; ((Some "LDELIM", None), (Some "LDELIM",Some "<"))
+  ; ((Some "LPAREN", None), (Some "LPAREN",Some "("))
   ; ((Some "OR", None), (Some "OR",Some "||"))
   ; ((Some "PIPE", None), (Some "PIPE",Some "|"))
-  ; ((Some "EQUALS", None), (Some "EQUALS", Some "="))
-  ; ((Some "AT", None), (Some "AT", Some "@"))
+  ; ((Some "RBRACE", None), (Some "RBRACE",Some "}"))
+  ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
+  ; ((Some "RDELIM", None), (Some "RDELIM",Some ">"))
+  ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
+  ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
+  ; ((Some "SLASH", None), (Some "SLASH",Some "/"))
+  ; ((Some "TMPL_ASSIGN", None), (Some "TMPL_ASSIGN", Some "::="))
   ; ((Some "TRUE", None), (Some "TRUE", Some "true"))
-  ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
   ]
 end
 
@@ -338,26 +341,9 @@ module ActionFuns_stg = struct
 let reset () = ()
 end
 
-module STGAfterInit = struct
+module STG0AfterInit = struct
   module Lex = STG0Lexer.Full
   let after_init lex = ()
 end
 
-module STG = Make(ActionFuns_stg)(struct
-let renaming = [
-    ((Some "TMPL_ASSIGN", None), (Some "TMPL_ASSIGN", Some "::="))
-  ; ((Some "ASSIGN", None), (Some "ASSIGN", Some "="))
-  ; ((Some "DOT", None), (Some "DOT",Some "."))
-  ; ((Some "COMMA", None), (Some "COMMA",Some ","))
-  ; ((Some "LPAREN", None), (Some "LPAREN",Some "("))
-  ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
-  ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
-  ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
-  ; ((Some "AT", None), (Some "AT", Some "@"))
-  ; ((Some "TRUE", None), (Some "TRUE", Some "true"))
-  ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
-  ; ((Some "ELLIPSIS", None), (Some "ELLIPSIS", Some "..."))
-  ; ((Some "COLON", None), (Some "COLON",Some ":"))
-  ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
-  ]
-              end)(STG0Lexer.Full)(STGAfterInit)
+module STG0 = Make(ActionFuns_stg)(STRenaming)(STG0Lexer.Full)(STG0AfterInit)
