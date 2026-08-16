@@ -176,6 +176,10 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/ST2.txt \
 	fixtures/custom-descriptors/antlr4/STG0.txt \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
+	fixtures/custom-descriptors/antlr4/STG2.txt \
+
+DTEST := \
+	fixtures/custom-descriptors/antlr4/STG2.txt \
 
 DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)
 
