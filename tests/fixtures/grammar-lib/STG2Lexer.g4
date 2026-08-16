@@ -73,7 +73,7 @@ GroupSTRING
 			'\n'
 		|	~('\\'|'"'|'\n')
 		)*
-		'"'
+		'"' -> type(STRING)
 	;
 
 BIGSTRING       : LDAngle ( ('\\' .) | ~'\\' )*? RDAngle;
