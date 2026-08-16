@@ -1,0 +1,9 @@
+ML=lexerBase.ml l_constants.ml l.ml test.ml
+
+all-tests::
+	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=B named-{python,ocaml}-test{,-named-output} || true
+
+test.cmo: l_constants.cmo
+
+clean::
+	rm -f *-named-types.*

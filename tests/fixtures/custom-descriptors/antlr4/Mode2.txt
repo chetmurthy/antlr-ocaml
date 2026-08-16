@@ -1,0 +1,53 @@
+[type]
+Lexer
+
+[grammar]
+lexer grammar L;
+
+@lexer::members {
+    self.mode(self.One)
+}
+
+NOTHING : ;
+
+mode One ;
+LBrace : '{' -> pushMode(Two) ;
+
+mode Two ;
+RBrace : '}' -> popMode ;
+Inbetween : ~'}' ;
+
+[input]
+"""{foo}"""
+
+[output]
+[@0,0:0='{',<2>,1:0]
+[@1,1:1='f',<4>,1:1]
+[@2,2:2='o',<4>,1:2]
+[@3,3:3='o',<4>,1:3]
+[@4,4:4='}',<3>,1:4]
+[@5,5:4='<EOF>',<-1>,1:5]
+[output type=lexer-only-named-types]
+[@0,0:0='{',<LBrace>,channel=0,1:0]
+[@1,1:1='f',<Inbetween>,channel=0,1:1]
+[@2,2:2='o',<Inbetween>,channel=0,1:2]
+[@3,3:3='o',<Inbetween>,channel=0,1:3]
+[@4,4:4='}',<RBrace>,channel=0,1:4]
+[@5,5:4='<EOF>',<EOF>,channel=0,1:5]
+[input name=B]
+"""{bar}"""
+
+[output name=B]
+[@0,0:0='{',<2>,1:0]
+[@1,1:1='b',<4>,1:1]
+[@2,2:2='a',<4>,1:2]
+[@3,3:3='r',<4>,1:3]
+[@4,4:4='}',<3>,1:4]
+[@5,5:4='<EOF>',<-1>,1:5]
+[output name=B type=lexer-only-named-types]
+[@0,0:0='{',<LBrace>,channel=0,1:0]
+[@1,1:1='b',<Inbetween>,channel=0,1:1]
+[@2,2:2='a',<Inbetween>,channel=0,1:2]
+[@3,3:3='r',<Inbetween>,channel=0,1:3]
+[@4,4:4='}',<RBrace>,channel=0,1:4]
+[@5,5:4='<EOF>',<EOF>,channel=0,1:5]
