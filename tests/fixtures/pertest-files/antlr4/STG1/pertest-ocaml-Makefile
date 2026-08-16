@@ -7,6 +7,8 @@ all-tests::
 	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=E named-{python,ocaml}-test{,-named-output} || true
 	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=F named-{python,ocaml}-test{,-named-output} || true
 	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=G named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=H named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) NAME=I named-{python,ocaml}-test{,-named-output} || true
 
 test.cmo: l_constants.cmo
 

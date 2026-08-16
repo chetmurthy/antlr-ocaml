@@ -181,3 +181,15 @@ a(x) ::= <<>\>>>
 [@7,9:15='<<>\>>>',<BIGSTRING>,channel=0,1:9]
 [@8,16:16='\n',<VERT_WS>,channel=2,1:16]
 [@9,17:16='<EOF>',<EOF>,channel=0,2:0]
+[input name=H]
+{<x>}
+[output name=H]
+X
+[output name=H type=lexer-only-named-types]
+X
+[input name=I]
+{<x:{s|<s><s>}>}
+[output name=I]
+X
+[output name=I type=lexer-only-named-types]
+X
