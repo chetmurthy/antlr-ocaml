@@ -13,7 +13,7 @@ type formal_arg_default_t =
 type formal_arg_t =
   string * formal_arg_default_t option
 
-type template_t =
+type stg_template_t =
   TEMPLATE_DEF of string * formal_arg_t list * template_rhs_t
 | TEMPLATE_ALIAS of string * string
 
@@ -30,7 +30,7 @@ type dict_t =
   string * ((string * key_value_t) list * key_value_t option)
 
 type group_def_t =
-  GROUPDEF_TEMPLATE of template_t
+  GROUPDEF_TEMPLATE of stg_template_t
 | GROUPDEF_DICT of dict_t
 
 type header_t = {

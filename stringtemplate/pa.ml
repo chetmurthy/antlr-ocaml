@@ -4,6 +4,7 @@ open Pa_ppx_utils ;
 open Pa_ppx_located_yojson ;
 open Antlr ;
 open Sttypes2 ;
+open Stg_types ;
 open Camlp5_adapter ;
 
 module Pa(Lex : Exec.FULL_LEXER)(C5Lex : CAMLP5LEXER) = struct
@@ -19,6 +20,8 @@ value lexer = {Plexing.tok_func = C5Lex.lexer;
 value g = Grammar.gcreate lexer;
 value template = Grammar.Entry.create g "template";
 value template_eoi = Grammar.Entry.create g "template_eoi";
+value group = Grammar.Entry.create g "group";
+value group_eoi = Grammar.Entry.create g "group_eoi";
 
 value pa_ID = parser [: `("ID",id) :] -> id ;
 value pa_SLASH = parser [: `("","/") :] -> () ;
@@ -112,6 +115,42 @@ value check_comma_id_equals =
     check_comma_id_equals_f
 ;
 
+value check_id_lparen_f strm =
+  match stream_npeek 2 strm with [
+    [(("ID"), _); ("", "(")] -> ()
+  | _ -> raise Stream.Failure
+  ]
+;
+
+value check_id_lparen =
+  Grammar.Entry.of_parser g "check_id_lparen"
+    check_id_lparen_f
+;
+
+value check_id_tmplassign_f strm =
+  match stream_npeek 2 strm with [
+    [(("ID"), _); ("", "::=")] -> ()
+  | _ -> raise Stream.Failure
+  ]
+;
+
+value check_id_tmplassign =
+  Grammar.Entry.of_parser g "check_id_tmplassign"
+    check_id_tmplassign_f
+;
+
+value check_comma_string_f strm =
+  match stream_npeek 2 strm with [
+    [("", ","); (("STRING"), _)] -> ()
+  | _ -> raise Stream.Failure
+  ]
+;
+
+value check_comma_string =
+  Grammar.Entry.of_parser g "check_comma_string"
+    check_comma_string_f
+;
+
 value mexpr = Grammar.Entry.create g "mexpr";
 value mexpr_basic = Grammar.Entry.create g "mexpr_basic";
 value mexpr_template_ref = Grammar.Entry.create g "mexpr_template_ref";
@@ -121,15 +160,16 @@ value top_mexpr_basic = Grammar.Entry.create g "top_mexpr_basic";
 
 EXTEND
   GLOBAL: template template_eoi
+          group group_eoi
 
           top_mexpr_template_ref
           top_mexpr_basic
 
           check_qid_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
           check_id_equals check_comma_id_equals
+          check_id_lparen check_id_tmplassign check_comma_string
 
           mexpr mexpr_basic mexpr_template_ref
-
   ;
 
 top_mexpr_template_ref: [ [ "#inside" ; x = mexpr_template_ref ; EOI -> x ] ] ;
@@ -270,6 +310,98 @@ ifstat: [ [
 
 region: [ [ ] ] ;
 
+group_eoi: [ [ x = group ; EOI -> x ] ] ;
+
+group: [ [
+      header = OPT [ h = header -> h ] ;
+      dopt = OPT [ d = delimiters -> d ] ;
+      iopt = OPT [ i = imports -> i ] ;
+      defs = LIST0 [ t = template_ -> GROUPDEF_TEMPLATE t | d = dict_ -> GROUPDEF_DICT d ] ->
+      let imports = match iopt with [ None ->  [] | Some l -> l ] in
+      { header = header ; imports = imports ; defs = defs }
+  ] ]
+  ;
+
+header: [ [
+      "group" ; name = [ s1 = ID ; s2opt = OPT [ ":" ; s = ID -> s ] -> (s1, s2opt) ] ;
+      implements = OPT [ "implements" ; name = [ s1 = ID ; s2opt = OPT [ ":" ; s = ID -> s ] -> (s1, s2opt) ] -> name ] ; ";" ->
+       { name = name ; implements = implements }
+  ] ]
+  ;
+
+delimiters: [ [
+      "delimiters" ; x1 = STRING ; "," ; x2 = STRING ->
+      failwith "Pa_stg: delimiters unsupported (for now)"
+  ] ]
+  ;
+
+imports: [ [
+      l = LIST1 [ "import" ; s = STRING -> s ] -> l
+  ] ]
+  ;
+
+template_: [ [
+      "@" ; enclosing = ID ; "." ; name = ID ; "(" ; ")" ->
+      failwith "template_: region reference unimplemented"
+    | check_id_lparen ;
+      name = ID ; "(" ; l = formal_args ; ")" ; "::=" ;
+      d = template_def_rhs -> TEMPLATE_DEF name l d
+    | name = ID ; "::=" ; rhs = ID -> TEMPLATE_ALIAS name rhs
+  ] ]
+  ;
+template_def_rhs: [ [
+      s = STRING -> TDEF_STRING s
+    | s = BIGSTRING -> TDEF_BIGSTRING s
+    | s = BIGSTRING_NO_NL -> TDEF_BIGSTRING_NO_NL s
+  ] ]
+  ;
+
+formal_args: [ [ l = LIST0 formal_arg SEP "," -> l ] ] ;
+
+formal_arg: [ [
+      name = ID ; "=" ; d = formal_arg_default -> (name, Some d)
+    | name = ID  -> (name, None)
+  ] ]
+  ;
+
+formal_arg_default: [ [
+      s = STRING -> FORMAL_STRING s
+    | s = ANON_TEMPLATE -> FORMAL_ANON_TEMPLATE s
+    | s = "true" -> FORMAL_BOOL True
+    | s = "false" -> FORMAL_BOOL False
+    | "[" ; "]" -> FORMAL_MT_DICT
+  ] ]
+  ;
+
+dict_: [ [
+      check_id_tmplassign ;
+      name = ID ; "::=" ; "[" ; l = dict_pairs ; "]" ->
+      (name, l)
+  ] ]
+  ;
+
+dict_pairs: [ [
+      p = key_value_pair ; l = LIST0 [ check_comma_string ; "," ; p = key_value_pair -> p ] ;
+      defopt = OPT [ "," ;  p = default_value_pair -> p ] -> ([p::l], defopt)
+    | p = default_value_pair -> ([], Some p)
+  ] ]
+  ;
+
+key_value_pair: [ [ s = STRING ; ":" ; v = key_value -> (s,v) ] ] ;
+default_value_pair: [ [ "default" ; ":" ; v = key_value -> v ] ] ;
+
+key_value: [ [
+      s = BIGSTRING -> KEYVAL_BIGSTRING s
+    | s = BIGSTRING_NO_NL -> KEYVAL_BIGSTRING_NO_NL s
+    | s = ANON_TEMPLATE -> KEYVAL_ANON_TEMPLATE s
+    | s = STRING -> KEYVAL_STRING s
+    | s = "true" -> KEYVAL_BOOL True
+    | s = "false" -> KEYVAL_BOOL False
+    | "[" ; "]" -> KEYVAL_MT_DICT
+    | ID "key" -> KEYVAL_KEY
+  ] ]
+  ;
+
 END ;
 
 value start_location = C5Lex.start_location ;
@@ -289,6 +421,12 @@ module Mexpr_Basic = St_util.PAHelper(struct
                      type t = mexpr_t ;
                      value start_location = start_location ;
                      value entry = top_mexpr_basic ;
+                   end) ;
+
+module Group = St_util.PAHelper(struct
+                     type t = group_t ;
+                     value start_location = start_location ;
+                     value entry = group_eoi ;
                    end) ;
 
 end

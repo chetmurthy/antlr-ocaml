@@ -109,14 +109,18 @@ pa_st.cmx : \
     camlp5_adapter.cmx
 pa.cmo : \
     sttypes2.cmo \
+    stg_types.cmo \
     st_util.cmo \
+    STG2Lexer.cmo \
     ST2Lexer.cmo \
     ST1Lexer.cmo \
     ST0Lexer.cmo \
     camlp5_adapter.cmo
 pa.cmx : \
     sttypes2.cmx \
+    stg_types.cmx \
     st_util.cmx \
+    STG2Lexer.cmx \
     ST2Lexer.cmx \
     ST1Lexer.cmx \
     ST0Lexer.cmx \

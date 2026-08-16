@@ -51,9 +51,15 @@ channels {
 // ------------------------------------------------------------------------------
 // mode default
 
-NOTHING : ;
+INSIDEMode : '#inside' -> mode(Inside) ;
+OUTSIDEMode : '#outside' -> mode(Outside) ;
+GROUPMode : '#group' -> mode(Group) ;
 
 mode Group ;
+
+Group_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
+Group_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
+Group_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
 
 GroupDOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL), type(DOC_COMMENT);
 GroupBLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL), type(BLOCK_COMMENT);
@@ -144,7 +150,9 @@ fragment RDAngle    : RShift;
 mode Outside ;
 // default mode = Outside
 
-INSIDE : '#inside' -> mode(Inside) ;
+Outside_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
+Outside_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
+Outside_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
 
 DOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL);
 BLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL);
@@ -163,6 +171,10 @@ TEXT: . { self.adjText(); }; // have to handle weird terminals
 
 // -----------------------------------
 mode Inside;
+
+Inside_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
+Inside_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
+Inside_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
 
 INS_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
 INS_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
