@@ -337,7 +337,7 @@ module ST0 = Make(ActionFuns_ST0)(STRenaming)(ST0Lexer.Full)(ST0AfterInit)
 module ST1 = Make(ActionFuns_ST1)(STRenaming)(ST1Lexer.Full)(ST1AfterInit)
 module ST2 = Make(ActionFuns_ST2)(STRenaming)(ST2Lexer.Full)(ST2AfterInit)
 
-module ActionFuns_stg = struct
+module ActionFuns_STG0 = struct
 let reset () = ()
 end
 
@@ -346,4 +346,13 @@ module STG0AfterInit = struct
   let after_init lex = ()
 end
 
-module STG0 = Make(ActionFuns_stg)(STRenaming)(STG0Lexer.Full)(STG0AfterInit)
+module STG0 = Make(ActionFuns_STG0)(STRenaming)(STG0Lexer.Full)(STG0AfterInit)
+
+module STG2_ST_AfterInit = struct
+  module Lex = STG2Lexer.Full
+  let after_init lex =
+    Exec.(R.mode lex.L.recog STG2Lexer_constants.Modes._Outside) ;
+    ()
+end
+
+module STG2_ST = Make(ActionFuns_STG2)(STRenaming)(STG2Lexer.Full)(STG2_ST_AfterInit)

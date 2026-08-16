@@ -75,21 +75,27 @@ stg_types.cmo :
 stg_types.cmx :
 camlp5_adapter.cmo : \
     st_util.cmo \
+    STG2Lexer_constants.cmo \
+    STG2Lexer.cmo \
     STG0Lexer.cmo \
     ST2Lexer_constants.cmo \
     ST2Lexer.cmo \
     ST1Lexer.cmo \
     ST0Lexer.cmo \
+    ActionFuns_STG2.cmo \
     ActionFuns_ST2.cmo \
     ActionFuns_ST1.cmo \
     ActionFuns_ST0.cmo
 camlp5_adapter.cmx : \
     st_util.cmx \
+    STG2Lexer_constants.cmx \
+    STG2Lexer.cmx \
     STG0Lexer.cmx \
     ST2Lexer_constants.cmx \
     ST2Lexer.cmx \
     ST1Lexer.cmx \
     ST0Lexer.cmx \
+    ActionFuns_STG2.cmx \
     ActionFuns_ST2.cmx \
     ActionFuns_ST1.cmx \
     ActionFuns_ST0.cmx
