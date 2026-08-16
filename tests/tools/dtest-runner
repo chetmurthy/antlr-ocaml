@@ -197,7 +197,7 @@ sub compare {
 	  if (-f "expected/errors${type}${namesuff}") ;
 
       unless (defined $expectedoutput || defined $expectederrors) {
-	print STDERR "SKIP $testdir (neither expected-{output,errors} specified)!\n" ;
+	print STDERR "SKIP $testdir (neither expected-{output,errors} specified)!\n" if $main::verbose ;
 	next ;
       }
       $expectedoutput = "" unless (defined $expectedoutput) ;
@@ -213,7 +213,7 @@ sub compare {
       $expectederrors = "/dev/null" ;
     }
 
-    print STDERR "DIFF $testdir\n" ;
+    print STDERR "DIFF $testdir\n" if $main::verbose ;
     v_system("diff -Bwiu $expectedoutput ${testdir}/output") ;
     v_system("diff -Bwiu $expectederrors ${testdir}/errors") ;
   }

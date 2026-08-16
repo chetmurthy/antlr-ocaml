@@ -78,7 +78,11 @@ GroupSTRING
 
 BIGSTRING       : LDAngle ( ('\\' .) | ~'\\' )*? RDAngle;
 BIGSTRING_NO_NL : LPct .*? RPct;
-ANON_TEMPLATE   : LBrace .*? RBrace;
+// ANON_TEMPLATE   : LBrace .*? RBrace;
+
+GroupLBRACE : LBrace { self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(SubTemplate);
+GroupLBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(Outside);
+
 
 // -----------------------------------
 // Symbols
