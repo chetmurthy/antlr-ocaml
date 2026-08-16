@@ -33,27 +33,6 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore (STPa.Template.load ~file:"fixtures/antlrtest.7/Test.py"))
   ; assert_equal () (ignore (STPa.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
 
-let test_parse_stg ctxt =
-  let open Stringtemplate in
-  ()
-  ; assert_equal () (ignore([%here_string {| import "foo" |}] |> Pa_stg.Group.of_here_string))
-  ; assert_equal () (ignore([%here_string {| 
-cppTypeInitMap ::= [
-    "int":"0",
-    "long":"0",
-    "float":"0.0f",
-    "double":"0.0",
-    "bool":"false",
-    "short":"0",
-    "char":"0",
-    default: "nullptr" // anything other than a primitive type is an object
-]
-
- |}] |> Pa_stg.Group.of_here_string))
-  ; assert_equal () (ignore([%here_string {| 
-stat(name,value="99") ::= "x=<value>; // <name>"
-|}] |> Pa_stg.Group.of_here_string))
-
 let test_parse_grammar g ctxt =
   let open Stringtemplate in
   let module D = Descriptor in
@@ -95,6 +74,26 @@ let parse_fixed_files =
   ]
   |> List.map (fun f -> (f >:: test_parse_st_file f))
 
+let test_parse_stg ctxt =
+  let open Stringtemplate in
+  ()
+  ; assert_equal () (ignore([%here_string {| import "foo" |}] |> Pa_stg.Group.of_here_string))
+  ; assert_equal () (ignore([%here_string {| 
+cppTypeInitMap ::= [
+    "int":"0",
+    "long":"0",
+    "float":"0.0f",
+    "double":"0.0",
+    "bool":"false",
+    "short":"0",
+    "char":"0",
+    default: "nullptr" // anything other than a primitive type is an object
+]
+
+ |}] |> Pa_stg.Group.of_here_string))
+  ; assert_equal () (ignore([%here_string {| 
+stat(name,value="99") ::= "x=<value>; // <name>"
+|}] |> Pa_stg.Group.of_here_string))
 
 let list_all_stg () =
   [
