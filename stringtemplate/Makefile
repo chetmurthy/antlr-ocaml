@@ -20,7 +20,6 @@ ML=\
 	ST0Lexer.ml ST1Lexer.ml ST2Lexer.ml STG0Lexer.ml STG2Lexer.ml \
 	st_types.ml sttypes2.ml stg_types.ml \
 	camlp5_adapter.ml \
-	pa_st.ml \
 	pa.ml \
 	st_ops.ml \
 	eval.ml \

@@ -1,4 +1,4 @@
-lexerBase.cmo st_util.cmo ST0Lexer_constants.cmo ST1Lexer_constants.cmo ST2Lexer_constants.cmo STG0Lexer_constants.cmo STG2Lexer_constants.cmo ActionFuns_ST0.cmo ActionFuns_ST1.cmo ActionFuns_ST2.cmo ActionFuns_STG2.cmo ST0Lexer.cmo ST1Lexer.cmo ST2Lexer.cmo STG0Lexer.cmo STG2Lexer.cmo st_types.cmo sttypes2.cmo stg_types.cmo camlp5_adapter.cmo pa_st.cmo pa.cmo st_ops.cmo eval.cmo testharness.cmo old_testharness.cmo sexpio.cmo lexerBase.cmi st_util.cmi ST0Lexer_constants.cmi ST1Lexer_constants.cmi ST2Lexer_constants.cmi STG0Lexer_constants.cmi STG2Lexer_constants.cmi ActionFuns_ST0.cmi ActionFuns_ST1.cmi ActionFuns_ST2.cmi ActionFuns_STG2.cmi ST0Lexer.cmi ST1Lexer.cmi ST2Lexer.cmi STG0Lexer.cmi STG2Lexer.cmi st_types.cmi sttypes2.cmi stg_types.cmi camlp5_adapter.cmi pa_st.cmi pa.cmi st_ops.cmi eval.cmi testharness.cmi old_testharness.cmi sexpio.cmi lexerBase.cmx st_util.cmx ST0Lexer_constants.cmx ST1Lexer_constants.cmx ST2Lexer_constants.cmx STG0Lexer_constants.cmx STG2Lexer_constants.cmx ActionFuns_ST0.cmx ActionFuns_ST1.cmx ActionFuns_ST2.cmx ActionFuns_STG2.cmx ST0Lexer.cmx ST1Lexer.cmx ST2Lexer.cmx STG0Lexer.cmx STG2Lexer.cmx st_types.cmx sttypes2.cmx stg_types.cmx camlp5_adapter.cmx pa_st.cmx pa.cmx st_ops.cmx eval.cmx testharness.cmx old_testharness.cmx sexpio.cmx: 
+lexerBase.cmo st_util.cmo ST0Lexer_constants.cmo ST1Lexer_constants.cmo ST2Lexer_constants.cmo STG0Lexer_constants.cmo STG2Lexer_constants.cmo ActionFuns_ST0.cmo ActionFuns_ST1.cmo ActionFuns_ST2.cmo ActionFuns_STG2.cmo ST0Lexer.cmo ST1Lexer.cmo ST2Lexer.cmo STG0Lexer.cmo STG2Lexer.cmo st_types.cmo sttypes2.cmo stg_types.cmo camlp5_adapter.cmo pa.cmo st_ops.cmo eval.cmo testharness.cmo old_testharness.cmo sexpio.cmo lexerBase.cmi st_util.cmi ST0Lexer_constants.cmi ST1Lexer_constants.cmi ST2Lexer_constants.cmi STG0Lexer_constants.cmi STG2Lexer_constants.cmi ActionFuns_ST0.cmi ActionFuns_ST1.cmi ActionFuns_ST2.cmi ActionFuns_STG2.cmi ST0Lexer.cmi ST1Lexer.cmi ST2Lexer.cmi STG0Lexer.cmi STG2Lexer.cmi st_types.cmi sttypes2.cmi stg_types.cmi camlp5_adapter.cmi pa.cmi st_ops.cmi eval.cmi testharness.cmi old_testharness.cmi sexpio.cmi lexerBase.cmx st_util.cmx ST0Lexer_constants.cmx ST1Lexer_constants.cmx ST2Lexer_constants.cmx STG0Lexer_constants.cmx STG2Lexer_constants.cmx ActionFuns_ST0.cmx ActionFuns_ST1.cmx ActionFuns_ST2.cmx ActionFuns_STG2.cmx ST0Lexer.cmx ST1Lexer.cmx ST2Lexer.cmx STG0Lexer.cmx STG2Lexer.cmx st_types.cmx sttypes2.cmx stg_types.cmx camlp5_adapter.cmx pa.cmx st_ops.cmx eval.cmx testharness.cmx old_testharness.cmx sexpio.cmx: 
 lexerBase.cmo :
 lexerBase.cmx :
 st_util.cmo :
@@ -101,14 +101,6 @@ camlp5_adapter.cmx : \
     ActionFuns_ST2.cmx \
     ActionFuns_ST1.cmx \
     ActionFuns_ST0.cmx
-pa_st.cmo : \
-    st_util.cmo \
-    st_types.cmo \
-    camlp5_adapter.cmo
-pa_st.cmx : \
-    st_util.cmx \
-    st_types.cmx \
-    camlp5_adapter.cmx
 pa.cmo : \
     sttypes2.cmo \
     stg_types.cmo \
