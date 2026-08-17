@@ -55,7 +55,7 @@ compare::
 	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) compare $(VERBOSE)
 
 all-tests::
-	$(NOVERBOSE) $(MAKE) $(MAKEFLAGS) {python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) {python,ocaml}-test{,-named-output} || true
 
 save-json-log: json.log
 	cp json.log json.log.SAVED
