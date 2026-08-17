@@ -10,6 +10,7 @@ NOVERBOSE=@
 DEBUG=-g
 NOT_OCAMLFIND=not-ocamlfind
 LAUNCH=$(NOVERBOSE) env TOP=$(TOP) ocamlfind camlp5-buildscripts/LAUNCH $(DEBUG_LAUNCH) --
+LAUNCHVERBOSE=env TOP=$(TOP) ocamlfind camlp5-buildscripts/LAUNCH $(DEBUG_LAUNCH) --
 OCAMLFIND=ocamlfind
 JOINMETA=ocamlfind camlp5-buildscripts/join_meta
 YAWRAP=ocamlfind camlp5-buildscripts/ya-wrap-ocamlfind
