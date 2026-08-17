@@ -85,15 +85,16 @@ let load ~file =
   else Fmt.(failwithf "TH.load: file %s is neither .json nor .sexp" file)
 
 let verify ~verbose th =
+  let open Pa in
   List.map (fun r ->
       if verbose then Fmt.(pf stderr "\t[input %a]@." Dump.string r.input) ;
-      Pa_st.Template.of_string r.input) th.runs ;
+      STG2_STPa.Template.of_string r.input) th.runs ;
   Option.map (fun (fname,txt) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      Pa_stg.Group.of_string txt) th.groupfile ;
+      STG2_STGPa.Group.of_string txt) th.groupfile ;
   List.map (fun (fname,txt) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      Pa_stg.Group.of_string txt) th.groupfiles ;
+      STG2_STGPa.Group.of_string txt) th.groupfiles ;
   ()
 
 module Multi = struct
