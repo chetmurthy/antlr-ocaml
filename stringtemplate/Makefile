@@ -23,7 +23,6 @@ ML=\
 	pa_st.ml \
 	pa.ml \
 	st_ops.ml \
-	pa_stg.ml \
 	eval.ml \
 	testharness.ml old_testharness.ml \
 	sexpio.ml

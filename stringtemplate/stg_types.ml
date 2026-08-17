@@ -6,7 +6,6 @@ type template_rhs_t =
 
 type formal_arg_default_t =
   FORMAL_STRING of string
-| FORMAL_ANON_TEMPLATE of string
 | FORMAL_SUBTEMPLATE of Sttypes2.subtemplate_t
 | FORMAL_BOOL of bool
 | FORMAL_MT_DICT
@@ -21,7 +20,7 @@ type stg_template_t =
 type key_value_t =
   KEYVAL_BIGSTRING of string
 | KEYVAL_BIGSTRING_NO_NL of string
-| KEYVAL_ANON_TEMPLATE of string
+| KEYVAL_SUBTEMPLATE of Sttypes2.subtemplate_t
 | KEYVAL_STRING of string
 | KEYVAL_BOOL of bool
 | KEYVAL_MT_DICT

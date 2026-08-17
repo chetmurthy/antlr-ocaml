@@ -186,10 +186,25 @@ a(x) ::= <<>\>>>
 [output name=H]
 X
 [output name=H type=lexer-only-named-types]
-X
+[@0,0:4='{<x>}',<ANON_TEMPLATE>,channel=0,1:0]
+[@1,5:5='\n',<VERT_WS>,channel=2,1:5]
+[@2,6:5='<EOF>',<EOF>,channel=0,2:0]
 [input name=I]
 {<x:{s|<s><s>}>}
 [output name=I]
 X
 [output name=I type=lexer-only-named-types]
+[@0,0:13='{<x:{s|<s><s>}',<ANON_TEMPLATE>,channel=0,1:0]
+[@1,16:16='\n',<VERT_WS>,channel=2,1:16]
+[@2,17:16='<EOF>',<EOF>,channel=0,2:0]
+[errors name=I type=lexer-only-named-types]
+line 1:14 token recognition error at: '>'
+line 1:15 token recognition error at: '}'
+[input name=J]
+d ::= [ "int":{<x:{s|<s><s>}>} ]
+[output name=j]
 X
+[output name=j type=lexer-only-named-types]
+[@0,0:13='{<x:{s|<s><s>}',<ANON_TEMPLATE>,channel=0,1:0]
+[@1,16:16='\n',<VERT_WS>,channel=2,1:16]
+[@2,17:16='<EOF>',<EOF>,channel=0,2:0]

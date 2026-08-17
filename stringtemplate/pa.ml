@@ -393,7 +393,7 @@ default_value_pair: [ [ "default" ; ":" ; v = key_value -> v ] ] ;
 key_value: [ [
       s = BIGSTRING -> KEYVAL_BIGSTRING s
     | s = BIGSTRING_NO_NL -> KEYVAL_BIGSTRING_NO_NL s
-    | s = ANON_TEMPLATE -> KEYVAL_ANON_TEMPLATE s
+    | s = subtemplate -> KEYVAL_SUBTEMPLATE s
     | s = STRING -> KEYVAL_STRING s
     | s = "true" -> KEYVAL_BOOL True
     | s = "false" -> KEYVAL_BOOL False
