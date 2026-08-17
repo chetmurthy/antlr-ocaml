@@ -109,8 +109,10 @@ open Camlp5_adapter ;;
 
 #load "stringtemplate_util.cmo";;
 open Stringtemplate_util ;;
+open Stringtemplate_test ;;
 open Stringtemplate ;;
 
+"<if(!(x||y))>works<endif>" |> STPa.Template.of_string ;;
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***
