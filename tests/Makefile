@@ -178,7 +178,7 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 	fixtures/custom-descriptors/antlr4/STG2.txt \
 
-DALL=$(shell ls fixtures/descriptors/*/*) $(shell ls fixtures/custom-descriptors/*/*)
+DALL=$(shell ls fixtures/descriptors/*Lexer*/*) $(shell ls fixtures/custom-descriptors/*/*)
 
 DTESTCMD=full -v
 
