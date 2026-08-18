@@ -192,17 +192,10 @@ dtest-selected: $(DTEST:.txt=.DTEST)
 
 dtest-all: $(DALL:.txt=.DTEST)
 
-STJSONALL=$(shell ls fixtures/st4-single/*.json)
 STSEXPALL=$(shell ls fixtures/st4-single/*.sexp)
 
 ST4UTIL=$(TOP)/tests/stringtemplate_util.opt
 ST4GEN=_generated/st4
-
-%.STTEST: %.json
-	$(ST4UTIL) generate -f -d $(ST4GEN) $<
-	$(ST4UTIL) compile -d $(ST4GEN) $<
-	$(ST4UTIL) execute -d $(ST4GEN) $<
-	$(ST4UTIL) check -d $(ST4GEN) $<
 
 %.STTEST: %.sexp
 	$(ST4UTIL) generate -f -d $(ST4GEN) $<
@@ -230,7 +223,7 @@ sttest-multi-verify:
 fixtures/st4-multi/TestNullEmptyMatrix.sexp: testmatrix.exe
 	./testmatrix.exe > $@.NEW && mv $@.NEW $@
 
-sttest-all: $(STJSONALL:.json=.STTEST) $(STSEXPALL:.sexp=.STTEST)
+sttest-all: $(STSEXPALL:.sexp=.STTEST)
 
 #ONE=LexerExec/CharSet
 ONE=ParserExec/Basic

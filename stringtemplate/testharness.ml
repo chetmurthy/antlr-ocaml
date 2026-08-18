@@ -2,87 +2,62 @@
 
 open Pa_ppx_base
 open Ppxutil
+open Pa_ppx_located_sexp
 
 open Eval
+
+type 'a located = (Ploc.t * 'a)
+let located_sexp_of_located subf (_,x) = subf x
+let located_of_located_sexp subf se = (Sexp.loc_of_sexp se, subf se)
+let pp_located subf (_,x) = subf x
 
 type run_t = {
     input : string
   ; output : string
-    [@yojson.default ""]
-    [@located_yojson.default ""]
     [@located_sexp.default ""]
     [@located_sexp.sexp_drop_default (=)]
   ; attributes : Environ.frame_t
-    [@yojson.default []]
-    [@located_yojson.default []]
     [@located_sexp.default []]
     [@located_sexp.sexp_drop_default (=)]
   }
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true}]
 
 type t =
   {
     classname : string
   ; groupfile : (string * string) option
-    [@yojson.default None]
-    [@located_yojson.default None]
     [@located_sexp.default None]
     [@located_sexp.sexp_drop_default (=)]
   ; groupfiles : (string * string) list
-    [@yojson.default []]
-    [@located_yojson.default []]
     [@located_sexp.default []]
     [@located_sexp.sexp_drop_default (=)]
   ; indent : bool
-    [@yojson.default true]
-    [@located_yojson.default true]
     [@located_sexp.default true]
     [@located_sexp.sexp_drop_default (=)]
   ; runs : run_t list
   ; errors : string
-    [@yojson.default ""]
-    [@located_yojson.default ""]
     [@located_sexp.default ""]
     [@located_sexp.sexp_drop_default (=)]
   ; errorsContains : string
-    [@yojson.default ""]
-    [@located_yojson.default ""]
     [@located_sexp.default ""]
     [@located_sexp.sexp_drop_default (=)]
   ; ignore : bool
-    [@yojson.default false]
-    [@located_yojson.default false]
     [@located_sexp.default false]
     [@located_sexp.sexp_drop_default (=)]
   }
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
-
-let of_json_string s =
-  let open Pa_ppx_located_yojson.Json in
-  let j = JsonEOI.of_string s in
-  of_located_yojson_exn j
+[@@deriving show,located_sexp {exn=true}]
 
 let of_sexp_string s =
   let open Pa_ppx_located_sexp.Altsexp in
   let j = of_string s in
   t_of_located_sexp j
 
-let load_json ~file =
-  let open Pa_ppx_located_yojson.Json in
-  let j = JsonEOI.load ~file in
-  of_located_yojson_exn j
-
 let load_sexp ~file =
   let open Pa_ppx_located_sexp.Altsexp in
   let j = load_sexp file in
   t_of_located_sexp j
 
-let load ~file =
-  if Fpath.(file |> v |> has_ext "json") then
-    load_json ~file
-  else if Fpath.(file |> v |> has_ext "sexp") then
-    load_sexp ~file
-  else Fmt.(failwithf "TH.load: file %s is neither .json nor .sexp" file)
+let load ~file = load_sexp ~file
 
 let verify ~verbose th =
   let open Pa in
@@ -91,32 +66,23 @@ let verify ~verbose th =
       STG2_STPa.Template.of_string r.input) th.runs ;
   Option.map (fun (fname,txt) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      STG2_STGPa.Group.of_string txt) th.groupfile ;
+      Eval.Intern.group_of_string txt) th.groupfile ;
   List.map (fun (fname,txt) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      STG2_STGPa.Group.of_string txt) th.groupfiles ;
+      Eval.Intern.group_of_string txt
+    ) th.groupfiles ;
   ()
 
 module Multi = struct
 type _t = (string * t) list
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true}]
 type t = _t
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
-
-let of_json_string s =
-  let open Pa_ppx_located_yojson.Json in
-  let j = JsonEOI.of_string s in
-  of_located_yojson_exn j
+[@@deriving show,located_sexp {exn=true}]
 
 let of_sexp_string s =
   let open Pa_ppx_located_sexp.Altsexp in
   let j = of_string s in
   t_of_located_sexp j
-
-let load_json ~file =
-  let open Pa_ppx_located_yojson.Json in
-  let j = JsonEOI.load ~file in
-  of_located_yojson_exn j
 
 let load_sexp ~file =
   let open Pa_ppx_located_sexp.Altsexp in
@@ -124,11 +90,7 @@ let load_sexp ~file =
   t_of_located_sexp j
 
 let load ~file =
-  if Fpath.(file |> v |> has_ext "json") then
-    load_json ~file
-  else if Fpath.(file |> v |> has_ext "sexp") then
-    load_sexp ~file
-  else Fmt.(failwithf "TH.Multi.load: file %s is neither .json nor .sexp" file)
+  load_sexp ~file
 
 end
 

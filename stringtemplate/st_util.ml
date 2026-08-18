@@ -5,7 +5,7 @@ open Ppxutil
 open Pa_ppx_utils
 open Antlr
 
-let unescape s =
+let unescape_escape_template s =
   let payload =
     match [%match {|^<(.+)>$|} / strings !1] s with
       None ->
@@ -26,6 +26,25 @@ let unescape s =
        s |> [%subst {|^\\u([0-9a-fA-F]{1,4})$|} / {|\u{$1}|} / pcre2 ] |> Std.unescape_string
      else Fmt.(failwithf "St_util.unescape: unrecognized escape -payload- %a" Dump.string s)
 
+let unescape_stg_string s =
+  let s =
+    match [%match {|^"(.*)"$|} / s strings !1] s with
+      None ->
+      Fmt.(failwithf "unescape_stg_string: malformed string %a" Dump.string s)
+    | Some s -> s in
+  Util.unescape_string s
+
+let unwrap_stg_bigstring s =
+  match [%match {|^<<(.*)>>$|} / s strings !1] s with
+    None ->
+    Fmt.(failwithf "unwrap_stg_bigstring: malformed string %a" Dump.string s)
+  | Some s -> s
+
+let unwrap_stg_bigstring_no_nl s =
+  match [%match {|^<%(.*)%>$|} / s strings !1] s with
+    None ->
+     Fmt.(failwithf "unwrap_stg_bigstring_no_nl: malformed string %a" Dump.string s)
+  | Some s -> s  
 
 module type PAHELPER = sig
   type t

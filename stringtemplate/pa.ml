@@ -4,7 +4,7 @@ open Pa_ppx_utils ;
 open Pa_ppx_located_yojson ;
 open Antlr ;
 open Sttypes2 ;
-open Stg_types ;
+open Stg_types.Raw ;
 open Camlp5_adapter ;
 
 module Pa(Lex : Exec.FULL_LEXER)(C5Lex : CAMLP5LEXER) = struct
@@ -214,7 +214,7 @@ element: [ [
 single_element: [ [
       x = expr_tag -> EXPR_TAG x
     | x = TEXT -> LIT (TEXT x)
-    | x = ESCAPE -> LIT(TEXT (St_util.unescape x))
+    | x = ESCAPE -> LIT(TEXT (St_util.unescape_escape_template x))
     | x = HORZ_WS -> LIT(HORZ_WS x)
     | x = VERT_WS -> LIT(VERT_WS x)
   ] ]

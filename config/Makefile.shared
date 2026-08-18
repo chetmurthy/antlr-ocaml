@@ -25,7 +25,7 @@ PRPACKAGE = camlp5.pr_o
 ifeq ($(NOVERBOSE),)
 MAKE:=make
 else
-MAKE:=make --no-print-directory
+#MAKE:=make --no-print-directory
 endif
 
 

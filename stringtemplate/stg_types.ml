@@ -1,4 +1,9 @@
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.located_sexp,pa_ppx.utils *)
 
+open Pa_ppx_utils
+
+
+module Raw = struct
 type template_rhs_t =
   TDEF_STRING of string
 | TDEF_BIGSTRING of string
@@ -43,3 +48,44 @@ type group_t = {
   ; imports : string list
   ; defs : group_def_t list
   }
+end
+
+module Cooked = struct
+
+open Coll
+
+type value_t =
+  VALUE_TEMPLATE of Sttypes2.template_t
+| VALUE_SUBTEMPLATE of Sttypes2.subtemplate_t
+| VALUE_BOOL of bool
+| VALUE_MT_DICT
+
+type template_def_t =
+  {
+    name : string
+  ; formals : (string * value_t option) list
+  ; body : Sttypes2.template_t
+  }
+
+type dict_val_t =
+  DVAL_VALUE of value_t
+| DVAL_KEY
+
+
+type dict_t =
+  {
+    kv : (string, dict_val_t) MHM.t
+  ; default : dict_val_t option
+  }
+
+type group_t = {
+    header : Raw.header_t option
+  ; imports : string list
+  ; templates : (string, template_def_t) MHM.t
+  ; dicts : (string, dict_t) MHM.t
+  }
+
+type groupdir_t = {
+    groups : (string, group_t) MHM.t
+  }
+end

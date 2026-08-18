@@ -84,3 +84,19 @@ let coalesce t =
     coalesce1 t in
   let dt = { (dt) with migrate_elements_t } in
   dt.migrate_elements_t dt t
+
+let removews1 (l : template_t) : template_t =
+  l
+  |> List.filter_map
+       (function
+          LIT (TEXT _) as x -> Some x
+       | _ -> None)
+
+let removews t =
+  let dt = Migrate.make_dt() in
+  let old_migrate_elements_t = dt.migrate_elements_t in
+  let migrate_elements_t __dt__ t =
+    let t = old_migrate_elements_t __dt__ t in
+    removews1 t in
+  let dt = { (dt) with migrate_elements_t } in
+  dt.migrate_elements_t dt t
