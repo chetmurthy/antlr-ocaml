@@ -314,6 +314,7 @@ args: [ [
       a1 = named_arg ; al = LIST0 [ check_comma_id_equals ; "," ; a = named_arg -> a ] ; 
       ellipsis = [ "," ; "..." -> True | -> False] ->
       ARGS_NAMED [a1::al] ellipsis
+    | "..." -> ARGS_NAMED [] True
     | l = LIST1 mexpr_no_comma SEP "," -> ARGS_LIST l
     | -> ARGS_EMPTY
   ] ]
@@ -379,9 +380,9 @@ template_: [ [
   ] ]
   ;
 template_def_rhs: [ [
-      s = STRING -> TDEF_STRING s
-    | s = BIGSTRING -> TDEF_BIGSTRING s
-    | s = BIGSTRING_NO_NL -> TDEF_BIGSTRING_NO_NL s
+      s = STRING -> TDEF_STRING (loc, s)
+    | s = BIGSTRING -> TDEF_BIGSTRING (loc, s)
+    | s = BIGSTRING_NO_NL -> TDEF_BIGSTRING_NO_NL (loc, s)
   ] ]
   ;
 
@@ -394,7 +395,7 @@ formal_arg: [ [
   ;
 
 formal_arg_default: [ [
-      s = STRING -> FORMAL_STRING s
+      s = STRING -> FORMAL_STRING (loc, s)
     | s = subtemplate -> FORMAL_SUBTEMPLATE s
     | s = "true" -> FORMAL_BOOL True
     | s = "false" -> FORMAL_BOOL False
@@ -416,14 +417,14 @@ dict_pairs: [ [
   ] ]
   ;
 
-key_value_pair: [ [ s = STRING ; ":" ; v = key_value -> (s,v) ] ] ;
+key_value_pair: [ [ s = STRING ; ":" ; v = key_value -> ((loc, s),v) ] ] ;
 default_value_pair: [ [ "default" ; ":" ; v = key_value -> v ] ] ;
 
 key_value: [ [
-      s = BIGSTRING -> KEYVAL_BIGSTRING s
-    | s = BIGSTRING_NO_NL -> KEYVAL_BIGSTRING_NO_NL s
+      s = BIGSTRING -> KEYVAL_BIGSTRING (loc, s)
+    | s = BIGSTRING_NO_NL -> KEYVAL_BIGSTRING_NO_NL (loc, s)
     | s = subtemplate -> KEYVAL_SUBTEMPLATE s
-    | s = STRING -> KEYVAL_STRING s
+    | s = STRING -> KEYVAL_STRING (loc, s)
     | s = "true" -> KEYVAL_BOOL True
     | s = "false" -> KEYVAL_BOOL False
     | "[" ; "]" -> KEYVAL_MT_DICT

@@ -23,7 +23,7 @@ ML=\
 	pa.ml \
 	st_ops.ml \
 	eval.ml \
-	testharness.ml old_testharness.ml \
+	testharness.ml \
 	sexpio.ml
 
 TOOLSML = mk_meta.ml

@@ -4,15 +4,11 @@ open Pa_ppx_base
 open Ppxutil
 open Pa_ppx_located_sexp
 
+open St_util
 open Eval
 
-type 'a located = (Ploc.t * 'a)
-let located_sexp_of_located subf (_,x) = subf x
-let located_of_located_sexp subf se = (Sexp.loc_of_sexp se, subf se)
-let pp_located subf (_,x) = subf x
-
 type run_t = {
-    input : string
+    input : string located
   ; output : string
     [@located_sexp.default ""]
     [@located_sexp.sexp_drop_default (=)]
@@ -25,10 +21,10 @@ type run_t = {
 type t =
   {
     classname : string
-  ; groupfile : (string * string) option
+  ; groupfile : (string * string located) option
     [@located_sexp.default None]
     [@located_sexp.sexp_drop_default (=)]
-  ; groupfiles : (string * string) list
+  ; groupfiles : (string * string located) list
     [@located_sexp.default []]
     [@located_sexp.sexp_drop_default (=)]
   ; indent : bool
@@ -62,14 +58,14 @@ let load ~file = load_sexp ~file
 let verify ~verbose th =
   let open Pa in
   List.map (fun r ->
-      if verbose then Fmt.(pf stderr "\t[input %a]@." Dump.string r.input) ;
-      STG2_STPa.Template.of_string r.input) th.runs ;
+      if verbose then Fmt.(pf stderr "\t[input %a]@." Dump.string (snd r.input)) ;
+      STG2_STPa.Template.of_located_string r.input) th.runs ;
   Option.map (fun (fname,txt) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      Eval.Intern.group_of_string txt) th.groupfile ;
+      Eval.Intern.group_of_located_string txt) th.groupfile ;
   List.map (fun (fname,txt) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      Eval.Intern.group_of_string txt
+      Eval.Intern.group_of_located_string txt
     ) th.groupfiles ;
   ()
 
@@ -98,10 +94,10 @@ open Value
 open Environ
 let eg1 = {
     classname = "hello"
-  ; groupfile = Some ("a.stg"," d() ::= << >> ")
+  ; groupfile = Some ("a.stg",(Ploc.dummy, " d() ::= << >> "))
   ; groupfiles = []
   ; runs = [{
-               input = "<{Hello, <name>!}>"
+               input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", SV (STRING "World"))
@@ -118,7 +114,7 @@ let eg2 = {
   ; groupfile = None
   ; groupfiles = []
   ; runs = [{
-               input = "<{Hello, <name>!}>"
+               input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", MV [STRING "World1"; STRING "World2"])
@@ -135,7 +131,7 @@ let eg3 = {
   ; groupfile = None
   ; groupfiles = []
   ; runs = [{
-               input = "<{Hello, <name>!}>"
+               input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", SV NULL)
@@ -152,7 +148,7 @@ let eg4 = {
   ; groupfile = None
   ; groupfiles = []
   ; runs = [{
-               input = "<{Hello, <name>!}>"
+               input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", SV (LIST [STRING "World1"; STRING "World2"]))
@@ -169,7 +165,7 @@ let eg5 = {
   ; groupfile = None
   ; groupfiles = []
   ; runs = [{
-               input = "<{Hello, <name>!}>"
+               input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))
@@ -250,7 +246,7 @@ System.out.println("<RoNnIe|"+output+"|RaYgUn>") ;
 System.out.println("====") ;
 }
 |}
-           Dump.string r.input
+           Dump.string (snd r.input)
            (list add_binding) r.attributes
            render_txt
       )
@@ -264,7 +260,7 @@ System.out.println("<RoNnIe|"+output+"|RaYgUn>") ;
 System.out.println("====") ;
 }
 |}
-           Dump.string r.input
+           Dump.string (snd r.input)
            (list add_binding) r.attributes
            render_txt
       ) in

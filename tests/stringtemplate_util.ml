@@ -101,7 +101,7 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
 
       destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg ;
       ((match th.groupfile with None -> [] | Some x -> [x])@th.groupfiles)
-      |> List.map (fun (groupfilename, contents) ->
+      |> List.map (fun (groupfilename, (_, contents)) ->
              let full = Fpath.(append destdir (v groupfilename)) in
              let dir = Fpath.parent full in
              Bos.OS.Dir.create ~path:true ~mode:0o755 dir |> Rresult.R.failwith_error_msg ;

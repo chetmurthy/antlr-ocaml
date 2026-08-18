@@ -33,7 +33,7 @@ test(x) ::= %a
 |}
          Dump.string stt.template
     ) in
-  let groupfile = Some ("t.stg", groupfile_txt) in
+  let groupfile = Some ("t.stg", (Ploc.dummy, groupfile_txt)) in
   let errors =
     if stt.x <> _UNDEF then ""
     else {bar|context [anonymous] 1:6 attribute x isn't defined
@@ -47,7 +47,7 @@ test(x) ::= %a
   ; groupfiles = []
   ; groupfile
   ; runs = [{
-               input = "<test(x)>"
+               input = (Ploc.dummy, "<test(x)>")
              ; output = stt.expecting
              ; attributes
            }]

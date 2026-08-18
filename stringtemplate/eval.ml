@@ -14,18 +14,18 @@ module Intern = struct
   open Cooked
 
   let dict_value = function
-      Raw.KEYVAL_BIGSTRING s ->
-       let s = St_util.unwrap_stg_bigstring s in
-       let t = STPa.Template.of_string s in
+      Raw.KEYVAL_BIGSTRING (loc, s) ->
+       let (loc, s) = St_util.unwrap_stg_bigstring (loc, s) in
+       let t = STPa.Template.of_located_string (loc, s) in
        DVAL_VALUE (VALUE_TEMPLATE t)
-    | KEYVAL_BIGSTRING_NO_NL s ->
-       let s = St_util.unwrap_stg_bigstring_no_nl s in
-       let t = STPa.Template.of_string s in
+    | KEYVAL_BIGSTRING_NO_NL (loc, s) ->
+       let (loc, s) = St_util.unwrap_stg_bigstring_no_nl (loc, s) in
+       let t = STPa.Template.of_located_string (loc, s) in
        let t = St_ops.removews t in
        DVAL_VALUE (VALUE_TEMPLATE t)
-    | KEYVAL_STRING s ->
-       let s = St_util.unescape_stg_string s in
-       DVAL_VALUE(VALUE_TEMPLATE (STPa.Template.of_string s))
+    | KEYVAL_STRING (loc, s) ->
+       let (loc, s) = St_util.unescape_stg_string (loc, s) in
+       DVAL_VALUE(VALUE_TEMPLATE (STPa.Template.of_located_string (loc, s)))
     | KEYVAL_SUBTEMPLATE st ->
        DVAL_VALUE(VALUE_SUBTEMPLATE st)
     | KEYVAL_BOOL b -> DVAL_VALUE(VALUE_BOOL b)
@@ -36,7 +36,7 @@ module Intern = struct
     let kv =
       kv
       |> List.map (fun (k, v) ->
-             (St_util.unescape_stg_string k,
+             (snd (St_util.unescape_stg_string k),
               dict_value v)) in
     let kv = MHM.ofList 23 kv in
     let default = Option.map dict_value dflt_opt in
@@ -55,7 +55,7 @@ module Intern = struct
                   |> Option.map (function
                            FORMAL_STRING s ->
                             let s = St_util.unescape_stg_string s in
-                            VALUE_TEMPLATE (STPa.Template.of_string s)
+                            VALUE_TEMPLATE (STPa.Template.of_located_string s)
                          | FORMAL_SUBTEMPLATE st ->
                             VALUE_SUBTEMPLATE st
                          | FORMAL_BOOL b -> VALUE_BOOL b
@@ -65,13 +65,13 @@ module Intern = struct
          match rhs with
            TDEF_STRING s ->
             let s = St_util.unescape_stg_string s in
-            STPa.Template.of_string s
+            STPa.Template.of_located_string s
          | TDEF_BIGSTRING s ->
             let s = St_util.unwrap_stg_bigstring s in
-            STPa.Template.of_string s
+            STPa.Template.of_located_string s
          | TDEF_BIGSTRING_NO_NL s ->
             let s = St_util.unwrap_stg_bigstring_no_nl s in
-            let t = STPa.Template.of_string s in
+            let t = STPa.Template.of_located_string s in
             St_ops.removews t in
        let t = {
            name
@@ -90,7 +90,6 @@ module Intern = struct
   let group g =
     let templates = MHM.mk 23 in
     let dicts = MHM.mk 23 in
-    assert (g.Raw.imports = []) ;
     let rv = {
         header = g.Raw.header
       ; imports = g.Raw.imports
@@ -109,8 +108,15 @@ module Intern = struct
     let raw = STGPa.Group.of_string s in
     group raw
 
-  let groupfile file =
+  let group_of_located_string s =
+    let raw = STGPa.Group.of_located_string s in
+    group raw
+
+  let groupfile ~stg file =
     let raw = STGPa.Group.load ~file in
+    if not stg then begin
+        assert (raw.Raw.imports = []) ;
+      end ;
     group raw
 
   let groupdir dir =
@@ -125,12 +131,12 @@ module Intern = struct
     let rec intern_and_add file =
       if MHM.in_dom gd.groups file then ()
       else if Fpath.(file |> v |> has_ext "st") then
-        let g = groupfile file in
+        let g = groupfile ~stg:false file in
         assert (g.imports = []) ;
         MHM.add gd.groups (file, g)
 
       else if Fpath.(file |> v |> has_ext "stg") then
-        let g = groupfile file in
+        let g = groupfile ~stg:true file in
         MHM.add gd.groups (file, g) ;
         List.iter intern_and_add g.imports
       else assert false

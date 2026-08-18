@@ -26,25 +26,29 @@ let unescape_escape_template s =
        s |> [%subst {|^\\u([0-9a-fA-F]{1,4})$|} / {|\u{$1}|} / pcre2 ] |> Std.unescape_string
      else Fmt.(failwithf "St_util.unescape: unrecognized escape -payload- %a" Dump.string s)
 
-let unescape_stg_string s =
+let narrow_loc n loc =
+  let len = Ploc.((last_pos loc) - (first_pos loc)) in
+  Ploc.sub loc n (len-2*n)
+
+let unescape_stg_string (loc, s) =
   let s =
     match [%match {|^"(.*)"$|} / s strings !1] s with
       None ->
-      Fmt.(failwithf "unescape_stg_string: malformed string %a" Dump.string s)
+      Fmt.(raise_failwithf loc "unescape_stg_string: malformed string %a" Dump.string s)
     | Some s -> s in
-  Util.unescape_string s
+  (narrow_loc 1 loc, Util.unescape_string s)
 
-let unwrap_stg_bigstring s =
+let unwrap_stg_bigstring (loc, s) =
   match [%match {|^<<(.*)>>$|} / s strings !1] s with
     None ->
-    Fmt.(failwithf "unwrap_stg_bigstring: malformed string %a" Dump.string s)
-  | Some s -> s
+    Fmt.(raise_failwithf loc "unwrap_stg_bigstring: malformed string %a" Dump.string s)
+  | Some s -> (narrow_loc 2 loc, s)
 
-let unwrap_stg_bigstring_no_nl s =
+let unwrap_stg_bigstring_no_nl (loc, s) =
   match [%match {|^<%(.*)%>$|} / s strings !1] s with
     None ->
-     Fmt.(failwithf "unwrap_stg_bigstring_no_nl: malformed string %a" Dump.string s)
-  | Some s -> s  
+     Fmt.(raise_failwithf loc "unwrap_stg_bigstring_no_nl: malformed string %a" Dump.string s)
+  | Some s -> (narrow_loc 2 loc, s)
 
 module type PAHELPER = sig
   type t
@@ -52,6 +56,7 @@ module type PAHELPER = sig
   val parse_parsable : Grammar.parsable -> t
   val parse : ?startloc:Ploc.t -> char Stream.t -> t
   val of_string : ?startloc:Ploc.t -> string -> t
+  val of_located_string : Ploc.t * string -> t
   val of_here_string : Lexing.position * string -> t
   val input : ?startloc:Ploc.t -> in_channel -> t
   val load : file:string -> t
@@ -86,6 +91,9 @@ module PAHelper(M : sig type t
     let startloc = Util.ploc_of_position pos in
     of_string ~startloc s
 
+  let of_located_string (startloc, s) =
+    of_string ~startloc s
+
   let input ?startloc ic =
     with_location M.start_location ?startloc (fun ic -> ic |> Stream.of_channel |> Grammar.Entry.parse entry) ic
 
@@ -118,3 +126,10 @@ let triple_is_EOI (_,(p,_)) = fst p = "EOI"
 let triple2raw (raw, _) = raw
 let triple2pattern (_,(pat,_)) = pat
 let triple2ploc (_,(_,ploc)) = ploc
+
+type 'a located = (Ploc.t * 'a)
+let located_sexp_of_located subf (_,x) = subf x
+let located_of_located_sexp subf se =
+  let open Pa_ppx_located_sexp in
+  (Sexp.loc_of_sexp se, subf se)
+let pp_located subf pps (_,x) = subf pps x
