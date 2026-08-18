@@ -1,6 +1,7 @@
 (**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.located_sexp,pa_ppx.utils *)
 
 open Pa_ppx_utils
+open Coll
 
 open St_util
 
@@ -53,8 +54,6 @@ end
 
 module Cooked = struct
 
-open Coll
-
 type value_t =
   VALUE_TEMPLATE of Sttypes2.template_t
 | VALUE_SUBTEMPLATE of Sttypes2.subtemplate_t
@@ -84,6 +83,13 @@ type group_t = {
   ; imports : string list
   ; templates : (string, template_def_t) MHM.t
   ; dicts : (string, dict_t) MHM.t
+  }
+
+let mk_group () = {
+    header = None
+  ; imports = []
+  ; templates = MHM.mk 23
+  ; dicts = MHM.mk 23
   }
 
 type groupdir_t = {

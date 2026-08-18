@@ -165,6 +165,29 @@ let isBOOL = function BOOL _ -> true | _ -> false
 
 end
 
+module Context = struct
+  open Sttypes2
+  open Stg_types.Cooked
+
+type context_t = {
+    group : group_t
+  ; warning : string -> unit
+  ; error : string -> unit
+  }
+
+let warning ctxt s = ctxt.warning s
+let error ctxt s = ctxt.error s
+
+let default_warning s =  Fmt.(pf stderr "%s@." s)
+let default_error s = Fmt.(failwithf "%s@." s)
+
+let mk () = {
+    group = mk_group ()
+  ; warning = default_warning
+  ; error = default_error
+  }
+end
+
 module Environ = struct
 type attr_val_t = MV of Value.t list | SV of Value.t
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
@@ -174,6 +197,17 @@ type frame_t = binding_t list
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
 type t = frame_t list
 [@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+
+let lookup_opt ctxt (env : t) varname =
+  let rec lookrec = function
+      [] ->
+       Context.warning ctxt Fmt.(str "Environ.lookup: name %a not found" Dump.string varname) ;
+       None
+    | fh::tl when List.mem_assoc varname fh ->
+       Some (List.assoc varname fh)
+    | _::tl -> lookrec tl
+  in lookrec env
+
 end
 
 module type INDENT = sig
@@ -236,3 +270,24 @@ module IW = struct
 
 end
 module IndentWriter = IW
+
+module Doit = struct
+  open Sttypes2
+  open Stg_types.Cooked
+
+  open Environ
+  open Value
+
+
+type context_t = {
+    group : group_t
+  }
+
+let rec eval_expr ctxt env wr = function
+    ME_ID varname ->
+     match lookup_opt ctxt env varname with
+       None -> SV NULL
+     | Some v -> v
+    
+
+end
