@@ -151,12 +151,23 @@ value check_comma_string =
     check_comma_string_f
 ;
 
+value leftover_f (strm : Stream.t (string * string)) = ();
+
+value leftover =
+  Grammar.Entry.of_parser g "leftover"
+    leftover_f
+;
+
 value mexpr = Grammar.Entry.create g "mexpr";
 value mexpr_basic = Grammar.Entry.create g "mexpr_basic";
 value mexpr_template_ref = Grammar.Entry.create g "mexpr_template_ref";
 
 value top_mexpr_template_ref = Grammar.Entry.create g "top_mexpr_template_ref";
 value top_mexpr_basic = Grammar.Entry.create g "top_mexpr_basic";
+value top_me_cond = Grammar.Entry.create g "top_me_cond";
+value top_mexpr = Grammar.Entry.create g "top_mexpr";
+value top_expr_options = Grammar.Entry.create g "top_expr_options";
+value top_expr_option = Grammar.Entry.create g "top_expr_option";
 
 EXTEND
   GLOBAL: template template_eoi
@@ -164,6 +175,11 @@ EXTEND
 
           top_mexpr_template_ref
           top_mexpr_basic
+          top_me_cond
+          top_mexpr
+          top_expr_options
+          top_expr_option
+          leftover
 
           check_qid_lparen check_not_lt_if_elseif_else_endif check_id_comma_or_bar
           check_id_equals check_comma_id_equals
@@ -172,8 +188,12 @@ EXTEND
           mexpr mexpr_basic mexpr_template_ref
   ;
 
-top_mexpr_template_ref: [ [ "#inside" ; x = mexpr_template_ref ; EOI -> x ] ] ;
-top_mexpr_basic: [ [ "#inside" ; x = mexpr_basic ; EOI -> x ] ] ;
+top_mexpr_template_ref: [ [ "#inside" ; x = mexpr_template_ref ; leftover -> x ] ] ;
+top_mexpr_basic: [ [ "#inside" ; x = mexpr_basic ; leftover -> x ] ] ;
+top_mexpr: [ [ "#inside" ; x = mexpr ; leftover -> x ] ] ;
+top_me_cond: [ [ "#inside" ; x = me_cond ; leftover -> x ] ] ;
+top_expr_options: [ [ "#inside" ; x = expr_options ; leftover -> x ] ] ;
+top_expr_option: [ [ "#inside" ; x = expr_option ; leftover -> x ] ] ;
 
 template_eoi: [ [ x = template ; EOI -> x ] ] ;
 
@@ -218,7 +238,7 @@ expr_options: [ [
   ] ]
   ;
 
-expr_option: [ [ id = ID ; "=" ; e = mexpr -> (id,e) ] ] ;
+expr_option: [ [ id = ID ; "=" ; e = mexpr_no_comma -> (id,e) ] ] ;
 
 mexpr:
   [ "top" LEFTA
@@ -234,7 +254,9 @@ mexpr:
   ;
 
 mexpr_basic: [
-    [ mt = mexpr_template_ref -> ME_TEMPLATE mt
+    [ mt = mexpr_basic_template_ref -> mt
+    | "(" ; me = mexpr ; ")" ; "(" ; l = LIST0 mexpr_no_comma SEP "," ; ")" -> ME_TEMPLATE (ME_INCLUDE_IND me l)
+    | "(" ; me = mexpr ; ")" -> me
     | p = mexpr_primary -> ME_PRIMARY p
     ]
   ]
@@ -255,9 +277,15 @@ me_cond: [
     "OR" RIGHTA [ e1 = SELF ; "||" ; e2 = SELF -> COND_OR e1 e2 ]
   | "AND" RIGHTA [ e1 = SELF ; "&&" ; e2 = SELF -> COND_OR e1 e2 ]
   | "NOT" [ "!" ; e = SELF -> COND_NOT e ]
-  | "basic" [ "(" ; c = me_cond ; ")" -> c ]
+  | "parens" [ "(" ; e = SELF ; ")" -> e ]
   | "ATOM" [ e = mexpr LEVEL "dot" -> COND_ATOM e ] 
   ]
+  ;
+mexpr_basic_template_ref: [ [
+      check_qid_lparen ;
+      qid = qualified_id ; "(" ; a = args ; ")" -> ME_TEMPLATE (ME_INCLUDE qid a)
+    | st = subtemplate -> ME_TEMPLATE (ME_SUB st)
+  ] ]
   ;
 mexpr_template_ref: [ [
       check_qid_lparen ;
@@ -422,6 +450,30 @@ module Mexpr_Basic = St_util.PAHelper(struct
                      type t = mexpr_t ;
                      value start_location = start_location ;
                      value entry = top_mexpr_basic ;
+                   end) ;
+
+module Mexpr = St_util.PAHelper(struct
+                     type t = mexpr_t ;
+                     value start_location = start_location ;
+                     value entry = top_mexpr ;
+                   end) ;
+
+module Me_Cond = St_util.PAHelper(struct
+                     type t = mexpr_cond_t ;
+                     value start_location = start_location ;
+                     value entry = top_me_cond ;
+                   end) ;
+
+module Expr_Options = St_util.PAHelper(struct
+                     type t = list (string * mexpr_t)  ;
+                     value start_location = start_location ;
+                     value entry = top_expr_options ;
+                   end) ;
+
+module Expr_Option = St_util.PAHelper(struct
+                     type t = (string * mexpr_t)  ;
+                     value start_location = start_location ;
+                     value entry = top_expr_option ;
                    end) ;
 
 module Group = St_util.PAHelper(struct

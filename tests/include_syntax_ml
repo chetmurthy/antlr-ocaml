@@ -112,10 +112,36 @@ open Stringtemplate_util ;;
 open Stringtemplate_test ;;
 open Stringtemplate ;;
 
+Verify.st4_test ~debug:true ~verbose:true ~onlytest:(Some "testEarlyEvalOfDefaultArgs") ~multi:true ~testname:"" "fixtures/st4-multi/TestGroup.sexp" ;;
+
+#trace Pa.ST2Pa.leftover_f ;;
+#trace STPa.leftover_f ;;
+
 "<if(!(x||y))>works<endif>" |> STPa.Template.of_string ;;
+"<if((x||y))>works<endif>" |> STPa.Template.of_string ;;
+"<s(x)>" |> STPa.Template.of_string ;;
+
+{| 
+s(x,y={<(x)>}) ::= "<x><y>"
+|}
+ |> STGPa.Group.of_string ;;
+
+"#inside !(x||y)" |> STPa.Me_Cond.of_string ;;
+"#inside (x||y)" |> STPa.Me_Cond.of_string ;;
+"#inside (x||y)" |> STPa.Mexpr.of_string ;;
+"#inside x||y" |> STPa.Mexpr.of_string ;;
+"#inside x" |> STPa.Mexpr.of_string ;;
+"#inside x" |> STPa.Me_Cond.of_string ;;
+
+{|#inside null="foo", separator=", "|} |> ST2.located_patterns_of_string |> Std.list_of_stream |> List.map fst ;;
+
+{|<[no,go]; null="foo", separator=", ">|} |> Pa.ST2Pa.Template.of_string ;;
+{|#inside null="foo", separator=", "|} |> Pa.ST2Pa.Expr_Options.of_string ;;
+
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***
 ;;; End: ***
 
 *)
+ 
