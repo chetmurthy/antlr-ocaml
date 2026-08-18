@@ -70,10 +70,10 @@ VISITOR=-visitor
 	$(NOVERBOSE) antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Python3 <grammarName>.g4
 
 l.ml:
-	$(TOP)/tests/atn_util.opt emit-ocaml-lexer -i Lexer.interp --grammar-lib $(TOP)/tests/fixtures/grammar-lib -t translation.json --constants-module L_constants <grammarName>.g4 > l.ml.NEW && mv l.ml.NEW l.ml
+	$(NOVERBOSE) $(TOP)/tests/atn_util.opt emit-ocaml-lexer -i Lexer.interp --grammar-lib $(TOP)/tests/fixtures/grammar-lib -t translation.json --constants-module L_constants <grammarName>.g4 > l.ml.NEW && mv l.ml.NEW l.ml
 
 l_constants.ml:
-	$(TOP)/tests/atn_util.opt emit-ocaml-constants Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
+	$(NOVERBOSE) $(TOP)/tests/atn_util.opt emit-ocaml-constants Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
 
 python-test:: <lexerName>.py
 	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(PYTHONPATH) $(RUNNER) run $(VERBOSE) $(SHOWARGS)
@@ -128,13 +128,13 @@ deserialize-ocaml::
 <endif>
 
 compare-atns:: <lexerName>.py
-	rm -f json.log
-	diff -bBwi -u10 \
+	$(NOVERBOSE) rm -f json.log
+	$(NOVERBOSE) diff -bBwi -u10 \
 	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp | jq '.' ) \
 	<( $(TOP)/tests/atn_util.opt dump --json <grammarName>.interp | jq '.' )
-	mv json.log lexer-atn-json.log
+	$(NOVERBOSE) mv json.log lexer-atn-json.log
 <if(parserName)>
-	diff -bBwi -u10 \
+	$(NOVERBOSE) diff -bBwi -u10 \
 	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp | jq '.' ) \
 	<( $(TOP)/tests/atn_util.opt dump --json <lexerName>.interp | jq '.' )
 <endif>
