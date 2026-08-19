@@ -221,9 +221,15 @@ let emit pps th =
     match (th.groupfile, th.groupfiles) with
       (None, []) -> Fmt.(pf pps "")
     | (None, _::_) ->
-       Fmt.(pf pps "STGroup group = new STGroupDir(\".\");\n")
+       Fmt.(pf pps {|
+STGroup group = new STGroupDir(".");
+dumpGroup(group) ;
+|})
     | (Some(fname, _), _) ->
-       Fmt.(pf pps "STGroupFile group = new STGroupFile(%a);\ngroup.load();\n"
+       Fmt.(pf pps {|STGroupFile group = new STGroupFile(%a);
+group.load();
+dumpGroup(group) ;
+|}
               Dump.string fname)
   in
   let render_txt =
@@ -240,12 +246,17 @@ let emit pps th =
       Fmt.(pf pps {|
 {
 ST st = new ST(group, %a) ;
+System.out.println("================ template ================") ;
+System.out.println(%a) ;
+dump(%a, st.impl) ;
 %a
 %s
 System.out.println("<RoNnIe|"+output+"|RaYgUn>") ;
 System.out.println("====") ;
 }
 |}
+           Dump.string (snd r.input)
+           Dump.string (snd r.input)
            Dump.string (snd r.input)
            (list add_binding) r.attributes
            render_txt
@@ -253,7 +264,12 @@ System.out.println("====") ;
     else
       Fmt.(pf pps {|
 {
-ST st = new ST(%a) ;
+STGroup group = new STGroup() ;
+ST st = new ST(group, %a) ;
+dumpGroup(group) ;
+System.out.println("================ template ================") ;
+System.out.println(%a) ;
+dump(%a, st.impl) ;
 %a
 %s
 System.out.println("<RoNnIe|"+output+"|RaYgUn>") ;
@@ -261,18 +277,47 @@ System.out.println("====") ;
 }
 |}
            Dump.string (snd r.input)
+           Dump.string (snd r.input)
+           Dump.string (snd r.input)
            (list add_binding) r.attributes
            render_txt
       ) in
   Fmt.(pf pps {|
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.NoIndentWriter;
 import org.stringtemplate.v4.*;
+import org.stringtemplate.v4.compiler.*;
 
 public class %s {
+    public static
+    <T extends Comparable<? super T>> List<T> asSortedList(Collection<T> c) {
+      List<T> list = new ArrayList<T>(c);
+      java.util.Collections.sort(list);
+      return list;
+    }
+    public static void dump(String name, CompiledST cst) {
+	System.out.println("================ "+name+"   ================") ;
+	System.out.println("Template: "+cst.template) ;
+	System.out.println("================ instrs   ================") ;
+	System.out.println(cst.instrs()) ;
+	System.out.println("================ instrs (bytes)   ================") ;
+        {
+        byte[] bytes = Arrays.copyOfRange(cst.instrs, 0, cst.codeSize);
+        System.out.println(Arrays.toString(bytes)); 
+        }
+	System.out.println("================ disasm   ================") ;
+	System.out.println(cst.disasm()) ;
+	System.out.println("================ dump     ================") ;
+	cst.dump() ;
+	System.out.println("================ end      ================") ;
+    }
+    public static void dumpGroup(STGroup group) {
+	for (String name : asSortedList(group.getTemplateNames())) {
+	    dump(name, (new ST(name)).impl) ;
+	}
+    }
     public static void main(String[] args) throws Exception {
         %a
 	%a

@@ -110,16 +110,19 @@ let one_test ~debug ~verbose ~force ~destroot ~testname th =
       Bos.OS.File.write ~mode:0o644 javafile Fmt.(str "%a" emit th) |> Rresult.R.failwith_error_msg ;
       let maketxt =
         Fmt.(str {|
-                  test:
-	          java -cp classes:$(CLASSPATH) %s > output.NEW 2> errors.NEW && mv output.NEW output && mv errors.NEW errors
+test: classes
+	java -cp classes:$(CLASSPATH) %s > output.NEW 2> errors.NEW && mv output.NEW output && mv errors.NEW errors
 
-                  test-manually:
-	          java -cp classes:$(CLASSPATH) %s
+test-manually: classes
+	java -cp classes:$(CLASSPATH) %s
 
-                  compile:
-	          javac -d classes %s.java
-                  |}
-               th.classname th.classname th.classname) in
+classes compile: %s.java
+	javac -d classes %s.java
+
+clean::
+	rm -rf classes *.NEW
+|}
+               th.classname th.classname th.classname th.classname) in
       let makefile  = Fpath.(append destdir (v "Makefile")) in
       Bos.OS.File.write ~mode:0o644 makefile maketxt |> Rresult.R.failwith_error_msg ;
       ()
