@@ -53,4 +53,4 @@ and elements_t = element_t list
 and template_t = elements_t
 
 and expr_tag_t =
-  mexpr_t * (string * mexpr_t) list
+  mexpr_t * (string * mexpr_t option) list

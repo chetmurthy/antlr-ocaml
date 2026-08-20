@@ -12,7 +12,7 @@ ML= \
 	lib_test.ml antlr_test.ml atn_util.ml mimick_test.ml \
 	antlrtest_test.ml antlrtest_util.ml deserialize_jsonlog.ml \
 	replay_util.ml parser_test.ml grammar_tools_test.ml \
-	st4syntax_test.ml st4eval_test.ml stringtemplate_util.ml \
+	st4syntax_test.ml st4eval_test.ml st4_util.ml \
 	location_handling_test.ml \
 	testmatrix.ml
 
@@ -23,7 +23,7 @@ EXE=lib_test.exe antlr_test.exe atn_util.exe mimick_test.exe \
 	antlrtest_test.exe antlrtest_util.exe \
 	deserialize_jsonlog.exe replay_util.exe \
 	parser_test.exe grammar_tools_test.exe \
-	st4syntax_test.exe st4eval_test.exe stringtemplate_util.exe \
+	st4syntax_test.exe st4eval_test.exe st4_util.exe \
 	location_handling_test.exe \
 	testmatrix.exe
 
@@ -194,7 +194,7 @@ dtest-all: $(DALL:.txt=.DTEST)
 
 STSEXPALL=$(shell ls fixtures/st4-single/*.sexp)
 
-ST4UTIL=$(TOP)/tests/stringtemplate_util.opt
+ST4UTIL=$(TOP)/tests/st4_util.opt
 ST4GEN=_generated/st4
 
 %.STTEST: %.sexp

@@ -238,7 +238,7 @@ expr_options: [ [
   ] ]
   ;
 
-expr_option: [ [ id = ID ; "=" ; e = mexpr_no_comma -> (id,e) ] ] ;
+expr_option: [ [ id = ID ; eopt = OPT [ "=" ; e = mexpr_no_comma -> e ] -> (id,eopt) ] ] ;
 
 mexpr:
   [ "top" LEFTA
@@ -466,13 +466,13 @@ module Me_Cond = St_util.PAHelper(struct
                    end) ;
 
 module Expr_Options = St_util.PAHelper(struct
-                     type t = list (string * mexpr_t)  ;
+                     type t = list (string * option mexpr_t)  ;
                      value start_location = start_location ;
                      value entry = top_expr_options ;
                    end) ;
 
 module Expr_Option = St_util.PAHelper(struct
-                     type t = (string * mexpr_t)  ;
+                     type t = (string * option mexpr_t)  ;
                      value start_location = start_location ;
                      value entry = top_expr_option ;
                    end) ;

@@ -107,25 +107,22 @@ open Pa_ppx_located_sexp ;;
 
 open Camlp5_adapter ;;
 
-#load "stringtemplate_util.cmo";;
-open Stringtemplate_util ;;
-open Stringtemplate_test ;;
-open Stringtemplate ;;
+#load "st4_util.cmo";;
+open St4_util ;;
+#load "st4syntax_test.cmo";;
+open St4syntax_test ;;
 
-{| 
-a(x,y) ::= "<b(...)>"
-b(x,y) ::= "<x><y>"
-|}
-|> Pa.STG2_STGPa.Group.of_string ;;
+open Eval ;;
+open Value ;;
+open Environ ;;
 
+let ctxt = Context.mk() ;;
 
-{| 
-a(x,y) ::= "<b(...)>"
-b(x,y) ::= "<x><y>"
-|}
-|> Eval.Intern.group_of_string ;;
+let f = ["name",MV [STRING "Foo"; STRING "Bar"]] ;;
 
+let env = Env.(mt |> push_frame f) ;;
 
+let t = STPa.Template.of_string "<name>";;
 
 (*
 ;;; Local Variables: ***

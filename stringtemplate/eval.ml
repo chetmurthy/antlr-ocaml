@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.located_sexp,pa_ppx.utils *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_sexp,pa_ppx.utils *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -148,6 +148,38 @@ module Intern = struct
 
 end
 
+module type INDENT = sig
+  type t
+  val mt : t
+  val add_string : t -> string -> t
+  val emit : Buffer.t -> t -> unit
+end
+
+module Indent : INDENT = struct
+  type t = string list
+
+  let mt = []
+  let add_string t s = s::t
+
+  let emit b t =
+    let l = List.rev t in
+    List.iter (Buffer.add_string b) l
+
+end
+
+module OutputToken = struct
+open Pa_ppx_located_sexp.Sexp
+  type t =
+    LITERAL of literal_t
+  | INDENT of Indent.t
+
+  type render_t = (unit -> t Stream.t)
+                    [@printer fun pps x -> Fmt.(pf pps "<rendered>")]
+                    [@located_sexp_of (fun _ -> Atom(Ploc.dummy, "<rendered>"))]
+                    [@of_located_sexp (fun _ -> failwith "cannot deserialize to rendered stream")]
+                    [@@deriving show,located_sexp {exn=true}]
+end
+
 module Value = struct
 type t =
   STRING of string
@@ -156,7 +188,8 @@ type t =
 | DICT of (string * t) list
 | LIST of t list
 | NULL
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+| RENDERED of OutputToken.render_t
+[@@deriving show,located_sexp {exn=true}]
 
 let isSTRING = function STRING _ -> true | _ -> false
 let isSTRINGorNULL = function (STRING _|NULL) -> true | _ -> false
@@ -190,13 +223,13 @@ end
 
 module Environ = struct
 type attr_val_t = MV of Value.t list | SV of Value.t
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true}]
 type binding_t = string * attr_val_t
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true}]
 type frame_t = binding_t list
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true}]
 type t = frame_t list
-[@@deriving show,yojson,located_yojson {exn = true},located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true}]
 
 let lookup_opt ctxt (env : t) varname =
   let rec lookrec = function
@@ -208,24 +241,9 @@ let lookup_opt ctxt (env : t) varname =
     | _::tl -> lookrec tl
   in lookrec env
 
-end
+let mt = []
 
-module type INDENT = sig
-  type t
-  val mt : t
-  val add_string : t -> string -> t
-  val emit : Buffer.t -> t -> unit
-end
-
-module Indent : INDENT = struct
-  type t = string list
-
-  let mt = []
-  let add_string t s = s::t
-
-  let emit b t =
-    let l = List.rev t in
-    List.iter (Buffer.add_string b) l
+let push_frame f (env : t) : t = f::env
 
 end
 
@@ -278,16 +296,122 @@ module Doit = struct
   open Environ
   open Value
 
-
 type context_t = {
     group : group_t
   }
 
-let rec eval_expr ctxt env wr = function
+open OutputToken
+
+let render_value v : render_t =
+  fun () ->
+  match v with
+    STRING s -> [< 'LITERAL (TEXT s) >]
+  | BOOL b -> [< 'LITERAL (TEXT (if b then "true" else "false")) >]
+  | INT n -> [< 'LITERAL (TEXT (string_of_int n)) >]
+  | DICT _ -> failwith "render_value: DICT unimplemented"
+  | LIST  _ -> failwith "render_value: LIST unimplemented"
+  | NULL -> [< >]
+  | RENDERED f -> f ()
+
+let render_nullable ~null v : render_t  =
+  match v with
+    NULL -> null
+  | v -> render_value v
+
+let render_list ~sep ~null l : render_t =
+  fun () ->
+  let rec rerec = function
+      [] -> [< >]
+    | [h] -> render_nullable ~null h ()
+    | h::t ->
+       [< render_nullable ~null h () ;
+        sep () ;
+        rerec t >] in
+  rerec l
+
+let render_attr_value v : render_t =
+  fun () ->
+  match v with
+    SV v -> render_value v ()
+  | MV l -> render_list ~sep:(fun () -> [< >]) ~null:(fun () -> [< >]) l ()
+
+let rec option_value ctxt env indent key options =
+  match List.assoc_opt key options with
+    (None | Some None) -> (fun _ -> [< >])
+  | Some (Some me) ->
+     match eval_mexpr ctxt env indent me with
+       ((SV v)|(MV[v])) -> render_value v
+     | MV _ -> Fmt.(failwithf "%s: value must be single-value" key)
+
+and eval_mexpr ctxt env indent = function
+    ME_PRIMARY p -> eval_mexpr_primary ctxt env indent p
+
+and eval_mexpr_primary ctxt env indent = function
     ME_ID varname ->
      match lookup_opt ctxt env varname with
        None -> SV NULL
      | Some v -> v
     
+and eval_expr_tag ctxt env indent ((me, options) : expr_tag_t) : attr_val_t =
+  let rv = eval_mexpr ctxt env indent me in
+  match rv with
+  | SV v -> begin
+      match List.assoc_opt "null" options with
+        None -> rv
+      | Some _ ->
+         let null_value = option_value ctxt env indent "null" options in
+         SV (RENDERED (render_nullable ~null:null_value v))
+    end
+ | MV l ->
+     match List.assoc_opt "separator" options with
+       None -> rv
+     | Some _ ->
+        let sep_value = option_value ctxt env indent "separator" options in
+        let null_value = option_value ctxt env indent "null" options in
+        SV (RENDERED (render_list ~sep:sep_value ~null:null_value l))
+
+and eval_literal ctxt env indent = function
+    TEXT s -> RENDERED (fun () -> [< 'LITERAL(TEXT s) >])
+| HORZ_WS s -> RENDERED (fun () -> [< 'LITERAL(HORZ_WS s) >])
+| VERT_WS s -> RENDERED (fun () -> [< 'LITERAL(VERT_WS s) ; 'INDENT indent >])
+
+and eval_element ctxt env indent e : attr_val_t =
+  match e with
+    LIT lit -> SV (eval_literal ctxt env indent lit)
+  | EXPR_TAG et -> eval_expr_tag ctxt env indent et
+  | IFSTAT (me_cond, thenl, thenifl, elsel_opt) ->
+     let rec irec l =
+       match (l,elsel_opt) with
+         ([], None) -> SV NULL
+       | ([], Some l) -> eval_elements ctxt env indent l
+       | (((me_cond,thenl)::l), _) ->
+          if eval_cond ctxt env me_cond then
+            eval_elements ctxt env indent thenl
+          else irec l in
+     irec ((me_cond, thenl)::thenifl)
+
+and eval_elements ctxt env indent l =
+  match l with
+    [h] -> eval_element ctxt env indent h
+  | _ ->
+     SV (RENDERED (fun () ->
+  let rec erec = function
+      [] -> [< >]
+    | h::t -> [< render_attr_value (eval_element ctxt env indent h) () ; erec t >]
+  in erec l))
+
+and eval_cond ctxt env me_cond : bool =
+  match me_cond with
+  COND_ATOM me -> begin
+      match eval_mexpr ctxt env Indent.mt me with
+        SV NULL -> false
+      | SV (BOOL b) -> b
+      | _ -> true
+    end
+| COND_NOT c -> not(eval_cond ctxt env c)
+| COND_AND (c1,c2) ->
+   (eval_cond ctxt env c1) && (eval_cond ctxt env c2)
+| COND_OR (c1,c2) ->
+   (eval_cond ctxt env c1) || (eval_cond ctxt env c2)
 
 end
