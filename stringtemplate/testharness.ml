@@ -15,8 +15,15 @@ type run_t = {
   ; attributes : Environ.frame_t
     [@located_sexp.default []]
     [@located_sexp.sexp_drop_default (=)]
+  ; comments : string
+    [@located_sexp.default ""]
+    [@located_sexp.sexp_drop_default (=)]
+  ; disabled : bool
+    [@located_sexp.default false]
+    [@located_sexp.sexp_drop_default (=)]
+
   }
-[@@deriving show,located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true, strict=true}]
 
 type t =
   {
@@ -41,7 +48,7 @@ type t =
     [@located_sexp.default false]
     [@located_sexp.sexp_drop_default (=)]
   }
-[@@deriving show,located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true, strict=true}]
 
 let of_sexp_string s =
   let open Pa_ppx_located_sexp.Altsexp in
@@ -71,9 +78,9 @@ let verify ~verbose th =
 
 module Multi = struct
 type _t = (string * t) list
-[@@deriving show,located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true, strict=true}]
 type t = _t
-[@@deriving show,located_sexp {exn=true}]
+[@@deriving show,located_sexp {exn=true, strict=true}]
 
 let of_sexp_string s =
   let open Pa_ppx_located_sexp.Altsexp in
@@ -102,6 +109,8 @@ let eg1 = {
              ; attributes = [
                  ("name", SV (STRING "World"))
                ]
+             ; comments = ""
+             ; disabled = false
            }]
   ; indent = false
   ; errors = ""
@@ -119,6 +128,8 @@ let eg2 = {
              ; attributes = [
                  ("name", MV [STRING "World1"; STRING "World2"])
                ]
+             ; comments = ""
+             ; disabled = false
            }]
   ; indent = false
   ; errors = ""
@@ -136,6 +147,8 @@ let eg3 = {
              ; attributes = [
                  ("name", SV NULL)
                ]
+             ; comments = ""
+             ; disabled = false
            }]
   ; indent = false
   ; errors = ""
@@ -153,6 +166,8 @@ let eg4 = {
              ; attributes = [
                  ("name", SV (LIST [STRING "World1"; STRING "World2"]))
                ]
+             ; comments = ""
+             ; disabled = false
            }]
   ; indent = false
   ; errors = ""
@@ -170,6 +185,8 @@ let eg5 = {
              ; attributes = [
                  ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))
                ]
+             ; comments = ""
+             ; disabled = false
            }]
   ; indent = false
   ; errors = ""
@@ -326,5 +343,5 @@ public class %s {
 |}
          th.classname
          stgroup th
-         (list strun) th.runs
+         (list strun) (List.filter (fun r -> not r.disabled) th.runs)
   )

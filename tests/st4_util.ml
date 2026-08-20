@@ -263,12 +263,13 @@ let check ~testname ~output ~errors (th : t) =
     output
   |> [%split {|====|}]
   |> List.filter [%match {|RoNnIe|} / pred s] in
-  if List.length output_l <> List.length th.runs then begin
+  let runs = List.filter (fun r -> not r.disabled) th.runs in
+  if List.length output_l <> List.length runs then begin
       Fmt.(pf stderr "check %s: #outputs (%d) <> #expected outputs (%d)@."
              testname (List.length output_l) (List.length th.runs)) ;
       failwith "output count mismatch"
     end ;
-  let pairs = Std.combine output_l th.runs in
+  let pairs = Std.combine output_l runs in
   let output_mismatch = pairs |> List.mapi (check_run_output ~testname) |> List.exists (fun x -> x) in
   if not (error_ok th errors) then
     Fmt.(pf stderr "st4_util check: test %s: unexpected errors: {bar|%s|bar}@."

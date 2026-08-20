@@ -50,6 +50,8 @@ test(x) ::= %a
                input = (Ploc.dummy, "<test(x)>")
              ; output = stt.expecting
              ; attributes
+             ; comments = ""
+             ; disabled = false
            }]
   }
 
