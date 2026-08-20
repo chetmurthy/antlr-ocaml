@@ -131,7 +131,6 @@ Doit.(t
  |> FIW.render_stream
  |> Std.list_of_stream
  |> String.concat ""
- |> print_string
  ;;
 
 let t = {|
