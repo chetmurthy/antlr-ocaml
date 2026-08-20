@@ -16,8 +16,9 @@ WS : Ws+ -> channel(OFF_CHANNEL);
 
 ATOM : NameChar+ ;
 DQSTRING : DQuoteLiteral ;
-// RAWSTRING : '{' NameChar IdentChar?
-
+RAWSTRING : '{' (NameStartChar NameChar*)? '|' .*?
+            '|' (NameStartChar NameChar*)? '}' { self.canEndRawString() }?
+          ;
 LPAREN : '(' ;
 RPAREN : ')' ;
 

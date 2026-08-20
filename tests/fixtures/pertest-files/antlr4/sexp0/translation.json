@@ -1,0 +1,14 @@
+[
+    ["{ False }",
+     "false"],
+    ["{ True }",
+     "true"],
+    ["{ self.delimiterStart() }",
+     "ActionFuns_sexp.delimiterStart cu"],
+    ["{ self.startRawString() }",
+     "ActionFuns_sexp.startRawString self cu"],
+    ["{ self.canEndRawString() }",
+     "ActionFuns_sexp.canEndRawString self cu"],
+    ["{ self.endRawString() }",
+     "ActionFuns_sexp.endRawString self cu"]
+]
