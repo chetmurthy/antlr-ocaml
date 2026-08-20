@@ -264,7 +264,7 @@ mexpr_basic: [
 
 mexpr_primary: [
     [ id = ID -> ME_ID id
-    | s = STRING -> ME_STRING s
+    | s = STRING -> ME_STRING (snd (St_util.unescape_stg_string (loc, s)))
     | "true" -> ME_BOOL True
     | "false" -> ME_BOOL False
     | "[" ; l = LIST0 (OPT mexpr_no_comma) SEP "," ; "]" -> ME_LIST l

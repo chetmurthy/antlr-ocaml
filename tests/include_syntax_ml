@@ -112,6 +112,7 @@ open St4_util ;;
 #load "st4syntax_test.cmo";;
 open St4syntax_test ;;
 
+open Sttypes2 ;;
 open Eval ;;
 open Value ;;
 open Environ ;;
@@ -123,6 +124,34 @@ let f = ["name",MV [STRING "Foo"; STRING "Bar"]] ;;
 let env = Env.(mt |> push_frame f) ;;
 
 let t = STPa.Template.of_string "<name>";;
+
+Doit.(t
+ |> eval_elements ctxt env Indent.mt
+ |> render_attr_value) ()
+ |> FIW.render_stream
+ |> Std.list_of_stream
+ |> String.concat ""
+ |> print_string
+ ;;
+
+let t = {|
+  <"Hello">, <name; separator="\n">!
+|}
+ |> STPa.Template.of_string
+ |> St_ops.coalesce
+ |> St_ops.insert_indentation
+ ;;
+St_ops.balanced_indentation t ;;
+
+
+let t = {|
+  <"Hello">, <{ <name; separator="\n">}>!
+|}
+ |> STPa.Template.of_string
+ |> St_ops.coalesce
+ |> St_ops.insert_indentation
+ ;;
+St_ops.balanced_indentation t ;;
 
 (*
 ;;; Local Variables: ***

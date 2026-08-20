@@ -41,6 +41,8 @@ and literal_t =
   TEXT of string
 | HORZ_WS of string
 | VERT_WS of string
+| INDENT of string
+| DEDENT
 
 and element_t =
   LIT of literal_t

@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_sexp,pa_ppx.utils *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_sexp,pa_ppx.utils,pa_ppx_regexp,pa_ppx.import *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -151,7 +151,9 @@ end
 module type INDENT = sig
   type t
   val mt : t
-  val add_string : t -> string -> t
+  val add_string : string -> t -> t
+  val to_strings : t -> string list
+  val pop : t -> t
   val emit : Buffer.t -> t -> unit
 end
 
@@ -159,19 +161,20 @@ module Indent : INDENT = struct
   type t = string list
 
   let mt = []
-  let add_string t s = s::t
+  let add_string s t = s::t
+  let pop t = List.tl t
+
+  let to_strings t = List.rev t
 
   let emit b t =
-    let l = List.rev t in
+    let l = to_strings t in
     List.iter (Buffer.add_string b) l
 
 end
 
 module OutputToken = struct
 open Pa_ppx_located_sexp.Sexp
-  type t =
-    LITERAL of literal_t
-  | INDENT of Indent.t
+  type t = [%import: Sttypes2.literal_t]
 
   type render_t = (unit -> t Stream.t)
                     [@printer fun pps x -> Fmt.(pf pps "<rendered>")]
@@ -247,8 +250,48 @@ let push_frame f (env : t) : t = f::env
 
 end
 
-module IW = struct
+module FIW = struct
   type t = {
+      cur_indent : Indent.t
+    ; emitted_indent : bool
+    }
+
+  let mt = {
+      cur_indent = Indent.mt
+    ; emitted_indent = false
+    }
+
+  let emit t = function
+      TEXT s when not t.emitted_indent ->
+      ({(t) with emitted_indent = true},
+       (Indent.to_strings t.cur_indent)@[s])
+    | TEXT s -> (t, [s])
+    | HORZ_WS s ->
+       (* should not be immediately after a VWS, so a TEXT should have preceded it *)
+       assert t.emitted_indent ;
+       (t, [s])
+    | VERT_WS s ->
+       ({(t) with emitted_indent = false}, [s])
+    | INDENT s ->
+       ({(t) with cur_indent = Indent.add_string s t.cur_indent},
+        [])
+    | DEDENT ->
+       ({(t) with cur_indent = Indent.pop t.cur_indent},
+       [])
+
+let render_stream ?(init=mt) strm =
+  let rec rerec t = parser
+    [< 'lit ; strm >] ->
+      let (t, strs) = emit t lit in
+      [< Std.stream_of_list strs ; rerec t strm >]
+  | [< >] -> [< >]
+  in rerec init strm
+
+end
+module FunctionalIndentWriter = FIW
+
+module IW = struct
+  type _t = {
       mutable cur_indent : Indent.t
     ; mutable emitted_text : bool
     ; buf : Buffer.t
@@ -275,7 +318,7 @@ module IW = struct
        Buffer.add_string t.buf s
 
     | HORZ_WS s ->
-       t.cur_indent <- Indent.add_string t.cur_indent s
+       t.cur_indent <- Indent.add_string  s t.cur_indent
 
     | VERT_WS s ->
        Buffer.add_string t.buf s
@@ -305,9 +348,9 @@ open OutputToken
 let render_value v : render_t =
   fun () ->
   match v with
-    STRING s -> [< 'LITERAL (TEXT s) >]
-  | BOOL b -> [< 'LITERAL (TEXT (if b then "true" else "false")) >]
-  | INT n -> [< 'LITERAL (TEXT (string_of_int n)) >]
+    STRING s -> [< '(TEXT s) >]
+  | BOOL b -> [< '(TEXT (if b then "true" else "false")) >]
+  | INT n -> [< '(TEXT (string_of_int n)) >]
   | DICT _ -> failwith "render_value: DICT unimplemented"
   | LIST  _ -> failwith "render_value: LIST unimplemented"
   | NULL -> [< >]
@@ -347,11 +390,33 @@ and eval_mexpr ctxt env indent = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env indent p
 
 and eval_mexpr_primary ctxt env indent = function
-    ME_ID varname ->
-     match lookup_opt ctxt env varname with
-       None -> SV NULL
-     | Some v -> v
-    
+    ME_ID varname -> begin
+      match lookup_opt ctxt env varname with
+        None -> SV NULL
+      | Some v -> v
+    end
+  | ME_STRING s ->
+     let parts = [%split {|([ \t]+)|([\r\n\x0c]+)|} / strings (1,2) pcre2] s in
+     let lits =
+       parts
+       |> List.map (function
+                `Text s -> (TEXT s)
+              | `Delim (None, Some vws) -> (VERT_WS vws)
+              | `Delim (Some hws, None) ->  (HORZ_WS hws)
+              | _ -> assert false) in
+     SV (RENDERED (fun () -> Std.stream_of_list lits))
+
+  | ME_BOOL b -> SV (BOOL b)
+  | ME_LIST l ->
+     let eval1 = function
+         None -> [NULL]
+       | Some me -> begin
+           match eval_mexpr ctxt env indent me with
+             SV v -> [v]
+           | MV l -> l
+         end in
+     MV (List.concat_map eval1 l)
+
 and eval_expr_tag ctxt env indent ((me, options) : expr_tag_t) : attr_val_t =
   let rv = eval_mexpr ctxt env indent me in
   match rv with
@@ -370,10 +435,8 @@ and eval_expr_tag ctxt env indent ((me, options) : expr_tag_t) : attr_val_t =
         let null_value = option_value ctxt env indent "null" options in
         SV (RENDERED (render_list ~sep:sep_value ~null:null_value l))
 
-and eval_literal ctxt env indent = function
-    TEXT s -> RENDERED (fun () -> [< 'LITERAL(TEXT s) >])
-| HORZ_WS s -> RENDERED (fun () -> [< 'LITERAL(HORZ_WS s) >])
-| VERT_WS s -> RENDERED (fun () -> [< 'LITERAL(VERT_WS s) ; 'INDENT indent >])
+and eval_literal ctxt env indent lit =
+  RENDERED (fun () -> [< 'lit >])
 
 and eval_element ctxt env indent e : attr_val_t =
   match e with

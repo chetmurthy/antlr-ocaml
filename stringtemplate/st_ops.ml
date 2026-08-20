@@ -100,3 +100,77 @@ let removews t =
     removews1 t in
   let dt = { (dt) with migrate_elements_t } in
   dt.migrate_elements_t dt t
+
+
+(** insert_indentation0 takes an [element list] and replaces HORZ_WS
+    immediately following VERT_WS with INDENT; if it does so, then
+    before the next VERT_WS, it inserts a DEDENT.  There can only be
+    one HORZ_WS, so this will guarantee balance (one INDENT, one
+    DEDENT).
+
+    If there is no last VERT_WS, it inserts the DEDENT at the end.
+ *)
+
+let insert_indentation0 t =
+  let open Sttypes2 in
+  let rec balrec indented acc = function
+      (LIT(VERT_WS _))::_ as l when indented ->
+       let acc = (LIT DEDENT)::acc in
+       balrec false acc l
+
+    | (LIT(VERT_WS _) as e1)::(LIT(HORZ_WS s))::tl when not indented ->
+      let acc = (e1::acc) in
+      let acc = (LIT(INDENT s))::acc in
+      balrec true acc tl
+
+    | (LIT(VERT_WS _) as e1)::tl when not indented ->
+      let acc = (e1::acc) in
+      balrec false acc tl
+
+    | [] when indented ->
+       let acc = (LIT DEDENT)::acc in
+       List.rev acc
+
+    | [] -> List.rev acc
+
+    | h::tl -> balrec indented (h::acc) tl
+
+  in
+  let acc = [] in
+  match t with
+    (LIT(HORZ_WS s))::tl ->
+    let acc = (LIT(INDENT s))::acc in
+    balrec true acc tl
+
+  | _ -> balrec false [] t
+
+let insert_indentation t =
+  let dt = Migrate.make_dt() in
+  let old_migrate_elements_t = dt.migrate_elements_t in
+  let migrate_elements_t __dt__ t =
+    let t = old_migrate_elements_t __dt__ t in
+    insert_indentation0 t in
+  let dt = { (dt) with migrate_elements_t } in
+  dt.migrate_elements_t dt t
+
+let balanced_indentation0 t =
+  let indents = List.filter (function LIT (INDENT _) -> true | _ -> false) t in
+  let dedents = List.filter (function LIT DEDENT -> true | _ -> false) t in
+  List.length indents = List.length dedents
+
+let balanced_indentation t =
+  let exception Caught in
+  let dt = Migrate.make_dt() in
+  let old_migrate_elements_t = dt.migrate_elements_t in
+  let migrate_elements_t __dt__ t =
+    let t = old_migrate_elements_t __dt__ t in
+    if not (balanced_indentation0 t) then
+      raise Caught ;
+    t
+  in
+  let dt = { (dt) with migrate_elements_t } in
+  try
+    dt.migrate_elements_t dt t ;
+    true
+  with Caught -> false
+
