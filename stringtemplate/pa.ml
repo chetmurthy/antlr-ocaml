@@ -6,6 +6,7 @@ open Antlr ;
 open Sttypes2 ;
 open Stg_types.Raw ;
 open Camlp5_adapter ;
+open Lexers ;
 
 module Pa(Lex : Exec.FULL_LEXER)(C5Lex : CAMLP5LEXER) = struct
 

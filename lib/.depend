@@ -1,4 +1,4 @@
-range.cmo util.cmo intervalSet.cmo interp.cmo interp_syntax.cmo token.cmo types.cmo mimick.cmo tracelog.cmo atn.cmo visualization.cmo exec.cmo simulate.cmo range.cmi util.cmi intervalSet.cmi interp.cmi interp_syntax.cmi token.cmi types.cmi mimick.cmi tracelog.cmi atn.cmi visualization.cmi exec.cmi simulate.cmi range.cmx util.cmx intervalSet.cmx interp.cmx interp_syntax.cmx token.cmx types.cmx mimick.cmx tracelog.cmx atn.cmx visualization.cmx exec.cmx simulate.cmx: 
+range.cmo util.cmo intervalSet.cmo interp.cmo interp_syntax.cmo token.cmo types.cmo mimick.cmo tracelog.cmo atn.cmo visualization.cmo exec.cmo camlp5_adapter.cmo simulate.cmo range.cmi util.cmi intervalSet.cmi interp.cmi interp_syntax.cmi token.cmi types.cmi mimick.cmi tracelog.cmi atn.cmi visualization.cmi exec.cmi camlp5_adapter.cmi simulate.cmi range.cmx util.cmx intervalSet.cmx interp.cmx interp_syntax.cmx token.cmx types.cmx mimick.cmx tracelog.cmx atn.cmx visualization.cmx exec.cmx camlp5_adapter.cmx simulate.cmx: 
 range.cmo :
 range.cmx :
 util.cmo : \
@@ -73,6 +73,16 @@ exec.cmx : \
     interp_syntax.cmx \
     interp.cmx \
     atn.cmx
+camlp5_adapter.cmo : \
+    util.cmo \
+    tracelog.cmo \
+    interp.cmo \
+    exec.cmo
+camlp5_adapter.cmx : \
+    util.cmx \
+    tracelog.cmx \
+    interp.cmx \
+    exec.cmx
 simulate.cmo : \
     tracelog.cmo \
     mimick.cmo \

@@ -1,7 +1,35 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
 
 open Pa_ppx_utils
-open Antlr
+
+type raw = Exec.T.token_t
+[@@deriving show { with_path = false }]
+
+type ploc_t = Ploc.t
+let pp_ploc_t pps loc =
+  let intloc = Ploc.Internal.of_t loc in
+  Util.PlocInternal.pp pps intloc
+
+type located_pattern = (string * string) * ploc_t
+[@@deriving show { with_path = false }]
+
+type triple = raw * located_pattern
+[@@deriving show { with_path = false }]
+
+let raw_is_EOF t = Exec.(t.T.type_ = Some C._EOF)
+let triple_is_EOI (_,(p,_)) = fst p = "EOI"
+
+let triple2raw (raw, _) = raw
+let triple2pattern (_,(pat,_)) = pat
+let triple2ploc (_,(_,ploc)) = ploc
+
+type 'a located = (Ploc.t * 'a)
+let located_sexp_of_located subf (_,x) = subf x
+let located_of_located_sexp subf se =
+  let open Pa_ppx_located_sexp in
+  (Sexp.loc_of_sexp se, subf se)
+let pp_located subf pps (_,x) = subf pps x
+
 
 module type ACTION_FUNS = sig
   val reset : unit -> unit
@@ -21,14 +49,14 @@ module type CAMLP5LEXER = sig
   val rename :
     string option * string option -> string option * string option
   val names : (string option * string option) array
-  val pattern_of_token : Antlr.Exec.T.token_t -> Plexing.pattern
+  val pattern_of_token : Exec.T.token_t -> Plexing.pattern
   val located_pattern_of_token :
-    startloc:Ploc.t -> Antlr.Exec.T.token_t -> Plexing.pattern * Ploc.t
+    startloc:Ploc.t -> Exec.T.token_t -> Plexing.pattern * Ploc.t
   val start_location : Ploc.t ref
   val raw_lexer :
-    ?all_channels:bool -> char Stream.t -> unit -> Antlr.Exec.T.t
+    ?all_channels:bool -> char Stream.t -> unit -> Exec.T.t
   val raw_modes_lexer :
-    char Stream.t -> unit -> (string list * Antlr.Exec.T.t * string list)
+    char Stream.t -> unit -> (string list * Exec.T.t * string list)
   val located_pattern_lexer :
     ?all_channels:bool ->
     char Stream.t -> unit -> Plexing.pattern * Ploc.t
@@ -36,14 +64,14 @@ module type CAMLP5LEXER = sig
     char Stream.t -> unit -> (string list * Plexing.pattern * string list)
   val triple_lexer :
     ?all_channels:bool ->
-    char Stream.t -> unit -> Antlr.Exec.T.t * (Plexing.pattern * Ploc.t)
+    char Stream.t -> unit -> Exec.T.t * (Plexing.pattern * Ploc.t)
   val stream_of_lexer : (unit -> 'a) -> 'a Stream.t
   val lexer :
     char Stream.t -> Plexing.pattern Stream.t * Plexing.Locations.t
   val raw_of_string :
-    ?all_channels:bool -> string -> Antlr.Exec.T.t Stream.t
+    ?all_channels:bool -> string -> Exec.T.t Stream.t
   val raw_modes_of_string :
-    string -> (string list * Antlr.Exec.T.t * string list) Stream.t
+    string -> (string list * Exec.T.t * string list) Stream.t
   val located_patterns_of_string :
     ?startloc:Ploc.t ->
     ?all_channels:bool -> string -> (Plexing.pattern * Ploc.t) Stream.t
@@ -55,18 +83,17 @@ module type CAMLP5LEXER = sig
   val triple_of_string :
     ?startloc:Ploc.t ->
     ?all_channels:bool ->
-    string -> (Antlr.Exec.T.t * (Plexing.pattern * Ploc.t)) Stream.t
+    string -> (Exec.T.t * (Plexing.pattern * Ploc.t)) Stream.t
   val triple_of_here_string :
     ?all_channels:bool ->
     Lexing.position * string ->
-    (Antlr.Exec.T.t * (Plexing.pattern * Ploc.t)) Stream.t
+    (Exec.T.t * (Plexing.pattern * Ploc.t)) Stream.t
   val watch_mode : (string * int * int list) -> unit
   val watch_mode0 : (string * string * string list) -> unit
 end
 
 
 let ploc_of_token ~startloc t =
-  let open Antlr in
   let open Exec in
   let open T in
   let open Std in
@@ -116,7 +143,6 @@ let rename x =
   | Some y -> y
 
 let names =
-  let open Antlr in
   let symbolic_names = (fst Lex.full_atn).Interp.Raw.token_symbolic_names in
   let literal_names = (fst Lex.full_atn).Interp.Raw.token_literal_names in
   assert (Array.length symbolic_names = Array.length literal_names) ;
@@ -124,7 +150,6 @@ let names =
   Array.map rename names
 
 let pattern_of_token self : Plexing.pattern =
-  let open Antlr in
   match self.Exec.T.type_ with
     None -> assert false
   | Some (-1) -> ("EOI","")
@@ -159,7 +184,6 @@ let located_pattern_of_token ~startloc self : (Plexing.pattern * Ploc.t) =
 let start_location = ref Ploc.dummy
 
 let raw_lexer ?(all_channels=false) cs =
-  let open Antlr in
   let txt = string_of_char_stream cs in
   let input : Exec.IS.t =
     Tracelog.with_disabled (fun () ->
@@ -180,7 +204,6 @@ let raw_lexer ?(all_channels=false) cs =
   next_token
 
 let raw_modes_lexer cs =
-  let open Antlr in
   let txt = string_of_char_stream cs in
   let input : Exec.IS.t =
     Tracelog.with_disabled (fun () ->
@@ -233,10 +256,10 @@ let raw_of_string ?all_channels s =
   |> Stream.of_string
   |> raw_lexer ?all_channels
   |> stream_of_lexer
-  |> Util.truncate_stream St_util.raw_is_EOF
+  |> Util.truncate_stream raw_is_EOF
 
 let raw_modes_is_EOF (_,t,_) =
-  St_util.raw_is_EOF t
+  raw_is_EOF t
 
 let raw_modes_of_string s =
   s
@@ -245,8 +268,17 @@ let raw_modes_of_string s =
   |> stream_of_lexer
   |> Util.truncate_stream raw_modes_is_EOF
 
+
+let with_location start_location ?startloc f arg =
+  let startloc = match startloc with None -> Ploc.dummy | Some x -> x in
+  let old_start_location = !start_location in
+  start_location := startloc ;
+  Util.finally f
+    (fun _ _ -> start_location := old_start_location)
+    arg
+
 let located_patterns_of_string ?startloc ?all_channels s =
-  St_util.with_location start_location ?startloc (fun s ->
+  with_location start_location ?startloc (fun s ->
       s
       |> Stream.of_string
       |> located_pattern_lexer ?all_channels
@@ -268,12 +300,12 @@ let located_patterns_of_here_string ?all_channels (pos,s)  =
   located_patterns_of_string  ~startloc ?all_channels s
 
 let triple_of_string ?startloc ?all_channels s =
-  St_util.with_location start_location ?startloc (fun s ->
+  with_location start_location ?startloc (fun s ->
       s
       |> Stream.of_string
       |> triple_lexer ?all_channels
       |> stream_of_lexer
-      |> Util.truncate_stream St_util.triple_is_EOI
+      |> Util.truncate_stream triple_is_EOI
     ) s
 
 let triple_of_here_string ?all_channels (pos,s)  =
@@ -281,87 +313,3 @@ let triple_of_here_string ?all_channels (pos,s)  =
   triple_of_string  ~startloc ?all_channels s
 
 end
-
-module STRenaming = struct
-let renaming = [
-    ((Some "AND", None), (Some "AND",Some "&&"))
-  ; ((Some "ASSIGN", None), (Some "ASSIGN", Some "="))
-  ; ((Some "AT", None), (Some "AT", Some "@"))
-  ; ((Some "BANG", None), (Some "BANG",Some "!"))
-  ; ((Some "COLON", None), (Some "COLON",Some ":"))
-  ; ((Some "COMMA", None), (Some "COMMA",Some ","))
-  ; ((Some "DOT", None), (Some "DOT",Some "."))
-  ; ((Some "ELLIPSIS", None), (Some "ELLIPSIS", Some "..."))
-  ; ((Some "EQUALS", None), (Some "EQUALS", Some "="))
-  ; ((Some "FALSE", None), (Some "FALSE", Some "false"))
-  ; ((Some "LBRACE", None), (Some "LBRACE",Some "{"))
-  ; ((Some "LBRACK", None), (Some "LBRACK",Some "["))
-  ; ((Some "LDELIM", None), (Some "LDELIM",Some "<"))
-  ; ((Some "LPAREN", None), (Some "LPAREN",Some "("))
-  ; ((Some "OR", None), (Some "OR",Some "||"))
-  ; ((Some "PIPE", None), (Some "PIPE",Some "|"))
-  ; ((Some "RBRACE", None), (Some "RBRACE",Some "}"))
-  ; ((Some "RBRACK", None), (Some "RBRACK",Some "]"))
-  ; ((Some "RDELIM", None), (Some "RDELIM",Some ">"))
-  ; ((Some "RPAREN", None), (Some "RPAREN",Some ")"))
-  ; ((Some "SEMI", None), (Some "SEMI",Some ";"))
-  ; ((Some "SLASH", None), (Some "SLASH",Some "/"))
-  ; ((Some "TMPL_ASSIGN", None), (Some "TMPL_ASSIGN", Some "::="))
-  ; ((Some "TRUE", None), (Some "TRUE", Some "true"))
-  ]
-end
-
-module ST0AfterInit = struct
-  module Lex = ST0Lexer.Full
-  let after_init lex =
-    (*
-    Exec.(R.mode lex.L.recog L_st_constants.Modes._Outside) ;
- *)
-    ()
-end
-module ST1AfterInit = struct
-  module Lex = ST1Lexer.Full
-  let after_init lex =
-    (*
-    Exec.(R.mode lex.L.recog L_st_constants.Modes._Outside) ;
- *)
-    ()
-end
-module ST2AfterInit = struct
-  module Lex = ST2Lexer.Full
-  let after_init lex =
-    Exec.(R.mode lex.L.recog ST2Lexer_constants.Modes._Outside) ;
-    ()
-end
-module ST0 = Make(ActionFuns_ST0)(STRenaming)(ST0Lexer.Full)(ST0AfterInit)
-module ST1 = Make(ActionFuns_ST1)(STRenaming)(ST1Lexer.Full)(ST1AfterInit)
-module ST2 = Make(ActionFuns_ST2)(STRenaming)(ST2Lexer.Full)(ST2AfterInit)
-
-module ActionFuns_STG0 = struct
-let reset () = ()
-end
-
-module STG0AfterInit = struct
-  module Lex = STG0Lexer.Full
-  let after_init lex = ()
-end
-
-module STG0 = Make(ActionFuns_STG0)(STRenaming)(STG0Lexer.Full)(STG0AfterInit)
-
-module STG2_ST_AfterInit = struct
-  module Lex = STG2Lexer.Full
-  let after_init lex =
-    Exec.(R.mode lex.L.recog STG2Lexer_constants.Modes._Outside) ;
-    ()
-end
-
-module STG2_ST = Make(ActionFuns_STG2)(STRenaming)(STG2Lexer.Full)(STG2_ST_AfterInit)
-
-module STG2_STG_AfterInit = struct
-  module Lex = STG2Lexer.Full
-  let after_init lex =
-    Exec.(R.mode lex.L.recog STG2Lexer_constants.Modes._Group) ;
-    ()
-end
-
-module STG2_STG = Make(ActionFuns_STG2)(STRenaming)(STG2Lexer.Full)(STG2_STG_AfterInit)

@@ -17,7 +17,8 @@ ML=\
 	types.ml mimick.ml \
 	tracelog.ml \
 	atn.ml visualization.ml \
-	exec.ml simulate.ml
+	exec.ml camlp5_adapter.ml \
+	simulate.ml
 
 TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)

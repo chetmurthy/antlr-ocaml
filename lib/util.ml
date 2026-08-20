@@ -399,5 +399,3 @@ let bsearch arr key =
         else brec mid hi
     in
     brec 0 (arrlen - 1)
-
-    

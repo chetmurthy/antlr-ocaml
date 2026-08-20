@@ -19,7 +19,7 @@ ML=\
 	ActionFuns_ST0.ml ActionFuns_ST1.ml ActionFuns_ST2.ml ActionFuns_STG2.ml \
 	ST0Lexer.ml ST1Lexer.ml ST2Lexer.ml STG0Lexer.ml STG2Lexer.ml \
 	st_types.ml sttypes2.ml stg_types.ml \
-	camlp5_adapter.ml \
+	lexers.ml \
 	pa.ml \
 	st_ops.ml \
 	eval.ml \
