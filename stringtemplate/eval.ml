@@ -102,6 +102,17 @@ module Intern = struct
 
 end
 
+module Group = struct
+  open Coll
+  open Cooked
+  type t = {
+      dicts : (string, dict_t) MHM.t
+    ; templates : (string list, template_def_t) MHM.t
+    ; aliases : (string list, string list) MHM.t
+    }
+end
+
+
 module type INDENT = sig
   type t
   val mt : t
