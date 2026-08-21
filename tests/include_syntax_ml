@@ -112,7 +112,14 @@ open St4_util ;;
 #load "st4syntax_test.cmo";;
 open St4syntax_test ;;
 
-
+let here_filecache = [
+      ("foo.st",[%here_string {|foo() ::= "foo"|}])
+    ] ;;
+#trace Eval.Group.Int.load1 ;;
+#trace STGPa.Group.of_located_string ;;
+#trace Eval.Group.check_st_constraint ;;
+[%here_string {| import "foo" |}]
+                            |> Eval.Group.of_here_string ~stg:true ~here_filecache ;;
 
 
 (*

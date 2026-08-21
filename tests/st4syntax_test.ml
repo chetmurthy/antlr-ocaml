@@ -105,12 +105,12 @@ stat(name,value={<x>}) ::= "x=<value>; // <name>"
 
 let test_load_stg ctxt =
   let open ST4 in
-  let filecache = [
+  let here_filecache = [
       ("foo.st",[%here_string {|foo() ::= "foo"|}])
     ] in
   ()
   ; assert_equal () (ignore([%here_string {| import "foo" |}]
-                            |> Eval.Group.of_here_string ~filecache))
+                            |> Eval.Group.of_here_string ~stg:true ~here_filecache))
   ; assert_equal () (ignore([%here_string {| 
 cppTypeInitMap ::= [
     "int":"0",

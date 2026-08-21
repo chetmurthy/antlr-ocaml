@@ -67,13 +67,12 @@ let verify ~verbose th =
   List.map (fun r ->
       if verbose then Fmt.(pf stderr "\t[input %a]@." Dump.string (snd r.input)) ;
       STG2_STPa.Template.of_located_string r.input) th.runs ;
-  Option.map (fun (fname,txt) ->
-      if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      Eval.Group.of_located_string txt) th.groupfile ;
-  List.map (fun (fname,txt) ->
-      if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      Eval.Group.of_located_string txt
-    ) th.groupfiles ;
+  let ploc_filecache =
+    (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
+  ploc_filecache
+  |> List.iter (fun (file,_) ->
+      if verbose then Fmt.(pf stderr "\t[groupfile %s]@." file) ;
+         ignore (Eval.Group.load ~ploc_filecache file : Eval.Group.t)) ;
   ()
 
 module Multi = struct

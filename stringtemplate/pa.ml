@@ -347,9 +347,9 @@ group: [ [
       header = OPT [ h = header -> h ] ;
       dopt = OPT [ d = delimiters -> d ] ;
       iopt = OPT [ i = imports -> i ] ;
-      defs = LIST0 [ t = template_ -> t | d = dict_ -> GROUPDEF_DICT d ] ->
+      defs = LIST0 [ t = template_ -> t | d = dict_ -> GROUPDEF_DICT loc d ] ->
       let imports = match iopt with [ None ->  [] | Some l -> l ] in
-      { header = header ; imports = imports ; defs = defs }
+      { loc = loc ; filename = Ploc.file_name loc ; header = header ; imports = imports ; defs = defs }
   ] ]
   ;
 
@@ -367,7 +367,7 @@ delimiters: [ [
   ;
 
 imports: [ [
-      l = LIST1 [ "import" ; s = STRING -> s ] -> l
+      l = LIST1 [ "import" ; s = STRING -> snd (St_util.unescape_stg_string (loc, s)) ] -> l
   ] ]
   ;
 
@@ -376,8 +376,8 @@ template_: [ [
       failwith "template_: region reference unimplemented"
     | check_id_lparen ;
       name = ID ; "(" ; l = formal_args ; ")" ; "::=" ;
-      d = template_def_rhs -> GROUPDEF_TEMPLATE_DEF name l d
-    | name = ID ; "::=" ; rhs = ID -> GROUPDEF_TEMPLATE_ALIAS name rhs
+      d = template_def_rhs -> GROUPDEF_TEMPLATE_DEF loc name l d
+    | name = ID ; "::=" ; rhs = ID -> GROUPDEF_TEMPLATE_ALIAS loc name rhs
   ] ]
   ;
 template_def_rhs: [ [

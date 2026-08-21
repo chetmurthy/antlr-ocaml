@@ -3,6 +3,8 @@
 open Pa_ppx_base
 open Ppxutil
 open Pa_ppx_utils
+
+open Antlr
 open Sttypes2
 open Stg_types
 
@@ -32,7 +34,7 @@ module Intern = struct
     | KEYVAL_MT_DICT -> DVAL_VALUE VALUE_MT_DICT
     | KEYVAL_KEY -> DVAL_KEY
 
-  let dict (name,(kv,dflt_opt)) : string * Cooked.dict_t =
+  let dict loc (name,(kv,dflt_opt)) : string * Cooked.dict_t =
     let kv =
       kv
       |> List.map (fun (k, v) ->
@@ -40,9 +42,9 @@ module Intern = struct
               dict_value v)) in
     let kv = MHM.ofList 23 kv in
     let default = Option.map dict_value dflt_opt in
-    (name, { kv ; default })
+    (name, { loc ; kv ; default })
 
-  let template_def (name, formals,  rhs) : string * Cooked.template_def_t =
+  let template_def loc (name, formals,  rhs) : string * Cooked.template_def_t =
     let open Raw in
     let formals =
       formals
@@ -90,7 +92,8 @@ module Intern = struct
          |> St_ops.coalesce
     in
     let t = {
-        name
+        loc
+      ; name
       ; formals
       ; body
       } in
@@ -103,8 +106,8 @@ module Group = struct
   open Cooked
   type t = {
       dicts : (string, dict_t) MHM.t
-    ; templates : (string list, template_def_t) MHM.t
-    ; aliases : (string list, string list) MHM.t
+    ; templates : (string, template_def_t) MHM.t
+    ; aliases : (string, string) MHM.t
     }
 
   let intern_group raw =
@@ -116,14 +119,14 @@ module Group = struct
     let rawaliases =
       raw.defs |> List.filter (function GROUPDEF_TEMPLATE_ALIAS _ -> true | _ -> false) in
 
-    let defs = List.map (function GROUPDEF_TEMPLATE_DEF (name, formals, rhs)
-                                  -> Intern.template_def (name, formals, rhs))
+    let defs = List.map (function GROUPDEF_TEMPLATE_DEF (loc, name, formals, rhs)
+                                  -> Intern.template_def loc (name, formals, rhs))
                  rawdefs in
-    let aliases = List.map (function GROUPDEF_TEMPLATE_ALIAS (name, alias)
+    let aliases = List.map (function GROUPDEF_TEMPLATE_ALIAS (loc, name, alias)
                                   -> (name, alias))
                     rawaliases in
-    let dicts = List.map (function GROUPDEF_DICT d
-                                   -> Intern.dict d)
+    let dicts = List.map (function GROUPDEF_DICT (loc, d)
+                                   -> Intern.dict loc d)
                   rawdicts in
     (defs, aliases, dicts)
 
@@ -152,30 +155,101 @@ module Group = struct
     let dicts = List.fold_left upsert imp_dicts dicts in
     (defs, aliases, dicts)
 
-  let rec of_located_string ?(filecache=[]) locs =
+  let check_st_constraint ~stg raw =
+    let open Raw in
+    if not stg then begin
+        if not Fpath.(raw.filename |> v |> has_ext "st") then
+          Fmt.(raise_failwith raw.loc "check_st_constraint: internal error: was not a .st file even though that's what we expected: %a@." raw.filename) ;
+        let basename = Fpath.(raw.filename |> v |> rem_ext |> basename) in
+        if raw.imports <> [] then
+          Fmt.(raise_failwith raw.loc "check_st_constraint: .st file cannot have imports") ;
+        begin
+          match raw.defs with
+            (_::_::_)|[] ->
+             Fmt.(raise_failwith raw.loc "check_st_constraint: .st file must contain exact ONE entry") ;
+          | [(GROUPDEF_TEMPLATE_DEF (_, tname, _, _)
+              | GROUPDEF_TEMPLATE_ALIAS (_, tname, _))] when tname = basename -> ()
+          | [(GROUPDEF_TEMPLATE_DEF (_, tname, _, _)
+              | GROUPDEF_TEMPLATE_ALIAS (_, tname, _))] ->
+             Fmt.(raise_failwith raw.loc "check_st_constraint: .st file must contain exact ONE template-def or alias with same name (%a) as file's basename (%a)"
+                    Dump.string tname Dump.string basename)
+          | [GROUPDEF_DICT _] ->
+             Fmt.(raise_failwith raw.loc "check_st_constraint: .st file cannot contain dict") ;
+        end
+      end
+
+module Int = struct
+  let rec of_located_string ?(filecache=[]) ~stg locs =
     let raw = STGPa.Group.of_located_string locs in
-    let imported = read_imports ~filecache raw.Raw.imports in
+    check_st_constraint ~stg raw ;
+    let imported = read_imports ~filecache raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and of_here_string ?(filecache=[]) locs =
+  and of_here_string ?(filecache=[]) ~stg locs =
     let raw = STGPa.Group.of_here_string locs in
-    let imported = read_imports ~filecache raw.Raw.imports in
+    check_st_constraint ~stg raw ;
+    let imported = read_imports ~filecache raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
   and load ?(filecache=[]) ~file =
+    let file_exists file =
+      List.mem_assoc file filecache ||
+        file |> Fpath.v |> Bos.OS.File.exists |> Rresult.R.failwith_error_msg in
+    let (file,stg) =
+      if Fpath.(file |> v |> has_ext "st") && file_exists file then
+        (file, false)
+      else if Fpath.(file |> v |> has_ext "stg") && file_exists file then
+        (file, true)
+      else if file_exists (file^".st") then
+        (file^".st",false)
+      else if file_exists (file^".stg") then
+        (file^".stg",true)
+      else Fmt.(failwithf "Group.load: no such file %a@." Dump.string file) in
+    load1 ~filecache ~stg ~file
+    
+  and load1 ?(filecache=[]) ~stg ~file =
     let raw =
       match List.assoc_opt file filecache with
-        Some x -> STGPa.Group.of_here_string x
+        Some x ->
+         let g = STGPa.Group.of_located_string x in
+         { (g) with filename = file }
       | None -> STGPa.Group.load ~file in
-    let imported = read_imports ~filecache raw.Raw.imports in
+    check_st_constraint ~stg raw ;
+    let imported = read_imports ~filecache raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and read_imports ?(filecache=[]) files =
+  and read_imports ?(filecache=[]) raw =
+    let files = raw.Raw.imports in
     let imported_l = List.map (fun file -> load ~filecache ~file) files in
     List.fold_left merge1 ([], [], []) imported_l
+
+let mk_filecache here_filecache ploc_filecache =
+  (List.map (fun (fname, (pos, txt)) -> (fname, (Util.ploc_of_position pos, txt))) here_filecache)
+  @ploc_filecache
+
+let _mk (defs, aliases, dicts) =
+  {
+    dicts = MHM.ofList 23 dicts
+  ; templates = MHM.ofList 23 defs
+  ; aliases = MHM.ofList 23 aliases
+  }
+
+end
+
+let load ?(here_filecache=[]) ?(ploc_filecache=[]) file =
+  let filecache = Int.mk_filecache here_filecache ploc_filecache in
+  Int._mk (Int.load ~filecache ~file)
+
+let of_located_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
+  let filecache = Int.mk_filecache here_filecache ploc_filecache in
+  Int._mk (Int.of_located_string ~filecache ~stg locs)
+
+let of_here_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
+  let filecache = Int.mk_filecache here_filecache ploc_filecache in
+  Int._mk (Int.of_here_string ~filecache ~stg locs)
 
 end
 

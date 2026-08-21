@@ -33,9 +33,9 @@ type dict_t =
   string * ((string located * key_value_t) list * key_value_t option)
 
 type group_def_t =
-  GROUPDEF_TEMPLATE_DEF of string * formal_arg_t list * template_rhs_t
-| GROUPDEF_TEMPLATE_ALIAS of string * string
-| GROUPDEF_DICT of dict_t
+  GROUPDEF_TEMPLATE_DEF of Ploc.t * string * formal_arg_t list * template_rhs_t
+| GROUPDEF_TEMPLATE_ALIAS of Ploc.t * string * string
+| GROUPDEF_DICT of Ploc.t * dict_t
 
 type header_t = {
     name : string * string option
@@ -43,7 +43,9 @@ type header_t = {
   }
 
 type group_t = {
-    header : header_t option
+    loc : Ploc.t
+  ; filename : string
+  ; header : header_t option
   ; imports : string list
   ; defs : group_def_t list
   }
@@ -59,7 +61,8 @@ type value_t =
 
 type template_def_t =
   {
-    name : string
+    loc : Ploc.t
+  ; name : string
   ; formals : (string * value_t option) list
   ; body : Sttypes2.template_t
   }
@@ -71,7 +74,8 @@ type dict_val_t =
 
 type dict_t =
   {
-    kv : (string, dict_val_t) MHM.t
+    loc : Ploc.t
+  ; kv : (string, dict_val_t) MHM.t
   ; default : dict_val_t option
   }
 
