@@ -94,6 +94,15 @@ let coalesce_subtemplate t =
   let dt = { (dt) with migrate_elements_t } in
   dt.migrate_subtemplate_t dt t
 
+let coalesce_mexpr t =
+  let dt = Migrate.make_dt() in
+  let old_migrate_elements_t = dt.migrate_elements_t in
+  let migrate_elements_t __dt__ t =
+    let t = old_migrate_elements_t __dt__ t in
+    coalesce1 t in
+  let dt = { (dt) with migrate_elements_t } in
+  dt.migrate_mexpr_t dt t
+
 let removews1 (l : template_t) : template_t =
   l
   |> List.filter_map
@@ -170,6 +179,15 @@ let insert_indentation_subtemplate t =
     insert_indentation0 t in
   let dt = { (dt) with migrate_elements_t } in
   dt.migrate_subtemplate_t dt t
+
+let insert_indentation_mexpr t =
+  let dt = Migrate.make_dt() in
+  let old_migrate_elements_t = dt.migrate_elements_t in
+  let migrate_elements_t __dt__ t =
+    let t = old_migrate_elements_t __dt__ t in
+    insert_indentation0 t in
+  let dt = { (dt) with migrate_elements_t } in
+  dt.migrate_mexpr_t dt t
 
 let balanced_indentation0 t =
   let indents = List.filter (function LIT (INDENT _) -> true | _ -> false) t in

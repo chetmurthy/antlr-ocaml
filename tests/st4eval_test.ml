@@ -7,6 +7,7 @@ open Pa_ppx_utils
 open Antlr
 open Antlrtest
 open ST4
+open Sttypes2
 open Eval
 
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
@@ -37,17 +38,36 @@ let steval env t =
   |> Std.list_of_stream
   |> String.concat ""
 
+let test_environ ctxt =
+  let open ST4 in
+  let open Pa_ppx_located_sexp in
+  assert_equal ~printer:Environ.show_attr_val_t
+    (Environ.MEXPR ([%here_string "#inside x"]
+     |> STPa.Mexpr.of_here_string))
+    ({| (MEXPR "x") |}
+     |> Sexp.of_string 
+     |> Environ.attr_val_t_of_located_sexp)
+
 let test_eval_simple ctxt =
   let open ST4 in
   let printer x = Fmt.(str "%a" Dump.string x) in
+  let env = Environ.[
+        [
+          ("name",MV [STRING "Foo"; STRING "Bar"])
+        ; ("x", MEXPR ([%here_string "#inside name"] |> STPa.Mexpr.of_here_string))
+        ]
+            ] in
   ()
   ; assert_equal ~printer "Hello, FooBar!"
-      (steval [["name",MV [STRING "Foo"; STRING "Bar"]]]
+      (steval env
          (stparse {|<"Hello">, <name>!|}))
+  ; assert_equal ~printer "Hello, FooBar!"
+      (steval env
+         (stparse {|<"Hello">, <x>!|}))
   ; assert_equal ~printer {|
   Hello, FooBar!
 |}
-      (steval [["name",MV [STRING "Foo"; STRING "Bar"]]]
+      (steval env
          (stparse {|
   <"Hello">, <name>!
 |}))
@@ -55,7 +75,7 @@ let test_eval_simple ctxt =
   Hello, Foo
   Bar!
 |}
-      (steval [["name",MV [STRING "Foo"; STRING "Bar"]]]
+      (steval env
          (stparse {|
   <"Hello">, <name; separator="\n">!
 |}))
@@ -63,7 +83,8 @@ let test_eval_simple ctxt =
 
 
 let suite = "Test St4 evaluation" >::: [
-      "eval simple"   >:: test_eval_simple
+      "environ"   >:: test_environ
+    ; "eval simple"   >:: test_eval_simple
     ]
 
 let _ = 

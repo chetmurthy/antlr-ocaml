@@ -1,7 +1,8 @@
-(**pp -syntax camlp5o -package pa_ppx_regexp *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.deriving_plugins.located_sexp,pa_ppx.utils,pa_ppx_regexp,pa_ppx.import *)
 
 type qualified_id_t =
   { rooted : bool ; ids : string list }
+[@@deriving show,located_sexp {exn=true}]
 
 type mexpr_t =
   ME_MAP of mexpr_t * mexpr_template_ref_t (* : *)
@@ -56,3 +57,4 @@ and template_t = elements_t
 
 and expr_tag_t =
   mexpr_t * (string * mexpr_t option) list
+[@@deriving show,located_sexp {exn=true}]

@@ -25,10 +25,6 @@ let pp_char_stream strm =
 #require "pa_ppx_fmtformat";;
 #require "pa_ppx.runtime";;
 #require "pa_ppx.runtime_fat";;
-#require "pa_ppx.located_yojson";;
-#require "pa_ppx.deriving_plugins.located_yojson";;
-
-open Pa_ppx_located_yojson.Json ;;
 
 #require "pa_ppx.here";;
 #require "pa_ppx.located_sexp";;
@@ -112,8 +108,22 @@ open St4_util ;;
 #load "st4syntax_test.cmo";;
 open St4syntax_test ;;
 
+(*
 #trace Eval.Group.Int._mk ;;
 Verify.st4_test ~debug:true ~verbose:true ~onlytest:None ~multi:false ~testname:"import1" "fixtures/st4-single/import1.sexp" ;;
+ *)
+
+{|
+(MEXPR (ME_PRIMARY (ME_ID x)))
+ |}
+|> Sexp.of_string 
+|> Value.t_of_located_sexp ;;
+
+{|
+(MEXPR "#inside x")
+ |}
+|> Sexp.of_string 
+|> Value.t_of_located_sexp ;;
 
 (*
 ;;; Local Variables: ***

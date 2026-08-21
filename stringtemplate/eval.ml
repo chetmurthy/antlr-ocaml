@@ -302,6 +302,7 @@ open Pa_ppx_located_sexp.Sexp
 end
 
 module Value = struct
+
 type t =
   STRING of string
 | BOOL of bool
@@ -341,7 +342,21 @@ let mk () = {
 end
 
 module Environ = struct
-type attr_val_t = MV of Value.t list | SV of Value.t
+
+let mexpr_t_of_located_sexp =
+  let open Pa_ppx_located_sexp in
+  function
+    Sexp.Atom(loc, s) ->
+    (loc,"#inside "^s)
+    |> STPa.Mexpr.of_located_string
+    |> St_ops.coalesce_mexpr
+    |> St_ops.insert_indentation_mexpr
+  | se -> Sttypes2.mexpr_t_of_located_sexp se
+
+type attr_val_t = 
+  MV of Value.t list
+| SV of Value.t
+| MEXPR of (Sttypes2.mexpr_t [@of_located_sexp mexpr_t_of_located_sexp])
 [@@deriving show,located_sexp {exn=true}]
 type binding_t = string * attr_val_t
 [@@deriving show,located_sexp {exn=true}]
@@ -505,8 +520,10 @@ and eval_mexpr_primary ctxt env indent = function
     ME_ID varname -> begin
       match lookup_opt ctxt env varname with
         None -> SV NULL
-      | Some v -> v
+      | Some ((SV _ | MV _) as v) -> v
+      | Some (MEXPR me) -> eval_mexpr ctxt env indent me
     end
+
   | ME_STRING s ->
      let parts = [%split {|([ \t]+)|([\r\n\x0c]+)|} / strings (1,2) pcre2] s in
      let lits =
