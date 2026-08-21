@@ -206,6 +206,9 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) execute -d $(ST4GEN) $<
 	$(ST4UTIL) check -d $(ST4GEN) $<
 
+%.STTEST-OCAML: %.sexp
+	$(ST4UTIL) test-ocaml -v -f $<
+
 STTESTCMD=full -f -d $(ST4GEN)
 sttest-multi:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestCoreBasics.sexp

@@ -404,10 +404,81 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
+module TestOCaml = struct
+open Eval
+  
+module STPa = Stringtemplate.Pa.STG2_STPa
+module STGPa = Stringtemplate.Pa.STG2_STGPa
+
+let stparse s =
+  let t =
+    s
+    |> STPa.Template.of_string
+    |> St_ops.coalesce
+    |> St_ops.insert_indentation
+  in
+  assert (St_ops.balanced_indentation t) ;
+  t
+
+let steval env t =
+  let open Doit in
+  let ctxt = Context.mk() in
+  (t
+   |> eval_elements ctxt env Indent.mt
+   |> render_attr_value) ()
+  |> FIW.render_stream
+  |> Std.list_of_stream
+  |> String.concat ""
+
+let doit ~verbose testname th =
+  th.runs
+  |> List.iteri (fun i r ->
+         if verbose then
+           Fmt.(pf stderr "[run %a]@." Dump.string (snd r.input)) ;
+         let t = stparse (snd r.input) in
+         let env = [r.attributes] in
+         let output = steval env t in
+         if output <> r.output then
+           Fmt.(pf stderr "st4_util check: test %s/%d: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+           testname i r.output output) ;
+
+    )
+
+let one_test ~debug ~verbose ~force ~testname th =
+  if th.ignore then
+    Fmt.(pf stderr "[ignore %s]@." testname)
+  else begin
+      if verbose then Fmt.(pf stderr "[%s]@." testname) ;
+      doit ~verbose testname th
+    end
+
+let st4_test ~debug ~verbose ~force ~onlytest ~multi ~testname file =
+  if multi then
+    let thl = select_tests ~onlytest ~file in
+    thl
+    |> List.iter (fun (testname,th) ->
+           one_test ~debug ~verbose ~force ~testname th)
+  else
+  let th = load ~file in
+  let testname = if testname <> "" then testname else filename_to_testname file in
+  one_test ~debug ~verbose ~force ~testname th
+
+let cmd =
+  let doc = "full test trip for a Stringtemplate4 test" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "test-ocaml" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ debug and+ verbose and+ force and+ onlytest and+ multi and+ testname in
+  st4_test ~debug ~verbose ~force ~onlytest ~multi ~testname file ;
+  Cmdliner.Cmd.Exit.ok
+end
+
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [Generate.cmd; Compile.cmd; Execute.cmd; Check.cmd; Verify.cmd; Full.cmd]
+  [Generate.cmd; Compile.cmd; Execute.cmd; Check.cmd; Verify.cmd; Full.cmd; TestOCaml.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())
