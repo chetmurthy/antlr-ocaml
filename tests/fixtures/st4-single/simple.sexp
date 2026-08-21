@@ -47,49 +47,70 @@ Sumana
 name
 <{<name>}>
 |})
-      (output "")
+      (output {bar|
+name
+FooBar
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      ((input {|
 name:t1()
 <{<name:t1()>}>
 |})
-      (output "")
+      (output {bar|
+name:t1()
+Foo Bar 
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      ((input {|
 name:t1a()
 <{<name:t1a()>}>
 |})
-      (output "")
+      (output {bar|
+name:t1a()
+FooBar
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      ((input {|
 name:t1b()
 <{<name:t1b()>}>
 |})
-      (output "")
+      (output {bar|
+name:t1b()
+ Foo Bar 
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      ((input {|
 name:t1c()
 <{<name:t1c()>}>
 |})
-      (output "")
+      (output {bar|
+name:t1c()
+FooBar
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      ((input {|
 name:t1d()
 <{<name:t1d()>}>
 |})
-      (output "")
+      (output {bar|
+name:t1d()
+  FooBar
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      ((input {|
 name:t1e()
 <{<name:t1e()>}>
 |})
-      (output "")
+      (output {bar|
+name:t1e()
+  FooBar
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      )

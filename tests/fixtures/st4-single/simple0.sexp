@@ -9,21 +9,30 @@ t1(x) ::= <% <t1a(x)> %>
 name
 <{<name>}>
 |})
-      (output "")
+      (output {bar|
+name
+FooBar
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      ((input {|
 name:t1()
 <{<name:t1()>}>
 |})
-      (output "")
+      (output {bar|
+name:t1()
+Foo Bar 
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      ((input {|
 name:t1a()
 <{<name:t1a()>}>
 |})
-      (output "")
+      (output {bar|
+name:t1a()
+FooBar
+|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       )
      )
