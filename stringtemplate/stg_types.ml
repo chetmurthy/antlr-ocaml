@@ -20,10 +20,6 @@ type formal_arg_default_t =
 type formal_arg_t =
   string * formal_arg_default_t option
 
-type stg_template_t =
-  TEMPLATE_DEF of string * formal_arg_t list * template_rhs_t
-| TEMPLATE_ALIAS of string * string
-
 type key_value_t =
   KEYVAL_BIGSTRING of string located
 | KEYVAL_BIGSTRING_NO_NL of string located
@@ -37,7 +33,8 @@ type dict_t =
   string * ((string located * key_value_t) list * key_value_t option)
 
 type group_def_t =
-  GROUPDEF_TEMPLATE of stg_template_t
+  GROUPDEF_TEMPLATE_DEF of string * formal_arg_t list * template_rhs_t
+| GROUPDEF_TEMPLATE_ALIAS of string * string
 | GROUPDEF_DICT of dict_t
 
 type header_t = {
