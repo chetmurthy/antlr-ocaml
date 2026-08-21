@@ -17,19 +17,31 @@ module Intern = struct
 
   let dict_value = function
       Raw.KEYVAL_BIGSTRING (loc, s) ->
-       let (loc, s) = St_util.unwrap_stg_bigstring (loc, s) in
-       let t = STPa.Template.of_located_string (loc, s) in
-       DVAL_VALUE (VALUE_TEMPLATE t)
+      (loc, s)
+      |> St_util.unwrap_stg_bigstring
+      |> STPa.Template.of_located_string
+      |> St_ops.coalesce
+      |> St_ops.insert_indentation
+      |> (fun t -> DVAL_VALUE (VALUE_TEMPLATE t))
     | KEYVAL_BIGSTRING_NO_NL (loc, s) ->
-       let (loc, s) = St_util.unwrap_stg_bigstring_no_nl (loc, s) in
-       let t = STPa.Template.of_located_string (loc, s) in
-       let t = St_ops.removews t in
-       DVAL_VALUE (VALUE_TEMPLATE t)
+       (loc, s)
+       |> St_util.unwrap_stg_bigstring_no_nl
+       |> STPa.Template.of_located_string
+       |> St_ops.coalesce
+       |> (fun t -> DVAL_VALUE (VALUE_TEMPLATE t))
     | KEYVAL_STRING (loc, s) ->
-       let (loc, s) = St_util.unescape_stg_string (loc, s) in
-       DVAL_VALUE(VALUE_TEMPLATE (STPa.Template.of_located_string (loc, s)))
+       (loc, s)
+       |> St_util.unescape_stg_string 
+       |> STPa.Template.of_located_string
+       |> St_ops.coalesce
+       |> St_ops.insert_indentation
+       |> (fun t -> DVAL_VALUE(VALUE_TEMPLATE t))
+
     | KEYVAL_SUBTEMPLATE st ->
-       DVAL_VALUE(VALUE_SUBTEMPLATE st)
+       st
+       |> St_ops.coalesce_subtemplate
+       |> (fun st -> DVAL_VALUE(VALUE_SUBTEMPLATE st))
+
     | KEYVAL_BOOL b -> DVAL_VALUE(VALUE_BOOL b)
     | KEYVAL_MT_DICT -> DVAL_VALUE VALUE_MT_DICT
     | KEYVAL_KEY -> DVAL_KEY
