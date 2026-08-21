@@ -13,8 +13,8 @@ open Lexers
 
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 
-module ST = ST2
-module STG = STG0
+module ST = STG2_ST
+module STG = STG2_STG
 
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
