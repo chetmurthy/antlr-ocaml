@@ -52,6 +52,8 @@ test(x) ::= %a
              ; attributes
              ; comments = ""
              ; disabled = false
+             ; disabled_ocaml = false
+             ; disabled_java = false
            }]
   }
 

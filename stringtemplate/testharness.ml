@@ -21,7 +21,12 @@ type run_t = {
   ; disabled : bool
     [@located_sexp.default false]
     [@located_sexp.sexp_drop_default (=)]
-
+  ; disabled_ocaml : bool
+    [@located_sexp.default false]
+    [@located_sexp.sexp_drop_default (=)]
+  ; disabled_java : bool
+    [@located_sexp.default false]
+    [@located_sexp.sexp_drop_default (=)]
   }
 [@@deriving show,located_sexp {exn=true, strict=true}]
 
@@ -110,6 +115,8 @@ let eg1 = {
                ]
              ; comments = ""
              ; disabled = false
+             ; disabled_ocaml = false
+             ; disabled_java = false
            }]
   ; indent = false
   ; errors = ""
@@ -129,6 +136,8 @@ let eg2 = {
                ]
              ; comments = ""
              ; disabled = false
+             ; disabled_ocaml = false
+             ; disabled_java = false
            }]
   ; indent = false
   ; errors = ""
@@ -148,6 +157,8 @@ let eg3 = {
                ]
              ; comments = ""
              ; disabled = false
+             ; disabled_ocaml = false
+             ; disabled_java = false
            }]
   ; indent = false
   ; errors = ""
@@ -167,6 +178,8 @@ let eg4 = {
                ]
              ; comments = ""
              ; disabled = false
+             ; disabled_ocaml = false
+             ; disabled_java = false
            }]
   ; indent = false
   ; errors = ""
@@ -186,6 +199,8 @@ let eg5 = {
                ]
              ; comments = ""
              ; disabled = false
+             ; disabled_ocaml = false
+             ; disabled_java = false
            }]
   ; indent = false
   ; errors = ""
