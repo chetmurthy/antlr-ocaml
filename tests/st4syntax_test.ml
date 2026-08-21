@@ -103,6 +103,34 @@ stat(name,value="99") ::= "x=<value>; // <name>"
 stat(name,value={<x>}) ::= "x=<value>; // <name>"
 |}] |> STGPa.Group.of_here_string))
 
+let test_load_stg ctxt =
+  let open ST4 in
+  let filecache = [
+      ("foo.st",[%here_string {|foo() ::= "foo"|}])
+    ] in
+  ()
+  ; assert_equal () (ignore([%here_string {| import "foo" |}]
+                            |> Eval.Group.of_here_string ~filecache))
+  ; assert_equal () (ignore([%here_string {| 
+cppTypeInitMap ::= [
+    "int":"0",
+    "long":"0",
+    "float":"0.0f",
+    "double":"0.0",
+    "bool":"false",
+    "short":"0",
+    "char":"0",
+    default: "nullptr" // anything other than a primitive type is an object
+]
+
+ |}] |> STGPa.Group.of_here_string))
+  ; assert_equal () (ignore([%here_string {| 
+stat(name,value="99") ::= "x=<value>; // <name>"
+|}] |> STGPa.Group.of_here_string))
+  ; assert_equal () (ignore([%here_string {| 
+stat(name,value={<x>}) ::= "x=<value>; // <name>"
+|}] |> STGPa.Group.of_here_string))
+
 let list_all_stg () =
   [
     "/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/templates"
@@ -131,6 +159,7 @@ let test_parse_all_stg ctxt =
 let suite = "Test Stringtemplate" >::: [
       "parse st"   >:: test_parse_st
     ; "parse stg"   >:: test_parse_stg
+    ; "load stg"   >:: test_load_stg
     ; "parse fixed files" >::: parse_fixed_files
     ; "parse descriptors" >:: test_parse_all_descriptors
     ; "parse stg files" >:: test_parse_all_stg

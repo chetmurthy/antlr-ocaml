@@ -32,7 +32,7 @@ module Intern = struct
     | KEYVAL_MT_DICT -> DVAL_VALUE VALUE_MT_DICT
     | KEYVAL_KEY -> DVAL_KEY
 
-  let dict g (name,(kv,dflt_opt)) =
+  let dict (name,(kv,dflt_opt)) : string * Cooked.dict_t =
     let kv =
       kv
       |> List.map (fun (k, v) ->
@@ -42,7 +42,7 @@ module Intern = struct
     let default = Option.map dict_value dflt_opt in
     (name, { kv ; default })
 
-  let template_def (name, formals,  rhs) =
+  let template_def (name, formals,  rhs) : string * Cooked.template_def_t =
     let open Raw in
     let formals =
       formals
@@ -96,10 +96,6 @@ module Intern = struct
       } in
     (name, t)
 
-  let group_of_located_string s =
-    let raw = STGPa.Group.of_located_string s in
-    raw
-
 end
 
 module Group = struct
@@ -110,6 +106,77 @@ module Group = struct
     ; templates : (string list, template_def_t) MHM.t
     ; aliases : (string list, string list) MHM.t
     }
+
+  let intern_group raw =
+    let open Raw in
+    let rawdicts =
+      raw.defs |> List.filter (function GROUPDEF_DICT _ -> true | _ -> false) in
+    let rawdefs =
+      raw.defs |> List.filter (function GROUPDEF_TEMPLATE_DEF _ -> true | _ -> false) in
+    let rawaliases =
+      raw.defs |> List.filter (function GROUPDEF_TEMPLATE_ALIAS _ -> true | _ -> false) in
+
+    let defs = List.map (function GROUPDEF_TEMPLATE_DEF (name, formals, rhs)
+                                  -> Intern.template_def (name, formals, rhs))
+                 rawdefs in
+    let aliases = List.map (function GROUPDEF_TEMPLATE_ALIAS (name, alias)
+                                  -> (name, alias))
+                    rawaliases in
+    let dicts = List.map (function GROUPDEF_DICT d
+                                   -> Intern.dict d)
+                  rawdicts in
+    (defs, aliases, dicts)
+
+  let merge1 (defs1, aliases1, dicts1) (defs2, aliases2, dicts2) =
+    let defnames1 = (List.map fst defs1)@(List.map fst aliases1) in
+    let defnames2 = (List.map fst defs2)@(List.map fst aliases2) in
+    if [] <> Std.intersect defnames1 defnames2 then
+      Fmt.(failwithf "Group.merge: two parallel imports define the same template-names: %a@."
+             (list string) (Std.intersect defnames1 defnames2)) ;
+    let dictnames1 = List.map fst dicts1 in
+    let dictnames2 = List.map fst dicts2 in
+    if [] <> Std.intersect dictnames1 dictnames2 then
+      Fmt.(failwithf "Group.merge: two parallel imports define the same dictionary-names: %a@."
+             (list string) (Std.intersect dictnames1 dictnames2)) ;
+    (defs1@defs2, aliases1@aliases2, dicts1@dicts2)
+
+  let merge_imports ~imported:(imp_defs, imp_aliases, imp_dicts) (defs, aliases, dicts) =
+    let upsert m (k,v) =
+      let m =
+        if List.mem_assoc k m then
+          List.remove_assoc k m
+        else m in
+      (k,v)::m in
+    let defs = List.fold_left upsert imp_defs defs in
+    let aliases = List.fold_left upsert imp_aliases aliases in
+    let dicts = List.fold_left upsert imp_dicts dicts in
+    (defs, aliases, dicts)
+
+  let rec of_located_string ?(filecache=[]) locs =
+    let raw = STGPa.Group.of_located_string locs in
+    let imported = read_imports ~filecache raw.Raw.imports in
+    let interned = intern_group raw in
+    merge_imports ~imported interned
+
+  and of_here_string ?(filecache=[]) locs =
+    let raw = STGPa.Group.of_here_string locs in
+    let imported = read_imports ~filecache raw.Raw.imports in
+    let interned = intern_group raw in
+    merge_imports ~imported interned
+
+  and load ?(filecache=[]) ~file =
+    let raw =
+      match List.assoc_opt file filecache with
+        Some x -> STGPa.Group.of_here_string x
+      | None -> STGPa.Group.load ~file in
+    let imported = read_imports ~filecache raw.Raw.imports in
+    let interned = intern_group raw in
+    merge_imports ~imported interned
+
+  and read_imports ?(filecache=[]) files =
+    let imported_l = List.map (fun file -> load ~filecache ~file) files in
+    List.fold_left merge1 ([], [], []) imported_l
+
 end
 
 

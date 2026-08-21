@@ -28,6 +28,12 @@ let pp_char_stream strm =
 #require "pa_ppx.located_yojson";;
 #require "pa_ppx.deriving_plugins.located_yojson";;
 
+open Pa_ppx_located_yojson.Json ;;
+
+#require "pa_ppx.here";;
+#require "pa_ppx.located_sexp";;
+open Pa_ppx_located_sexp ;;
+
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 Pa_ppx_runtime_fat.Exceptions.Ploc.pp_loc_verbose := true ;;
 
@@ -87,8 +93,8 @@ l |> List.iter (fun s ->
 
 ;;
 
-#require "stringtemplate" ;;
-open Stringtemplate ;;
+#require "ST4" ;;
+open ST4 ;;
 (*
 #trace Camlp5_adapter.STG.pattern_of_token ;;
 
@@ -99,12 +105,6 @@ open Stringtemplate ;;
 #require "antlrtest" ;;
 open Antlrtest ;;
 
-open Pa_ppx_located_yojson.Json ;;
-
-#require "pa_ppx.here";;
-#require "pa_ppx.located_sexp";;
-open Pa_ppx_located_sexp ;;
-
 open Camlp5_adapter ;;
 
 #load "st4_util.cmo";;
@@ -112,45 +112,8 @@ open St4_util ;;
 #load "st4syntax_test.cmo";;
 open St4syntax_test ;;
 
-open Sttypes2 ;;
-open Eval ;;
-open Value ;;
-open Environ ;;
-
-let ctxt = Context.mk() ;;
-
-let f = ["name",MV [STRING "Foo"; STRING "Bar"]] ;;
-
-let env = Env.(mt |> push_frame f) ;;
-
-let t = STPa.Template.of_string "<name>";;
-
-Doit.(t
- |> eval_elements ctxt env Indent.mt
- |> render_attr_value) ()
- |> FIW.render_stream
- |> Std.list_of_stream
- |> String.concat ""
- ;;
-
-let t = {|
-  <"Hello">, <name; separator="\n">!
-|}
- |> STPa.Template.of_string
- |> St_ops.coalesce
- |> St_ops.insert_indentation
- ;;
-St_ops.balanced_indentation t ;;
 
 
-let t = {|
-  <"Hello">, <{ <name; separator="\n">}>!
-|}
- |> STPa.Template.of_string
- |> St_ops.coalesce
- |> St_ops.insert_indentation
- ;;
-St_ops.balanced_indentation t ;;
 
 (*
 ;;; Local Variables: ***

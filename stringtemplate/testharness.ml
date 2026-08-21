@@ -69,10 +69,10 @@ let verify ~verbose th =
       STG2_STPa.Template.of_located_string r.input) th.runs ;
   Option.map (fun (fname,txt) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      Eval.Intern.group_of_located_string txt) th.groupfile ;
+      Eval.Group.of_located_string txt) th.groupfile ;
   List.map (fun (fname,txt) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." fname) ;
-      Eval.Intern.group_of_located_string txt
+      Eval.Group.of_located_string txt
     ) th.groupfiles ;
   ()
 
