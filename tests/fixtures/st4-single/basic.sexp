@@ -1,6 +1,6 @@
 ((classname hello)
- (groupfile (("t.stg" {|
-t2(x,y={<z>},z={<y>}) ::= "<x><y>"
+ (groupfile (("g.stg" {|
+t(x) ::= "[<x>]"
 
 |})))
    (runs
@@ -18,6 +18,30 @@ basic, basic, basic
 |})
       (output {|
   Hello, FooBar!
+|})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+basic, basic, basic
+|}
+       )
+      )
+     ((input {|
+  <"Hello">, <t(name)>!
+|})
+      (output {|
+  Hello, [FooBar]!
+|})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+basic, basic, basic
+|}
+       )
+      )
+     ((input {|
+  <"Hello">, <name:t()>!
+|})
+      (output {|
+  Hello, [Foo][Bar]!
 |})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       (comments {|
