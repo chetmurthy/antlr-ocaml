@@ -16,8 +16,8 @@ Fmt.(pf stdout {|# Specifications for the "stringtemplate" package:
 version = "%s"
 description = "String Templates"
 
-  archive(byte) = "stringtemplate.cma"
-  archive(native) = "stringtemplate.cmxa"
+  archive(byte) = "ST4.cma"
+  archive(native) = "ST4.cmxa"
 
   requires = "camlp5,pa_ppx_regexp.runtime,fmt,bos,pa_ppx.utils,yojson,pa_ppx.located_yojson,pa_ppx.located_sexp"
 |} version)

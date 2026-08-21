@@ -9,14 +9,14 @@ Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
-module STPa = Stringtemplate.Pa.STG2_STPa
+module STPa = ST4.Pa.STG2_STPa
 (*
-module STGPa = Stringtemplate.Pa_stg
+module STGPa = ST4.Pa_stg
  *)
-module STGPa = Stringtemplate.Pa.STG2_STGPa
+module STGPa = ST4.Pa.STG2_STGPa
 
 let test_parse_st ctxt =
-  let open Stringtemplate in
+  let open ST4 in
   ()
   ; assert_equal () (ignore([%here_string {|abc def|}] |> STPa.Template.of_here_string))
   ; assert_equal () (ignore([%here_string {|Hello, <name>!|}] |> STPa.Template.of_here_string))
@@ -39,12 +39,12 @@ let test_parse_st ctxt =
   ; assert_equal () (ignore (STPa.Template.load ~file:"fixtures/antlrtest.7/TestLexer.py"))
 
 let test_parse_grammar g ctxt =
-  let open Stringtemplate in
+  let open ST4 in
   let module D = Descriptor in
   ignore(STPa.Template.of_string ~startloc:g.D.loc g.D.txt)
 
 let test_parse_descriptor file ctxt =
-  let open Stringtemplate in
+  let open ST4 in
   let module D = Descriptor in
   let testname = [%match {|([^/]+/[^/]+)\.txt$|} / pcre2 strings !1 exc] file in
   let d = D.load ~testname file in
@@ -80,7 +80,7 @@ let parse_fixed_files =
   |> List.map (fun f -> (f >:: test_parse_st_file f))
 
 let test_parse_stg ctxt =
-  let open Stringtemplate in
+  let open ST4 in
   ()
   ; assert_equal () (ignore([%here_string {| import "foo" |}] |> STGPa.Group.of_here_string))
   ; assert_equal () (ignore([%here_string {| 
@@ -118,7 +118,7 @@ let list_all_stg () =
   |> List.map Fpath.to_string
 
 let test_parse_stg_file file ctxt =
-  let open Stringtemplate in
+  let open ST4 in
   ()
   ; assert_equal () (ignore (STGPa.Group.load ~file))
 

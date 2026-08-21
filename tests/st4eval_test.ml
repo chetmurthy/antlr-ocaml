@@ -6,7 +6,7 @@ open Pa_ppx_utils
 
 open Antlr
 open Antlrtest
-open Stringtemplate
+open ST4
 open Eval
 
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
@@ -14,8 +14,8 @@ Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
-module STPa = Stringtemplate.Pa.STG2_STPa
-module STGPa = Stringtemplate.Pa.STG2_STGPa
+module STPa = ST4.Pa.STG2_STPa
+module STGPa = ST4.Pa.STG2_STGPa
 
 let stparse s =
   let t =
@@ -38,7 +38,7 @@ let steval env t =
   |> String.concat ""
 
 let test_eval_simple ctxt =
-  let open Stringtemplate in
+  let open ST4 in
   let printer x = Fmt.(str "%a" Dump.string x) in
   ()
   ; assert_equal ~printer "Hello, FooBar!"

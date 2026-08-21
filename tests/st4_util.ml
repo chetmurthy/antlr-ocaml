@@ -10,7 +10,7 @@ Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
-open Stringtemplate
+open ST4
 open Testharness
 
 let filename_to_testname file =
@@ -407,8 +407,8 @@ end
 module TestOCaml = struct
 open Eval
   
-module STPa = Stringtemplate.Pa.STG2_STPa
-module STGPa = Stringtemplate.Pa.STG2_STGPa
+module STPa = ST4.Pa.STG2_STPa
+module STGPa = ST4.Pa.STG2_STGPa
 
 let stparse s =
   let t =

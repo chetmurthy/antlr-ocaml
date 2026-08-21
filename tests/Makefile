@@ -6,7 +6,7 @@ ifndef JSONLOGGING
 export JSONLOGGING=0
 endif
 
-PACKAGES := $(PACKAGES),antlr,parse_antlrv4,stringtemplate,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
+PACKAGES := $(PACKAGES),antlr,parse_antlrv4,ST4,ounit2,cmdliner,yojson,antlrtest,pa_ppx.runtime
 
 ML= \
 	lib_test.ml antlr_test.ml atn_util.ml mimick_test.ml \

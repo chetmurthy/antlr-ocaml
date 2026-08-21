@@ -8,7 +8,7 @@ open Pa_ppx_utils
 
 open Antlr
 open Antlrtest
-open Stringtemplate
+open ST4
 open Lexers
 
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;

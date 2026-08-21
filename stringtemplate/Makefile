@@ -9,7 +9,7 @@ DESTDIR=
 
 PACKAGES := $(PACKAGES),antlr
 
-TARGET_PACKAGE=stringtemplate
+TARGET_PACKAGE=ST4
 TARGET = $(TARGET_PACKAGE).cma
 
 ML=\
@@ -30,7 +30,7 @@ TOOLSML = mk_meta.ml
 ALLSRC=$(ML) $(TOOLSML)
 ALLPACKAGES=$(PACKAGES)
 
-OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Stringtemplate
+OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack ST4
 
 all: $(TARGET) $(TARGET:.cma=.cmxa)
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
