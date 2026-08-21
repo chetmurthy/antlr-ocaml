@@ -78,21 +78,4 @@ type dict_t =
   ; default : dict_val_t option
   }
 
-type group_t = {
-    header : Raw.header_t option
-  ; imports : string list
-  ; templates : (string, template_def_t) MHM.t
-  ; dicts : (string, dict_t) MHM.t
-  }
-
-let mk_group () = {
-    header = None
-  ; imports = []
-  ; templates = MHM.mk 23
-  ; dicts = MHM.mk 23
-  }
-
-type groupdir_t = {
-    groups : (string, group_t) MHM.t
-  }
 end
