@@ -10,7 +10,7 @@ u(name) ::= "[<name>]"
       (output {bar|Hello, FooBar!|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       (comments {|
-basic, basic, basic
+basic variable-reference
 |}
        )
       )
@@ -22,9 +22,45 @@ basic, basic, basic
 |})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       (comments {|
-basic, basic, basic
+bool true
 |}
        )
+      )
+     ((input {|
+  <"Hello">, <true>!
+|})
+      (output {|
+  Hello, true!
+|})
+      (comments {|
+basic variable-reference with whitespace but no separator.
+|}
+       )
+      (name "simple boolean")
+      )
+     ((input {|
+  <"Hello">, <false>!
+|})
+      (output {|
+  Hello, false!
+|})
+      (comments {|
+bool false
+|}
+       )
+      (name "simple boolean(2)")
+      )
+     ((input {|
+  <"Hello">, <["1",,"2"]>!
+|})
+      (output {|
+  Hello, 12!
+|})
+      (comments {|
+a simple list with a null
+|}
+       )
+      (name "simple list")
       )
      ((input {|
   <"Hello">, <t(name)>!
@@ -34,7 +70,7 @@ basic, basic, basic
 |})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       (comments {|
-basic, basic, basic
+simplest function-application
 |}
        )
       (name "simple function-application")
