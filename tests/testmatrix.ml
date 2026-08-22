@@ -47,7 +47,8 @@ test(x) ::= %a
   ; groupfiles = []
   ; groupfile
   ; runs = [{
-               input = (Ploc.dummy, "<test(x)>")
+               name = ""
+             ; input = (Ploc.dummy, "<test(x)>")
              ; output = stt.expecting
              ; attributes
              ; comments = ""

@@ -519,6 +519,10 @@ let rec option_value ctxt env indent key options =
 
 and eval_mexpr ctxt env indent = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env indent p
+  | me ->
+     Fmt.(pf stderr "eval_mexpr: unhandled mexpr_t@.%a@."
+            pp_mexpr_t me) ;
+     failwith "eval_mexpr: unhandled case"
 
 and eval_mexpr_primary ctxt env indent = function
     ME_ID varname -> begin

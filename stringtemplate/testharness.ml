@@ -8,7 +8,10 @@ open St_util
 open Eval
 
 type run_t = {
-    input : string located
+    name : string
+    [@located_sexp.default ""]
+    [@located_sexp.sexp_drop_default (=)]
+  ; input : string located
   ; output : string
     [@located_sexp.default ""]
     [@located_sexp.sexp_drop_default (=)]
@@ -108,7 +111,8 @@ let eg1 = {
   ; groupfile = Some ("a.stg",(Ploc.dummy, " d() ::= << >> "))
   ; groupfiles = []
   ; runs = [{
-               input = (Ploc.dummy, "<{Hello, <name>!}>")
+               name = ""
+             ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", SV (STRING "World"))
@@ -129,7 +133,8 @@ let eg2 = {
   ; groupfile = None
   ; groupfiles = []
   ; runs = [{
-               input = (Ploc.dummy, "<{Hello, <name>!}>")
+               name = ""
+             ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", MV [STRING "World1"; STRING "World2"])
@@ -150,7 +155,8 @@ let eg3 = {
   ; groupfile = None
   ; groupfiles = []
   ; runs = [{
-               input = (Ploc.dummy, "<{Hello, <name>!}>")
+               name = ""
+             ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", SV NULL)
@@ -171,7 +177,8 @@ let eg4 = {
   ; groupfile = None
   ; groupfiles = []
   ; runs = [{
-               input = (Ploc.dummy, "<{Hello, <name>!}>")
+               name = ""
+             ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", SV (LIST [STRING "World1"; STRING "World2"]))
@@ -192,7 +199,8 @@ let eg5 = {
   ; groupfile = None
   ; groupfiles = []
   ; runs = [{
-               input = (Ploc.dummy, "<{Hello, <name>!}>")
+               name = ""
+             ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
                  ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))

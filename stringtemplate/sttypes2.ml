@@ -2,7 +2,7 @@
 
 type qualified_id_t =
   { rooted : bool ; ids : string list }
-[@@deriving show,located_sexp {exn=true}]
+[@@deriving show { with_path = false },located_sexp {exn=true}]
 
 type mexpr_t =
   ME_MAP of mexpr_t * mexpr_template_ref_t (* : *)
@@ -57,4 +57,4 @@ and template_t = elements_t
 
 and expr_tag_t =
   mexpr_t * (string * mexpr_t option) list
-[@@deriving show,located_sexp {exn=true}]
+[@@deriving show { with_path = false },located_sexp {exn=true}]

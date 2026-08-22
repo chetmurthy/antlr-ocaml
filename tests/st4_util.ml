@@ -263,7 +263,7 @@ let check ~testname ~output ~errors (th : t) =
     output
   |> [%split {|====|}]
   |> List.filter [%match {|RoNnIe|} / pred s] in
-  let runs = List.filter (fun r -> not r.disabled) th.runs in
+  let runs = List.filter (fun r -> not r.disabled && not r.disabled_ocaml) th.runs in
   if List.length output_l <> List.length runs then begin
       Fmt.(pf stderr "check %s: #outputs (%d) <> #expected outputs (%d)@."
              testname (List.length output_l) (List.length th.runs)) ;
@@ -450,12 +450,15 @@ let runtest ~verbose testname th =
   let errorbuf = Buffer.create 23 in
   th.runs
   |> List.iteri (fun i r ->
+         let name =
+           if r.name <> "" then r.name
+           else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
          if verbose then
-           Fmt.(pf stderr "[run %a]@." Dump.string (snd r.input)) ;
+           Fmt.(pf stderr "[run %s]@." name) ;
          let (output, errors) = doit group r in
          if output <> r.output then
-           Fmt.(pf stderr "st4_util test-ocaml: test %s/%d: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-                  testname i r.output output) ;
+           Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+                  testname name r.output output) ;
          Buffer.add_string errorbuf errors
        ) ;
   let errors = Buffer.contents errorbuf in

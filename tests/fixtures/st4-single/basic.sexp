@@ -1,6 +1,7 @@
 ((classname hello)
  (groupfile (("g.stg" {|
 t(x) ::= "[<x>]"
+u(name) ::= "[<name>]"
 
 |})))
    (runs
@@ -27,6 +28,19 @@ basic, basic, basic
       )
      ((input {|
   <"Hello">, <t(name)>!
+|})
+      (output {|
+  Hello, [FooBar]!
+|})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+basic, basic, basic
+|}
+       )
+      (name "simple function-application")
+      )
+     ((input {|
+  <"Hello">, <u({<name>})>!
 |})
       (output {|
   Hello, [FooBar]!
