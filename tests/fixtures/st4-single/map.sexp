@@ -63,7 +63,8 @@ round-robin alternation of map receiver
 somehow prepend() (takes two args) doesn't work, but wrapping it in a subtemplate does.
 |}
        )
-      (disabled true)
+      (name "this-fails")
+      (disabled false)
       )
      ((input {|<u,v:{x,y|<prepend(x,y)>}>|})
       (output {bar|[a d][b e][c f]|bar})

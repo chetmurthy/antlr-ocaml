@@ -249,13 +249,16 @@ let error_ok th errors =
     Util.string_contains ~pat:th.errorsContains errors
 
 let check_run_output ~testname i (output, r) =
+  let name =
+    if r.name <> "" then r.name
+    else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
   let output =
     match [%match {|<RoNnIe\|(.*)\|RaYgUn>|} / strings !1 s] output with
-      None -> Fmt.(failwithf "test %s: no output found" testname)
+      None -> Fmt.(failwithf "test %s/%s: no output found" testname name)
     | Some output -> output in
   if output <> r.output then
-    Fmt.(pf stderr "st4_util check: test %s/%d: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-           testname i r.output output) ;
+    Fmt.(pf stderr "st4_util check: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+           testname name r.output output) ;
   (output <> r.output)
 
 let check ~testname ~output ~errors (th : t) =
@@ -424,7 +427,7 @@ let steval group env t =
   let open Doit in
   let ctxt = Context.mk group in
   (t
-   |> eval_elements ctxt env Indent.mt
+   |> eval_elements ctxt env
    |> render_attr_value) ()
   |> FIW.render_stream
   |> Std.list_of_stream

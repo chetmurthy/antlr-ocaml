@@ -509,27 +509,27 @@ let render_attr_value v : render_t =
     SV v -> render_value v ()
   | MV l -> render_list ~sep:(fun () -> [< >]) ~null:(fun () -> [< >]) l ()
 
-let rec option_value ctxt env indent key options =
+let rec option_value ctxt env key options =
   match List.assoc_opt key options with
     (None | Some None) -> (fun _ -> [< >])
   | Some (Some me) ->
-     match eval_mexpr ctxt env indent me with
+     match eval_mexpr ctxt env me with
        ((SV v)|(MV[v])) -> render_value v
      | MV _ -> Fmt.(failwithf "%s: value must be single-value" key)
 
-and eval_mexpr ctxt env indent = function
-    ME_PRIMARY p -> eval_mexpr_primary ctxt env indent p
+and eval_mexpr ctxt env = function
+    ME_PRIMARY p -> eval_mexpr_primary ctxt env p
   | me ->
      Fmt.(pf stderr "eval_mexpr: unhandled mexpr_t@.%a@."
             pp_mexpr_t me) ;
      failwith "eval_mexpr: unhandled case"
 
-and eval_mexpr_primary ctxt env indent = function
+and eval_mexpr_primary ctxt env = function
     ME_ID varname -> begin
       match lookup_opt ctxt env varname with
         None -> SV NULL
       | Some ((SV _ | MV _) as v) -> v
-      | Some (MEXPR me) -> eval_mexpr ctxt env indent me
+      | Some (MEXPR me) -> eval_mexpr ctxt env me
     end
 
   | ME_STRING s ->
@@ -548,62 +548,62 @@ and eval_mexpr_primary ctxt env indent = function
      let eval1 = function
          None -> [NULL]
        | Some me -> begin
-           match eval_mexpr ctxt env indent me with
+           match eval_mexpr ctxt env me with
              SV v -> [v]
            | MV l -> l
          end in
      MV (List.concat_map eval1 l)
 
-and eval_expr_tag ctxt env indent ((me, options) : expr_tag_t) : attr_val_t =
-  let rv = eval_mexpr ctxt env indent me in
+and eval_expr_tag ctxt env ((me, options) : expr_tag_t) : attr_val_t =
+  let rv = eval_mexpr ctxt env me in
   match rv with
   | SV v -> begin
       match List.assoc_opt "null" options with
         None -> rv
       | Some _ ->
-         let null_value = option_value ctxt env indent "null" options in
+         let null_value = option_value ctxt env "null" options in
          SV (RENDERED (render_nullable ~null:null_value v))
     end
  | MV l ->
      match List.assoc_opt "separator" options with
        None -> rv
      | Some _ ->
-        let sep_value = option_value ctxt env indent "separator" options in
-        let null_value = option_value ctxt env indent "null" options in
+        let sep_value = option_value ctxt env "separator" options in
+        let null_value = option_value ctxt env "null" options in
         SV (RENDERED (render_list ~sep:sep_value ~null:null_value l))
 
-and eval_literal ctxt env indent lit =
+and eval_literal ctxt env lit =
   RENDERED (fun () -> [< 'lit >])
 
-and eval_element ctxt env indent e : attr_val_t =
+and eval_element ctxt env e : attr_val_t =
   match e with
-    LIT lit -> SV (eval_literal ctxt env indent lit)
-  | EXPR_TAG et -> eval_expr_tag ctxt env indent et
+    LIT lit -> SV (eval_literal ctxt env lit)
+  | EXPR_TAG et -> eval_expr_tag ctxt env et
   | IFSTAT (me_cond, thenl, thenifl, elsel_opt) ->
      let rec irec l =
        match (l,elsel_opt) with
          ([], None) -> SV NULL
-       | ([], Some l) -> eval_elements ctxt env indent l
+       | ([], Some l) -> eval_elements ctxt env l
        | (((me_cond,thenl)::l), _) ->
           if eval_cond ctxt env me_cond then
-            eval_elements ctxt env indent thenl
+            eval_elements ctxt env thenl
           else irec l in
      irec ((me_cond, thenl)::thenifl)
 
-and eval_elements ctxt env indent l =
+and eval_elements ctxt env l =
   match l with
-    [h] -> eval_element ctxt env indent h
+    [h] -> eval_element ctxt env h
   | _ ->
      SV (RENDERED (fun () ->
   let rec erec = function
       [] -> [< >]
-    | h::t -> [< render_attr_value (eval_element ctxt env indent h) () ; erec t >]
+    | h::t -> [< render_attr_value (eval_element ctxt env h) () ; erec t >]
   in erec l))
 
 and eval_cond ctxt env me_cond : bool =
   match me_cond with
   COND_ATOM me -> begin
-      match eval_mexpr ctxt env Indent.mt me with
+      match eval_mexpr ctxt env me with
         SV NULL -> false
       | SV (BOOL b) -> b
       | _ -> true

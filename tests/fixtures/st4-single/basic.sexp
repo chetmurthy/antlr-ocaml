@@ -47,9 +47,12 @@ basic, basic, basic
 |})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       (comments {|
-basic, basic, basic
+infinite loop name -> <{name}> (b/c dynamic binding, and
+name -> {<name>} is not detected by ST4 interpreter where
+name -> name would be.
 |}
        )
+       (disabled true)
       )
      ((input {|
   <"Hello">, <name:t()>!
