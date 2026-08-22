@@ -251,6 +251,8 @@ let _mk (defs, aliases, dicts) =
 
 end
 
+let mk() = Int._mk ([],[],[])
+
 let load ?(here_filecache=[]) ?(ploc_filecache=[]) file =
   let filecache = Int.mk_filecache here_filecache ploc_filecache in
   Int._mk (Int.load ~filecache ~file)
@@ -325,7 +327,8 @@ module Context = struct
   open Stg_types.Cooked
 
 type context_t = {
-    warning : string -> unit
+    group : Group.t
+  ; warning : string -> unit
   ; error : string -> unit
   }
 
@@ -335,8 +338,9 @@ let error ctxt s = ctxt.error s
 let default_warning s =  Fmt.(pf stderr "%s@." s)
 let default_error s = Fmt.(failwithf "%s@." s)
 
-let mk () = {
-    warning = default_warning
+let mk group = {
+    group
+  ; warning = default_warning
   ; error = default_error
   }
 end

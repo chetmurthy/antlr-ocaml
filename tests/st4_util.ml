@@ -420,9 +420,9 @@ let stparse s =
   assert (St_ops.balanced_indentation t) ;
   t
 
-let steval env t =
+let steval group env t =
   let open Doit in
-  let ctxt = Context.mk() in
+  let ctxt = Context.mk group in
   (t
    |> eval_elements ctxt env Indent.mt
    |> render_attr_value) ()
@@ -430,26 +430,45 @@ let steval env t =
   |> Std.list_of_stream
   |> String.concat ""
 
-let doit ~verbose testname th =
+let doit group r =
+  try
+         let t = stparse (snd r.input) in
+         let env = [r.attributes] in
+         let output = steval group env t in
+         (output, "")
+  with ex ->
+    let rbt = Printexc.get_raw_backtrace () in
+    ("", Fmt.(str "%a" exn_backtrace (ex,rbt)))
+
+let runtest ~verbose testname th =
+  let group = match th.groupfile with
+      None -> Group.mk()
+    | Some (file,_) ->
+       let ploc_filecache =
+         (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
+       Group.load ~ploc_filecache file in
+  let errorbuf = Buffer.create 23 in
   th.runs
   |> List.iteri (fun i r ->
          if verbose then
            Fmt.(pf stderr "[run %a]@." Dump.string (snd r.input)) ;
-         let t = stparse (snd r.input) in
-         let env = [r.attributes] in
-         let output = steval env t in
+         let (output, errors) = doit group r in
          if output <> r.output then
-           Fmt.(pf stderr "st4_util check: test %s/%d: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-           testname i r.output output) ;
-
-    )
+           Fmt.(pf stderr "st4_util test-ocaml: test %s/%d: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+                  testname i r.output output) ;
+         Buffer.add_string errorbuf errors
+       ) ;
+  let errors = Buffer.contents errorbuf in
+  if errors <> th.errors then
+    Fmt.(pf stderr "st4_util test-ocaml: test %s: errors didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+           testname th.errors errors)
 
 let one_test ~debug ~verbose ~force ~testname th =
   if th.ignore then
     Fmt.(pf stderr "[ignore %s]@." testname)
   else begin
       if verbose then Fmt.(pf stderr "[%s]@." testname) ;
-      doit ~verbose testname th
+      runtest ~verbose testname th
     end
 
 let st4_test ~debug ~verbose ~force ~onlytest ~multi ~testname file =

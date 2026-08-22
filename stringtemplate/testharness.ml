@@ -357,5 +357,5 @@ public class %s {
 |}
          th.classname
          stgroup th
-         (list strun) (List.filter (fun r -> not r.disabled) th.runs)
+         (list strun) (List.filter (fun r -> not r.disabled && not r.disabled_java) th.runs)
   )

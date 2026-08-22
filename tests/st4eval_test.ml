@@ -30,7 +30,8 @@ let stparse s =
 
 let steval env t =
   let open Doit in
-  let ctxt = Context.mk() in
+  let group = Eval.Group.mk () in
+  let ctxt = Context.mk group in
   (t
    |> eval_elements ctxt env Indent.mt
    |> render_attr_value) ()
