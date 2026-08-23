@@ -118,7 +118,15 @@ open Environ ;;
 #install_printer OutputToken.pp_render_t ;;
 
 #trace Group.Int._mk ;;
+(*
+#trace Doit.eval_mexpr_template_ref ;;
+ *)
+#trace Doit.render_attr_value ;;
 #trace Doit.eval_mexpr ;;
+#trace Doit.eval_element ;;
+#trace Doit.eval_elements ;;
+#trace Doit.eval_mexpr_template_ref_multi ;;
+#trace Doit.attrval_list_mapi ;;
 
 let th = Testharness.load "xx.sexp" ;;
 
@@ -134,6 +142,7 @@ let r = (List.hd th.runs) ;;
 let t = TestOCaml.stparse (snd r.input) ;;
 let env = [r.attributes] ;;
 
+let t = TestOCaml.stparse {|<"a",[]:{x,y|<two(x,y)>}>|} ;;
 TestOCaml.steval group env t ;;
 (*
 TestOCaml.st4_test ~debug:true ~verbose:true ~force:true ~onlytest:None ~multi:false ~testname:"basic" "xx.sexp" ;;

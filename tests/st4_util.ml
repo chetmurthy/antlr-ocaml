@@ -250,7 +250,7 @@ let error_ok th errors =
 
 let check_run_output ~testname i (output, r) =
   let name =
-    if r.name <> "" then r.name
+    if r.name <> "" then Fmt.(str "%d/%s" i r.name)
     else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
   let output =
     match [%match {|<RoNnIe\|(.*)\|RaYgUn>|} / strings !1 s] output with
@@ -455,7 +455,7 @@ let runtest ~verbose testname th =
   |> List.iteri (fun i r ->
          if not r.disabled && not r.disabled_ocaml then
            let name =
-             if r.name <> "" then r.name
+             if r.name <> "" then Fmt.(str "%d/%s" i r.name)
              else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
            if verbose then
              Fmt.(pf stderr "[run %s]@." name) ;

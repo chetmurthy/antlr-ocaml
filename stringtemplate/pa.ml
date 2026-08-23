@@ -268,6 +268,7 @@ mexpr_primary: [
     | s = STRING -> ME_STRING (snd (St_util.unescape_stg_string (loc, s)))
     | "true" -> ME_BOOL True
     | "false" -> ME_BOOL False
+    | "[" ; "]" -> ME_LIST []
     | "[" ; l = LIST0 (OPT mexpr_no_comma) SEP "," ; "]" -> ME_LIST l
     | "(" ; c = me_cond ; ")" -> ME_COND c
     ]

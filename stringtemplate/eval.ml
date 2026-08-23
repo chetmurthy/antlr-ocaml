@@ -568,6 +568,33 @@ let attrval_mapi f (av : attr_val_t) : attr_val_t list =
        | v::t -> (f i (SV v))::(maprec (i+1) t)
      in maprec 0 l
 
+let attrval_list_mapi (f : int -> attr_val_t list -> attr_val_t) (av_l : attr_val_t list) : attr_val_t list =
+  let vl_l = List.map (function
+                   MEXPR _ -> failwith "attrval_list_map: Internal error: MEXPR should never be found here"
+                 | SV v -> [v]
+                 | MV l -> l) av_l in
+  let vl_array = Array.of_list vl_l in
+  let has_values () = Array.exists (fun v -> v <> []) vl_array in
+  let get_values () : attr_val_t list =
+    vl_array
+    |> Array.mapi (fun i v ->
+           match v with
+             [] -> SV NULL
+           | h::t -> 
+              vl_array.(i) <- t ;
+              SV h)
+    |> Array.to_list in
+  
+  let rec genrec i =
+    if not (has_values()) then []
+    else
+      let v = get_values() in
+      (f i v)::(genrec (i+1))
+  in genrec 0
+
+let attrval_list_map f (av_l : attr_val_t list) : attr_val_t list =
+  attrval_list_mapi (fun i v -> f v) av_l
+
 let attrval_append av1 av2 : attr_val_t =
   match (av1, av2) with
     (SV v1, SV v2) -> MV [v1; v2]
@@ -608,11 +635,7 @@ and eval_mexpr ctxt env = function
   | ME_MAP (ME_CAT _ as me1, mtr2) as me ->
      let me_l = flatten_ME_CAT me1 in
      let attrval_l = List.map (eval_mexpr ctxt env) me_l in
-     
-
-     Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
-            pp_mexpr_t me) ;
-     failwith "eval_mexpr: unhandled case"
+     eval_mexpr_template_ref_multi ctxt env attrval_l mtr2     
 
   | ME_MAP (me1, (MTR_CAT _ as mtr2)) ->
      let mtr_l = flatten_MTR_CAT mtr2 in
@@ -675,6 +698,47 @@ and eval_mexpr ctxt env = function
      Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
             pp_mexpr_t me) ;
      failwith "eval_mexpr: unhandled case"
+
+and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
+  let nattrs = List.length attrval_l in
+  attrval_l
+  |> attrval_list_mapi (fun i attrval_l ->
+         match mtr with
+           MTR_INCLUDE (qid, args) ->
+           let t = Context.lookup_template ctxt qid in
+           let formals = t.formals in
+           if List.length formals < nattrs then
+             Fmt.(failwithf "eval_mexpr_template_ref_multi:#formals %d < #attrvals %d"
+                    (List.length formals) nattrs) ;
+           let (firsts, rests) = Std.sep_firstn nattrs formals in
+           let firstvars = List.map fst firsts in
+           let argexps = List.map (fun v -> ME_PRIMARY(ME_ID v)) firstvars in
+           let body = t.body in
+           let args = match args with
+               ARGS_NAMED _ -> failwith "eval_mexpr_template_ref_multi: named args not permitted here"
+             | ARGS_EMPTY -> ARGS_LIST argexps
+             | ARGS_LIST l -> ARGS_LIST (argexps@l)
+           in
+           let env = Environ.push_frame (List.map2 (fun v av -> (v, av)) firstvars attrval_l) env in
+           eval_mexpr ctxt env (ME_TEMPLATE (MTR_INCLUDE (qid, args)))
+
+           | MTR_SUB (ids, t) ->
+              if List.length ids <> nattrs then
+                Fmt.(failwithf "eval_mexpr_template_ref_multi:# subtemplate formals %d <> #attrvals %d"
+                       (List.length ids) nattrs) ;
+
+              let binding = List.map2 (fun v av -> (v, av)) ids attrval_l in
+              let binding = [("i0", SV (STRING (string_of_int i)))
+                            ;("i", SV (STRING (string_of_int (i+1))))]@binding in
+              let env = Environ.push_frame binding env in
+              eval_elements ctxt env t
+              
+           | metr ->
+              Fmt.(pf stderr "eval_mexpr_template_ref_multi: unhandled@.%a@."
+                     pp_mexpr_template_ref_t metr) ;
+              failwith "eval_mexpr_template_ref_multi: unhandled case"
+       )
+  |> attrval_concat
 
 
 and eval_mexpr_template_ref ctxt env attrval = function
