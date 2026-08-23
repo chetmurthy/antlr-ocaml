@@ -65,7 +65,7 @@ GroupDOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL), type(DOC_COMMENT);
 GroupBLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL), type(BLOCK_COMMENT);
 GroupLINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL), type(LINE_COMMENT);
 
-GroupTMPL_COMMENT: LBang .? RBang -> channel(OFF_CHANNEL), type(TMPL_COMMENT);
+GroupTMPL_COMMENT: { False }? LBang .? RBang -> channel(OFF_CHANNEL), type(TMPL_COMMENT);
 
 GroupHORZ_WS : Hws+ -> channel(OFF_CHANNEL), type(HORZ_WS);
 GroupVERT_WS : Vws+ -> channel(OFF_CHANNEL), type(VERT_WS);
@@ -154,9 +154,9 @@ Outside_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
 Outside_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
 Outside_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
 
-DOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL);
-BLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL);
-LINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL);
+DOC_COMMENT   : { False }? . ;
+BLOCK_COMMENT : { False }? . ;
+LINE_COMMENT  : { False }? . ;
 
 TMPL_COMMENT: TmplComment -> channel(OFF_CHANNEL);
 
