@@ -130,21 +130,21 @@ deserialize-ocaml::
 compare-atns:: <lexerName>.py
 	$(NOVERBOSE) rm -f json.log
 	$(NOVERBOSE) diff -bBwi -u10 \
-	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp | jq '.' ) \
-	<( $(TOP)/tests/atn_util.opt dump --json <grammarName>.interp | jq '.' )
+	\<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <grammarName>.interp | jq '.' ) \
+	\<( $(TOP)/tests/atn_util.opt dump --json <grammarName>.interp | jq '.' )
 	$(NOVERBOSE) mv json.log lexer-atn-json.log
 <if(parserName)>
 	$(NOVERBOSE) diff -bBwi -u10 \
-	<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp | jq '.' ) \
-	<( $(TOP)/tests/atn_util.opt dump --json <lexerName>.interp | jq '.' )
+	\<( env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp | jq '.' ) \
+	\<( $(TOP)/tests/atn_util.opt dump --json <lexerName>.interp | jq '.' )
 <endif>
 
 visualize-lexer: <lexerName>.interp
-	xdot <( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot <lexerName>.interp )
+	xdot \<( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot <lexerName>.interp )
 
 <if(parserName)>
 visualize-parser: <grammarName>.interp
-	xdot <( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot <grammarName>.interp )
+	xdot \<( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot <grammarName>.interp )
 <endif>
 
 realclean:: clean
