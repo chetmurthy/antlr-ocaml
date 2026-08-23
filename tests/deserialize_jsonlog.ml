@@ -17,7 +17,6 @@ let deser_json_stream strm =
 let deser1 ~verbose file =
   if verbose then
     Fmt.(pf stderr "[READ %s]@." file) ;
-  let ic = open_in file in
   Pa_json.with_input_file Pa_json.g Json.JsonOrEOI.parse_parsable deser_json_stream ~file
 
 let deser1_yojson ~verbose file =

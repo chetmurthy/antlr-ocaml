@@ -216,7 +216,7 @@ stat(name,x=true,y=false) ::= "<name>; <x> <y>"
  (testCantSeeGroupDirIfGroupFileOfSameName
   ((classname hello)
    (groupfiles
-    (("./group.stg" {|
+    (("group.stg" {|
 b() ::= "group file b"
 |})
      ("group/a.st" {| 
@@ -405,7 +405,7 @@ s(x,y={<(x)>}) ::= "<x><y>"
  (testGroupFileInDir2
   ((classname hello)
    (groupfiles
-    (("./group.stg" {|
+    (("group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
 |})
@@ -425,7 +425,7 @@ a(x) ::= <<foo>>
  (testGroupFileInDir3
   ((classname hello)
    (groupfiles
-    (("./group.stg" {|
+    (("group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
 |})
@@ -445,7 +445,7 @@ a(x) ::= <<foo>>
  (testGroupFileInDir
   ((classname hello)
    (groupfiles
-    (("./group.st" {|
+    (("group.stg" {|
 b() ::= "bar"
 c() ::= "duh"
 |})
@@ -469,7 +469,7 @@ a(x) ::= <<foo>>
 b() ::= "bar"
 c() ::= "duh"
 |})
-     ("./a.st" {| 
+     ("a.st" {|
 a(x) ::= <<foo>>
 |})
      )
@@ -534,10 +534,10 @@ g() ::= "<f(y={b},x={a})>"
  (testSimpleDefaultArg
   ((classname hello)
    (groupfiles
-    (("./b.st" {|
+    (("b.st" {|
 b(x="foo") ::= "<x>"
 |})
-     ("./a.st" {| 
+     ("a.st" {|
 a() ::= << <b()> >>
 |})
      )
@@ -550,7 +550,7 @@ a() ::= << <b()> >>
    (groupfiles
     (("subdir/b.st" {|
 b() ::= "bar"
-|}) ("./a.st" {| 
+|}) ("a.st" {|
 a(x) ::= <<foo>>
 |}))
     )
@@ -563,7 +563,7 @@ a(x) ::= <<foo>>
     (("sub1/sub2/b.st" {|
 b() ::= "bar"
 |})
-     ("./a.st" {| 
+     ("a.st" {|
 a(x) ::= <<foo>>
 |})
      )
@@ -619,14 +619,14 @@ g() ::= "<f(x={a},z={b})>"
  (testGroupFileImport2
   ((classname hello)
    (groupfile
-    (("./group1.stg" {| 
+    (("group1.stg" {|
 import "group2.stg"
 a(x) ::= <<
 foo<b()>
 >>
 |}))
     )
-   (groupfiles (("./group2.stg" {|
+   (groupfiles (("group2.stg" {|
 b() ::= "bar"
 |})))
    (runs (((input "<\"\":a()>") (output foobar))))
@@ -635,14 +635,14 @@ b() ::= "bar"
  (testGroupFileImport
   ((classname hello)
    (groupfile
-    (("./group1.stg" {| 
+    (("group1.stg" {|
 import "group2.stg"
 a(x) ::= <<
 foo<b()>
 >>
 |}))
     )
-   (groupfiles (("./group2.stg" {|
+   (groupfiles (("group2.stg" {|
 b() ::= "bar"
 |})))
    (runs (((input "<b()>") (output bar))))
