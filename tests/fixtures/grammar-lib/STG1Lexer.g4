@@ -51,21 +51,27 @@ channels {
 // ------------------------------------------------------------------------------
 // mode default
 
-NOTHING : ;
+INSIDEMode : '#inside' -> mode(Inside) ;
+OUTSIDEMode : '#outside' -> mode(Outside) ;
+GROUPMode : '#group' -> mode(Group) ;
 
 mode Group ;
 
-DOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL);
-BLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL);
-LINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL);
+Group_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
+Group_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
+Group_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
 
-TMPL_COMMENT: LBang .? RBang -> channel(OFF_CHANNEL);
+GroupDOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL), type(DOC_COMMENT);
+GroupBLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL), type(BLOCK_COMMENT);
+GroupLINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL), type(LINE_COMMENT);
 
-HORZ_WS : Hws+ -> channel(OFF_CHANNEL);
-VERT_WS : Vws+ -> channel(OFF_CHANNEL);
+GroupTMPL_COMMENT: LBang .? RBang -> channel(OFF_CHANNEL), type(TMPL_COMMENT);
+
+GroupHORZ_WS : Hws+ -> channel(OFF_CHANNEL), type(HORZ_WS);
+GroupVERT_WS : Vws+ -> channel(OFF_CHANNEL), type(VERT_WS);
 
 //STRING          : DQuoteLiteral;
-STRING
+GroupSTRING
 	:	'"'
 		(	'\\' '"'
 		|	'\\' ~'"'
@@ -73,31 +79,35 @@ STRING
 			'\n'
 		|	~('\\'|'"'|'\n')
 		)*
-		'"'
+		'"' -> type(STRING)
 	;
 
 BIGSTRING       : LDAngle ( ('\\' .) | ~'\\' )*? RDAngle;
 BIGSTRING_NO_NL : LPct .*? RPct;
-ANON_TEMPLATE   : LBrace .*? RBrace;
+// ANON_TEMPLATE   : LBrace .*? RBrace;
+
+GroupLBRACE : LBrace { self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(SubTemplate);
+GroupLBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(Outside);
+
 
 // -----------------------------------
 // Symbols
 
 TMPL_ASSIGN : TmplAssign;
-ASSIGN      : Equal;
+GroupASSIGN      : Equal -> type(EQUALS);
 
-DOT      : Dot;
-COMMA    : Comma;
-COLON    : Colon;
-LPAREN   : LParen;
-RPAREN   : RParen;
-LBRACK   : LBrack;
-RBRACK   : RBrack;
-AT       : At;
-TRUE     : True_;
-FALSE    : False_;
-ELLIPSIS : Ellipsis;
-SEMI     : Semi;
+GroupDOT      : Dot -> type(DOT);
+GroupCOMMA    : Comma -> type(COMMA);
+GroupCOLON    : Colon -> type(COLON);
+GroupLPAREN   : LParen -> type(LPAREN);
+GroupRPAREN   : RParen -> type(RPAREN);
+GroupLBRACK   : LBrack -> type(LBRACK);
+GroupRBRACK   : RBrack -> type(RBRACK);
+GroupAT       : At -> type(AT);
+GroupTRUE     : True_ -> type(TRUE);
+GroupFALSE    : False_ -> type(FALSE);
+GroupELLIPSIS : Ellipsis -> type(ELLIPSIS);
+GroupSEMI     : Semi -> type(SEMI);
 
 // -----------------------------------
 // Key words
@@ -123,7 +133,7 @@ GROUP     : 'group'; // not used by parser?
 // ANCHOR    : 'anchor';
 // SEPARATOR : 'separator';
 
-ID: NameStartChar (NameChar | '-')*;
+GroupID: NameStartChar (NameChar | '-')* -> type(ID);
 
 // -----------------------------------
 // Grammar specific fragments
@@ -135,3 +145,92 @@ fragment LPct       : '<%';
 fragment RPct       : '%>';
 fragment LDAngle    : LShift;
 fragment RDAngle    : RShift;
+
+// -----------------------------------
+mode Outside ;
+// default mode = Outside
+
+Outside_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
+Outside_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
+Outside_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
+
+DOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL);
+BLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL);
+LINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL);
+
+TMPL_COMMENT: TmplComment -> channel(OFF_CHANNEL);
+
+HORZ_WS : Hws+ ;
+VERT_WS : Vws+ ;
+
+ESCAPE : .      { self.isLDelimNotComment() }? EscSeq . { self.isRDelim() }?; // self contained
+LDELIM : .      { self.isLDelimNotComment() }? -> pushMode(Inside); // switch mode to inside
+RBRACE : RBrace { self.exitSubTemplate(); }; // conditional switch to inside
+
+TEXT: . { self.adjText(); }; // have to handle weird terminals
+
+// -----------------------------------
+mode Inside;
+
+Inside_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
+Inside_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
+Inside_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
+
+INS_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
+INS_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
+
+LBRACE : LBrace { self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> pushMode(SubTemplate);
+LBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(Outside);
+RDELIM : .      { self.isRDelim() }? -> popMode;
+
+STRING: DQuoteLiteral;
+
+IF     : 'if';
+ELSEIF : 'elseif';
+ELSE   : 'else';
+ENDIF  : 'endif';
+SUPER  : 'super';
+END    : '@end';
+
+TRUE  : True_;
+FALSE : False_;
+
+AT       : At;
+ELLIPSIS : Ellipsis;
+DOT      : Dot;
+COMMA    : Comma;
+COLON    : Colon;
+SEMI     : Semi;
+AND      : And;
+OR       : Or;
+LPAREN   : LParen;
+RPAREN   : RParen;
+LBRACK   : LBrack;
+RBRACK   : RBrack;
+EQUALS   : Equal;
+BANG     : Bang;
+SLASH    : Slash;
+ID : NameStartChar NameChar*;
+
+// -----------------------------------
+// Unknown content in mode Inside
+
+// ERR_CHAR: . -> skip;
+
+// -----------------------------------
+mode SubTemplate;
+
+SUB_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
+SUB_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
+
+SUB_ID    : NameStartChar NameChar* -> type(ID) ;
+SUB_COMMA : Comma -> type(COMMA);
+PIPE      : Pipe  -> mode(Outside);
+
+// -----------------------------------
+// Grammar specific fragments
+
+fragment TmplComment: LTmplMark .*? RTmplMark;
+
+fragment LTmplMark : .      { self.isLTmplComment() }? Bang;
+fragment RTmplMark : Bang . { self.isRTmplComment() }?;
