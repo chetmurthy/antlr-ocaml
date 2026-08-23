@@ -556,6 +556,18 @@ let attrval_map f (av : attr_val_t) : attr_val_t list =
   | SV _ -> [f av]
   | MV l -> List.filter_map (function NULL -> None | v -> Some (f (SV v))) l
 
+let attrval_mapi f (av : attr_val_t) : attr_val_t list =
+  match av with
+    MEXPR _ -> failwith "attrval_map: Internal error: MEXPR should never be found here"
+  | SV NULL -> [SV NULL]
+  | SV _ -> [f 0 av]
+  | MV l ->
+     let rec maprec i = function
+         [] -> []
+       | NULL::t -> (SV NULL)::(maprec i t)
+       | v::t -> (f i (SV v))::(maprec (i+1) t)
+     in maprec 0 l
+
 let attrval_append av1 av2 : attr_val_t =
   match (av1, av2) with
     (SV v1, SV v2) -> MV [v1; v2]
@@ -676,6 +688,17 @@ and eval_mexpr_template_ref ctxt env attrval = function
      |> attrval_map (fun attrval ->
             let env = Environ.push_frame [(varname, attrval)] env in
             eval_mexpr ctxt env (ME_TEMPLATE (MTR_INCLUDE (qid, args))))
+     |> attrval_concat
+
+  | MTR_SUB (ids, t) ->
+     assert (List.length ids = 1) ;
+     let varname = List.hd ids in
+     attrval
+     |> attrval_mapi (fun i attrval ->
+            let env = Environ.push_frame [("i0", SV (STRING (string_of_int i)))
+                                         ;("i", SV (STRING (string_of_int (i+1))))
+                                         ;(varname, attrval)] env in
+            eval_elements ctxt env t)
      |> attrval_concat
 
   | metr ->
