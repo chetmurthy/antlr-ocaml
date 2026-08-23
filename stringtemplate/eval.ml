@@ -537,11 +537,34 @@ let bind_formal_arg vname (v : value_t) : Environ.binding_t =
   | VALUE_BOOL b -> (vname, SV (BOOL b))
   | VALUE_MT_DICT -> (vname, MV [])
 
+let filter_loopback_bindings bl =
+  bl
+  |> List.filter (function
+           (v, MEXPR (ME_PRIMARY (ME_ID v'))) when v = v' -> false
+         | _ -> true)
+
 let render_attr_value v : render_t =
   fun () ->
   match v with
     SV v -> render_value v ()
   | MV l -> render_list ~sep:(fun () -> [< >]) ~null:(fun () -> [< >]) l ()
+
+let attrval_map f (av : attr_val_t) : attr_val_t list =
+  match av with
+    MEXPR _ -> failwith "attrval_map: Internal error: MEXPR should never be found here"
+  | SV _ -> [f av]
+  | MV l -> List.map (fun v -> f (SV v)) l
+
+let attrval_append av1 av2 : attr_val_t =
+  match (av1, av2) with
+    (SV v1, SV v2) -> MV [v1; v2]
+  | (SV v1, MV l) -> MV (v1::l)
+  | (MV l, SV v2) -> MV (l@[v2])
+  | ((MEXPR _, _)|(_, MEXPR _)) ->
+     failwith "attrval_append: Internal error: MEXPR should never be found here"
+
+let attrval_concat (l : attr_val_t list) : attr_val_t =
+  List.fold_left attrval_append (MV[]) l
 
 let rec option_value ctxt env key options =
   match List.assoc_opt key options with
@@ -553,6 +576,11 @@ let rec option_value ctxt env key options =
 
 and eval_mexpr ctxt env = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env p
+  | ME_MAP (ME_CAT _ as me1, mtr2) -> assert false
+  | ME_MAP (me1, (MTR_CAT _ as mtr2)) -> assert false
+  | ME_MAP (me1, mtr2) ->
+     let attrval = eval_mexpr ctxt env me1 in
+     eval_mexpr_template_ref ctxt env attrval mtr2
 
   | ME_TEMPLATE (MTR_INCLUDE (qid, args)) ->
      let t = Context.lookup_template ctxt qid in
@@ -582,11 +610,7 @@ and eval_mexpr ctxt env = function
                    | (None, Some rhs) -> bind_formal_arg vname rhs
                    | _ ->
                       Fmt.(failwithf "eval_mexpr: var %s has no arg (too few actuals)" vname)) in
-     let bindings =
-       bindings
-       |> List.filter (function
-                (v, MEXPR (ME_PRIMARY (ME_ID v'))) when v = v' -> false
-              | _ -> true) in
+     let bindings = filter_loopback_bindings bindings in
      eval_elements ctxt (Environ.push_frame bindings env) body
 
   | me ->
@@ -596,7 +620,21 @@ and eval_mexpr ctxt env = function
 
 
 and eval_mexpr_template_ref ctxt env attrval = function
-    metr ->
+    MTR_INCLUDE (qid, args) ->
+     let t = Context.lookup_template ctxt qid in
+     let formals = t.formals in
+     let body = t.body in
+     let varname = fst (List.hd formals) in
+     let args = match args with
+         ARGS_NAMED _ -> failwith "eval_mexpr_template_ref: named args not permitted here"
+       | ARGS_EMPTY -> ARGS_LIST [ME_PRIMARY(ME_ID varname)] in
+     attrval
+     |> attrval_map (fun attrval ->
+            let env = Environ.push_frame [(varname, attrval)] env in
+            eval_mexpr ctxt env (ME_TEMPLATE (MTR_INCLUDE (qid, args))))
+     |> attrval_concat
+
+  | metr ->
     Fmt.(pf stderr "eval_mexpr_template_ref: unhandled@.%a@."
            pp_mexpr_template_ref_t metr) ;
     failwith "eval_mexpr_template_ref: unhandled case"

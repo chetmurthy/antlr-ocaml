@@ -288,12 +288,17 @@ mexpr_basic_template_ref: [ [
     | st = subtemplate -> ME_TEMPLATE (MTR_SUB st)
   ] ]
   ;
-mexpr_template_ref: [ [
+mexpr_template_ref: [
+    "comma" RIGHTA [
+      e1 = SELF ; "," ; e2 = SELF -> MTR_CAT e1 e2
+    ]
+  | "simple" [
       check_qid_lparen ;
       qid = qualified_id ; "(" ; a = args ; ")" -> MTR_INCLUDE qid a
     | st = subtemplate -> MTR_SUB st
     | "(" ; me = mexpr ; ")" ; "(" ; l = LIST0 mexpr_no_comma SEP "," ; ")" -> MTR_INCLUDE_IND me l
-  ] ]
+    ]
+  ]
   ;
 
 subtemplate: [ [

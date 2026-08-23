@@ -13,7 +13,8 @@ type mexpr_t =
 | ME_PROP_IND of mexpr_t * mexpr_t
 
 and mexpr_template_ref_t =
-  MTR_INCLUDE of qualified_id_t * args_t
+  MTR_CAT of mexpr_template_ref_t * mexpr_template_ref_t
+| MTR_INCLUDE of qualified_id_t * args_t
 | MTR_SUB of subtemplate_t
 | MTR_TEMPLATE of template_t
 | MTR_INCLUDE_IND of mexpr_t * mexpr_t list
