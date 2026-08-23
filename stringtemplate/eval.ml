@@ -336,22 +336,26 @@ open Pa_ppx_located_sexp.Sexp
   type t = [%import: Sttypes2.literal_t]
              [@@deriving show,located_sexp {exn=true}]
 
-  let pp_render_t_0 pps (x :  unit -> t Stream.t) =
-    let strm = x () in
+  type _render_t =
+    LITS of t list
+  | RLIST of _render_t list
+
+  let rec flatten = function
+      LITS l -> l
+    | RLIST l -> List.concat_map flatten l
+
+  let pp_render_t_0 pps (x : _render_t) =
     let s =
-      strm
+      x
+      |> flatten
+      |> Std.stream_of_list
       |> FIW.render_stream
       |> Std.list_of_stream
       |> String.concat ""
     in Fmt.(pf pps "#<render< %s >>" s)
 
-  type render_t = (unit -> t Stream.t)
+  type render_t = _render_t
                     [@printer pp_render_t_0]
-                    [@located_sexp_of (fun _ -> Atom(Ploc.dummy, "<rendered>"))]
-                    [@of_located_sexp (fun _ -> failwith "cannot deserialize to rendered stream")]
-                    [@@deriving show,located_sexp {exn=true}]
-
-  type render_list_t = t list
                     [@located_sexp_of (fun _ -> Atom(Ploc.dummy, "<rendered>"))]
                     [@of_located_sexp (fun _ -> failwith "cannot deserialize to rendered stream")]
                     [@@deriving show,located_sexp {exn=true}]
@@ -368,7 +372,6 @@ type t =
 | LIST of t list
 | NULL
 | RENDERED of OutputToken.render_t
-| RENDERED_LIST of OutputToken.render_list_t
 [@@deriving show,located_sexp {exn=true}]
 
 let isSTRING = function STRING _ -> true | _ -> false
@@ -504,15 +507,14 @@ module Doit = struct
 open OutputToken
 
 let render_value v : render_t =
-  fun () ->
   match v with
-    STRING s -> [< '(TEXT s) >]
-  | BOOL b -> [< '(TEXT (if b then "true" else "false")) >]
-  | INT n -> [< '(TEXT (string_of_int n)) >]
+    STRING s -> LITS [(TEXT s)]
+  | BOOL b -> LITS [(TEXT (if b then "true" else "false"))]
+  | INT n -> LITS [(TEXT (string_of_int n))]
   | DICT _ -> failwith "render_value: DICT unimplemented"
   | LIST  _ -> failwith "render_value: LIST unimplemented"
-  | NULL -> [< >]
-  | RENDERED f -> f ()
+  | NULL -> LITS []
+  | RENDERED x -> x
 
 let render_nullable ~null v : render_t  =
   match v with
@@ -520,14 +522,13 @@ let render_nullable ~null v : render_t  =
   | v -> render_value v
 
 let render_list ~sep ~null l : render_t =
-  fun () ->
   let rec rerec = function
-      [] -> [< >]
-    | [h] -> render_nullable ~null h ()
+      [] -> RLIST []
+    | [h] -> render_nullable ~null h
     | h::t ->
-       [< render_nullable ~null h () ;
-        sep () ;
-        rerec t >] in
+       RLIST [render_nullable ~null h;
+        sep ;
+        rerec t] in
   rerec l
 
 let bind_formal_arg vname (v : value_t) : Environ.binding_t =
@@ -544,10 +545,9 @@ let filter_loopback_bindings bl =
          | _ -> true)
 
 let render_attr_value v : render_t =
-  fun () ->
   match v with
-    SV v -> render_value v ()
-  | MV l -> render_list ~sep:(fun () -> [< >]) ~null:(fun () -> [< >]) l ()
+    SV v -> render_value v
+  | MV l -> render_list ~sep:(RLIST []) ~null:(RLIST[]) l
 
 let attrval_map f (av : attr_val_t) : attr_val_t list =
   match av with
@@ -623,11 +623,21 @@ in flatrec me
 
 let rec option_value ctxt env key options =
   match List.assoc_opt key options with
-    (None | Some None) -> (fun _ -> [< >])
+    (None | Some None) -> (RLIST[])
   | Some (Some me) ->
      match eval_mexpr ctxt env me with
        ((SV v)|(MV[v])) -> render_value v
      | MV _ -> Fmt.(failwithf "%s: value must be single-value" key)
+
+and eval_mexpr_arg_by_value ctxt env = function
+    ME_TEMPLATE (MTR_SUB _) as me -> MEXPR me
+  | ME_PRIMARY (ME_ID varname) -> begin
+      match lookup_opt ctxt env varname with
+        None -> SV NULL
+      | Some ((SV _ | MV _) as v) -> v
+      | Some (MEXPR me) -> eval_mexpr_arg_by_value ctxt env me
+    end
+  | me -> eval_mexpr ctxt env me
 
 and eval_mexpr ctxt env = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env p
@@ -671,7 +681,9 @@ and eval_mexpr ctxt env = function
             formals
             |> List.map (fun (vname, dflt_opt) ->
                    match (List.assoc_opt vname named_actuals, dflt_opt) with
-                     (Some rhs, _) -> (vname, MEXPR rhs)
+                     (Some rhs, _) ->
+                      let attrval = eval_mexpr_arg_by_value ctxt env rhs in
+                      (vname, attrval)
                    | (None, Some rhs) -> bind_formal_arg vname rhs
                    | _ when not ellipsis ->
                       Fmt.(failwithf "eval_mexpr: var %s has no arg (and ellipsis not present)" vname))
@@ -680,7 +692,9 @@ and eval_mexpr ctxt env = function
             formals
             |> List.mapi (fun i (vname, dflt_opt) ->
                    match (List.nth_opt actuals i, dflt_opt) with
-                     (Some rhs, _) -> (vname, MEXPR rhs)
+                     (Some rhs, _) ->
+                      let attrval = eval_mexpr_arg_by_value ctxt env rhs in
+                      (vname, attrval)
                    | (None, Some rhs) -> bind_formal_arg vname rhs
                    | _ ->
                       Fmt.(failwithf "eval_mexpr: var %s has no arg (too few actuals)" vname)) in
@@ -791,7 +805,7 @@ and eval_mexpr_primary ctxt env = function
               | `Delim (None, Some vws) -> (VERT_WS vws)
               | `Delim (Some hws, None) ->  (HORZ_WS hws)
               | _ -> assert false) in
-     SV (RENDERED (fun () -> Std.stream_of_list lits))
+     SV (RENDERED (LITS lits))
 
   | ME_BOOL b -> SV (BOOL b)
   | ME_LIST l ->
@@ -823,7 +837,7 @@ and eval_expr_tag ctxt env ((me, options) : expr_tag_t) : attr_val_t =
         SV (RENDERED (render_list ~sep:sep_value ~null:null_value l))
 
 and eval_literal ctxt env lit =
-  RENDERED (fun () -> [< 'lit >])
+  RENDERED (LITS[lit])
 
 and eval_element ctxt env e : attr_val_t =
   match e with
@@ -844,11 +858,11 @@ and eval_elements ctxt env l =
   match l with
     [h] -> eval_element ctxt env h
   | _ ->
-     SV (RENDERED (fun () ->
-  let rec erec = function
-      [] -> [< >]
-    | h::t -> [< render_attr_value (eval_element ctxt env h) () ; erec t >]
-  in erec l))
+     let rec erec = function
+         [] -> RLIST []
+       | h::t -> RLIST [render_attr_value (eval_element ctxt env h) ; erec t]
+     in
+     SV (RENDERED (erec l))
 
 and eval_cond ctxt env me_cond : bool =
   match me_cond with

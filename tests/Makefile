@@ -232,6 +232,8 @@ fixtures/st4-multi/TestNullEmptyMatrix.sexp: testmatrix.exe
 
 sttest-all: $(STSEXPALL:.sexp=.STTEST)
 
+sttest-all-ocaml: $(STSEXPALL:.sexp=.STTEST-OCAML)
+
 #ONE=LexerExec/CharSet
 ONE=ParserExec/Basic
 #ONE=CompositeParsers/ImportLexerWithOnlyFragmentRules
