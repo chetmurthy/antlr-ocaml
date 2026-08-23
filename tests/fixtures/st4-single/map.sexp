@@ -11,11 +11,40 @@ v(y) ::= << <y> >>
 |})))
    (runs
     (
-     ((input {|<["a","b"]:t()>|})
-      (output {bar|[a][b]|bar})
-      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+     ((input {|<"b":t()>|})
+      (output {bar|[b]|bar})
       (comments {|
 simple map
+|}
+       )
+      )
+     ((input {|<["b"]:t()>|})
+      (output {bar|[b]|bar})
+      (comments {|
+simple map
+|}
+       )
+      )
+     ((input {|<["a","b"]:t()>|})
+      (output {bar|[a][b]|bar})
+      (comments {|
+simple map
+|}
+       )
+      )
+     ((input {|<"b":two("1")>|})
+      (output {bar|[b 1]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+map supplies the -first- argument, not last
+|}
+       )
+      )
+     ((input {|<["b"]:two("1")>|})
+      (output {bar|[b 1]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+map supplies the -first- argument, not last
 |}
        )
       )

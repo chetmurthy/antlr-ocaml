@@ -613,6 +613,9 @@ and eval_mexpr ctxt env = function
      let bindings = filter_loopback_bindings bindings in
      eval_elements ctxt (Environ.push_frame bindings env) body
 
+  | ME_TEMPLATE (MTR_TEMPLATE t) ->
+     eval_elements ctxt env t
+
   | me ->
      Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
             pp_mexpr_t me) ;
@@ -627,7 +630,9 @@ and eval_mexpr_template_ref ctxt env attrval = function
      let varname = fst (List.hd formals) in
      let args = match args with
          ARGS_NAMED _ -> failwith "eval_mexpr_template_ref: named args not permitted here"
-       | ARGS_EMPTY -> ARGS_LIST [ME_PRIMARY(ME_ID varname)] in
+       | ARGS_EMPTY -> ARGS_LIST [ME_PRIMARY(ME_ID varname)]
+       | ARGS_LIST l -> ARGS_LIST ((ME_PRIMARY(ME_ID varname))::l)
+     in
      attrval
      |> attrval_map (fun attrval ->
             let env = Environ.push_frame [(varname, attrval)] env in
