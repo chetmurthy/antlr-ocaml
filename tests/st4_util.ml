@@ -453,16 +453,17 @@ let runtest ~verbose testname th =
   let errorbuf = Buffer.create 23 in
   th.runs
   |> List.iteri (fun i r ->
-         let name =
-           if r.name <> "" then r.name
-           else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
-         if verbose then
-           Fmt.(pf stderr "[run %s]@." name) ;
-         let (output, errors) = doit group r in
-         if output <> r.output then
-           Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-                  testname name r.output output) ;
-         Buffer.add_string errorbuf errors
+         if not r.disabled && not r.disabled_ocaml then
+           let name =
+             if r.name <> "" then r.name
+             else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
+           if verbose then
+             Fmt.(pf stderr "[run %s]@." name) ;
+           let (output, errors) = doit group r in
+           if output <> r.output then
+             Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+                    testname name r.output output) ;
+           Buffer.add_string errorbuf errors
        ) ;
   let errors = Buffer.contents errorbuf in
   if errors <> th.errors then

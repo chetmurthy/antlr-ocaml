@@ -108,22 +108,34 @@ open St4_util ;;
 #load "st4syntax_test.cmo";;
 open St4syntax_test ;;
 
-(*
-#trace Eval.Group.Int._mk ;;
-Verify.st4_test ~debug:true ~verbose:true ~onlytest:None ~multi:false ~testname:"import1" "fixtures/st4-single/import1.sexp" ;;
- *)
+open Sttypes2 ;;
+open Stg_types ;;
+open Cooked ;;
+open Eval ;;
+open Environ ;;
 
-{|
-(MEXPR (ME_PRIMARY (ME_ID x)))
- |}
-|> Sexp.of_string 
-|> Value.t_of_located_sexp ;;
+#install_printer OutputToken.pp_render_t ;;
 
-{|
-(MEXPR "#inside x")
- |}
-|> Sexp.of_string 
-|> Value.t_of_located_sexp ;;
+#trace Group.Int._mk ;;
+#trace Doit.eval_mexpr ;;
+
+let th = Testharness.load "xx.sexp" ;;
+
+  let group = match th.groupfile with
+      None -> Group.mk()
+    | Some (file,_) ->
+       let ploc_filecache =
+         (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
+       Group.load ~ploc_filecache file
+;;
+
+let r = (List.hd th.runs) ;;
+let t = TestOCaml.stparse (snd r.input) ;;
+let env = [r.attributes] ;;
+
+TestOCaml.steval group env t ;;
+
+TestOCaml.st4_test ~debug:true ~verbose:true ~force:true ~onlytest:None ~multi:false ~testname:"basic" "xx.sexp" ;;
 
 (*
 ;;; Local Variables: ***

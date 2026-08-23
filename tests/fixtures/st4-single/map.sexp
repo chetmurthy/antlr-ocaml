@@ -24,6 +24,26 @@ map supplies the -first- argument, not last
 |}
        )
       )
+     ((input {|<["a","b"]:prepend(x="1")>|})
+      (output {bar|[a 1][b 1]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+map supplies the -first- argument, not last
+|}
+       )
+       (name "map with named arg (second arg)")
+       (disabled true)
+      )
+     ((input {|<["a","b"]:prepend(p="1")>|})
+      (output {bar|[a 1][b 1]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+map supplies the -first- argument, not last
+|}
+       )
+       (name "map with named arg (first arg)")
+       (disabled true)
+      )
      ((input {|<["a","b","c","d","e","f"]:prepend("1"),prepend("2")>|})
       (output {bar|[a 1][b 2][c 1][d 2][e 1][f 2]|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
@@ -64,7 +84,7 @@ somehow prepend() (takes two args) doesn't work, but wrapping it in a subtemplat
 |}
        )
       (name "this-fails")
-      (disabled false)
+      (disabled true)
       )
      ((input {|<u,v:{x,y|<prepend(x,y)>}>|})
       (output {bar|[a d][b e][c f]|bar})

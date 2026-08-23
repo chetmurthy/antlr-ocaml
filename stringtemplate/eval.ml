@@ -3,6 +3,7 @@
 open Pa_ppx_base
 open Ppxutil
 open Pa_ppx_utils
+open Coll
 
 open Antlr
 open Sttypes2
@@ -12,7 +13,6 @@ module STPa = Pa.STG2_STPa
 module STGPa = Pa.STG2_STGPa
 
 module Intern = struct
-  open Coll
   open Cooked
 
   let dict_value = function
@@ -114,7 +114,6 @@ module Intern = struct
 end
 
 module Group = struct
-  open Coll
   open Cooked
   type t = {
       dicts : (string, dict_t) MHM.t
@@ -292,15 +291,71 @@ module Indent : INDENT = struct
 
 end
 
+module FIW = struct
+  type t = {
+      cur_indent : Indent.t
+    ; emitted_indent : bool
+    }
+
+  let mt = {
+      cur_indent = Indent.mt
+    ; emitted_indent = false
+    }
+
+  let emit t = function
+      TEXT s when not t.emitted_indent ->
+      ({(t) with emitted_indent = true},
+       (Indent.to_strings t.cur_indent)@[s])
+    | TEXT s -> (t, [s])
+    | HORZ_WS s ->
+       (* should not be immediately after a VWS, so a TEXT should have preceded it *)
+       assert t.emitted_indent ;
+       (t, [s])
+    | VERT_WS s ->
+       ({(t) with emitted_indent = false}, [s])
+    | INDENT s ->
+       ({(t) with cur_indent = Indent.add_string s t.cur_indent},
+        [])
+    | DEDENT ->
+       ({(t) with cur_indent = Indent.pop t.cur_indent},
+       [])
+
+let render_stream ?(init=mt) strm =
+  let rec rerec t = parser
+    [< 'lit ; strm >] ->
+      let (t, strs) = emit t lit in
+      [< Std.stream_of_list strs ; rerec t strm >]
+  | [< >] -> [< >]
+  in rerec init strm
+
+end
+module FunctionalIndentWriter = FIW
+
 module OutputToken = struct
 open Pa_ppx_located_sexp.Sexp
   type t = [%import: Sttypes2.literal_t]
+             [@@deriving show,located_sexp {exn=true}]
+
+  let pp_render_t_0 pps (x :  unit -> t Stream.t) =
+    let strm = x () in
+    let s =
+      strm
+      |> FIW.render_stream
+      |> Std.list_of_stream
+      |> String.concat ""
+    in Fmt.(pf pps "#<render< %s >>" s)
 
   type render_t = (unit -> t Stream.t)
-                    [@printer fun pps x -> Fmt.(pf pps "<rendered>")]
+                    [@printer pp_render_t_0]
                     [@located_sexp_of (fun _ -> Atom(Ploc.dummy, "<rendered>"))]
                     [@of_located_sexp (fun _ -> failwith "cannot deserialize to rendered stream")]
                     [@@deriving show,located_sexp {exn=true}]
+
+  type render_list_t = t list
+                    [@located_sexp_of (fun _ -> Atom(Ploc.dummy, "<rendered>"))]
+                    [@of_located_sexp (fun _ -> failwith "cannot deserialize to rendered stream")]
+                    [@@deriving show,located_sexp {exn=true}]
+
 end
 
 module Value = struct
@@ -313,6 +368,7 @@ type t =
 | LIST of t list
 | NULL
 | RENDERED of OutputToken.render_t
+| RENDERED_LIST of OutputToken.render_list_t
 [@@deriving show,located_sexp {exn=true}]
 
 let isSTRING = function STRING _ -> true | _ -> false
@@ -334,6 +390,17 @@ type context_t = {
 
 let warning ctxt s = ctxt.warning s
 let error ctxt s = ctxt.error s
+
+let lookup_template ctxt qid =
+  assert (not qid.rooted) ;
+  assert (List.length qid.ids = 1) ;
+  let id = List.hd qid.ids in
+  let id = if MHM.in_dom ctxt.group.aliases id then
+             MHM.map ctxt.group.aliases id
+           else id in
+  if not (MHM.in_dom ctxt.group.templates id) then
+    Fmt.(failwithf "lookup_template: template %a not found" pp_qualified_id_t qid) ;
+  MHM.map ctxt.group.templates id
 
 let default_warning s =  Fmt.(pf stderr "%s@." s)
 let default_error s = Fmt.(failwithf "%s@." s)
@@ -384,46 +451,6 @@ let mt = []
 let push_frame f (env : t) : t = f::env
 
 end
-
-module FIW = struct
-  type t = {
-      cur_indent : Indent.t
-    ; emitted_indent : bool
-    }
-
-  let mt = {
-      cur_indent = Indent.mt
-    ; emitted_indent = false
-    }
-
-  let emit t = function
-      TEXT s when not t.emitted_indent ->
-      ({(t) with emitted_indent = true},
-       (Indent.to_strings t.cur_indent)@[s])
-    | TEXT s -> (t, [s])
-    | HORZ_WS s ->
-       (* should not be immediately after a VWS, so a TEXT should have preceded it *)
-       assert t.emitted_indent ;
-       (t, [s])
-    | VERT_WS s ->
-       ({(t) with emitted_indent = false}, [s])
-    | INDENT s ->
-       ({(t) with cur_indent = Indent.add_string s t.cur_indent},
-        [])
-    | DEDENT ->
-       ({(t) with cur_indent = Indent.pop t.cur_indent},
-       [])
-
-let render_stream ?(init=mt) strm =
-  let rec rerec t = parser
-    [< 'lit ; strm >] ->
-      let (t, strs) = emit t lit in
-      [< Std.stream_of_list strs ; rerec t strm >]
-  | [< >] -> [< >]
-  in rerec init strm
-
-end
-module FunctionalIndentWriter = FIW
 
 module IW = struct
   type _t = {
@@ -503,6 +530,13 @@ let render_list ~sep ~null l : render_t =
         rerec t >] in
   rerec l
 
+let bind_formal_arg vname (v : value_t) : Environ.binding_t =
+  match v with
+    VALUE_TEMPLATE t -> (vname, MEXPR (ME_TEMPLATE (MTR_TEMPLATE t)))
+  | VALUE_SUBTEMPLATE st -> (vname, MEXPR (ME_TEMPLATE (MTR_SUB st)))
+  | VALUE_BOOL b -> (vname, SV (BOOL b))
+  | VALUE_MT_DICT -> (vname, MV [])
+
 let render_attr_value v : render_t =
   fun () ->
   match v with
@@ -519,10 +553,53 @@ let rec option_value ctxt env key options =
 
 and eval_mexpr ctxt env = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env p
+
+  | ME_TEMPLATE (MTR_INCLUDE (qid, args)) ->
+     let t = Context.lookup_template ctxt qid in
+     let formals = t.formals in
+     let body = t.body in
+     let bindings =
+       match args with
+         ARGS_EMPTY ->
+          if formals |> List.exists (function (_, None) -> true | _ -> false) then
+            Fmt.(failwith "eval_mexpr: no-arg include calls template with args that require values") ;
+          List.filter_map (function (vname, Some rhs) -> Some (bind_formal_arg vname rhs) | _ -> None) formals
+
+         | ARGS_NAMED (named_actuals, ellipsis) ->
+            formals
+            |> List.map (fun (vname, dflt_opt) ->
+                   match (List.assoc_opt vname named_actuals, dflt_opt) with
+                     (Some rhs, _) -> (vname, MEXPR rhs)
+                   | (None, Some rhs) -> bind_formal_arg vname rhs
+                   | _ when not ellipsis ->
+                      Fmt.(failwithf "eval_mexpr: var %s has no arg (and ellipsis not present)" vname))
+
+         | ARGS_LIST actuals ->
+            formals
+            |> List.mapi (fun i (vname, dflt_opt) ->
+                   match (List.nth_opt actuals i, dflt_opt) with
+                     (Some rhs, _) -> (vname, MEXPR rhs)
+                   | (None, Some rhs) -> bind_formal_arg vname rhs
+                   | _ ->
+                      Fmt.(failwithf "eval_mexpr: var %s has no arg (too few actuals)" vname)) in
+     let bindings =
+       bindings
+       |> List.filter (function
+                (v, MEXPR (ME_PRIMARY (ME_ID v'))) when v = v' -> false
+              | _ -> true) in
+     eval_elements ctxt (Environ.push_frame bindings env) body
+
   | me ->
-     Fmt.(pf stderr "eval_mexpr: unhandled mexpr_t@.%a@."
+     Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
             pp_mexpr_t me) ;
      failwith "eval_mexpr: unhandled case"
+
+
+and eval_mexpr_template_ref ctxt env attrval = function
+    metr ->
+    Fmt.(pf stderr "eval_mexpr_template_ref: unhandled@.%a@."
+           pp_mexpr_template_ref_t metr) ;
+    failwith "eval_mexpr_template_ref: unhandled case"
 
 and eval_mexpr_primary ctxt env = function
     ME_ID varname -> begin

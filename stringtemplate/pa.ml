@@ -256,7 +256,7 @@ mexpr:
 
 mexpr_basic: [
     [ mt = mexpr_basic_template_ref -> mt
-    | "(" ; me = mexpr ; ")" ; "(" ; l = LIST0 mexpr_no_comma SEP "," ; ")" -> ME_TEMPLATE (ME_INCLUDE_IND me l)
+    | "(" ; me = mexpr ; ")" ; "(" ; l = LIST0 mexpr_no_comma SEP "," ; ")" -> ME_TEMPLATE (MTR_INCLUDE_IND me l)
     | "(" ; me = mexpr ; ")" -> me
     | p = mexpr_primary -> ME_PRIMARY p
     ]
@@ -284,15 +284,15 @@ me_cond: [
   ;
 mexpr_basic_template_ref: [ [
       check_qid_lparen ;
-      qid = qualified_id ; "(" ; a = args ; ")" -> ME_TEMPLATE (ME_INCLUDE qid a)
-    | st = subtemplate -> ME_TEMPLATE (ME_SUB st)
+      qid = qualified_id ; "(" ; a = args ; ")" -> ME_TEMPLATE (MTR_INCLUDE qid a)
+    | st = subtemplate -> ME_TEMPLATE (MTR_SUB st)
   ] ]
   ;
 mexpr_template_ref: [ [
       check_qid_lparen ;
-      qid = qualified_id ; "(" ; a = args ; ")" -> ME_INCLUDE qid a
-    | st = subtemplate -> ME_SUB st
-    | "(" ; me = mexpr ; ")" ; "(" ; l = LIST0 mexpr_no_comma SEP "," ; ")" -> ME_INCLUDE_IND me l
+      qid = qualified_id ; "(" ; a = args ; ")" -> MTR_INCLUDE qid a
+    | st = subtemplate -> MTR_SUB st
+    | "(" ; me = mexpr ; ")" ; "(" ; l = LIST0 mexpr_no_comma SEP "," ; ")" -> MTR_INCLUDE_IND me l
   ] ]
   ;
 
