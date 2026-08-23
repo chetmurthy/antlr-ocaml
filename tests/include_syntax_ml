@@ -110,6 +110,7 @@ open St4syntax_test ;;
 
 open Sttypes2 ;;
 open Stg_types ;;
+open Lexers ;;
 open Cooked ;;
 open Eval ;;
 open Environ ;;
