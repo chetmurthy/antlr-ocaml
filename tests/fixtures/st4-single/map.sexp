@@ -100,6 +100,22 @@ map supplies the -first- argument, not last
        (name "map with named arg (first arg)")
        (disabled true)
       )
+     ((input {|<"a":two("1"),two("2")>|})
+      (output {bar|[a 1]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+round-robin alternation of map receiver
+|}
+       )
+      )
+     ((input {|<["a"]:two("1"),two("2")>|})
+      (output {bar|[a 1]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+round-robin alternation of map receiver
+|}
+       )
+      )
      ((input {|<["a","b","c","d","e","f"]:two("1"),two("2")>|})
       (output {bar|[a 1][b 2][c 1][d 2][e 1][f 2]|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))

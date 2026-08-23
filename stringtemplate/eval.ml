@@ -560,11 +560,26 @@ let attrval_append av1 av2 : attr_val_t =
     (SV v1, SV v2) -> MV [v1; v2]
   | (SV v1, MV l) -> MV (v1::l)
   | (MV l, SV v2) -> MV (l@[v2])
-  | ((MEXPR _, _)|(_, MEXPR _)) ->
+  | (MV l1, MV l2) -> MV(l1@l2)
+| ((MEXPR _, _)|(_, MEXPR _)) ->
      failwith "attrval_append: Internal error: MEXPR should never be found here"
 
 let attrval_concat (l : attr_val_t list) : attr_val_t =
   List.fold_left attrval_append (MV[]) l
+
+let flatten_MTR_CAT mtr =
+  let rec flatrec = function
+      MTR_CAT(mtr1, mtr2) ->
+      (flatrec mtr1)@(flatrec mtr2)
+    | mtr -> [mtr]
+in flatrec mtr
+
+let flatten_ME_CAT me =
+  let rec flatrec = function
+      ME_CAT(me1, me2) ->
+      (flatrec me1)@(flatrec me2)
+    | me -> [me]
+in flatrec me
 
 let rec option_value ctxt env key options =
   match List.assoc_opt key options with
@@ -577,7 +592,21 @@ let rec option_value ctxt env key options =
 and eval_mexpr ctxt env = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env p
   | ME_MAP (ME_CAT _ as me1, mtr2) -> assert false
-  | ME_MAP (me1, (MTR_CAT _ as mtr2)) -> assert false
+  | ME_MAP (me1, (MTR_CAT _ as mtr2)) ->
+     let mtr_l = flatten_MTR_CAT mtr2 in
+     let n = List.length mtr_l in
+     let attrval = eval_mexpr ctxt env me1 in
+     begin
+       match attrval with
+         MEXPR _ -> failwith "eval_mexpr: internal error: should never see MEXPR here"
+       | SV _ -> eval_mexpr_template_ref ctxt env attrval (List.hd mtr_l)
+       | MV l ->
+          l
+          |> List.mapi (fun i v ->
+                 eval_mexpr_template_ref ctxt env (SV v) (List.nth mtr_l (i mod n)))
+          |> attrval_concat
+     end
+
   | ME_MAP (me1, mtr2) ->
      let attrval = eval_mexpr ctxt env me1 in
      eval_mexpr_template_ref ctxt env attrval mtr2
