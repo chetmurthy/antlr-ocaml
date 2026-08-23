@@ -667,6 +667,10 @@ and eval_mexpr ctxt env = function
   | ME_TEMPLATE (MTR_TEMPLATE t) ->
      eval_elements ctxt env t
 
+  | ME_TEMPLATE (MTR_SUB (ids, t)) ->
+     assert (ids = []) ;
+     eval_elements ctxt env t
+
   | me ->
      Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
             pp_mexpr_t me) ;
