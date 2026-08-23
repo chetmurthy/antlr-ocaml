@@ -552,8 +552,9 @@ let render_attr_value v : render_t =
 let attrval_map f (av : attr_val_t) : attr_val_t list =
   match av with
     MEXPR _ -> failwith "attrval_map: Internal error: MEXPR should never be found here"
+  | SV NULL -> [SV NULL]
   | SV _ -> [f av]
-  | MV l -> List.map (fun v -> f (SV v)) l
+  | MV l -> List.filter_map (function NULL -> None | v -> Some (f (SV v))) l
 
 let attrval_append av1 av2 : attr_val_t =
   match (av1, av2) with
@@ -591,7 +592,16 @@ let rec option_value ctxt env key options =
 
 and eval_mexpr ctxt env = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env p
-  | ME_MAP (ME_CAT _ as me1, mtr2) -> assert false
+
+  | ME_MAP (ME_CAT _ as me1, mtr2) as me ->
+     let me_l = flatten_ME_CAT me1 in
+     let attrval_l = List.map (eval_mexpr ctxt env) me_l in
+     
+
+     Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
+            pp_mexpr_t me) ;
+     failwith "eval_mexpr: unhandled case"
+
   | ME_MAP (me1, (MTR_CAT _ as mtr2)) ->
      let mtr_l = flatten_MTR_CAT mtr2 in
      let n = List.length mtr_l in

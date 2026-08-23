@@ -132,9 +132,9 @@ let th = Testharness.load "xx.sexp" ;;
 let r = (List.hd th.runs) ;;
 let t = TestOCaml.stparse (snd r.input) ;;
 let env = [r.attributes] ;;
-(*
-TestOCaml.steval group env t ;;
 
+TestOCaml.steval group env t ;;
+(*
 TestOCaml.st4_test ~debug:true ~verbose:true ~force:true ~onlytest:None ~multi:false ~testname:"basic" "xx.sexp" ;;
  *)
 (*

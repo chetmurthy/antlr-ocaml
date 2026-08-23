@@ -25,8 +25,43 @@ simple map
 |}
        )
       )
-     ((input {|<["a","b"]:t()>|})
+     ((input {|<["a",,"b"]:t()>|})
       (output {bar|[a][b]|bar})
+      (comments {|
+simple map
+|}
+       )
+      )
+     ((input {|<[,,"b"]:t()>|})
+      (output {bar|[b]|bar})
+      (comments {|
+simple map
+|}
+       )
+      )
+     ((input {|<[,,]:t()>|})
+      (output {bar||bar})
+      (comments {|
+simple map
+|}
+       )
+      )
+     ((input {|<[]:t()>|})
+      (output {bar||bar})
+      (comments {|
+simple map
+|}
+       )
+      )
+     ((input {|<["a",,"b"]:{x|[<i> <x>]}>|})
+      (output {bar|[1 a][2 b]|bar})
+      (comments {|
+simple map
+|}
+       )
+      )
+     ((input {|<["a",,"b"]:{x|[<i> <x>]}; separator=", ", null={//}>|})
+      (output {bar|[1 a], //, [2 b]|bar})
       (comments {|
 simple map
 |}
@@ -132,13 +167,41 @@ and it can be more than two stages
 |}
        )
       )
+     ((input {|<"a",[]:{x,y|<two(x,y)>}>|})
+      (output {bar|[a ]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+two inputs, one two-arg receiver: in subtemplate, it works
+|}
+       )
+      (name "two inputs, one two-arg receiver subtemplate, minimal example")
+      )
+     ((input {|<[],"d":{x,y|<two(x,y)>}>|})
+      (output {bar|[ d]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+two inputs, one two-arg receiver: in subtemplate, it works
+|}
+       )
+      (name "two inputs, one two-arg receiver subtemplate, minimal example")
+      )
+     ((input {|<"a","d":{x,y|<two(x,y)>}>|})
+      (output {bar|[a d]|bar})
+      (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
+      (comments {|
+two inputs, one two-arg receiver: in subtemplate, it works
+|}
+       )
+      (name "two inputs, one two-arg receiver subtemplate, minimal example")
+      )
      ((input {|<["a","b","c"],["d","e","f"]:{x,y|<two(x,y)>}>|})
       (output {bar|[a d][b e][c f]|bar})
       (attributes ((name (MV ((STRING Foo) (STRING Bar))))))
       (comments {|
-round-robin alternation of map receiver
+two inputs, one two-arg receiver: in subtemplate, it works
 |}
        )
+      (name "two inputs, one two-arg receiver subtemplate")
       )
      ((input {|<["a","b","c"],["d","e","f","g"]:{x,y|<two(x,y)>}>|})
       (output {bar|[a d][b e][c f][ g]|bar})
