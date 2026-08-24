@@ -26,9 +26,9 @@ let unescape_escape_template s =
        s |> [%subst {|^\\u([0-9a-fA-F]{1,4})$|} / {|\u{$1}|} / pcre2 ] |> Std.unescape_string
      else Fmt.(failwithf "St_util.unescape: unrecognized escape -payload- %a" Dump.string s)
 
-let narrow_loc n loc =
+let narrow_loc (leftlen,rightlen) loc =
   let len = Ploc.((last_pos loc) - (first_pos loc)) in
-  Ploc.sub loc n (len-2*n)
+  Ploc.sub loc leftlen (len-(leftlen+rightlen))
 
 let unescape_stg_string (loc, s) =
   let s =
@@ -36,19 +36,24 @@ let unescape_stg_string (loc, s) =
       None ->
       Fmt.(raise_failwithf loc "unescape_stg_string: malformed string %a" Dump.string s)
     | Some s -> s in
-  (narrow_loc 1 loc, Util.unescape_string s)
+  (narrow_loc (1,1) loc, Util.unescape_string s)
 
 let unwrap_stg_bigstring (loc, s) =
   match [%match {|^<<(.*)>>$|} / s strings !1] s with
     None ->
     Fmt.(raise_failwithf loc "unwrap_stg_bigstring: malformed string %a" Dump.string s)
-  | Some s -> (narrow_loc 2 loc, s)
+  | Some s ->
+     let leftlen = 2 in
+     let rightlen = 2 in
+     let s' = [%subst {|\\>|} / {|>|} / g s] s in
+     let rightlen = rightlen + (String.length s) - (String.length s') in
+     (narrow_loc (leftlen,rightlen) loc, s')
 
 let unwrap_stg_bigstring_no_nl (loc, s) =
   match [%match {|^<%(.*)%>$|} / s strings !1] s with
     None ->
      Fmt.(raise_failwithf loc "unwrap_stg_bigstring_no_nl: malformed string %a" Dump.string s)
-  | Some s -> (narrow_loc 2 loc, s)
+  | Some s -> (narrow_loc (2,2) loc, s)
 
 module type PAHELPER = sig
   type t

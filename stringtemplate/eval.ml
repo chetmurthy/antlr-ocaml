@@ -117,13 +117,23 @@ end
 
 module Group = struct
   open Cooked
+  type triple_t = (string * template_def_t) list * (string * string) list * (string * dict_t) list
   type t = {
       dicts : (string, dict_t) MHM.t
     ; templates : (string, template_def_t) MHM.t
     ; aliases : (string, string) MHM.t
     }
 
-  let intern_group raw =
+  let filter_redefinitions kind l =
+    List.fold_left (fun m (k,v) ->
+        if List.mem_assoc k m then begin
+            Fmt.(pf stderr "ignored redefinition of %s named %s@." kind k) ;
+            m
+          end
+        else (k,v)::m)
+      [] l
+
+  let intern_group raw : triple_t =
     let open Raw in
     let rawdicts =
       raw.defs |> List.filter (function GROUPDEF_DICT _ -> true | _ -> false) in
@@ -135,12 +145,15 @@ module Group = struct
     let defs = List.map (function GROUPDEF_TEMPLATE_DEF (loc, name, formals, rhs)
                                   -> Intern.template_def loc (name, formals, rhs))
                  rawdefs in
+    let defs = filter_redefinitions "template" defs  in
     let aliases = List.map (function GROUPDEF_TEMPLATE_ALIAS (loc, name, alias)
                                   -> (name, alias))
                     rawaliases in
+    let aliases = filter_redefinitions "alias" aliases  in
     let dicts = List.map (function GROUPDEF_DICT (loc, d)
                                    -> Intern.dict loc d)
                   rawdicts in
+    let dicts = filter_redefinitions "dict" dicts  in
     (defs, aliases, dicts)
 
   let merge1 (defs1, aliases1, dicts1) (defs2, aliases2, dicts2) =
@@ -156,7 +169,7 @@ module Group = struct
              (list string) (Std.intersect dictnames1 dictnames2)) ;
     (defs1@defs2, aliases1@aliases2, dicts1@dicts2)
 
-  let merge_imports ~imported:(imp_defs, imp_aliases, imp_dicts) (defs, aliases, dicts) =
+  let merge_imports ~imported:(imp_defs, imp_aliases, imp_dicts) (defs, aliases, dicts) : triple_t =
     let upsert m (k,v) =
       let m =
         if List.mem_assoc k m then
@@ -271,25 +284,68 @@ end
 module GroupDir = struct
 
 type t = {
-    perdir : (string, Group.t) MHM.t
+    perdir : (string, Group.t) LM.t
   }
 
-let classify_files files =
-  let analyze f =
-    let is_stg = Fpath.(f |> v |> has_ext "stg") in
-    let is_st = Fpath.(f |> v |> has_ext "st") in
-    if (not is_stg) && (not is_st) then
-      Fmt.(failwithf "GroupDir: file %a not valid" Dump.string f) ;
+let is_stg f = Fpath.(f |> v |> has_ext "stg")
+let is_st f = Fpath.(f |> v |> has_ext "st")
+
+let groupname_of_file f =
     let groupname =
-      if is_st then
+      if is_st f then
         Fpath.(f |> v |> parent |> to_string)
       else Fpath.(f |> v |> rem_ext |> to_string) in
     let groupname = [%subst {|/$|} / {||} /s] groupname in
     let groupname = if groupname = "." then "" else groupname in
-    (groupname, f)
+    groupname
+
+let classify_files files =
+  let analyze f =
+    if (not (is_stg f)) && (not (is_st f)) then
+      Fmt.(failwithf "GroupDir: file %a not valid" Dump.string f) ;
+    (groupname_of_file f, f)
   in
   let props = List.map analyze files in
   Std.nway_partition (fun (a,_) (b,_) -> a=b) props
+
+let read_group ~filecache dirkey files =
+  match files with
+    [file] ->
+     Group.Int.load ~filecache file
+  | files ->
+     let stg_files = List.filter is_stg files in
+     let st_files = List.filter is_st files in
+
+     assert (List.length stg_files <= 1) ;
+     assert (st_files <> []) ;
+     assert (List.for_all (fun file -> dirkey = groupname_of_file file) st_files) ;
+
+     if (stg_files <> []) then
+       Fmt.(pf stderr "GroupDir.read_group: STG file %s shadows ST files %a@."
+              (List.hd stg_files) (list string) st_files) ;
+
+     match stg_files with
+       [file] -> Group.Int.load ~filecache file
+     | _ ->
+        let defs =
+          st_files
+          |> List.concat_map (fun file ->
+                 let key = Fpath.(file |> v |> rem_ext |> basename) in
+                 let (defs, aliases, dicts) = Group.Int.load ~filecache file in
+                 if aliases <> [] then
+                   Fmt.(failwithf "ST file %s should not contain aliases" file) ;
+                 if dicts <> [] then
+                   Fmt.(failwithf "ST file %s should not contain dicts" file) ;
+                 match defs with
+                   ([]|(_::_::_)) ->
+                    Fmt.(failwithf "Should have exactly ONE template def in ST file %s"
+                           file)
+                 | [(k,v)] when k <> key ->
+                    Fmt.(failwithf "template def in file %s should be named %s, not %s"
+                           file key k)
+                 | _ -> defs) in
+        (defs, [], [])
+
 
 let load ?(here_filecache=[]) ?(ploc_filecache=[]) ?(files=[]) ?dir () =
   let filecache = Group.Int.mk_filecache here_filecache ploc_filecache in
@@ -308,71 +364,60 @@ let load ?(here_filecache=[]) ?(ploc_filecache=[]) ?(files=[]) ?dir () =
   let process1 pairs =
     let dirkey = fst (List.hd pairs) in
     let files = List.map snd pairs in
-    if List.length files > 1 then
-      if not (List.for_all (fun f -> Fpath.(f |> v |> has_ext "st")) files) then
-        Fmt.(failwithf "GroupDir.load: more than one file in same groupdir [%a] are not all .st"
-             (list string) files) ;
-    match files with
-      [file] ->
-      (dirkey, Group.Int.load ~filecache file)
-    | files ->
-       let l = List.map (Group.Int.load ~filecache) files in
-       assert (List.for_all (function ([_], [], []) -> true | _ -> false) l) ;
-       (dirkey, (List.concat_map Std.fst3 l, [], [])) in
+    (dirkey, read_group ~filecache dirkey files) in
   
   let contents = List.map process1 grouped_files in
   let contents = List.map (fun (dirkey, l) ->  (dirkey, Group.Int._mk l)) contents in
   let gd = {
-    perdir = MHM.ofList 23 contents
+    perdir = LM.ofList () contents
     } in
   gd
 
 let mk ?group () =
-  let gd = { perdir = MHM.mk 23 } in
-  group |> Option.map (fun g -> MHM.add gd.perdir ("",g)) ;
-  gd
+  let contents = Option.fold ~none:[] ~some:(fun g -> [("",g)]) group in
+  { perdir = LM.ofList () contents }
 
-let has_alias gd s =
-  if not (MHM.in_dom gd.perdir "") then
+let has_alias gd ~path s =
+  if not (LM.in_dom gd.perdir path) then
     false
   else
-  let g = MHM.map gd.perdir "" in
+  let g = LM.map gd.perdir path in
   MHM.in_dom g.aliases s
 
-let find_alias gd s =
-  if not (MHM.in_dom gd.perdir "") then
-    Fmt.(failwith "no default group found") ;
-  let g = MHM.map gd.perdir "" in
+let find_alias gd ~path s =
+  if not (LM.in_dom gd.perdir path) then
+    Fmt.(failwithf "no group found for dir %a" Dump.string path) ;
+  let g = LM.map gd.perdir path in
   if not (MHM.in_dom g.aliases s) then
-    Fmt.(failwithf "GroupDir.find_alias: alias %s not found" s) ;
+    Fmt.(failwithf "GroupDir.find_alias: alias (dir=%a) %s not found" Dump.string path s) ;
   MHM.map g.aliases s
 
-let has_template gd s =
-  if not (MHM.in_dom gd.perdir "") then
+let has_template gd ~path s =
+  if not (LM.in_dom gd.perdir path) then
     false
   else
-  let g = MHM.map gd.perdir "" in
+  let g = LM.map gd.perdir path in
   MHM.in_dom g.templates s
 
-let find_template gd s =
-  if not (MHM.in_dom gd.perdir "") then
-    Fmt.(failwith "no default group found") ;
-  let g = MHM.map gd.perdir "" in
+let find_template gd ~path s =
+  if not (LM.in_dom gd.perdir path) then
+    Fmt.(failwith "no group found for dir %a" Dump.string path) ;
+  let g = LM.map gd.perdir path in
   if not (MHM.in_dom g.templates s) then
-    Fmt.(failwithf "GroupDir.find_template: template %s not found" s) ;
+    Fmt.(failwithf "GroupDir.find_template: template (dir=%a) %s not found" Dump.string path s) ;
   MHM.map g.templates s
 
 let has_dict gd s =
-  if not (MHM.in_dom gd.perdir "") then
+  if not (LM.in_dom gd.perdir "") then
     false
   else
-  let g = MHM.map gd.perdir "" in
+  let g = LM.map gd.perdir "" in
   MHM.in_dom g.dicts s
 
 let find_dict gd s =
-  if not (MHM.in_dom gd.perdir "") then
+  if not (LM.in_dom gd.perdir "") then
     Fmt.(failwith "no default group found") ;
-  let g = MHM.map gd.perdir "" in
+  let g = LM.map gd.perdir "" in
   if not (MHM.in_dom g.dicts s) then
     Fmt.(failwithf "GroupDir.find_dict: dict %s not found" s) ;
   MHM.map g.dicts s
@@ -511,15 +556,16 @@ let error ctxt s = ctxt.error s
 
 let lookup_template ctxt qid =
   assert (not qid.rooted) ;
-  assert (List.length qid.ids = 1) ;
-  let id = List.hd qid.ids in
+  assert (qid.ids <> []) ;
+  let (id, path) = Std.sep_last qid.ids in
+  let path = String.concat "/" path in
   let id =
-    if GroupDir.has_alias ctxt.groupdir id then
-      GroupDir.find_alias ctxt.groupdir id
+    if GroupDir.has_alias ctxt.groupdir ~path id then
+      GroupDir.find_alias ctxt.groupdir ~path id
     else id in
-  if not (GroupDir.has_template ctxt.groupdir id) then
+  if not (GroupDir.has_template ctxt.groupdir ~path id) then
     Fmt.(failwithf "lookup_template: template %a not found" pp_qualified_id_t qid) ;
-  GroupDir.find_template ctxt.groupdir id
+  GroupDir.find_template ctxt.groupdir ~path id
 
 let default_warning s =  Fmt.(pf stderr "%s@." s)
 let default_error s = Fmt.(failwithf "%s@." s)
@@ -948,8 +994,10 @@ and eval_mexpr ctxt env = function
        match args with
          ARGS_EMPTY ->
           if formals |> List.exists (function (_, None) -> true | _ -> false) then
-            Fmt.(failwith "eval_mexpr: no-arg include calls template with args that require values") ;
-          List.filter_map (function (vname, Some rhs) -> Some (bind_formal_arg vname rhs) | _ -> None) formals
+            Context.warning ctxt Fmt.(str "eval_mexpr: no-arg include calls template with args that require values") ;
+          List.filter_map (function
+                (vname, Some rhs) -> Some (bind_formal_arg vname rhs)
+              | _ -> None) formals
 
          | ARGS_NAMED (named_actuals, ellipsis) ->
             formals

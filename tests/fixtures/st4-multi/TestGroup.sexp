@@ -389,7 +389,7 @@ stat(name,value="99") ::= "x=<value>; // <name>"
 b() ::= "bar"
 b() ::= "duh"
 |})))
-   (runs (((input ""))))
+   (runs (((input "<b()>") (output bar))))
    (errors {|group.stg 3:0: redefinition of template b
 |})
    )
