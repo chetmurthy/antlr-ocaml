@@ -60,6 +60,16 @@ let test_environ ctxt =
       ({| (MV ((STRING "foo"))) |}
        |> Sexp.of_string 
        |> Environ.env_val_t_of_located_sexp)
+  ; assert_equal ~printer:Environ.show_env_val_t
+      Environ.(VAL (SV (DICT [])))
+      ({| (SV (DICT ())) |}
+       |> Sexp.of_string 
+       |> Environ.env_val_t_of_located_sexp)
+  ; assert_equal ~printer:Environ.show_env_val_t
+      Environ.(VAL (SV (DICT ["a",STRING "b"])))
+      ({| (SV (DICT (("a" (STRING "b"))))) |}
+       |> Sexp.of_string 
+       |> Environ.env_val_t_of_located_sexp)
 
 let test_eval_simple_1 ctxt =
   let open ST4 in
