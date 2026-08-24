@@ -786,6 +786,8 @@ let dictval2value key = function
     DVAL_KEY -> VALUE_TEMPLATE [EXPR_TAG(ME_PRIMARY(ME_STRING key),[])]
   | DVAL_VALUE v -> v
 
+let builtin_functions = ["first";"rest";"trunc";"length";"last";"strip";"trim";"strlen";"reverse"]
+
 let rec dict2attr_val ctxt env d : attr_val_t =
   let l =
     d.kv
@@ -816,6 +818,98 @@ and eval_mexpr_arg_by_value ctxt env = function
     end
   | me -> VAL (eval_mexpr ctxt env me)
 
+and eval_funcall ctxt env fname args =
+  let av_l = match args with
+      ARGS_EMPTY -> []
+    | ARGS_NAMED _ -> Fmt.(failwithf "cannot call builtin function %s with named args" fname)
+    | ARGS_LIST l -> List.map (eval_mexpr ctxt env) l in
+  match (fname, av_l) with
+    "first",[av] -> begin
+      match av with
+        (MV (h::_)|SV h) -> SV h
+      | _ -> SV NULL
+    end
+
+  | "last",[av] -> begin
+      match av with
+        MV (_::_ as l) -> SV (fst (Std.sep_last l))
+      | SV v -> SV v
+      | _ -> SV NULL
+    end
+
+  | "rest",[av] -> begin
+      match av with
+        MV (_::t) -> MV t
+      | _ -> SV NULL
+    end
+
+  | "reverse",[av] -> begin
+      match av with
+        MV l -> MV (List.rev l)
+      | SV v -> SV v
+      | _ -> SV NULL
+    end
+
+  | "trunc",[av] -> begin
+      match av with
+        MV (_::_ as l) -> MV (snd (Std.sep_last l))
+      | _ -> SV NULL
+    end
+
+  | "strip",[av] -> begin
+      match av with
+        MV l -> MV (List.filter (function NULL -> false | _ -> true) l)
+      | _ -> SV NULL
+    end
+
+  | "length",[av] -> begin
+      match av with
+        MV l -> SV (INT (List.length l))
+      | _ -> SV NULL
+    end
+
+  | "trim",[av] -> begin
+      let trimws s =
+        s
+        |> [%subst {|^\s+|} / {||} / s]
+        |> [%subst {|\s+$|} / {||} / s] in
+
+      match av with
+        (SV (STRING s)|MV [STRING s]) -> SV (STRING (trimws s))
+      | (SV v | MV [v]) ->
+         let s =
+           v
+           |> render_value
+           |> OutputToken.flatten
+           |> Std.stream_of_list
+           |> FIW.render_stream
+           |> Std.list_of_stream
+           |> String.concat ""
+           |> trimws in
+         SV (STRING s)
+      | _ -> SV NULL
+    end
+
+  | "strlen",[av] -> begin
+      match av with
+        (SV (STRING s)|MV [STRING s]) -> SV (INT (String.length s))
+      | (SV v | MV [v]) ->
+         let s =
+           v
+           |> render_value
+           |> OutputToken.flatten
+           |> Std.stream_of_list
+           |> FIW.render_stream
+           |> Std.list_of_stream
+           |> String.concat ""
+           |> String.length in
+         SV (INT s)
+      | _ -> SV NULL
+    end
+
+  | _ -> Context.warning ctxt Fmt.(str "unrecognized function call %s with %d args" fname (List.length av_l)) ;
+         SV NULL
+
 and eval_mexpr ctxt env = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env p
 
@@ -841,6 +935,10 @@ and eval_mexpr ctxt env = function
   | ME_MAP (me1, mtr2) ->
      let attrval = eval_mexpr ctxt env me1 in
      eval_mexpr_template_ref ctxt env attrval mtr2
+
+  | ME_TEMPLATE (MTR_INCLUDE ({rooted=false; ids=[id]}, args))
+       when List.mem id builtin_functions ->
+     eval_funcall ctxt env id args
 
   | ME_TEMPLATE (MTR_INCLUDE (qid, args)) ->
      let t = Context.lookup_template ctxt qid in
