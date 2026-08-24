@@ -633,16 +633,17 @@ let render_list ~sep ?null l : render_t =
       ([],_) -> RLIST []
 
     | ([NULL], Some null) -> null
-
     | ([NULL], None) -> RLIST[]
+
+    | ([h], Some null) -> render_nullable ~null h
+    | ([h], None) -> render_value h
+
+    | (NULL::t, None) -> rerec t
 
     | (h::t, Some null) ->
        RLIST [render_nullable ~null h;
         sep ;
         rerec t]
-
-    | (NULL::t, None) -> rerec t
-
     | (h::t, None) ->
        RLIST [render_value h;
         sep ;

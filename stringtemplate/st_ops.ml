@@ -1,5 +1,7 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.import,pa_ppx_migrate *)
 
+open Pa_ppx_utils
+
 open Sttypes2
 
 module Migrate = struct
@@ -210,3 +212,19 @@ let balanced_indentation t =
     true
   with Caught -> false
 
+let nuke_first_lf t =
+  match t with
+    (LIT (VERT_WS s))::l ->
+    let s = [%subst {|^\n|} / {||} / s] s in
+    if s <> "" then
+      (LIT (VERT_WS s))::l
+    else l
+
+let nuke_last_lf t =
+  if t = [] then []
+  else
+    match Std.sep_last t with
+      (LIT (VERT_WS "\n")),rest -> rest
+    | (LIT (VERT_WS s)),rest ->
+       let s = [%subst {|\n$|} / {||} / s] s in
+       rest@[(LIT (VERT_WS s))]

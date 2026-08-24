@@ -51,7 +51,7 @@ let test_environ ctxt =
      |> Sexp.of_string 
      |> Environ.attr_val_t_of_located_sexp)
 
-let test_eval_simple ctxt =
+let test_eval_simple_1 ctxt =
   let open ST4 in
   let printer x = Fmt.(str "%a" Dump.string x) in
   let env = Environ.[
@@ -74,6 +74,18 @@ let test_eval_simple ctxt =
          (stparse {|
   <"Hello">, <name>!
 |}))
+
+
+let test_eval_simple_2 ctxt =
+  let open ST4 in
+  let printer x = Fmt.(str "%a" Dump.string x) in
+  let env = Environ.[
+        [
+          ("name",MV [STRING "Foo"; STRING "Bar"])
+        ; ("x", MEXPR ([%here_string "#inside name"] |> STPa.Mexpr.of_here_string))
+        ]
+            ] in
+  ()
   ; assert_equal ~printer {|
   Hello, Foo
   Bar!
@@ -87,7 +99,8 @@ let test_eval_simple ctxt =
 
 let suite = "Test St4 evaluation" >::: [
       "environ"   >:: test_environ
-    ; "eval simple"   >:: test_eval_simple
+    ; "eval simple 1"   >:: test_eval_simple_1
+    ; "eval simple 2"   >:: test_eval_simple_2
     ]
 
 let _ = 

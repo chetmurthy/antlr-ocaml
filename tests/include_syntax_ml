@@ -107,6 +107,8 @@ open Camlp5_adapter ;;
 open St4_util ;;
 #load "st4syntax_test.cmo";;
 open St4syntax_test ;;
+#load "st4eval_test.cmo";;
+open St4eval_test ;;
 
 open Sttypes2 ;;
 open Stg_types ;;
@@ -139,7 +141,7 @@ let group = match th.groupfile with
        Group.load ~ploc_filecache file
 ;;
 
-let r = (List.nth th.runs 2) ;;
+let r = (List.nth th.runs 7) ;;
 let t = TestOCaml.stparse (snd r.input) ;;
 let env = [r.attributes] ;;
 
