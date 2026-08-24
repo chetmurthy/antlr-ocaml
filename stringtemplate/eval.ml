@@ -889,6 +889,21 @@ and eval_mexpr ctxt env = function
             | Some dv -> dictval2value dv in
      eval_value ctxt env v
 
+  | ME_PROP ((ME_PRIMARY (ME_ID dict_id)), key) ->
+     if not (GroupDir.has_dict ctxt.groupdir dict_id) then
+       Fmt.(failwithf "eval_mexpr: dict %s not found" dict_id) ;
+     let d = GroupDir.find_dict ctxt.groupdir dict_id in
+     let dictval2value = function
+         DVAL_KEY -> VALUE_TEMPLATE [EXPR_TAG(ME_PRIMARY(ME_STRING key),[])]
+       | DVAL_VALUE v -> v in
+     let v = 
+       if MHM.in_dom d.kv key then
+         dictval2value (MHM.map d.kv key)
+       else match d.default with
+              None -> VALUE_TEMPLATE[]
+            | Some dv -> dictval2value dv in
+     eval_value ctxt env v
+
   | me ->
      Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
             pp_mexpr_t me) ;
