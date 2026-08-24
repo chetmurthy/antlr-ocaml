@@ -4,6 +4,7 @@ open Pa_ppx_base
 open Ppxutil
 open Pa_ppx_located_sexp
 
+open Sttypes2
 open St_util
 open Eval
 
@@ -115,7 +116,7 @@ let eg1 = {
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
-                 ("name", SV (STRING "World"))
+                 ("name", VAL (SV (STRING "World")))
                ]
              ; comments = ""
              ; disabled = false
@@ -137,7 +138,7 @@ let eg2 = {
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
-                 ("name", MV [STRING "World1"; STRING "World2"])
+                 ("name", VAL (MV [STRING "World1"; STRING "World2"]))
                ]
              ; comments = ""
              ; disabled = false
@@ -159,7 +160,7 @@ let eg3 = {
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
-                 ("name", SV NULL)
+                 ("name", VAL (SV NULL))
                ]
              ; comments = ""
              ; disabled = false
@@ -181,7 +182,7 @@ let eg4 = {
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
-                 ("name", SV (LIST [STRING "World1"; STRING "World2"]))
+                 ("name", VAL (SV (LIST [STRING "World1"; STRING "World2"])))
                ]
              ; comments = ""
              ; disabled = false
@@ -203,7 +204,7 @@ let eg5 = {
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
              ; attributes = [
-                 ("name", SV (DICT [("a",STRING "b"); ("c",STRING "d")]))
+                 ("name", VAL (SV (DICT [("a",STRING "b"); ("c",STRING "d")])))
                ]
              ; comments = ""
              ; disabled = false
@@ -247,11 +248,12 @@ let add_attr pps (n,v) =
 
 let add_binding pps (n,rhs) =
   match rhs with
-    SV v ->
+    VAL (SV v) ->
     add_attr pps (n,v)
-  | MV l ->
+  | VAL (MV l) ->
        let add1 pps v = add_attr pps (n,v) in
        Fmt.(pf pps "%a" (list add1) l)
+  | MEXPR me -> Fmt.(failwithf "add_binding: cannot bind an expression %a" pp_mexpr_t me)
 
 let emit pps th =
   let groupfiles = (match th.groupfile with None -> [] | Some x -> [x])@th.groupfiles in

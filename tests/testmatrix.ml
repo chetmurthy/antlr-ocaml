@@ -23,7 +23,7 @@ let _UNDEF = STRING "<undefined>"
 let generate stt =
   let attributes =
     if stt.x <> _UNDEF then
-      [("x", SV stt.x)]
+      [("x", VAL (SV stt.x))]
     else [] in
   let groupfile_txt =
     Fmt.(str {|

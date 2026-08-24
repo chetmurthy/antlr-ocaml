@@ -21,7 +21,7 @@ u(x) ::= "<x>"
 test(x) ::= "<x>"
 |}))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV NULL)))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV NULL))))))))
    )
   )
  (single02
@@ -33,7 +33,7 @@ u(x) ::= "<x>"
 test(x) ::= "<x>"
 |}))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (STRING ""))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (STRING "")))))))))
    )
   )
  (single03
@@ -45,7 +45,7 @@ u(x) ::= "<x>"
 test(x) ::= "<x>"
 |}))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (single04
@@ -71,7 +71,7 @@ u(x) ::= "<x>"
 test(x) ::= "<x:t()>"
 |}))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV NULL)))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV NULL))))))))
    )
   )
  (single06
@@ -83,7 +83,7 @@ u(x) ::= "<x>"
 test(x) ::= "<x:t()>"
 |}))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (STRING ""))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (STRING "")))))))))
    )
   )
  (single07
@@ -95,7 +95,7 @@ u(x) ::= "<x>"
 test(x) ::= "<x:t()>"
 |}))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (single08
@@ -125,7 +125,9 @@ test(x) ::= "<x; null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (output y) (attributes ((x (SV NULL)))))))
+   (runs
+    (((input "<test(x)>") (output y) (attributes ((x (VAL (SV NULL)))))))
+    )
    )
   )
  (single10
@@ -139,7 +141,7 @@ test(x) ::= "<x; null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (STRING ""))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (STRING "")))))))))
    )
   )
  (single11
@@ -153,7 +155,7 @@ test(x) ::= "<x; null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (single12
@@ -183,7 +185,9 @@ test(x) ::= "<x:t(); null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (output y) (attributes ((x (SV NULL)))))))
+   (runs
+    (((input "<test(x)>") (output y) (attributes ((x (VAL (SV NULL)))))))
+    )
    )
   )
  (single14
@@ -197,7 +201,7 @@ test(x) ::= "<x:t(); null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (STRING ""))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (STRING "")))))))))
    )
   )
  (single15
@@ -211,7 +215,7 @@ test(x) ::= "<x:t(); null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (single16
@@ -241,7 +245,7 @@ test(x) ::= "<if(x)>y<endif>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV NULL)))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV NULL))))))))
    )
   )
  (single18
@@ -256,7 +260,10 @@ test(x) ::= "<if(x)>y<endif>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output y) (attributes ((x (SV (STRING "")))))))
+    (((input "<test(x)>")
+      (output y)
+      (attributes ((x (VAL (SV (STRING ""))))))
+      ))
     )
    )
   )
@@ -271,7 +278,7 @@ test(x) ::= "<if(x)>y<endif>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (single20
@@ -301,7 +308,9 @@ test(x) ::= "<if(x)>y<else>z<endif>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (output z) (attributes ((x (SV NULL)))))))
+   (runs
+    (((input "<test(x)>") (output z) (attributes ((x (VAL (SV NULL)))))))
+    )
    )
   )
  (single22
@@ -316,7 +325,10 @@ test(x) ::= "<if(x)>y<else>z<endif>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output y) (attributes ((x (SV (STRING "")))))))
+    (((input "<test(x)>")
+      (output y)
+      (attributes ((x (VAL (SV (STRING ""))))))
+      ))
     )
    )
   )
@@ -332,7 +344,7 @@ test(x) ::= "<if(x)>y<else>z<endif>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output z) (attributes ((x (SV (LIST ())))))))
+    (((input "<test(x)>") (output z) (attributes ((x (VAL (SV (LIST ()))))))))
     )
    )
   )
@@ -345,7 +357,7 @@ u(x) ::= "<x>"
 test(x) ::= "<x>"
 |}))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi01
@@ -360,7 +372,7 @@ test(x) ::= "<x>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -377,7 +389,7 @@ test(x) ::= "<x>"
    (runs
     (((input "<test(x)>")
       (output ab)
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -391,7 +403,7 @@ u(x) ::= "<x>"
 test(x) ::= "<x>"
 |}))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST (NULL)))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST (NULL))))))))))
    )
   )
  (multi04
@@ -406,7 +418,7 @@ test(x) ::= "<x>"
    (runs
     (((input "<test(x)>")
       (output b)
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -423,7 +435,7 @@ test(x) ::= "<x>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -440,7 +452,7 @@ test(x) ::= "<x>"
    (runs
     (((input "<test(x)>")
       (output ab)
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -456,7 +468,7 @@ test(x) ::= "<x; null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi08
@@ -473,7 +485,7 @@ test(x) ::= "<x; null={y}>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -492,7 +504,7 @@ test(x) ::= "<x; null={y}>"
    (runs
     (((input "<test(x)>")
       (output ab)
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -509,7 +521,10 @@ test(x) ::= "<x; null={y}>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output y) (attributes ((x (SV (LIST (NULL))))))))
+    (((input "<test(x)>")
+      (output y)
+      (attributes ((x (VAL (SV (LIST (NULL)))))))
+      ))
     )
    )
   )
@@ -527,7 +542,7 @@ test(x) ::= "<x; null={y}>"
    (runs
     (((input "<test(x)>")
       (output yb)
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -546,7 +561,7 @@ test(x) ::= "<x; null={y}>"
    (runs
     (((input "<test(x)>")
       (output ay)
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -565,7 +580,7 @@ test(x) ::= "<x; null={y}>"
    (runs
     (((input "<test(x)>")
       (output ayb)
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -581,7 +596,7 @@ test(x) ::= "<x; separator={,}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi15
@@ -598,7 +613,7 @@ test(x) ::= "<x; separator={,}>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -617,7 +632,7 @@ test(x) ::= "<x; separator={,}>"
    (runs
     (((input "<test(x)>")
       (output "a,b")
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -633,7 +648,7 @@ test(x) ::= "<x; separator={,}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST (NULL)))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST (NULL))))))))))
    )
   )
  (multi18
@@ -650,7 +665,7 @@ test(x) ::= "<x; separator={,}>"
    (runs
     (((input "<test(x)>")
       (output b)
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -669,7 +684,7 @@ test(x) ::= "<x; separator={,}>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -688,7 +703,7 @@ test(x) ::= "<x; separator={,}>"
    (runs
     (((input "<test(x)>")
       (output "a,b")
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -704,7 +719,7 @@ test(x) ::= "<x; null={y}, separator={,}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi22
@@ -721,7 +736,7 @@ test(x) ::= "<x; null={y}, separator={,}>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -740,7 +755,7 @@ test(x) ::= "<x; null={y}, separator={,}>"
    (runs
     (((input "<test(x)>")
       (output "a,b")
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -757,7 +772,10 @@ test(x) ::= "<x; null={y}, separator={,}>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output y) (attributes ((x (SV (LIST (NULL))))))))
+    (((input "<test(x)>")
+      (output y)
+      (attributes ((x (VAL (SV (LIST (NULL)))))))
+      ))
     )
    )
   )
@@ -775,7 +793,7 @@ test(x) ::= "<x; null={y}, separator={,}>"
    (runs
     (((input "<test(x)>")
       (output "y,b")
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -794,7 +812,7 @@ test(x) ::= "<x; null={y}, separator={,}>"
    (runs
     (((input "<test(x)>")
       (output "a,y")
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -813,7 +831,7 @@ test(x) ::= "<x; null={y}, separator={,}>"
    (runs
     (((input "<test(x)>")
       (output "a,y,b")
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -829,7 +847,7 @@ test(x) ::= "<if(x)>y<endif>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi29
@@ -846,7 +864,7 @@ test(x) ::= "<if(x)>y<endif>"
    (runs
     (((input "<test(x)>")
       (output y)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -865,7 +883,7 @@ test(x) ::= "<if(x)>y<endif>"
    (runs
     (((input "<test(x)>")
       (output y)
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -882,7 +900,10 @@ test(x) ::= "<if(x)>y<endif>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output y) (attributes ((x (SV (LIST (NULL))))))))
+    (((input "<test(x)>")
+      (output y)
+      (attributes ((x (VAL (SV (LIST (NULL)))))))
+      ))
     )
    )
   )
@@ -900,7 +921,7 @@ test(x) ::= "<if(x)>y<endif>"
    (runs
     (((input "<test(x)>")
       (output y)
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -919,7 +940,7 @@ test(x) ::= "<if(x)>y<endif>"
    (runs
     (((input "<test(x)>")
       (output y)
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -938,7 +959,7 @@ test(x) ::= "<if(x)>y<endif>"
    (runs
     (((input "<test(x)>")
       (output y)
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -954,7 +975,7 @@ test(x) ::= "<x:{it | <it>}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi36
@@ -971,7 +992,7 @@ test(x) ::= "<x:{it | <it>}>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -990,7 +1011,7 @@ test(x) ::= "<x:{it | <it>}>"
    (runs
     (((input "<test(x)>")
       (output ab)
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -1006,7 +1027,7 @@ test(x) ::= "<x:{it | <it>}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST (NULL)))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST (NULL))))))))))
    )
   )
  (multi39
@@ -1023,7 +1044,7 @@ test(x) ::= "<x:{it | <it>}>"
    (runs
     (((input "<test(x)>")
       (output b)
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -1042,7 +1063,7 @@ test(x) ::= "<x:{it | <it>}>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -1061,7 +1082,7 @@ test(x) ::= "<x:{it | <it>}>"
    (runs
     (((input "<test(x)>")
       (output ab)
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -1077,7 +1098,7 @@ test(x) ::= "<x:{it | <it>}; null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi43
@@ -1094,7 +1115,7 @@ test(x) ::= "<x:{it | <it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -1113,7 +1134,7 @@ test(x) ::= "<x:{it | <it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output ab)
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -1130,7 +1151,10 @@ test(x) ::= "<x:{it | <it>}; null={y}>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output y) (attributes ((x (SV (LIST (NULL))))))))
+    (((input "<test(x)>")
+      (output y)
+      (attributes ((x (VAL (SV (LIST (NULL)))))))
+      ))
     )
    )
   )
@@ -1148,7 +1172,7 @@ test(x) ::= "<x:{it | <it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output yb)
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -1167,7 +1191,7 @@ test(x) ::= "<x:{it | <it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output ay)
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -1186,7 +1210,7 @@ test(x) ::= "<x:{it | <it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output ayb)
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -1202,7 +1226,7 @@ test(x) ::= "<x:{it | <i>.<it>}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi50
@@ -1219,7 +1243,7 @@ test(x) ::= "<x:{it | <i>.<it>}>"
    (runs
     (((input "<test(x)>")
       (output "1.a")
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -1238,7 +1262,7 @@ test(x) ::= "<x:{it | <i>.<it>}>"
    (runs
     (((input "<test(x)>")
       (output "1.a2.b")
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -1254,7 +1278,7 @@ test(x) ::= "<x:{it | <i>.<it>}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST (NULL)))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST (NULL))))))))))
    )
   )
  (multi53
@@ -1271,7 +1295,7 @@ test(x) ::= "<x:{it | <i>.<it>}>"
    (runs
     (((input "<test(x)>")
       (output "1.b")
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -1290,7 +1314,7 @@ test(x) ::= "<x:{it | <i>.<it>}>"
    (runs
     (((input "<test(x)>")
       (output "1.a")
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -1309,7 +1333,7 @@ test(x) ::= "<x:{it | <i>.<it>}>"
    (runs
     (((input "<test(x)>")
       (output "1.a2.b")
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -1325,7 +1349,7 @@ test(x) ::= "<x:{it | <i>.<it>}; null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi57
@@ -1342,7 +1366,7 @@ test(x) ::= "<x:{it | <i>.<it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output "1.a")
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -1361,7 +1385,7 @@ test(x) ::= "<x:{it | <i>.<it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output "1.a2.b")
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -1378,7 +1402,10 @@ test(x) ::= "<x:{it | <i>.<it>}; null={y}>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output y) (attributes ((x (SV (LIST (NULL))))))))
+    (((input "<test(x)>")
+      (output y)
+      (attributes ((x (VAL (SV (LIST (NULL)))))))
+      ))
     )
    )
   )
@@ -1396,7 +1423,7 @@ test(x) ::= "<x:{it | <i>.<it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output "y1.b")
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -1415,7 +1442,7 @@ test(x) ::= "<x:{it | <i>.<it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output "1.ay")
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -1434,7 +1461,7 @@ test(x) ::= "<x:{it | <i>.<it>}; null={y}>"
    (runs
     (((input "<test(x)>")
       (output "1.ay2.b")
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -1450,7 +1477,7 @@ test(x) ::= "<x:{it | x<if(!it)>y<endif>}; null={z}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi64
@@ -1467,7 +1494,7 @@ test(x) ::= "<x:{it | x<if(!it)>y<endif>}; null={z}>"
    (runs
     (((input "<test(x)>")
       (output x)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -1486,7 +1513,7 @@ test(x) ::= "<x:{it | x<if(!it)>y<endif>}; null={z}>"
    (runs
     (((input "<test(x)>")
       (output xx)
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -1503,7 +1530,10 @@ test(x) ::= "<x:{it | x<if(!it)>y<endif>}; null={z}>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output z) (attributes ((x (SV (LIST (NULL))))))))
+    (((input "<test(x)>")
+      (output z)
+      (attributes ((x (VAL (SV (LIST (NULL)))))))
+      ))
     )
    )
   )
@@ -1521,7 +1551,7 @@ test(x) ::= "<x:{it | x<if(!it)>y<endif>}; null={z}>"
    (runs
     (((input "<test(x)>")
       (output zx)
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -1540,7 +1570,7 @@ test(x) ::= "<x:{it | x<if(!it)>y<endif>}; null={z}>"
    (runs
     (((input "<test(x)>")
       (output xz)
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -1559,7 +1589,7 @@ test(x) ::= "<x:{it | x<if(!it)>y<endif>}; null={z}>"
    (runs
     (((input "<test(x)>")
       (output xzx)
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )
@@ -1575,7 +1605,7 @@ test(x) ::= "<x:t():u(); null={y}>"
 |}
       ))
     )
-   (runs (((input "<test(x)>") (attributes ((x (SV (LIST ()))))))))
+   (runs (((input "<test(x)>") (attributes ((x (VAL (SV (LIST ())))))))))
    )
   )
  (multi71
@@ -1592,7 +1622,7 @@ test(x) ::= "<x:t():u(); null={y}>"
    (runs
     (((input "<test(x)>")
       (output a)
-      (attributes ((x (SV (LIST ((STRING a)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a))))))))
       ))
     )
    )
@@ -1611,7 +1641,7 @@ test(x) ::= "<x:t():u(); null={y}>"
    (runs
     (((input "<test(x)>")
       (output ab)
-      (attributes ((x (SV (LIST ((STRING a) (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) (STRING b))))))))
       ))
     )
    )
@@ -1628,7 +1658,10 @@ test(x) ::= "<x:t():u(); null={y}>"
       ))
     )
    (runs
-    (((input "<test(x)>") (output y) (attributes ((x (SV (LIST (NULL))))))))
+    (((input "<test(x)>")
+      (output y)
+      (attributes ((x (VAL (SV (LIST (NULL)))))))
+      ))
     )
    )
   )
@@ -1646,7 +1679,7 @@ test(x) ::= "<x:t():u(); null={y}>"
    (runs
     (((input "<test(x)>")
       (output yb)
-      (attributes ((x (SV (LIST (NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST (NULL (STRING b))))))))
       ))
     )
    )
@@ -1665,7 +1698,7 @@ test(x) ::= "<x:t():u(); null={y}>"
    (runs
     (((input "<test(x)>")
       (output ay)
-      (attributes ((x (SV (LIST ((STRING a) NULL))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL)))))))
       ))
     )
    )
@@ -1684,7 +1717,7 @@ test(x) ::= "<x:t():u(); null={y}>"
    (runs
     (((input "<test(x)>")
       (output ayb)
-      (attributes ((x (SV (LIST ((STRING a) NULL (STRING b)))))))
+      (attributes ((x (VAL (SV (LIST ((STRING a) NULL (STRING b))))))))
       ))
     )
    )

@@ -553,16 +553,31 @@ let mexpr_t_of_located_sexp =
 type attr_val_t = 
   MV of Value.t list
 | SV of Value.t
+[@@deriving show,located_sexp {exn=true}]
+type _env_val_t =
+  VAL of attr_val_t
 | MEXPR of (Sttypes2.mexpr_t [@of_located_sexp mexpr_t_of_located_sexp])
 [@@deriving show,located_sexp {exn=true}]
-type binding_t = string * attr_val_t
+
+let env_val_t_of_located_sexp arg : _env_val_t =
+  let open Pa_ppx_located_sexp.Sexp in
+  match arg with
+    List (loc, [Atom (_, ("SV"|"sV"|"MV"|"mV")); _]) ->
+    _env_val_t_of_located_sexp (List(loc, [Atom(loc,"VAL"); arg]))
+
+  | _ -> _env_val_t_of_located_sexp arg
+
+type env_val_t = _env_val_t
+[@@deriving show,located_sexp_of]
+
+type binding_t = string * env_val_t
 [@@deriving show,located_sexp {exn=true}]
 type frame_t = binding_t list
 [@@deriving show,located_sexp {exn=true}]
 type t = frame_t list
 [@@deriving show,located_sexp {exn=true}]
 
-let lookup_opt ctxt (env : t) varname =
+let lookup_opt ctxt (env : t) varname : env_val_t option =
   let rec lookrec = function
       [] ->
        Context.warning ctxt Fmt.(str "Environ.lookup: name %a not found" Dump.string varname) ;
@@ -672,8 +687,8 @@ let bind_formal_arg vname (v : value_t) : Environ.binding_t =
   match v with
     VALUE_TEMPLATE t -> (vname, MEXPR (ME_TEMPLATE (MTR_TEMPLATE t)))
   | VALUE_SUBTEMPLATE st -> (vname, MEXPR (ME_TEMPLATE (MTR_SUB st)))
-  | VALUE_BOOL b -> (vname, SV (BOOL b))
-  | VALUE_MT_DICT -> (vname, MV [])
+  | VALUE_BOOL b -> (vname, VAL (SV (BOOL b)))
+  | VALUE_MT_DICT -> (vname, VAL (MV []))
 
 let filter_loopback_bindings bl =
   bl
@@ -688,15 +703,13 @@ let render_attr_value v : render_t =
 
 let attrval_map f (av : attr_val_t) : attr_val_t list =
   match av with
-    MEXPR _ -> failwith "attrval_map: Internal error: MEXPR should never be found here"
-  | SV NULL -> [SV NULL]
+    SV NULL -> [SV NULL]
   | SV _ -> [f av]
   | MV l -> List.filter_map (function NULL -> None | v -> Some (f (SV v))) l
 
 let attrval_mapi f (av : attr_val_t) : attr_val_t list =
   match av with
-    MEXPR _ -> failwith "attrval_map: Internal error: MEXPR should never be found here"
-  | SV NULL -> [SV NULL]
+    SV NULL -> [SV NULL]
   | SV _ -> [f 0 av]
   | MV l ->
      let rec maprec i = function
@@ -707,8 +720,7 @@ let attrval_mapi f (av : attr_val_t) : attr_val_t list =
 
 let attrval_list_mapi (f : int -> attr_val_t list -> attr_val_t) (av_l : attr_val_t list) : attr_val_t list =
   let vl_l = List.map (function
-                   MEXPR _ -> failwith "attrval_list_map: Internal error: MEXPR should never be found here"
-                 | SV v -> [v]
+                   SV v -> [v]
                  | MV l -> l) av_l in
   let vl_array = Array.of_list vl_l in
   let has_values () = Array.exists (fun v -> v <> []) vl_array in
@@ -738,8 +750,6 @@ let attrval_append av1 av2 : attr_val_t =
   | (SV v1, MV l) -> MV (v1::l)
   | (MV l, SV v2) -> MV (l@[v2])
   | (MV l1, MV l2) -> MV(l1@l2)
-| ((MEXPR _, _)|(_, MEXPR _)) ->
-     failwith "attrval_append: Internal error: MEXPR should never be found here"
 
 let attrval_concat (l : attr_val_t list) : attr_val_t =
   List.fold_left attrval_append (MV[]) l
@@ -770,11 +780,11 @@ and eval_mexpr_arg_by_value ctxt env = function
     ME_TEMPLATE (MTR_SUB _) as me -> MEXPR me
   | ME_PRIMARY (ME_ID varname) -> begin
       match lookup_opt ctxt env varname with
-        None -> SV NULL
-      | Some ((SV _ | MV _) as v) -> v
+        None -> VAL (SV NULL)
+      | Some (VAL (SV _ | MV _) as v) -> v
       | Some (MEXPR me) -> eval_mexpr_arg_by_value ctxt env me
     end
-  | me -> eval_mexpr ctxt env me
+  | me -> VAL (eval_mexpr ctxt env me)
 
 and eval_mexpr ctxt env = function
     ME_PRIMARY p -> eval_mexpr_primary ctxt env p
@@ -790,8 +800,7 @@ and eval_mexpr ctxt env = function
      let attrval = eval_mexpr ctxt env me1 in
      begin
        match attrval with
-         MEXPR _ -> failwith "eval_mexpr: internal error: should never see MEXPR here"
-       | SV _ -> eval_mexpr_template_ref ctxt env attrval (List.hd mtr_l)
+         SV _ -> eval_mexpr_template_ref ctxt env attrval (List.hd mtr_l)
        | MV l ->
           l
           |> List.mapi (fun i v ->
@@ -899,7 +908,7 @@ and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
              | ARGS_EMPTY -> ARGS_LIST argexps
              | ARGS_LIST l -> ARGS_LIST (argexps@l)
            in
-           let env = Environ.push_frame (List.map2 (fun v av -> (v, av)) firstvars attrval_l) env in
+           let env = Environ.push_frame (List.map2 (fun v av -> (v, VAL av)) firstvars attrval_l) env in
            eval_mexpr ctxt env (ME_TEMPLATE (MTR_INCLUDE (qid, args)))
 
            | MTR_SUB (ids, t) ->
@@ -907,9 +916,9 @@ and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
                 Fmt.(failwithf "eval_mexpr_template_ref_multi:# subtemplate formals %d <> #attrvals %d"
                        (List.length ids) nattrs) ;
 
-              let binding = List.map2 (fun v av -> (v, av)) ids attrval_l in
-              let binding = [("i0", SV (STRING (string_of_int i)))
-                            ;("i", SV (STRING (string_of_int (i+1))))]@binding in
+              let binding = List.map2 (fun v av -> (v, VAL av)) ids attrval_l in
+              let binding = [("i0", VAL (SV (STRING (string_of_int i))))
+                            ;("i", VAL (SV (STRING (string_of_int (i+1)))))]@binding in
               let env = Environ.push_frame binding env in
               eval_elements ctxt env t
               
@@ -933,7 +942,7 @@ and eval_mexpr_template_ref ctxt env attrval = function
      in
      attrval
      |> attrval_map (fun attrval ->
-            let env = Environ.push_frame [(varname, attrval)] env in
+            let env = Environ.push_frame [(varname, VAL attrval)] env in
             eval_mexpr ctxt env (ME_TEMPLATE (MTR_INCLUDE (qid, args))))
      |> attrval_concat
 
@@ -942,9 +951,9 @@ and eval_mexpr_template_ref ctxt env attrval = function
      let varname = List.hd ids in
      attrval
      |> attrval_mapi (fun i attrval ->
-            let env = Environ.push_frame [("i0", SV (STRING (string_of_int i)))
-                                         ;("i", SV (STRING (string_of_int (i+1))))
-                                         ;(varname, attrval)] env in
+            let env = Environ.push_frame [("i0", VAL (SV (STRING (string_of_int i))))
+                                         ;("i", VAL (SV (STRING (string_of_int (i+1)))))
+                                         ;(varname, VAL attrval)] env in
             eval_elements ctxt env t)
      |> attrval_concat
 
@@ -957,7 +966,7 @@ and eval_mexpr_primary ctxt env = function
     ME_ID varname -> begin
       match lookup_opt ctxt env varname with
         None -> SV NULL
-      | Some ((SV _ | MV _) as v) -> v
+      | Some (VAL ((SV _ | MV _) as v)) -> v
       | Some (MEXPR me) -> eval_mexpr ctxt env me
     end
 
