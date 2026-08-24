@@ -121,16 +121,17 @@ open Environ ;;
 (*
 #trace Doit.eval_mexpr_template_ref ;;
 #trace Doit.render_attr_value ;;
- *)
 #trace Doit.eval_element ;;
 #trace Doit.eval_mexpr ;;
 #trace Doit.eval_elements ;;
 #trace Doit.eval_mexpr_template_ref_multi ;;
 #trace Doit.attrval_list_mapi ;;
+ *)
+#trace OutputToken.flatten ;;
 
 let th = Testharness.load "xx.sexp" ;;
 
-  let group = match th.groupfile with
+let group = match th.groupfile with
       None -> Group.mk()
     | Some (file,_) ->
        let ploc_filecache =
@@ -138,12 +139,11 @@ let th = Testharness.load "xx.sexp" ;;
        Group.load ~ploc_filecache file
 ;;
 
-let r = (List.hd th.runs) ;;
+let r = (List.nth th.runs 2) ;;
 let t = TestOCaml.stparse (snd r.input) ;;
 let env = [r.attributes] ;;
 
-let t = TestOCaml.stparse {|<"a",[]:{x,y|<two(x,y)>}>|} ;;
-TestOCaml.steval group env t ;;
+TestOCaml.steval ~group env t ;;
 (*
 TestOCaml.st4_test ~debug:true ~verbose:true ~force:true ~onlytest:None ~multi:false ~testname:"basic" "xx.sexp" ;;
  *)

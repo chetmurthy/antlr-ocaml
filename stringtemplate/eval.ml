@@ -436,9 +436,11 @@ open Pa_ppx_located_sexp.Sexp
     LITS of t list
   | RLIST of _render_t list
 
-  let rec flatten = function
-      LITS l -> l
-    | RLIST l -> List.concat_map flatten l
+  let flatten x =
+    let rec flatten = function
+        LITS l -> l
+      | RLIST l -> List.concat_map flatten l
+    in flatten x
 
   let pp_render_t_0 pps (x : _render_t) =
     let s =
@@ -625,14 +627,27 @@ let render_nullable ~null v : render_t  =
     NULL -> null
   | v -> render_value v
 
-let render_list ~sep ~null l : render_t =
-  let rec rerec = function
-      [] -> RLIST []
-    | [h] -> render_nullable ~null h
-    | h::t ->
+let render_list ~sep ?null l : render_t =
+  let rec rerec l =
+    match (l, null) with
+      ([],_) -> RLIST []
+
+    | ([NULL], Some null) -> null
+
+    | ([NULL], None) -> RLIST[]
+
+    | (h::t, Some null) ->
        RLIST [render_nullable ~null h;
         sep ;
+        rerec t]
+
+    | (NULL::t, None) -> rerec t
+
+    | (h::t, None) ->
+       RLIST [render_value h;
+        sep ;
         rerec t] in
+
   rerec l
 
 let bind_formal_arg vname (v : value_t) : Environ.binding_t =
@@ -651,7 +666,7 @@ let filter_loopback_bindings bl =
 let render_attr_value v : render_t =
   match v with
     SV v -> render_value v
-  | MV l -> render_list ~sep:(RLIST []) ~null:(RLIST[]) l
+  | MV l -> render_list ~sep:(RLIST []) l
 
 let attrval_map f (av : attr_val_t) : attr_val_t list =
   match av with
@@ -931,10 +946,11 @@ and eval_expr_tag ctxt env ((me, options) : expr_tag_t) : attr_val_t =
          SV (RENDERED (render_nullable ~null:null_value v))
     end
  | MV l ->
-     match List.assoc_opt "separator" options with
-       None -> rv
+    let sep_value = option_value ctxt env "separator" options in
+    match List.assoc_opt "null" options with
+       None ->
+        SV (RENDERED (render_list ~sep:sep_value l))
      | Some _ ->
-        let sep_value = option_value ctxt env "separator" options in
         let null_value = option_value ctxt env "null" options in
         SV (RENDERED (render_list ~sep:sep_value ~null:null_value l))
 
