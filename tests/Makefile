@@ -198,6 +198,8 @@ dtest-all: $(DALL:.txt=.DTEST)
 
 STSEXPALL=$(shell ls fixtures/st4-single/*.sexp)
 
+STSEXPMULTI=$(shell ls fixtures/st4-multi/*.sexp)
+
 ST4UTIL=$(TOP)/tests/st4_util.opt
 ST4GEN=_generated/st4
 
@@ -211,7 +213,7 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) test-ocaml -v -f $<
 
 STTESTCMD=full -f -d $(ST4GEN)
-sttest-multi:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
+sttest-multi-old:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestCoreBasics.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestDictionaries.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestGroup.sexp
@@ -223,6 +225,11 @@ sttest-multi:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestWhitespace.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestIndirectionAndEarlyEval.sexp
+
+%.STTEST-MULTI: %.sexp
+	$(ST4UTIL) $(STTESTCMD) -m $<
+
+sttest-multi: $(STSEXPMULTI:.sexp=.STTEST-MULTI)
 
 sttest-multi-verify:
 	$(MAKE) STTESTCMD="verify" sttest-multi
