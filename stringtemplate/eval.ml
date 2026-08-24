@@ -768,6 +768,17 @@ let flatten_ME_CAT me =
     | me -> [me]
 in flatrec me
 
+let normalize_attr_val_t av =
+  let rec normrec = function
+      (LIST l) -> List.concat_map normrec l
+    | v -> [v] in
+  let vl = match av with
+      SV v -> normrec v
+    | MV l -> normrec (LIST l) in
+  match vl with
+    [v] -> SV v
+  | l -> MV l
+
 let rec option_value ctxt env key options =
   match List.assoc_opt key options with
     (None | Some None) -> (RLIST[])
@@ -781,7 +792,7 @@ and eval_mexpr_arg_by_value ctxt env = function
   | ME_PRIMARY (ME_ID varname) -> begin
       match lookup_opt ctxt env varname with
         None -> VAL (SV NULL)
-      | Some (VAL (SV _ | MV _) as v) -> v
+      | Some (VAL ((SV _ | MV _) as v)) -> VAL (normalize_attr_val_t v)
       | Some (MEXPR me) -> eval_mexpr_arg_by_value ctxt env me
     end
   | me -> VAL (eval_mexpr ctxt env me)
@@ -966,7 +977,7 @@ and eval_mexpr_primary ctxt env = function
     ME_ID varname -> begin
       match lookup_opt ctxt env varname with
         None -> SV NULL
-      | Some (VAL ((SV _ | MV _) as v)) -> v
+      | Some (VAL ((SV _ | MV _) as v)) -> normalize_attr_val_t v
       | Some (MEXPR me) -> eval_mexpr ctxt env me
     end
 
