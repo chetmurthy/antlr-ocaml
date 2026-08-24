@@ -229,7 +229,12 @@ sttest-multi-old:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
 %.STTEST-MULTI: %.sexp
 	$(ST4UTIL) $(STTESTCMD) -m $<
 
+%.STTEST-MULTI-OCAML: %.sexp
+	$(ST4UTIL) test-ocaml -v -m $<
+
 sttest-multi: $(STSEXPMULTI:.sexp=.STTEST-MULTI)
+
+sttest-multi-ocaml: $(STSEXPMULTI:.sexp=.STTEST-MULTI-OCAML)
 
 sttest-multi-verify:
 	$(MAKE) STTESTCMD="verify" sttest-multi
