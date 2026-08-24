@@ -577,15 +577,18 @@ type frame_t = binding_t list
 type t = frame_t list
 [@@deriving show,located_sexp {exn=true}]
 
-let lookup_opt ctxt (env : t) varname : env_val_t option =
+let lookup_id_opt ctxt (env : t) varname : env_val_t option =
   let rec lookrec = function
       [] ->
-       Context.warning ctxt Fmt.(str "Environ.lookup: name %a not found" Dump.string varname) ;
+       Context.warning ctxt Fmt.(str "Environ.lookup_id_opt: name %a not found" Dump.string varname) ;
        None
     | fh::tl when List.mem_assoc varname fh ->
        Some (List.assoc varname fh)
     | _::tl -> lookrec tl
   in lookrec env
+
+let has_id ctxt (env : t) varname : bool =
+  None <> (lookup_id_opt ctxt env varname)
 
 let mt = []
 
@@ -644,13 +647,13 @@ module Doit = struct
 
 open OutputToken
 
-let render_value v : render_t =
+let rec render_value v : render_t =
   match v with
     STRING s -> LITS [(TEXT s)]
   | BOOL b -> LITS [(TEXT (if b then "true" else "false"))]
   | INT n -> LITS [(TEXT (string_of_int n))]
-  | DICT _ -> failwith "render_value: DICT unimplemented"
-  | LIST  _ -> failwith "render_value: LIST unimplemented"
+  | DICT l -> render_value (LIST (List.map (fun (k,_) -> STRING k) l))
+  | LIST l -> RLIST (List.map render_value l)
   | NULL -> LITS []
   | RENDERED x -> x
 
@@ -779,7 +782,29 @@ let normalize_attr_val_t av =
     [v] -> SV v
   | l -> MV l
 
-let rec option_value ctxt env key options =
+let dictval2value key = function
+    DVAL_KEY -> VALUE_TEMPLATE [EXPR_TAG(ME_PRIMARY(ME_STRING key),[])]
+  | DVAL_VALUE v -> v
+
+let rec dict2attr_val ctxt env d : attr_val_t =
+  let l =
+    d.kv
+    |> MHM.toList
+    |> List.map (fun (k,dv) ->
+           dv
+           |> dictval2value k
+           |> eval_value ctxt env
+           |> render_attr_value
+           |> OutputToken.flatten
+           |> Std.stream_of_list
+           |> FIW.render_stream
+           |> Std.list_of_stream
+           |> String.concat ""
+           |> (fun s -> STRING s)
+         ) in
+  MV l
+
+and option_value ctxt env key options =
   match List.assoc_opt key options with
     (None | Some None) -> (RLIST[])
   | Some (Some me) ->
@@ -789,8 +814,13 @@ let rec option_value ctxt env key options =
 
 and eval_mexpr_arg_by_value ctxt env = function
     ME_TEMPLATE (MTR_SUB _) as me -> MEXPR me
+  | ME_PRIMARY (ME_ID varname)
+       when not (has_id ctxt env varname) && GroupDir.has_dict ctxt.groupdir varname ->
+     let d = GroupDir.find_dict ctxt.groupdir varname in
+     VAL (dict2attr_val ctxt env d)
+
   | ME_PRIMARY (ME_ID varname) -> begin
-      match lookup_opt ctxt env varname with
+      match lookup_id_opt ctxt env varname with
         None -> VAL (SV NULL)
       | Some (VAL ((SV _ | MV _) as v)) -> VAL (normalize_attr_val_t v)
       | Some (MEXPR me) -> eval_mexpr_arg_by_value ctxt env me
@@ -893,15 +923,12 @@ and eval_mexpr ctxt env = function
      if not (GroupDir.has_dict ctxt.groupdir dict_id) then
        Fmt.(failwithf "eval_mexpr: dict %s not found" dict_id) ;
      let d = GroupDir.find_dict ctxt.groupdir dict_id in
-     let dictval2value = function
-         DVAL_KEY -> VALUE_TEMPLATE [EXPR_TAG(ME_PRIMARY(ME_STRING key),[])]
-       | DVAL_VALUE v -> v in
      let v = 
        if MHM.in_dom d.kv key then
-         dictval2value (MHM.map d.kv key)
+         dictval2value key (MHM.map d.kv key)
        else match d.default with
               None -> VALUE_TEMPLATE[]
-            | Some dv -> dictval2value dv in
+            | Some dv -> dictval2value key dv in
      eval_value ctxt env v
 
   | me ->
@@ -956,7 +983,13 @@ and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
   |> attrval_concat
 
 
-and eval_mexpr_template_ref ctxt env attrval = function
+and eval_mexpr_template_ref ctxt env attrval mtr =
+  let attrval = match attrval with
+      SV (DICT l) ->
+       let l = List.map (fun (k,_) -> STRING k) l in
+       MV l
+    | _ -> attrval in
+  match mtr with
     MTR_INCLUDE (qid, args) ->
      let t = Context.lookup_template ctxt qid in
      let formals = t.formals in
@@ -990,7 +1023,7 @@ and eval_mexpr_template_ref ctxt env attrval = function
 
 and eval_mexpr_primary ctxt env = function
     ME_ID varname -> begin
-      match lookup_opt ctxt env varname with
+      match lookup_id_opt ctxt env varname with
         None -> SV NULL
       | Some (VAL ((SV _ | MV _) as v)) -> normalize_attr_val_t v
       | Some (MEXPR me) -> eval_mexpr ctxt env me
