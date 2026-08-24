@@ -28,6 +28,7 @@ module Intern = struct
        |> St_util.unwrap_stg_bigstring_no_nl
        |> STPa.Template.of_located_string
        |> St_ops.coalesce
+       |> St_ops.removews
        |> (fun t -> DVAL_VALUE (VALUE_TEMPLATE t))
     | KEYVAL_STRING (loc, s) ->
        (loc, s)
@@ -102,6 +103,7 @@ module Intern = struct
          |> St_util.unwrap_stg_bigstring_no_nl
          |> STPa.Template.of_located_string
          |> St_ops.coalesce
+         |> St_ops.removews
     in
     let t = {
         loc
@@ -359,6 +361,21 @@ let find_template gd s =
   if not (MHM.in_dom g.templates s) then
     Fmt.(failwithf "GroupDir.find_template: template %s not found" s) ;
   MHM.map g.templates s
+
+let has_dict gd s =
+  if not (MHM.in_dom gd.perdir "") then
+    false
+  else
+  let g = MHM.map gd.perdir "" in
+  MHM.in_dom g.dicts s
+
+let find_dict gd s =
+  if not (MHM.in_dom gd.perdir "") then
+    Fmt.(failwith "no default group found") ;
+  let g = MHM.map gd.perdir "" in
+  if not (MHM.in_dom g.dicts s) then
+    Fmt.(failwithf "GroupDir.find_dict: dict %s not found" s) ;
+  MHM.map g.dicts s
 
 end
 
@@ -828,10 +845,40 @@ and eval_mexpr ctxt env = function
      assert (ids = []) ;
      eval_elements ctxt env t
 
+  | ME_PROP_IND ((ME_PRIMARY (ME_ID dict_id)), me2) ->
+     if not (GroupDir.has_dict ctxt.groupdir dict_id) then
+       Fmt.(failwithf "eval_mexpr: dict %s not found" dict_id) ;
+     let d = GroupDir.find_dict ctxt.groupdir dict_id in
+     let key =
+       me2
+       |> eval_mexpr ctxt env
+       |> render_attr_value
+       |> OutputToken.flatten
+       |> Std.stream_of_list
+       |> FIW.render_stream
+       |> Std.list_of_stream
+       |> String.concat "" in
+     let dictval2value = function
+         DVAL_KEY -> VALUE_TEMPLATE [EXPR_TAG(ME_PRIMARY(ME_STRING key),[])]
+       | DVAL_VALUE v -> v in
+     let v = 
+       if MHM.in_dom d.kv key then
+         dictval2value (MHM.map d.kv key)
+       else match d.default with
+              None -> VALUE_TEMPLATE[]
+            | Some dv -> dictval2value dv in
+     eval_value ctxt env v
+
   | me ->
      Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
             pp_mexpr_t me) ;
      failwith "eval_mexpr: unhandled case"
+
+and eval_value ctxt env = function
+  VALUE_TEMPLATE t -> eval_elements ctxt env t
+| VALUE_SUBTEMPLATE st -> eval_mexpr ctxt env (ME_TEMPLATE (MTR_SUB st))
+| VALUE_BOOL b -> SV (BOOL b)
+| VALUE_MT_DICT -> SV NULL
 
 and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
   let nattrs = List.length attrval_l in

@@ -110,7 +110,8 @@ let removews1 (l : template_t) : template_t =
   |> List.filter_map
        (function
           LIT (TEXT _) as x -> Some x
-       | _ -> None)
+       | LIT _ -> None
+       | x -> Some x)
 
 let removews t =
   let dt = Migrate.make_dt() in

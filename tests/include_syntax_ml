@@ -141,14 +141,19 @@ let group = match th.groupfile with
        Group.load ~ploc_filecache file
 ;;
 
-let r = (List.nth th.runs 7) ;;
+let r = (List.nth th.runs 0) ;;
 let t = TestOCaml.stparse (snd r.input) ;;
 let env = [r.attributes] ;;
 
 TestOCaml.steval ~group env t ;;
 (*
 TestOCaml.st4_test ~debug:true ~verbose:true ~force:true ~onlytest:None ~multi:false ~testname:"basic" "xx.sexp" ;;
+
+TestOCaml.one_test ~debug:true ~verbose:true ~force:true ~testname:"basic" th ;;
+
+TestOCaml.runtest ~verbose:true "basic" th ;;
  *)
+
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***
