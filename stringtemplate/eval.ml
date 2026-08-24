@@ -53,7 +53,7 @@ module Intern = struct
       |> List.map (fun (k, v) ->
              (snd (St_util.unescape_stg_string k),
               dict_value v)) in
-    let kv = MHM.ofList 23 kv in
+    let kv = LM.ofList () kv in
     let default = Option.map dict_value dflt_opt in
     (name, { loc ; kv ; default })
 
@@ -500,7 +500,7 @@ module Context = struct
   open Sttypes2
   open Stg_types.Cooked
 
-type context_t = {
+type t = {
     groupdir : GroupDir.t
   ; warning : string -> unit
   ; error : string -> unit
@@ -577,6 +577,9 @@ type frame_t = binding_t list
 type t = frame_t list
 [@@deriving show,located_sexp {exn=true}]
 
+let has_id (ctxt : Context.t) (env : t) varname : bool =
+  List.exists (List.mem_assoc varname) env
+
 let lookup_id_opt ctxt (env : t) varname : env_val_t option =
   let rec lookrec = function
       [] ->
@@ -586,9 +589,6 @@ let lookup_id_opt ctxt (env : t) varname : env_val_t option =
        Some (List.assoc varname fh)
     | _::tl -> lookrec tl
   in lookrec env
-
-let has_id ctxt (env : t) varname : bool =
-  None <> (lookup_id_opt ctxt env varname)
 
 let mt = []
 
@@ -789,19 +789,8 @@ let dictval2value key = function
 let rec dict2attr_val ctxt env d : attr_val_t =
   let l =
     d.kv
-    |> MHM.toList
-    |> List.map (fun (k,dv) ->
-           dv
-           |> dictval2value k
-           |> eval_value ctxt env
-           |> render_attr_value
-           |> OutputToken.flatten
-           |> Std.stream_of_list
-           |> FIW.render_stream
-           |> Std.list_of_stream
-           |> String.concat ""
-           |> (fun s -> STRING s)
-         ) in
+    |> LM.toList
+    |> List.map (fun (k,_) -> STRING k) in
   MV l
 
 and option_value ctxt env key options =
@@ -896,10 +885,7 @@ and eval_mexpr ctxt env = function
      assert (ids = []) ;
      eval_elements ctxt env t
 
-  | ME_PROP_IND ((ME_PRIMARY (ME_ID dict_id)), me2) ->
-     if not (GroupDir.has_dict ctxt.groupdir dict_id) then
-       Fmt.(failwithf "eval_mexpr: dict %s not found" dict_id) ;
-     let d = GroupDir.find_dict ctxt.groupdir dict_id in
+  | ME_PROP_IND (me1, me2) ->
      let key =
        me2
        |> eval_mexpr ctxt env
@@ -909,28 +895,27 @@ and eval_mexpr ctxt env = function
        |> FIW.render_stream
        |> Std.list_of_stream
        |> String.concat "" in
-     let dictval2value = function
-         DVAL_KEY -> VALUE_TEMPLATE [EXPR_TAG(ME_PRIMARY(ME_STRING key),[])]
-       | DVAL_VALUE v -> v in
-     let v = 
-       if MHM.in_dom d.kv key then
-         dictval2value (MHM.map d.kv key)
-       else match d.default with
-              None -> VALUE_TEMPLATE[]
-            | Some dv -> dictval2value dv in
-     eval_value ctxt env v
+     eval_mexpr ctxt env (ME_PROP(me1, key))
 
-  | ME_PROP ((ME_PRIMARY (ME_ID dict_id)), key) ->
-     if not (GroupDir.has_dict ctxt.groupdir dict_id) then
-       Fmt.(failwithf "eval_mexpr: dict %s not found" dict_id) ;
+  | ME_PROP ((ME_PRIMARY (ME_ID dict_id)), key)
+       when GroupDir.has_dict ctxt.groupdir dict_id ->
      let d = GroupDir.find_dict ctxt.groupdir dict_id in
-     let v = 
-       if MHM.in_dom d.kv key then
-         dictval2value key (MHM.map d.kv key)
-       else match d.default with
-              None -> VALUE_TEMPLATE[]
-            | Some dv -> dictval2value key dv in
-     eval_value ctxt env v
+     if LM.in_dom d.kv key then
+       eval_value ctxt env (dictval2value key (LM.map d.kv key))
+     else begin
+         match d.default with
+           None -> SV NULL
+         | Some dv -> eval_value ctxt env (dictval2value key dv)
+       end
+
+  | ME_PROP (me1, key) ->
+     let av1 = eval_mexpr ctxt env me1 in
+     let d = match av1 with
+         SV (DICT d) -> d
+       | _ -> Fmt.(failwithf "eval_mexpr: expression did not evaluate to DICT: %a" pp_mexpr_t me1) in
+     if LM.in_dom d key then
+       SV (LM.map d key)
+     else SV NULL
 
   | me ->
      Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
@@ -1006,6 +991,18 @@ and eval_mexpr_template_ref ctxt env attrval mtr =
             eval_mexpr ctxt env (ME_TEMPLATE (MTR_INCLUDE (qid, args))))
      |> attrval_concat
 
+  | MTR_INCLUDE_IND (me1, me_l) ->
+     let id =
+       me1
+       |> eval_mexpr ctxt env
+       |> render_attr_value
+       |> OutputToken.flatten
+       |> Std.stream_of_list
+       |> FIW.render_stream
+       |> Std.list_of_stream
+       |> String.concat "" in
+     eval_mexpr_template_ref ctxt env attrval (MTR_INCLUDE({rooted=false; ids=[id]}, ARGS_LIST me_l))
+
   | MTR_SUB (ids, t) ->
      assert (List.length ids = 1) ;
      let varname = List.hd ids in
@@ -1023,7 +1020,12 @@ and eval_mexpr_template_ref ctxt env attrval mtr =
     failwith "eval_mexpr_template_ref: unhandled case"
 
 and eval_mexpr_primary ctxt env = function
-    ME_ID varname -> begin
+    ME_ID varname
+       when not (has_id ctxt env varname) && GroupDir.has_dict ctxt.groupdir varname ->
+     let d = GroupDir.find_dict ctxt.groupdir varname in
+     dict2attr_val ctxt env d
+
+  | ME_ID varname -> begin
       match lookup_id_opt ctxt env varname with
         None -> SV NULL
       | Some (VAL ((SV _ | MV _) as v)) -> normalize_attr_val_t v

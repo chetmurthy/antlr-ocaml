@@ -75,7 +75,7 @@ type dict_val_t =
 type dict_t =
   {
     loc : Ploc.t
-  ; kv : (string, dict_val_t) MHM.t
+  ; kv : (string, dict_val_t) LM.t
   ; default : dict_val_t option
   }
 
