@@ -423,9 +423,9 @@ let stparse s =
   assert (St_ops.balanced_indentation t) ;
   t
 
-let steval group env t =
+let steval ?group ?groupdir env t =
   let open Doit in
-  let ctxt = Context.mk group in
+  let ctxt = Context.mk ?group ?groupdir () in
   t
   |> eval_elements ctxt env
   |> render_attr_value
@@ -435,23 +435,27 @@ let steval group env t =
   |> Std.list_of_stream
   |> String.concat ""
 
-let doit group r =
+let doit ?group ?groupdir r =
   try
          let t = stparse (snd r.input) in
          let env = [r.attributes] in
-         let output = steval group env t in
+         let output = steval ?group ?groupdir env t in
          (output, "")
   with ex ->
     let rbt = Printexc.get_raw_backtrace () in
     ("", Fmt.(str "%a" exn_backtrace (ex,rbt)))
 
 let runtest ~verbose testname th =
-  let group = match th.groupfile with
-      None -> Group.mk()
-    | Some (file,_) ->
-       let ploc_filecache =
-         (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
-       Group.load ~ploc_filecache file in
+  let ploc_filecache =
+    (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
+  let (group, groupdir) =
+    match (th.groupfile, th.groupfiles) with
+      (None, []) -> (Some (Group.mk()), None)
+    | (Some (file, _), _) ->
+       (Some (Group.load ~ploc_filecache file), None)
+    | (None, _::_) ->
+       (None, Some (GroupDir.load ~ploc_filecache ~files:(List.map fst th.groupfiles) ())) in
+
   let errorbuf = Buffer.create 23 in
   th.runs
   |> List.iteri (fun i r ->
@@ -461,7 +465,7 @@ let runtest ~verbose testname th =
              else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
            if verbose then
              Fmt.(pf stderr "[run %s]@." name) ;
-           let (output, errors) = doit group r in
+           let (output, errors) = doit ?group ?groupdir r in
            if output <> r.output then
              Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
                     testname name r.output output) ;

@@ -170,7 +170,7 @@ module Group = struct
     let open Raw in
     if not stg then begin
         if not Fpath.(raw.filename |> v |> has_ext "st") then
-          Fmt.(raise_failwith raw.loc "check_st_constraint: internal error: was not a .st file even though that's what we expected: %a@." raw.filename) ;
+          Fmt.(raise_failwithf raw.loc "check_st_constraint: internal error: was not a .st file even though that's what we expected: %s@." raw.filename) ;
         let basename = Fpath.(raw.filename |> v |> rem_ext |> basename) in
         if raw.imports <> [] then
           Fmt.(raise_failwith raw.loc "check_st_constraint: .st file cannot have imports") ;
@@ -182,7 +182,7 @@ module Group = struct
               | GROUPDEF_TEMPLATE_ALIAS (_, tname, _))] when tname = basename -> ()
           | [(GROUPDEF_TEMPLATE_DEF (_, tname, _, _)
               | GROUPDEF_TEMPLATE_ALIAS (_, tname, _))] ->
-             Fmt.(raise_failwith raw.loc "check_st_constraint: .st file must contain exact ONE template-def or alias with same name (%a) as file's basename (%a)"
+             Fmt.(raise_failwithf raw.loc "check_st_constraint: .st file must contain exact ONE template-def or alias with same name (%a) as file's basename (%a)"
                     Dump.string tname Dump.string basename)
           | [GROUPDEF_DICT _] ->
              Fmt.(raise_failwith raw.loc "check_st_constraint: .st file cannot contain dict") ;
@@ -204,7 +204,7 @@ module Int = struct
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and load ?(filecache=[]) ~file =
+  and load ?(filecache=[]) file =
     let file_exists file =
       List.mem_assoc file filecache ||
         file |> Fpath.v |> Bos.OS.File.exists |> Rresult.R.failwith_error_msg in
@@ -218,9 +218,9 @@ module Int = struct
       else if file_exists (file^".stg") then
         (file^".stg",true)
       else Fmt.(failwithf "Group.load: no such file %a@." Dump.string file) in
-    load1 ~filecache ~stg ~file
+    load1 ~filecache ~stg file
     
-  and load1 ?(filecache=[]) ~stg ~file =
+  and load1 ?(filecache=[]) ~stg file =
     let raw =
       match List.assoc_opt file filecache with
         Some x ->
@@ -234,7 +234,7 @@ module Int = struct
 
   and read_imports ?(filecache=[]) raw =
     let files = raw.Raw.imports in
-    let imported_l = List.map (fun file -> load ~filecache ~file) files in
+    let imported_l = List.map (load ~filecache) files in
     List.fold_left merge1 ([], [], []) imported_l
 
 let mk_filecache here_filecache ploc_filecache =
@@ -254,7 +254,7 @@ let mk() = Int._mk ([],[],[])
 
 let load ?(here_filecache=[]) ?(ploc_filecache=[]) file =
   let filecache = Int.mk_filecache here_filecache ploc_filecache in
-  Int._mk (Int.load ~filecache ~file)
+  Int._mk (Int.load ~filecache file)
 
 let of_located_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
   let filecache = Int.mk_filecache here_filecache ploc_filecache in
@@ -263,6 +263,102 @@ let of_located_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
 let of_here_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
   let filecache = Int.mk_filecache here_filecache ploc_filecache in
   Int._mk (Int.of_here_string ~filecache ~stg locs)
+
+end
+
+module GroupDir = struct
+
+type t = {
+    perdir : (string, Group.t) MHM.t
+  }
+
+let classify_files files =
+  let analyze f =
+    let is_stg = Fpath.(f |> v |> has_ext "stg") in
+    let is_st = Fpath.(f |> v |> has_ext "st") in
+    if (not is_stg) && (not is_st) then
+      Fmt.(failwithf "GroupDir: file %a not valid" Dump.string f) ;
+    let groupname =
+      if is_st then
+        Fpath.(f |> v |> parent |> to_string)
+      else Fpath.(f |> v |> rem_ext |> to_string) in
+    let groupname = [%subst {|/$|} / {||} /s] groupname in
+    let groupname = if groupname = "." then "" else groupname in
+    (groupname, f)
+  in
+  let props = List.map analyze files in
+  Std.nway_partition (fun (a,_) (b,_) -> a=b) props
+
+let load ?(here_filecache=[]) ?(ploc_filecache=[]) ?(files=[]) ?dir () =
+  let filecache = Group.Int.mk_filecache here_filecache ploc_filecache in
+  let files =
+    match files, dir with
+      (_::_, None) -> files
+    | ([], Some dir) ->
+       [Fpath.v dir]
+       |> Bos.OS.Path.fold (fun a b -> a::b) []
+       |> Rresult.R.failwith_error_msg
+       |> List.filter (fun fp -> Fpath.has_ext "st" fp || Fpath.has_ext "stg" fp)
+       |> List.map Fpath.to_string
+    | _ -> failwith "GroupDir.load: only one of files & dir can be specified"
+  in
+  let grouped_files = classify_files files in
+  let process1 pairs =
+    let dirkey = fst (List.hd pairs) in
+    let files = List.map snd pairs in
+    if List.length files > 1 then
+      if not (List.for_all (fun f -> Fpath.(f |> v |> has_ext "st")) files) then
+        Fmt.(failwithf "GroupDir.load: more than one file in same groupdir [%a] are not all .st"
+             (list string) files) ;
+    match files with
+      [file] ->
+      (dirkey, Group.Int.load ~filecache file)
+    | files ->
+       let l = List.map (Group.Int.load ~filecache) files in
+       assert (List.for_all (function ([_], [], []) -> true | _ -> false) l) ;
+       (dirkey, (List.concat_map Std.fst3 l, [], [])) in
+  
+  let contents = List.map process1 grouped_files in
+  let contents = List.map (fun (dirkey, l) ->  (dirkey, Group.Int._mk l)) contents in
+  let gd = {
+    perdir = MHM.ofList 23 contents
+    } in
+  gd
+
+let mk ?group () =
+  let gd = { perdir = MHM.mk 23 } in
+  group |> Option.map (fun g -> MHM.add gd.perdir ("",g)) ;
+  gd
+
+let has_alias gd s =
+  if not (MHM.in_dom gd.perdir "") then
+    false
+  else
+  let g = MHM.map gd.perdir "" in
+  MHM.in_dom g.aliases s
+
+let find_alias gd s =
+  if not (MHM.in_dom gd.perdir "") then
+    Fmt.(failwith "no default group found") ;
+  let g = MHM.map gd.perdir "" in
+  if not (MHM.in_dom g.aliases s) then
+    Fmt.(failwithf "GroupDir.find_alias: alias %s not found" s) ;
+  MHM.map g.aliases s
+
+let has_template gd s =
+  if not (MHM.in_dom gd.perdir "") then
+    false
+  else
+  let g = MHM.map gd.perdir "" in
+  MHM.in_dom g.templates s
+
+let find_template gd s =
+  if not (MHM.in_dom gd.perdir "") then
+    Fmt.(failwith "no default group found") ;
+  let g = MHM.map gd.perdir "" in
+  if not (MHM.in_dom g.templates s) then
+    Fmt.(failwithf "GroupDir.find_template: template %s not found" s) ;
+  MHM.map g.templates s
 
 end
 
@@ -386,7 +482,7 @@ module Context = struct
   open Stg_types.Cooked
 
 type context_t = {
-    group : Group.t
+    groupdir : GroupDir.t
   ; warning : string -> unit
   ; error : string -> unit
   }
@@ -398,18 +494,26 @@ let lookup_template ctxt qid =
   assert (not qid.rooted) ;
   assert (List.length qid.ids = 1) ;
   let id = List.hd qid.ids in
-  let id = if MHM.in_dom ctxt.group.aliases id then
-             MHM.map ctxt.group.aliases id
-           else id in
-  if not (MHM.in_dom ctxt.group.templates id) then
+  let id =
+    if GroupDir.has_alias ctxt.groupdir id then
+      GroupDir.find_alias ctxt.groupdir id
+    else id in
+  if not (GroupDir.has_template ctxt.groupdir id) then
     Fmt.(failwithf "lookup_template: template %a not found" pp_qualified_id_t qid) ;
-  MHM.map ctxt.group.templates id
+  GroupDir.find_template ctxt.groupdir id
 
 let default_warning s =  Fmt.(pf stderr "%s@." s)
 let default_error s = Fmt.(failwithf "%s@." s)
 
-let mk group = {
-    group
+let mk ?group ?groupdir () =
+  let groupdir = match (group, groupdir) with
+      None, None -> GroupDir.mk()
+    | None, Some gd -> gd
+    | Some group, None -> GroupDir.mk ~group ()
+    | Some _, Some _ -> failwith "Context.mk: cannot specify both group and groupdir" in
+
+ {
+    groupdir
   ; warning = default_warning
   ; error = default_error
   }
@@ -727,7 +831,6 @@ and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
            let (firsts, rests) = Std.sep_firstn nattrs formals in
            let firstvars = List.map fst firsts in
            let argexps = List.map (fun v -> ME_PRIMARY(ME_ID v)) firstvars in
-           let body = t.body in
            let args = match args with
                ARGS_NAMED _ -> failwith "eval_mexpr_template_ref_multi: named args not permitted here"
              | ARGS_EMPTY -> ARGS_LIST argexps
@@ -759,7 +862,6 @@ and eval_mexpr_template_ref ctxt env attrval = function
     MTR_INCLUDE (qid, args) ->
      let t = Context.lookup_template ctxt qid in
      let formals = t.formals in
-     let body = t.body in
      let varname = fst (List.hd formals) in
      let args = match args with
          ARGS_NAMED _ -> failwith "eval_mexpr_template_ref: named args not permitted here"
