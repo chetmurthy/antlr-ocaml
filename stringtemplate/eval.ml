@@ -909,13 +909,15 @@ and eval_mexpr ctxt env = function
        end
 
   | ME_PROP (me1, key) ->
-     let av1 = eval_mexpr ctxt env me1 in
-     let d = match av1 with
-         SV (DICT d) -> d
-       | _ -> Fmt.(failwithf "eval_mexpr: expression did not evaluate to DICT: %a" pp_mexpr_t me1) in
-     if LM.in_dom d key then
-       SV (LM.map d key)
-     else SV NULL
+     let av1 = eval_mexpr ctxt env me1 in begin
+         match av1 with
+           SV (DICT d) ->
+            if LM.in_dom d key then
+              SV (LM.map d key)
+            else SV NULL
+         | _ -> Context.warning ctxt Fmt.(str "eval_mexpr: expression did not evaluate to DICT: %a" pp_mexpr_t me1) ;
+                SV NULL
+       end
 
   | me ->
      Fmt.(pf stderr "eval_mexpr: unhandled@.%a@."
