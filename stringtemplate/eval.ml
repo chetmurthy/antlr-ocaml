@@ -866,12 +866,13 @@ and eval_mexpr ctxt env = function
 
          | ARGS_NAMED (named_actuals, ellipsis) ->
             formals
-            |> List.map (fun (vname, dflt_opt) ->
+            |> List.filter_map (fun (vname, dflt_opt) ->
                    match (List.assoc_opt vname named_actuals, dflt_opt) with
                      (Some rhs, _) ->
                       let attrval = eval_mexpr_arg_by_value ctxt env rhs in
-                      (vname, attrval)
-                   | (None, Some rhs) -> bind_formal_arg vname rhs
+                      Some (vname, attrval)
+                   | (None, Some rhs) -> Some (bind_formal_arg vname rhs)
+                   | (None, None) when ellipsis -> None
                    | _ when not ellipsis ->
                       Fmt.(failwithf "eval_mexpr: var %s has no arg (and ellipsis not present)" vname))
 
