@@ -1000,6 +1000,10 @@ and eval_mexpr ctxt env = function
               | _ -> None) formals
 
          | ARGS_NAMED (named_actuals, ellipsis) ->
+            named_actuals
+            |> List.iter (fun (name,_) ->
+                   if not (List.mem_assoc name formals) then
+                     Context.warning ctxt Fmt.(str "eval_mexpr: actual named-arg %s not in formals" name)) ;
             formals
             |> List.filter_map (fun (vname, dflt_opt) ->
                    match (List.assoc_opt vname named_actuals, dflt_opt) with
@@ -1009,7 +1013,9 @@ and eval_mexpr ctxt env = function
                    | (None, Some rhs) -> Some (bind_formal_arg vname rhs)
                    | (None, None) when ellipsis -> None
                    | _ when not ellipsis ->
-                      Fmt.(failwithf "eval_mexpr: var %s has no arg (and ellipsis not present)" vname))
+                      Context.warning ctxt Fmt.(str "eval_mexpr: var %s has no arg (and ellipsis not present)" vname) ;
+                      None
+                 )
 
          | ARGS_LIST actuals ->
             formals

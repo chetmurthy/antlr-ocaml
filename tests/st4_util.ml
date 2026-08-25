@@ -448,29 +448,35 @@ let doit ?group ?groupdir r =
 let runtest ~verbose testname th =
   let ploc_filecache =
     (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
-  let (group, groupdir) =
-    match (th.groupfile, th.groupfiles) with
-      (None, []) -> (Some (Group.mk()), None)
-    | (Some (file, _), _) ->
-       (Some (Group.load ~ploc_filecache file), None)
-    | (None, _::_) ->
-       (None, Some (GroupDir.load ~ploc_filecache ~files:(List.map fst th.groupfiles) ())) in
-
   let errorbuf = Buffer.create 23 in
-  th.runs
-  |> List.iteri (fun i r ->
-         if not r.disabled && not r.disabled_ocaml then
-           let name =
-             if r.name <> "" then Fmt.(str "%d/%s" i r.name)
-             else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
-           if verbose then
-             Fmt.(pf stderr "[run %s]@." name) ;
-           let (output, errors) = doit ?group ?groupdir r in
-           if output <> r.output then
-             Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-                    testname name r.output output) ;
-           Buffer.add_string errorbuf errors
-       ) ;
+  begin
+      try
+        let (group, groupdir) =
+          match (th.groupfile, th.groupfiles) with
+            (None, []) -> (Some (Group.mk()), None)
+          | (Some (file, _), _) ->
+             (Some (Group.load ~ploc_filecache file), None)
+          | (None, _::_) ->
+             (None, Some (GroupDir.load ~ploc_filecache ~files:(List.map fst th.groupfiles) ())) in
+
+        th.runs
+        |> List.iteri (fun i r ->
+               if not r.disabled && not r.disabled_ocaml then
+                 let name =
+                   if r.name <> "" then Fmt.(str "%d/%s" i r.name)
+                   else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
+                 if verbose then
+                   Fmt.(pf stderr "[run %s]@." name) ;
+                 let (output, errors) = doit ?group ?groupdir r in
+                 if output <> r.output then
+                   Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+                          testname name r.output output) ;
+                 Buffer.add_string errorbuf errors
+             )
+      with ex -> 
+        let rbt = Printexc.get_raw_backtrace () in
+        Buffer.add_string errorbuf (Fmt.(str "%a" exn_backtrace (ex,rbt)))
+    end ;
   let errors = Buffer.contents errorbuf in
   if errors <> th.errors then
     Fmt.(pf stderr "st4_util test-ocaml: test %s: errors didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
