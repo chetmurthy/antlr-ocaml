@@ -1252,7 +1252,7 @@ and eval_expr_tag ctxt env ((me, options) : expr_tag_t) : attr_val_t =
   match rv with
   | SV v -> begin
       match List.assoc_opt "null" options with
-        None -> rv
+        None -> SV (RENDERED (render_attr_value rv))
       | Some _ ->
          let null_value = option_value ctxt env "null" options in
          SV (RENDERED (render_nullable ~null:null_value v))
