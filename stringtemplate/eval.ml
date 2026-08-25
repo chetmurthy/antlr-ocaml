@@ -866,7 +866,7 @@ and eval_mexpr_arg_by_value ctxt env = function
   | ME_PRIMARY (ME_ID varname) -> begin
       match lookup_id_opt ctxt env varname with
         None -> VAL (SV NULL)
-      | Some (VAL ((SV _ | MV _) as v)) -> VAL (normalize_attr_val_t v)
+      | Some (VAL ((SV _ | MV _) as v)) -> VAL v
       | Some (MEXPR me) -> eval_mexpr_arg_by_value ctxt env me
     end
   | me -> VAL (eval_mexpr ctxt env me)
@@ -1296,7 +1296,15 @@ and eval_elements ctxt env l =
 
 and eval_cond ctxt env me_cond : bool =
   match me_cond with
-  COND_ATOM me -> begin
+    COND_ATOM (ME_PRIMARY (ME_ID id)) when not (has_id ctxt env id) -> false
+  | COND_ATOM (ME_PRIMARY (ME_ID id)) -> begin
+      match lookup_id_opt ctxt env id with
+        None -> false
+      | Some (VAL (SV NULL | SV (BOOL false) | SV (LIST []) | MV [])) -> false
+      | _ -> true
+    end
+
+  | COND_ATOM me -> begin
       match normalize_attr_val_t (eval_mexpr ctxt env me) with
         (SV NULL|MV []) -> false
       | SV (BOOL b) -> b
