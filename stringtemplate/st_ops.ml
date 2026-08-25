@@ -71,7 +71,8 @@ let coalesce1 (l : template_t) : template_t =
       [] ->
        let tacc = finish_stracc tacc stracc in
        List.rev tacc
-    | (LIT (TEXT s))::l -> corec tacc (s::stracc) l
+
+    | (LIT (TEXT s))::l when s <> "\\" && s <> "\\\\" -> corec tacc (s::stracc) l
     | h::l ->
        let tacc = finish_stracc tacc stracc in
        corec (h::tacc) [] l
@@ -109,7 +110,7 @@ let removews1 (l : template_t) : template_t =
   l
   |> List.filter_map
        (function
-          LIT (TEXT _) as x -> Some x
+          LIT (TEXT _|ESCAPE _) as x -> Some x
        | LIT _ -> None
        | x -> Some x)
 

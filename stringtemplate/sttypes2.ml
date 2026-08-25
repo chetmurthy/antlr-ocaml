@@ -43,6 +43,7 @@ and subtemplate_t =
 
 and literal_t =
   TEXT of string
+| ESCAPE of string
 | HORZ_WS of string
 | VERT_WS of string
 | INDENT of string

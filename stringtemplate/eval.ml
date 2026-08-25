@@ -461,10 +461,10 @@ module FIW = struct
     }
 
   let emit t = function
-      TEXT s when not t.emitted_indent ->
+      (TEXT s|ESCAPE s) when not t.emitted_indent ->
       ({(t) with emitted_indent = true},
        (Indent.to_strings t.cur_indent)@[s])
-    | TEXT s -> (t, [s])
+    | (TEXT s|ESCAPE s) -> (t, [s])
     | HORZ_WS s -> (t, [s])
     | VERT_WS s ->
        ({(t) with emitted_indent = false}, [s])
@@ -477,9 +477,31 @@ module FIW = struct
 
 let render_stream ?(init=mt) strm =
   let rec rerec t = parser
-    [< 'lit ; strm >] ->
+    [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ ; 'VERT_WS _ ; strm >] -> rerec t strm
+
+  | [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ ; 'TEXT s ; strm >] ->
+     let s = [%subst {|^.|} / {||} / s] s in
+     let lit = TEXT s in
       let (t, strs) = emit t lit in
       [< Std.stream_of_list strs ; rerec t strm >]
+
+  | [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ ; strm >] -> rerec t strm
+
+  | [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ >] -> [< >]
+
+  | [< '(ESCAPE "\\" as lit) ; 'TEXT s ; strm >] ->
+     let s = [%subst {|^.|} / {||} / s] s in
+     let lit = TEXT s in
+      let (t, strs) = emit t lit in
+      [< Std.stream_of_list strs ; rerec t strm >]
+
+  | [< '(ESCAPE "\\" as lit) ; 'VERT_WS _ ; strm >] -> rerec t strm
+  | [< '(ESCAPE "\\" as lit) ; strm >] -> rerec t strm
+
+  | [< 'lit ; strm >] ->
+      let (t, strs) = emit t lit in
+      [< Std.stream_of_list strs ; rerec t strm >]
+
   | [< >] -> [< >]
   in rerec init strm
 
@@ -642,48 +664,6 @@ let mt = []
 let push_frame f (env : t) : t = f::env
 
 end
-
-module IW = struct
-  type _t = {
-      mutable cur_indent : Indent.t
-    ; mutable emitted_text : bool
-    ; buf : Buffer.t
-    }
-
-  let mk() = {
-      cur_indent = Indent.mt
-    ; emitted_text = false
-    ; buf = Buffer.create 23
-    }
-
-  let emit ~indent t x =
-    match x with
-      TEXT s when t.emitted_text ->
-       Buffer.add_string t.buf s
-
-    | TEXT s ->
-       Indent.emit t.buf t.cur_indent ;
-       ; t.cur_indent <- Indent.mt
-       ; t.emitted_text <- true
-       ; Buffer.add_string t.buf s
-
-    | HORZ_WS s when t.emitted_text ->
-       Buffer.add_string t.buf s
-
-    | HORZ_WS s ->
-       t.cur_indent <- Indent.add_string  s t.cur_indent
-
-    | VERT_WS s ->
-       Buffer.add_string t.buf s
-      ; t.cur_indent <- indent
-      ; t.emitted_text <- false
-
-  let cur_indent ~indent t =
-    if t.emitted_text then indent
-    else t.cur_indent
-
-end
-module IndentWriter = IW
 
 module Doit = struct
   open Sttypes2

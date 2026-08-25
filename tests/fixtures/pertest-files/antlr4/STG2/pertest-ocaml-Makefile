@@ -13,6 +13,11 @@ all-tests::
 	$(NOVERBOSE) $(MAKE) NAME=K named-{python,ocaml}-test{,-named-output} || true
 	$(NOVERBOSE) $(MAKE) NAME=L named-{python,ocaml}-test{,-named-output} || true
 	$(NOVERBOSE) $(MAKE) NAME=M named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) NAME=N named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) NAME=O named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) NAME=O2 named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) NAME=P named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) NAME=P2 named-{python,ocaml}-test{,-named-output} || true
 
 test.cmo: l_constants.cmo
 

@@ -214,8 +214,8 @@ element: [ [
 
 single_element: [ [
       x = expr_tag -> EXPR_TAG x
-    | x = TEXT -> LIT (TEXT x)
-    | x = ESCAPE -> LIT(TEXT (St_util.unescape_escape_template x))
+    | x = TEXT -> LIT (TEXT (if x = "\\\\" then "\\" else x))
+    | x = ESCAPE -> LIT(ESCAPE (St_util.unescape_escape_template x))
     | x = HORZ_WS -> LIT(HORZ_WS x)
     | x = VERT_WS -> LIT(VERT_WS x)
   ] ]
