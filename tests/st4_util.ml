@@ -462,6 +462,7 @@ let runtest ~ignorews ~ignore_errors ~verbose testname th =
   let ploc_filecache =
     (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
   let errorbuf = Buffer.create 23 in
+  let outputs = ref [] in
   begin
       try
         let (group, groupdir) =
@@ -481,15 +482,22 @@ let runtest ~ignorews ~ignore_errors ~verbose testname th =
                  if verbose then
                    Fmt.(pf stderr "[run %s]@." name) ;
                  let (output, errors) = doit ?group ?groupdir r in
-                 if not (equal_text ~ignorews output r.output) then
-                   Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-                          testname name r.output output) ;
+                 Std.push outputs (name, output, r.output) ;
                  Buffer.add_string errorbuf errors
              )
       with ex -> 
         let rbt = Printexc.get_raw_backtrace () in
         Buffer.add_string errorbuf (Fmt.(str "%a" exn_backtrace (ex,rbt)))
-    end ;
+  end ;
+  if List.length !outputs <> List.length th.runs then
+    Fmt.(pf stderr "st4_util test-ocaml: test %s: expected %d runs, only got %d (due to exceptions)@."
+           testname (List.length th.runs) (List.length !outputs)) ;
+  !outputs
+  |> List.rev
+  |> List.iter (fun (name, output, expected_output) ->
+         if not (equal_text ~ignorews output expected_output) then
+           Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
+                  testname name expected_output output)) ;
   let errors = Buffer.contents errorbuf in
   if not ignore_errors && errors <> th.errors then
     Fmt.(pf stderr "st4_util test-ocaml: test %s: errors didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
