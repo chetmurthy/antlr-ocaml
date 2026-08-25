@@ -31,7 +31,6 @@
 |bar})
       (attributes ((x (MV (NULL NULL)))))
       )
-
      ((input {|
   <["a",,"b"]; separator="\n", null="*">
 |})
@@ -49,6 +48,19 @@
   b
 |bar})
       )
+     ((input {|<["a",,"b"]; separator=",">|})
+      (output {bar|a,b|bar})
+      )
+
+     ((input {|<["b",]; separator=",">|})
+      (output {bar|b|bar})
+      )
+
+     ((input {|<[,"b"]; separator=",">|})
+      (output {bar|b|bar})
+      )
+
+
      ((input {|
   <["a",,"b"]; null="*">
 |})

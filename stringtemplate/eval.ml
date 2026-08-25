@@ -726,6 +726,10 @@ let render_list ~sep ?null l : render_t =
        RLIST [render_nullable ~null h;
         sep ;
         rerec t]
+
+    | (h::NULL::t, None) ->
+       rerec (h::t)
+
     | (h::t, None) ->
        RLIST [render_value h;
         sep ;
@@ -1268,8 +1272,8 @@ and eval_elements ctxt env l =
 and eval_cond ctxt env me_cond : bool =
   match me_cond with
   COND_ATOM me -> begin
-      match eval_mexpr ctxt env me with
-        SV NULL -> false
+      match normalize_attr_val_t (eval_mexpr ctxt env me) with
+        (SV NULL|MV []) -> false
       | SV (BOOL b) -> b
       | _ -> true
     end
