@@ -45,7 +45,7 @@ let unwrap_stg_bigstring (loc, s) =
   | Some s ->
      let leftlen = 2 in
      let rightlen = 2 in
-     let s' = [%subst {|>\\>|} / {|>>|} / g s] s in
+     let s' = [%subst {|\\>|} / {|>|} / g s] s in
      let rightlen = rightlen + (String.length s) - (String.length s') in
      (narrow_loc (leftlen,rightlen) loc, s')
 
