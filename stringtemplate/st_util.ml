@@ -39,7 +39,7 @@ let unescape_stg_string (loc, s) =
   (narrow_loc (1,1) loc, Util.unescape_string s)
 
 let unwrap_stg_bigstring (loc, s) =
-  match [%match {|^<<(.*)>>$|} / s strings !1] s with
+  match [%match {|^<<\n?(.*?)\n?>>$|} / s strings !1] s with
     None ->
     Fmt.(raise_failwithf loc "unwrap_stg_bigstring: malformed string %a" Dump.string s)
   | Some s ->
