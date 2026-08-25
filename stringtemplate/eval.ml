@@ -989,6 +989,18 @@ and eval_mexpr ctxt env = function
      let attrval = eval_mexpr ctxt env me1 in
      eval_mexpr_template_ref ctxt env attrval mtr2
 
+  | ME_TEMPLATE (MTR_INCLUDE_IND (me1, me_l)) ->
+     let id =
+       me1
+       |> eval_mexpr ctxt env
+       |> render_attr_value
+       |> OutputToken.flatten
+       |> Std.stream_of_list
+       |> FIW.render_stream
+       |> Std.list_of_stream
+       |> String.concat "" in
+     eval_mexpr ctxt env (ME_TEMPLATE (MTR_INCLUDE ({rooted=false; ids=[id]}, ARGS_LIST me_l)))
+
   | ME_TEMPLATE (MTR_INCLUDE ({rooted=false; ids=[id]}, args))
        when List.mem id builtin_functions ->
      eval_funcall ctxt env id args
@@ -1100,8 +1112,20 @@ and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
   let nattrs = List.length attrval_l in
   attrval_l
   |> attrval_list_mapi (fun i attrval_l ->
-         match mtr with
-           MTR_INCLUDE (qid, args) ->
+         let rec f = function
+           MTR_INCLUDE_IND (me1, me_l) ->
+            let id =
+              me1
+              |> eval_mexpr ctxt env
+              |> render_attr_value
+              |> OutputToken.flatten
+              |> Std.stream_of_list
+              |> FIW.render_stream
+              |> Std.list_of_stream
+              |> String.concat "" in
+            f (MTR_INCLUDE ({rooted=false; ids=[id]}, ARGS_LIST me_l))
+
+          | MTR_INCLUDE (qid, args) ->
            let t = Context.lookup_template ctxt qid in
            let formals = t.formals in
            if List.length formals < nattrs then
@@ -1133,6 +1157,7 @@ and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
               Fmt.(pf stderr "eval_mexpr_template_ref_multi: unhandled@.%a@."
                      pp_mexpr_template_ref_t metr) ;
               failwith "eval_mexpr_template_ref_multi: unhandled case"
+         in f mtr
        )
   |> attrval_concat
 

@@ -209,8 +209,17 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) execute -d $(ST4GEN) $<
 	$(ST4UTIL) check -d $(ST4GEN) $<
 
+%.STTEST-MULTI: %.sexp
+	$(ST4UTIL) $(STTESTCMD) -m $<
+
+OCAMLVERBOSE=
+OCAMLIGNORE=--ignore-whitespace --ignore-errors
+
 %.STTEST-OCAML: %.sexp
-	$(ST4UTIL) test-ocaml --ignore-whitespace --ignore-errors -f $<
+	$(ST4UTIL) test-ocaml $(OCAMLVERBOSE) $(OCAMLIGNORE) -f $<
+
+%.STTEST-MULTI-OCAML: %.sexp
+	$(ST4UTIL) test-ocaml $(OCAMLVERBOSE) $(OCAMLIGNORE) -m $<
 
 STTESTCMD=full -f -d $(ST4GEN)
 sttest-multi-old:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
@@ -225,12 +234,6 @@ sttest-multi-old:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestWhitespace.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m fixtures/st4-multi/TestIndirectionAndEarlyEval.sexp
-
-%.STTEST-MULTI: %.sexp
-	$(ST4UTIL) $(STTESTCMD) -m $<
-
-%.STTEST-MULTI-OCAML: %.sexp
-	$(ST4UTIL) test-ocaml --ignore-whitespace --ignore-errors -m $<
 
 sttest-multi: $(STSEXPMULTI:.sexp=.STTEST-MULTI)
 
