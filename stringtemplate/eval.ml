@@ -1057,6 +1057,13 @@ and eval_mexpr ctxt env = function
      let d = GroupDir.find_dict ctxt.groupdir dict_id in
      if LM.in_dom d.kv key then
        eval_value ctxt env (dictval2value key (LM.map d.kv key))
+     else if key = "keys" then
+       let keys = (LM.dom d.kv)@(Option.fold ~none:[] ~some:(fun _ -> ["default"]) d.default) in
+       MV (List.map (fun v -> STRING v) keys)
+     else if key = "values" then
+       let dv_l = (LM.rng d.kv)@(Option.fold ~none:[] ~some:(fun dv -> [dv]) d.default) in
+       let values = List.map (fun dv -> eval_value ctxt env (dictval2value "key" dv)) dv_l in
+       attrval_concat values
      else begin
          match d.default with
            None -> SV NULL
