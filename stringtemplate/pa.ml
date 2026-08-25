@@ -277,7 +277,7 @@ mexpr_primary: [
 
 me_cond: [
     "OR" RIGHTA [ e1 = SELF ; "||" ; e2 = SELF -> COND_OR e1 e2 ]
-  | "AND" RIGHTA [ e1 = SELF ; "&&" ; e2 = SELF -> COND_OR e1 e2 ]
+  | "AND" RIGHTA [ e1 = SELF ; "&&" ; e2 = SELF -> COND_AND e1 e2 ]
   | "NOT" [ "!" ; e = SELF -> COND_NOT e ]
   | "parens" [ "(" ; e = SELF ; ")" -> e ]
   | "ATOM" [ e = mexpr LEVEL "dot" -> COND_ATOM e ] 

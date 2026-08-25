@@ -465,10 +465,7 @@ module FIW = struct
       ({(t) with emitted_indent = true},
        (Indent.to_strings t.cur_indent)@[s])
     | TEXT s -> (t, [s])
-    | HORZ_WS s ->
-       (* should not be immediately after a VWS, so a TEXT should have preceded it *)
-       assert t.emitted_indent ;
-       (t, [s])
+    | HORZ_WS s -> (t, [s])
     | VERT_WS s ->
        ({(t) with emitted_indent = false}, [s])
     | INDENT s ->
@@ -504,7 +501,7 @@ open Pa_ppx_located_sexp.Sexp
       | RLIST l -> List.concat_map flatten l
     in flatten x
 
-  let pp_render_t_0 pps (x : _render_t) =
+  let pp_hum_render_t pps (x : _render_t) =
     let s =
       x
       |> flatten
@@ -513,6 +510,10 @@ open Pa_ppx_located_sexp.Sexp
       |> Std.list_of_stream
       |> String.concat ""
     in Fmt.(pf pps "#<render< %s >>" s)
+
+  let pp_render_t_0 pps  (x : _render_t) =
+    let l = flatten x in
+    Fmt.(pf pps "#<render< %a >>" (list pp) l)
 
   type render_t = _render_t
                     [@printer pp_render_t_0]
@@ -766,6 +767,8 @@ let attrval_mapi f (av : attr_val_t) : attr_val_t list =
        | NULL::t -> (SV NULL)::(maprec i t)
        | v::t -> (f i (SV v))::(maprec (i+1) t)
      in maprec 0 l
+
+let attrval_map f av = attrval_mapi (fun i -> f) av
 
 let attrval_list_mapi (f : int -> attr_val_t list -> attr_val_t) (av_l : attr_val_t list) : attr_val_t list =
   let vl_l = List.map (function
@@ -1050,7 +1053,7 @@ and eval_mexpr ctxt env = function
      eval_mexpr ctxt env (ME_PROP(me1, key))
 
   | ME_PROP ((ME_PRIMARY (ME_ID dict_id)), key)
-       when GroupDir.has_dict ctxt.groupdir dict_id ->
+       when not(has_id ctxt env dict_id) && GroupDir.has_dict ctxt.groupdir dict_id ->
      let d = GroupDir.find_dict ctxt.groupdir dict_id in
      if LM.in_dom d.kv key then
        eval_value ctxt env (dictval2value key (LM.map d.kv key))

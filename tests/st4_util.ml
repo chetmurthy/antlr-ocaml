@@ -69,6 +69,10 @@ let debug =
   let doc = "enable debugging." in
   Arg.(value & flag & info ["debug"] ~doc)
 
+let ignorews =
+  let doc = "ignore whitespace in comparing {outputs,errors}." in
+  Arg.(value & flag & info ["ignore-whitespace"] ~doc)
+
 let verbose =
   let doc = "enable verbose logging." in
   Arg.(value & flag & info ["v";"verbose"] ~doc)
@@ -445,7 +449,12 @@ let doit ?group ?groupdir r =
     let rbt = Printexc.get_raw_backtrace () in
     ("", Fmt.(str "%a" exn_backtrace (ex,rbt)))
 
-let runtest ~verbose testname th =
+let equal_text ~ignorews txt1 txt2 =
+  let txt1 = if ignorews then [%subst {|\s|} / {||} / g s] txt1 else txt1 in
+  let txt2 = if ignorews then [%subst {|\s|} / {||} / g s] txt2 else txt2 in
+  txt1 = txt2
+
+let runtest ~ignorews ~verbose testname th =
   let ploc_filecache =
     (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
   let errorbuf = Buffer.create 23 in
@@ -468,7 +477,7 @@ let runtest ~verbose testname th =
                  if verbose then
                    Fmt.(pf stderr "[run %s]@." name) ;
                  let (output, errors) = doit ?group ?groupdir r in
-                 if output <> r.output then
+                 if not (equal_text ~ignorews output r.output) then
                    Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
                           testname name r.output output) ;
                  Buffer.add_string errorbuf errors
@@ -482,24 +491,24 @@ let runtest ~verbose testname th =
     Fmt.(pf stderr "st4_util test-ocaml: test %s: errors didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
            testname th.errors errors)
 
-let one_test ~debug ~verbose ~force ~testname th =
+let one_test ~ignorews ~debug ~verbose ~force ~testname th =
   if th.ignore then
     Fmt.(pf stderr "[ignore %s]@." testname)
   else begin
       if verbose then Fmt.(pf stderr "[%s]@." testname) ;
-      runtest ~verbose testname th
+      runtest ~ignorews ~verbose testname th
     end
 
-let st4_test ~debug ~verbose ~force ~onlytest ~multi ~testname file =
+let st4_test ~ignorews ~debug ~verbose ~force ~onlytest ~multi ~testname file =
   if multi then
     let thl = select_tests ~onlytest ~file in
     thl
     |> List.iter (fun (testname,th) ->
-           one_test ~debug ~verbose ~force ~testname th)
+           one_test ~ignorews ~debug ~verbose ~force ~testname th)
   else
   let th = load ~file in
   let testname = if testname <> "" then testname else filename_to_testname file in
-  one_test ~debug ~verbose ~force ~testname th
+  one_test ~ignorews ~debug ~verbose ~force ~testname th
 
 let cmd =
   let doc = "full test trip for a Stringtemplate4 test" in
@@ -508,8 +517,8 @@ let cmd =
     `P "Email bug reports to <bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "test-ocaml" ~version:"%%VERSION%%" ~doc ~man) @@
-  let+ file and+ debug and+ verbose and+ force and+ onlytest and+ multi and+ testname in
-  st4_test ~debug ~verbose ~force ~onlytest ~multi ~testname file ;
+  let+ file and+ ignorews and+ debug and+ verbose and+ force and+ onlytest and+ multi and+ testname in
+  st4_test ~ignorews ~debug ~verbose ~force ~onlytest ~multi ~testname file ;
   Cmdliner.Cmd.Exit.ok
 end
 

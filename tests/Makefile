@@ -210,7 +210,7 @@ ST4GEN=_generated/st4
 	$(ST4UTIL) check -d $(ST4GEN) $<
 
 %.STTEST-OCAML: %.sexp
-	$(ST4UTIL) test-ocaml -v -f $<
+	$(ST4UTIL) test-ocaml --ignore-whitespace -v -f $<
 
 STTESTCMD=full -f -d $(ST4GEN)
 sttest-multi-old:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
@@ -230,7 +230,7 @@ sttest-multi-old:: fixtures/st4-multi/TestNullEmptyMatrix.sexp
 	$(ST4UTIL) $(STTESTCMD) -m $<
 
 %.STTEST-MULTI-OCAML: %.sexp
-	$(ST4UTIL) test-ocaml -v -m $<
+	$(ST4UTIL) test-ocaml --ignore-whitespace -v -m $<
 
 sttest-multi: $(STSEXPMULTI:.sexp=.STTEST-MULTI)
 
