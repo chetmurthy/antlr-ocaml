@@ -15,11 +15,24 @@
 context [anonymous] 1:5 attribute go isn't defined
 |bar})
  ))
-("testCatWithNullTemplateApplicationAsElement."
+("testCatWithNullTemplateApplicationAsElement"
 ((classname hello)
  (runs
   (
    ((input "<[names, [\"foo\",\"bar\"]:{x | <x>!},phones]; separator=\", \">")
+    (output "Ter, Tom, foo!, bar!, 1, 2")
+    (attributes ((names (MV ((STRING "Ter") (STRING "Tom"))))
+    		 (phones (MV ((STRING "1") (STRING "2"))))
+    		 ))
+    )
+   )
+  )
+ ))
+("testCatWithNullTemplateApplicationAsElement2"
+((classname hello)
+ (runs
+  (
+   ((input {|<[names, {<["foo","bar"]:{x | <x>!}; separator=", ">},phones]; separator=", ">|})
     (output "Ter, Tom, foo!, bar!, 1, 2")
     (attributes ((names (MV ((STRING "Ter") (STRING "Tom"))))
     		 (phones (MV ((STRING "1") (STRING "2"))))
@@ -68,7 +81,7 @@ context [anonymous] 1:5 attribute go isn't defined
     		 (salaries (MV ((STRING "big") (STRING "huge"))))
     		 ))
     )
-   ((input "<[names:{n|<n>!},phones]; separator=\", \">")
+   ((input "<[ {<names:{n|<n>!}; separator=\", \">} ,phones]; separator=\", \">")
     (output "Ter!, Tom!, 1, 2")
     (attributes ((names (MV ((STRING "Ter") (STRING "Tom"))))
     		 (phones (MV ((STRING "1") (STRING "2"))))
