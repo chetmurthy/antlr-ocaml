@@ -10,8 +10,8 @@ Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 let caches = Simulate.Caches.mk () ;;
 Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
 
-open ST4
-open Testharness
+open ST4.Api
+open ST4.Testharness
 
 let filename_to_testname file =
   Fpath.(file |> v |> rem_ext |> basename)
@@ -416,32 +416,10 @@ let cmd =
 end
 
 module TestOCaml = struct
-open Eval
-  
-module STPa = ST4.Pa.STG2_STPa
-module STGPa = ST4.Pa.STG2_STGPa
 
-let stparse s =
-  let t =
-    s
-    |> STPa.Template.of_string
-    |> St_ops.coalesce
-    |> St_ops.insert_indentation
-  in
-  assert (St_ops.balanced_indentation t) ;
-  t
+let stparse s = Template.of_string s
 
-let steval ?group ?groupdir env t =
-  let open Doit in
-  let ctxt = EC.mk ?group ?groupdir () in
-  t
-  |> eval_elements ctxt env
-  |> render_attr_value
-  |> OutputToken.flatten
-  |> Std.stream_of_list
-  |> FIW.render_stream
-  |> Std.list_of_stream
-  |> String.concat ""
+let steval = Template.eval
 
 let doit ?group ?groupdir r =
   try

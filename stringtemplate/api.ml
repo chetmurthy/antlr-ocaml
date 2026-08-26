@@ -44,6 +44,9 @@ let of_here_string ctxt ~stg locs =
 end
 
 module GroupDir = struct
+  type t = Eval.GroupDir.t
+  let mk = Eval.GroupDir.mk
+  let load = Eval.GroupDir.load
 end
 
 module Template = struct
@@ -60,11 +63,10 @@ let of_string s =
   assert (St_ops.balanced_indentation t) ;
   t
 
-let eval env t =
+let eval ?group ?groupdir env t =
   let open Eval in
   let open Doit in
-  let group = Group.mk () in
-  let ctxt = EC.mk ~group () in
+  let ctxt = EC.mk ?group ?groupdir () in
   t
   |> eval_elements ctxt env
   |> render_attr_value
@@ -75,7 +77,7 @@ let eval env t =
   |> String.concat ""
 
 module Simple = struct
-  let eval env t =
+  let eval ?group ?groupdir env t =
     let open Eval.Environ in
     let open Eval.Value in
     let mk_binding (n,v) =
@@ -84,7 +86,7 @@ module Simple = struct
       | [v] -> (n,VAL (SV (STRING v)))
       | l -> (n, VAL (MV (List.map (fun s -> STRING s) l))) in
     let env = [(List.map mk_binding env)] in
-    eval env t
+    eval ?group ?groupdir env t
 end
 
 end
