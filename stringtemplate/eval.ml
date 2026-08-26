@@ -115,6 +115,55 @@ module Intern = struct
 
 end
 
+let is_stg f = Fpath.(f |> has_ext "stg")
+let is_st f = Fpath.(f  |> has_ext "st")
+
+module FileCache = struct
+  type t = {
+      files : (Fpath.t * (Ploc.t * string)) list
+    }
+
+let mk here_filecache ploc_filecache =
+  let files = (List.map (fun (fname, (pos, txt)) -> (fname, (Util.ploc_of_position pos, txt))) here_filecache)
+              @ploc_filecache in
+  let files =
+    files |> List.map (fun (fname, x) -> (Fpath.(fname |> v |> normalize), x)) in
+  { files }
+
+let mt = { files = [] }
+
+let is_empty fc = fc.files = []
+
+let has_file fname fc = List.mem_assoc fname fc.files
+
+let file_exists filecache file =
+  has_file file filecache ||
+    file |> Bos.OS.File.exists |> Rresult.R.failwith_error_msg
+
+let get_maybe_cached_file_opt fc fname =
+  if not (file_exists fc fname) then
+    None
+  else
+    Some (List.assoc_opt fname fc.files)
+
+let all_files filecache dir =
+  let is_prefix dir f =
+    (dir = Fpath.("." |> v |> normalize) && Fpath.is_rel f) ||
+      Fpath.is_prefix dir f in
+  if not (is_empty filecache) then
+    filecache.files
+    |> List.map fst
+    |> List.filter (is_prefix dir)
+    |> List.filter (fun fp -> is_st fp || is_stg fp)
+  else
+    [dir]
+    |> Bos.OS.Path.fold (fun a b -> a::b) []
+    |> Rresult.R.failwith_error_msg
+    |> List.filter (fun fp -> is_st fp || is_stg fp)
+
+end
+module FC = FileCache
+
 module Group = struct
   open Cooked
   type triple_t = (string * template_def_t) list * (string * string) list * (string * dict_t) list
@@ -184,9 +233,9 @@ module Group = struct
   let check_st_constraint ~stg raw =
     let open Raw in
     if not stg then begin
-        if not Fpath.(raw.filename |> v |> has_ext "st") then
-          Fmt.(raise_failwithf raw.loc "check_st_constraint: internal error: was not a .st file even though that's what we expected: %s@." raw.filename) ;
-        let basename = Fpath.(raw.filename |> v |> rem_ext |> basename) in
+        if not (is_st raw.filename) then
+          Fmt.(raise_failwithf raw.loc "check_st_constraint: internal error: was not a .st file even though that's what we expected: %a@." Fpath.pp raw.filename) ;
+        let basename = Fpath.(raw.filename |> rem_ext |> basename) in
         if raw.imports <> [] then
           Fmt.(raise_failwith raw.loc "check_st_constraint: .st file cannot have imports") ;
         begin
@@ -205,51 +254,65 @@ module Group = struct
       end
 
 module Int = struct
-  let rec of_located_string ?(filecache=[]) ~stg locs =
+  let rec of_located_string ?(filecache=FC.mt) ~stg ?file locs =
     let raw = STGPa.Group.of_located_string locs in
+    let raw = match file with
+        None -> raw
+      | Some f -> { (raw) with filename = Fpath.v f } in
     check_st_constraint ~stg raw ;
     let imported = read_imports ~filecache raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and of_here_string ?(filecache=[]) ~stg locs =
+  and of_here_string ?(filecache=FC.mt) ~stg ?file locs =
     let raw = STGPa.Group.of_here_string locs in
+    let raw = match file with
+        None -> raw
+      | Some f -> { (raw) with filename = Fpath.v f } in
     check_st_constraint ~stg raw ;
     let imported = read_imports ~filecache raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and load ?(filecache=[]) file =
-    let file_exists file =
-      List.mem_assoc file filecache ||
-        file |> Fpath.v |> Bos.OS.File.exists |> Rresult.R.failwith_error_msg in
+  and load ?(filecache=FC.mt) file =
     let (file,stg) =
-      if Fpath.(file |> v |> has_ext "st") && file_exists file then
+      if  is_st file && FC.file_exists filecache file then
         (file, false)
-      else if Fpath.(file |> v |> has_ext "stg") && file_exists file then
+      else if is_stg file && FC.file_exists filecache file then
         (file, true)
-      else if file_exists (file^".st") then
-        (file^".st",false)
-      else if file_exists (file^".stg") then
-        (file^".stg",true)
-      else Fmt.(failwithf "Group.load: no such file %a@." Dump.string file) in
+      else if FC.file_exists filecache Fpath.(file |> add_ext ".st") then
+        (Fpath.(file |> add_ext ".st"),false)
+      else if FC.file_exists filecache Fpath.(file |> add_ext ".stg") then
+        (Fpath.(file |> add_ext ".stg"),true)
+      else Fmt.(failwithf "Group.load: no such file %a@." Fpath.pp file) in
     load1 ~filecache ~stg file
     
-  and load1 ?(filecache=[]) ~stg file =
+  and load1 ?(filecache=FC.mt) ~stg file =
+    assert (FC.file_exists filecache file) ;
     let raw =
-      match List.assoc_opt file filecache with
-        Some x ->
+      match FC.get_maybe_cached_file_opt filecache file with
+        None -> Fmt.(failwithf "Group.load1: file %a doesn't exist" Fpath.pp file)
+      | Some (Some x) ->
          let g = STGPa.Group.of_located_string x in
          { (g) with filename = file }
-      | None -> STGPa.Group.load ~file in
+      | Some None -> STGPa.Group.load ~file:(Fpath.to_string file) in
     check_st_constraint ~stg raw ;
     let imported = read_imports ~filecache raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and read_imports ?(filecache=[]) raw =
+  and load_import ~filecache ~from file =
+    let file = Fpath.(file |> v |> normalize) in
+    let file =
+      if Fpath.is_rel file then Fpath.(file |> append (parent from) |> normalize)
+      else file in
+    if is_stg file || is_st file then
+      [load ~filecache file]
+    else failwith "unimplemented"
+
+  and read_imports ?(filecache=FC.mt) raw =
     let files = raw.Raw.imports in
-    let imported_l = List.map (load ~filecache) files in
+    let imported_l = List.concat_map (load_import ~filecache ~from:raw.filename) files in
     List.fold_left merge1 ([], [], []) imported_l
 
 let mk_filecache here_filecache ploc_filecache =
@@ -268,15 +331,15 @@ end
 let mk() = Int._mk ([],[],[])
 
 let load ?(here_filecache=[]) ?(ploc_filecache=[]) file =
-  let filecache = Int.mk_filecache here_filecache ploc_filecache in
+  let filecache = FC.mk here_filecache ploc_filecache in
   Int._mk (Int.load ~filecache file)
 
 let of_located_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
-  let filecache = Int.mk_filecache here_filecache ploc_filecache in
+  let filecache = FC.mk here_filecache ploc_filecache in
   Int._mk (Int.of_located_string ~filecache ~stg locs)
 
 let of_here_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
-  let filecache = Int.mk_filecache here_filecache ploc_filecache in
+  let filecache = FC.mk here_filecache ploc_filecache in
   Int._mk (Int.of_here_string ~filecache ~stg locs)
 
 end
@@ -287,14 +350,11 @@ type t = {
     perdir : (string, Group.t) LM.t
   }
 
-let is_stg f = Fpath.(f |> v |> has_ext "stg")
-let is_st f = Fpath.(f |> v |> has_ext "st")
-
 let groupname_of_file f =
     let groupname =
       if is_st f then
-        Fpath.(f |> v |> parent |> to_string)
-      else Fpath.(f |> v |> rem_ext |> to_string) in
+        Fpath.(f |> parent |> to_string)
+      else Fpath.(f |> rem_ext |> to_string) in
     let groupname = [%subst {|/$|} / {||} /s] groupname in
     let groupname = if groupname = "." then "" else groupname in
     groupname
@@ -302,7 +362,7 @@ let groupname_of_file f =
 let classify_files files =
   let analyze f =
     if (not (is_stg f)) && (not (is_st f)) then
-      Fmt.(failwithf "GroupDir: file %a not valid" Dump.string f) ;
+      Fmt.(failwithf "GroupDir: file %a not valid" Fpath.pp f) ;
     (groupname_of_file f, f)
   in
   let props = List.map analyze files in
@@ -321,8 +381,8 @@ let read_group ~filecache dirkey files =
      assert (List.for_all (fun file -> dirkey = groupname_of_file file) st_files) ;
 
      if (stg_files <> []) then
-       Fmt.(pf stderr "GroupDir.read_group: STG file %s shadows ST files %a@."
-              (List.hd stg_files) (list string) st_files) ;
+       Fmt.(pf stderr "GroupDir.read_group: STG file %a shadows ST files %a@."
+              Fpath.pp (List.hd stg_files) (list Fpath.pp) st_files) ;
 
      match stg_files with
        [file] -> Group.Int.load ~filecache file
@@ -330,36 +390,27 @@ let read_group ~filecache dirkey files =
         let defs =
           st_files
           |> List.concat_map (fun file ->
-                 let key = Fpath.(file |> v |> rem_ext |> basename) in
+                 let key = Fpath.(file |> rem_ext |> basename) in
                  let (defs, aliases, dicts) = Group.Int.load ~filecache file in
                  if aliases <> [] then
-                   Fmt.(failwithf "ST file %s should not contain aliases" file) ;
+                   Fmt.(failwithf "ST file %a should not contain aliases" Fpath.pp file) ;
                  if dicts <> [] then
-                   Fmt.(failwithf "ST file %s should not contain dicts" file) ;
+                   Fmt.(failwithf "ST file %a should not contain dicts" Fpath.pp file) ;
                  match defs with
                    ([]|(_::_::_)) ->
-                    Fmt.(failwithf "Should have exactly ONE template def in ST file %s"
-                           file)
+                    Fmt.(failwithf "Should have exactly ONE template def in ST file %a"
+                           Fpath.pp file)
                  | [(k,v)] when k <> key ->
-                    Fmt.(failwithf "template def in file %s should be named %s, not %s"
-                           file key k)
+                    Fmt.(failwithf "template def in file %a should be named %s, not %s"
+                           Fpath.pp file key k)
                  | _ -> defs) in
         (defs, [], [])
 
 
-let load ?(here_filecache=[]) ?(ploc_filecache=[]) ?(files=[]) ?dir () =
-  let filecache = Group.Int.mk_filecache here_filecache ploc_filecache in
-  let files =
-    match files, dir with
-      (_::_, None) -> files
-    | ([], Some dir) ->
-       [Fpath.v dir]
-       |> Bos.OS.Path.fold (fun a b -> a::b) []
-       |> Rresult.R.failwith_error_msg
-       |> List.filter (fun fp -> Fpath.has_ext "st" fp || Fpath.has_ext "stg" fp)
-       |> List.map Fpath.to_string
-    | _ -> failwith "GroupDir.load: only one of files & dir can be specified"
-  in
+let load ?(here_filecache=[]) ?(ploc_filecache=[]) dir =
+  let dir = Fpath.normalize dir in
+  let filecache = FC.mk here_filecache ploc_filecache in
+  let files = FC.all_files filecache dir in
   let grouped_files = classify_files files in
   let process1 pairs =
     let dirkey = fst (List.hd pairs) in

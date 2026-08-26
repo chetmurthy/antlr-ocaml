@@ -469,13 +469,19 @@ let runtest ~ignorews ~ignore_errors ~verbose testname th =
           match (th.groupfile, th.groupfiles) with
             (None, []) -> (Some (Group.mk()), None)
           | (Some (file, _), _) ->
-             (Some (Group.load ~ploc_filecache file), None)
+             (Some (Group.load ~ploc_filecache (Fpath.v file)), None)
           | (None, _::_) ->
-             (None, Some (GroupDir.load ~ploc_filecache ~files:(List.map fst th.groupfiles) ())) in
+             let files =
+               th.groupfiles
+               |> List.map fst
+               |> List.map Fpath.v in
+             (None, Some (GroupDir.load ~ploc_filecache (Fpath.v "."))) in
 
         th.runs
         |> List.iteri (fun i r ->
-               if not r.disabled && not r.disabled_ocaml then
+               if r.disabled || r.disabled_ocaml then
+                 Std.push outputs ("","","")
+               else
                  let name =
                    if r.name <> "" then Fmt.(str "%d/%s" i r.name)
                    else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in

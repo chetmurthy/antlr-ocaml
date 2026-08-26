@@ -109,7 +109,7 @@ let test_load_stg ctxt =
       ("foo.st",[%here_string {|foo() ::= "foo"|}])
     ] in
   ()
-  ; assert_equal () (ignore([%here_string {| import "foo" |}]
+  ; assert_equal () (ignore([%here_string {| import "foo.st" |}]
                             |> Eval.Group.of_here_string ~stg:true ~here_filecache))
   ; assert_equal () (ignore([%here_string {| 
 cppTypeInitMap ::= [

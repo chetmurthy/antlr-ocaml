@@ -44,7 +44,7 @@ type header_t = {
 
 type group_t = {
     loc : Ploc.t
-  ; filename : string
+  ; filename : Fpath.t
   ; header : header_t option
   ; imports : string list
   ; defs : group_def_t list

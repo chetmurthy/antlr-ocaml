@@ -81,7 +81,7 @@ let verify ~verbose th =
   ploc_filecache
   |> List.iter (fun (file,_) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." file) ;
-         ignore (Eval.Group.load ~ploc_filecache file : Eval.Group.t)) ;
+         ignore (Eval.Group.load ~ploc_filecache (Fpath.v file) : Eval.Group.t)) ;
   ()
 
 module Multi = struct

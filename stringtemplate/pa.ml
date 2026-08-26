@@ -355,7 +355,7 @@ group: [ [
       iopt = OPT [ i = imports -> i ] ;
       defs = LIST0 [ t = template_ -> t | d = dict_ -> GROUPDEF_DICT loc d ] ->
       let imports = match iopt with [ None ->  [] | Some l -> l ] in
-      { loc = loc ; filename = Ploc.file_name loc ; header = header ; imports = imports ; defs = defs }
+      { loc = loc ; filename = Fpath.v (Ploc.file_name loc) ; header = header ; imports = imports ; defs = defs }
   ] ]
   ;
 

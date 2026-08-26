@@ -45,7 +45,13 @@ let unwrap_stg_bigstring (loc, s) =
   | Some s ->
      let leftlen = 2 in
      let rightlen = 2 in
-     let s' = [%subst {|\\>|} / {|>|} / g s] s in
+     let s' =
+       s
+       |> [%split {|<\\.>|} / pcre2 strings s]
+       |> List.map (function
+                `Text s -> [%subst {|\\>|} / {|>|} / pcre2 g s] s
+              | `Delim s -> s)
+       |> String.concat "" in
      let rightlen = rightlen + (String.length s) - (String.length s') in
      (narrow_loc (leftlen,rightlen) loc, s')
 
