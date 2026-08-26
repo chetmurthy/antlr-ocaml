@@ -27,8 +27,11 @@ ML=\
 	testharness.ml \
 	sexpio.ml
 
+MLI=\
+	api.mli
+
 TOOLSML = mk_meta.ml
-ALLSRC=$(ML) $(TOOLSML)
+ALLSRC=$(ML) $(MLI) $(TOOLSML)
 ALLPACKAGES=$(PACKAGES)
 
 OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack ST4

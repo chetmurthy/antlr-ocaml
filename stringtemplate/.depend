@@ -68,13 +68,15 @@ api.cmo : \
     stg_types.cmo \
     st_ops.cmo \
     pa.cmo \
-    eval.cmo
+    eval.cmo \
+    api.cmi
 api.cmx : \
     sttypes2.cmx \
     stg_types.cmx \
     st_ops.cmx \
     pa.cmx \
-    eval.cmx
+    eval.cmx \
+    api.cmi
 testharness.cmo : \
     sttypes2.cmo \
     st_util.cmo \
@@ -87,5 +89,8 @@ testharness.cmx : \
     eval.cmx
 sexpio.cmo :
 sexpio.cmx :
+api.cmi : \
+    pa.cmo \
+    eval.cmo
 mk_meta.cmo :
 mk_meta.cmx :

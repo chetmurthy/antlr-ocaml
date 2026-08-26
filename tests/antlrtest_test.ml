@@ -1,7 +1,14 @@
 (**pp -syntax camlp5o -package pa_ppx_regexp,pa_ppx.deriving_plugins.std *)
 
 open OUnit2
+open Antlr
 open Antlrtest
+
+Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
+
+let caches = Simulate.Caches.mk () ;;
+Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
+
 
 let test_template ctxt =
   let module T = Stg.Template in
@@ -46,6 +53,24 @@ let test_stg ctxt =
   ; assert_equal ~printer {|{print($ctx.toStringTree(recog=self), file=self._output)}|} (trans {|{<ToStringTree("$ctx"):writeln()>}|})
   ; assert_equal ~printer (trans {||}) {||}
 
+let test_stg_new ctxt =
+  let open ST4.Api in
+  let ctxt = GLC.mk FC.mt in
+  let group = Group.load ctxt (Fpath.v "fixtures/Python3.test.stg") in
+  let env = [] in
+  let trans x = Template.(eval ~group env (of_string x)) in
+  let printer x = x in
+  ()
+  ; assert_equal ~printer "x"  (trans {|x|})
+  ; assert_equal ~printer "<" (trans {|\<|})
+  ; assert_equal ~printer {|{print("S.A", file=self._output)}|} (trans {|{<writeln("\"S.A\"")>}|})
+  ; assert_equal ~printer {|{print($label.y, file=self._output)}|} (trans {|{<writeln("$label.y")>}|})
+  ; assert_equal ~printer {|{self.dumpDFA()}|} (trans {|{<DumpDFA()>}|})
+  ; assert_equal ~printer {|{x = 0}|} (trans {|{<InitIntVar("x","0")>}|})
+  ; assert_equal ~printer {|{$ctx.toStringTree(recog=self)}|} (trans {|{<ToStringTree("$ctx")>}|})
+  ; assert_equal ~printer {|{print($ctx.toStringTree(recog=self), file=self._output)}|} (trans {|{<ToStringTree("$ctx"):writeln()>}|})
+  ; assert_equal ~printer (trans {||}) {||}
+
 let test_descriptor ctxt =
   let module D = Descriptor in
   let printer = [%show: [ `Delim of string * string * string | `Text of string ] list] in
@@ -60,6 +85,7 @@ let suite = "Test Antlrtest" >::: [
       "template"   >:: test_template
     ; "group"   >:: test_group
     ; "stg"   >:: test_stg
+    ; "new stg"   >:: test_stg_new
     ; "descriptor"   >:: test_descriptor
     ]
 

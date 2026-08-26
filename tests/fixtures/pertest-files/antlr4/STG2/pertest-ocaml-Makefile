@@ -18,6 +18,7 @@ all-tests::
 	$(NOVERBOSE) $(MAKE) NAME=O2 named-{python,ocaml}-test{,-named-output} || true
 	$(NOVERBOSE) $(MAKE) NAME=P named-{python,ocaml}-test{,-named-output} || true
 	$(NOVERBOSE) $(MAKE) NAME=P2 named-{python,ocaml}-test{,-named-output} || true
+	$(NOVERBOSE) $(MAKE) NAME=Q named-{python,ocaml}-test{,-named-output} || true
 
 test.cmo: l_constants.cmo
 
