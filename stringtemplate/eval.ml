@@ -161,8 +161,38 @@ let all_files filecache dir =
     |> Rresult.R.failwith_error_msg
     |> List.filter (fun fp -> is_st fp || is_stg fp)
 
+let children filecache dir =
+  if is_empty filecache then
+    dir
+    |> Bos.OS.Dir.contents
+    |> Rresult.R.failwith_error_msg
+  else
+    filecache.files
+    |> List.map fst
+    |> List.filter (Fpath.is_prefix dir)
+    |> List.map (Fpath.rem_prefix dir)
+    |> List.filter_map (function
+             None -> None
+           | Some suff ->
+              if [%match {|[^/]|} / pred] (Fpath.to_string suff) then
+                Some Fpath.(append dir suff)
+              else None)
 end
 module FC = FileCache
+
+module GroupLoadContext = struct
+  type t = {
+      filecache : FC.t
+    ;  in_dir : bool
+    }
+  let mk filecache = { filecache  ; in_dir = false }
+
+  let set_in_dir glc = { (glc) with in_dir = true }
+
+  let in_dir glc = glc.in_dir
+
+end
+module GLC = GroupLoadContext
 
 module Group = struct
   open Cooked
@@ -254,70 +284,79 @@ module Group = struct
       end
 
 module Int = struct
-  let rec of_located_string ?(filecache=FC.mt) ~stg ?file locs =
+  open GLC
+  let rec of_located_string ~ctxt ~stg ?file locs =
     let raw = STGPa.Group.of_located_string locs in
     let raw = match file with
         None -> raw
       | Some f -> { (raw) with filename = Fpath.v f } in
     check_st_constraint ~stg raw ;
-    let imported = read_imports ~filecache raw in
+    let imported = read_imports ~ctxt raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and of_here_string ?(filecache=FC.mt) ~stg ?file locs =
+  and of_here_string ~ctxt ~stg ?file locs =
     let raw = STGPa.Group.of_here_string locs in
     let raw = match file with
         None -> raw
       | Some f -> { (raw) with filename = Fpath.v f } in
     check_st_constraint ~stg raw ;
-    let imported = read_imports ~filecache raw in
+    let imported = read_imports ~ctxt raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and load ?(filecache=FC.mt) file =
+  and load ~ctxt file =
     let (file,stg) =
-      if  is_st file && FC.file_exists filecache file then
+      if  is_st file && FC.file_exists ctxt.filecache file then
         (file, false)
-      else if is_stg file && FC.file_exists filecache file then
+      else if is_stg file && FC.file_exists ctxt.filecache file then
         (file, true)
-      else if FC.file_exists filecache Fpath.(file |> add_ext ".st") then
+      else if FC.file_exists ctxt.filecache Fpath.(file |> add_ext ".st") then
         (Fpath.(file |> add_ext ".st"),false)
-      else if FC.file_exists filecache Fpath.(file |> add_ext ".stg") then
+      else if FC.file_exists ctxt.filecache Fpath.(file |> add_ext ".stg") then
         (Fpath.(file |> add_ext ".stg"),true)
       else Fmt.(failwithf "Group.load: no such file %a@." Fpath.pp file) in
-    load1 ~filecache ~stg file
+    load1 ~ctxt ~stg file
     
-  and load1 ?(filecache=FC.mt) ~stg file =
-    assert (FC.file_exists filecache file) ;
+  and load1 ~ctxt ~stg file =
+    assert (FC.file_exists ctxt.filecache file) ;
     let raw =
-      match FC.get_maybe_cached_file_opt filecache file with
+      match FC.get_maybe_cached_file_opt ctxt.filecache file with
         None -> Fmt.(failwithf "Group.load1: file %a doesn't exist" Fpath.pp file)
       | Some (Some x) ->
          let g = STGPa.Group.of_located_string x in
          { (g) with filename = file }
       | Some None -> STGPa.Group.load ~file:(Fpath.to_string file) in
     check_st_constraint ~stg raw ;
-    let imported = read_imports ~filecache raw in
+    let imported = read_imports ~ctxt raw in
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and load_import ~filecache ~from file =
+  and load_import ~ctxt ~from file =
     let file = Fpath.(file |> v |> normalize) in
+(*
     let file =
       if Fpath.is_rel file then Fpath.(file |> append (parent from) |> normalize)
       else file in
+ *)
     if is_stg file || is_st file then
-      [load ~filecache file]
-    else failwith "unimplemented"
+      [load ~ctxt file]
+    else if FC.file_exists ctxt.filecache Fpath.(file |> add_ext ".st") then
+      [load ~ctxt Fpath.(file |> add_ext ".st")]
+    else  if FC.file_exists ctxt.filecache Fpath.(file |> add_ext ".stg") then
+      [load ~ctxt Fpath.(file |> add_ext ".stg")]
+    else let subfiles = FC.children ctxt.filecache file in
+         subfiles
+         |> List.filter is_st
+         |> List.map (load ~ctxt)
 
-  and read_imports ?(filecache=FC.mt) raw =
+  and read_imports ~ctxt raw =
     let files = raw.Raw.imports in
-    let imported_l = List.concat_map (load_import ~filecache ~from:raw.filename) files in
+    if GLC.in_dir ctxt && files <> [] then
+      Fmt.(failwithf "Group.read_imports: while loading GroupDir, in file %a, found imports [%a] which are forbidden"
+           Fpath.pp raw.Raw.filename (list string) files) ;
+    let imported_l = List.concat_map (load_import ~ctxt ~from:raw.filename) files in
     List.fold_left merge1 ([], [], []) imported_l
-
-let mk_filecache here_filecache ploc_filecache =
-  (List.map (fun (fname, (pos, txt)) -> (fname, (Util.ploc_of_position pos, txt))) here_filecache)
-  @ploc_filecache
 
 let _mk (defs, aliases, dicts) =
   {
@@ -331,16 +370,16 @@ end
 let mk() = Int._mk ([],[],[])
 
 let load ?(here_filecache=[]) ?(ploc_filecache=[]) file =
-  let filecache = FC.mk here_filecache ploc_filecache in
-  Int._mk (Int.load ~filecache file)
+  let ctxt = GLC.mk (FC.mk here_filecache ploc_filecache) in
+  Int._mk (Int.load ~ctxt file)
 
 let of_located_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
-  let filecache = FC.mk here_filecache ploc_filecache in
-  Int._mk (Int.of_located_string ~filecache ~stg locs)
+  let ctxt = GLC.mk (FC.mk here_filecache ploc_filecache) in
+  Int._mk (Int.of_located_string ~ctxt ~stg locs)
 
 let of_here_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
-  let filecache = FC.mk here_filecache ploc_filecache in
-  Int._mk (Int.of_here_string ~filecache ~stg locs)
+  let ctxt = GLC.mk (FC.mk here_filecache ploc_filecache) in
+  Int._mk (Int.of_here_string ~ctxt ~stg locs)
 
 end
 
@@ -368,10 +407,10 @@ let classify_files files =
   let props = List.map analyze files in
   Std.nway_partition (fun (a,_) (b,_) -> a=b) props
 
-let read_group ~filecache dirkey files =
+let read_group ~ctxt dirkey files =
   match files with
     [file] ->
-     Group.Int.load ~filecache file
+     Group.Int.load ~ctxt file
   | files ->
      let stg_files = List.filter is_stg files in
      let st_files = List.filter is_st files in
@@ -385,13 +424,13 @@ let read_group ~filecache dirkey files =
               Fpath.pp (List.hd stg_files) (list Fpath.pp) st_files) ;
 
      match stg_files with
-       [file] -> Group.Int.load ~filecache file
+       [file] -> Group.Int.load ~ctxt file
      | _ ->
         let defs =
           st_files
           |> List.concat_map (fun file ->
                  let key = Fpath.(file |> rem_ext |> basename) in
-                 let (defs, aliases, dicts) = Group.Int.load ~filecache file in
+                 let (defs, aliases, dicts) = Group.Int.load ~ctxt file in
                  if aliases <> [] then
                    Fmt.(failwithf "ST file %a should not contain aliases" Fpath.pp file) ;
                  if dicts <> [] then
@@ -409,13 +448,14 @@ let read_group ~filecache dirkey files =
 
 let load ?(here_filecache=[]) ?(ploc_filecache=[]) dir =
   let dir = Fpath.normalize dir in
-  let filecache = FC.mk here_filecache ploc_filecache in
-  let files = FC.all_files filecache dir in
+  let ctxt = GLC.mk (FC.mk here_filecache ploc_filecache) in
+  let ctxt = GLC.set_in_dir ctxt in
+  let files = FC.all_files ctxt.filecache dir in
   let grouped_files = classify_files files in
   let process1 pairs =
     let dirkey = fst (List.hd pairs) in
     let files = List.map snd pairs in
-    (dirkey, read_group ~filecache dirkey files) in
+    (dirkey, read_group ~ctxt dirkey files) in
   
   let contents = List.map process1 grouped_files in
   let contents = List.map (fun (dirkey, l) ->  (dirkey, Group.Int._mk l)) contents in

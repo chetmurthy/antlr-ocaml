@@ -247,14 +247,14 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
-module Check = struct
-open Antlr
-
 let error_ok th errors =
   if th.errorsContains = "" then
     errors = th.errors
   else
     Util.string_contains ~pat:th.errorsContains errors
+
+module Check = struct
+open Antlr
 
 let check_run_output ~testname i (output, r) =
   let name =
@@ -458,6 +458,15 @@ let equal_text ~ignorews txt1 txt2 =
   let txt2 = if ignorews then [%subst {|\s|} / {||} / g s] txt2 else txt2 in
   txt1 = txt2
 
+let check_errors testname ignore_errors th errors =
+  if ignore_errors then ()
+  else if not (error_ok th errors) then
+    Fmt.(pf stderr "st4_util test-ocaml: test %s: errors didn't match@.expected:
+errors {foo|%s|foo}
+errorsContains: {foo|%s|foo}
+actual: {bar|%s|bar}@."
+           testname th.errors th.errorsContains errors)
+
 let runtest ~ignorews ~ignore_errors ~verbose testname th =
   let ploc_filecache =
     (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
@@ -505,9 +514,7 @@ let runtest ~ignorews ~ignore_errors ~verbose testname th =
            Fmt.(pf stderr "st4_util test-ocaml: test %s/%s: output didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
                   testname name expected_output output)) ;
   let errors = Buffer.contents errorbuf in
-  if not ignore_errors && errors <> th.errors then
-    Fmt.(pf stderr "st4_util test-ocaml: test %s: errors didn't match@.expected: {foo|%s|foo}@.actual: {bar|%s|bar}@."
-           testname th.errors errors)
+  check_errors testname ignore_errors th errors
 
 let one_test ~ignorews ~ignore_errors ~debug ~verbose ~force ~testname th =
   if th.ignore then

@@ -77,7 +77,7 @@ b() ::= "<c()>"
  (testImportRelativeDir2
   ((classname hello)
    (groupfile (("root/g.stg" {| 
-import "subdir"
+import "root/subdir"
 a() ::= <<dir1 a>>
 |})))
    (groupfiles
@@ -95,7 +95,7 @@ a() ::= <<dir1 a>>
  (testImportRelativeDir
   ((classname hello)
    (groupfile (("root/g.stg" {| 
-import "subdir"
+import "root/subdir"
 a() ::= <<dir1 a>>
 |})))
    (groupfiles
