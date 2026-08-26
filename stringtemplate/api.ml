@@ -74,4 +74,17 @@ let eval env t =
   |> Std.list_of_stream
   |> String.concat ""
 
+module Simple = struct
+  let eval env t =
+    let open Eval.Environ in
+    let open Eval.Value in
+    let mk_binding (n,v) =
+      match v with
+        [] -> (n,VAL (SV NULL))
+      | [v] -> (n,VAL (SV (STRING v)))
+      | l -> (n, VAL (MV (List.map (fun s -> STRING s) l))) in
+    let env = [(List.map mk_binding env)] in
+    eval env t
+end
+
 end
