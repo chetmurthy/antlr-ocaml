@@ -66,7 +66,7 @@ let test_stg_new ctxt =
   ; assert_equal ~printer {|{print("S.A", file=self._output)}|} (trans {|{<writeln("\"S.A\"")>}|})
   ; assert_equal ~printer {|{print($label.y, file=self._output)}|} (trans {|{<writeln("$label.y")>}|})
   ; assert_equal ~printer {|{self.dumpDFA()}|} (trans {|{<DumpDFA()>}|})
-  ; assert_equal ~printer {|{x = 0}|} (trans {|{<InitIntVar("x","0")>}|})
+  ; assert_equal ~printer {|{x=0}|} (trans {|{<InitIntVar("x","0")>}|})
   ; assert_equal ~printer {|{$ctx.toStringTree(recog=self)}|} (trans {|{<ToStringTree("$ctx")>}|})
   ; assert_equal ~printer {|{print($ctx.toStringTree(recog=self), file=self._output)}|} (trans {|{<ToStringTree("$ctx"):writeln()>}|})
   ; assert_equal ~printer (trans {||}) {||}
