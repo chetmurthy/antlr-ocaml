@@ -433,7 +433,7 @@ let stparse s =
 
 let steval ?group ?groupdir env t =
   let open Doit in
-  let ctxt = Context.mk ?group ?groupdir () in
+  let ctxt = EC.mk ?group ?groupdir () in
   t
   |> eval_elements ctxt env
   |> render_attr_value
@@ -470,6 +470,7 @@ actual: {bar|%s|bar}@."
 let runtest ~ignorews ~ignore_errors ~verbose testname th =
   let ploc_filecache =
     (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
+  let ctxt = GLC.mk (FC.mk [] ploc_filecache) in
   let errorbuf = Buffer.create 23 in
   let outputs = ref [] in
   begin
@@ -478,13 +479,13 @@ let runtest ~ignorews ~ignore_errors ~verbose testname th =
           match (th.groupfile, th.groupfiles) with
             (None, []) -> (Some (Group.mk()), None)
           | (Some (file, _), _) ->
-             (Some (Group.load ~ploc_filecache (Fpath.v file)), None)
+             (Some (Group.load ctxt (Fpath.v file)), None)
           | (None, _::_) ->
              let files =
                th.groupfiles
                |> List.map fst
                |> List.map Fpath.v in
-             (None, Some (GroupDir.load ~ploc_filecache (Fpath.v "."))) in
+             (None, Some (GroupDir.load ctxt (Fpath.v "."))) in
 
         th.runs
         |> List.iteri (fun i r ->

@@ -23,6 +23,7 @@ ML=\
 	pa.ml \
 	st_ops.ml \
 	eval.ml \
+	api.ml \
 	testharness.ml \
 	sexpio.ml
 

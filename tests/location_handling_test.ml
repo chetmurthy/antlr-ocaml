@@ -8,8 +8,8 @@ open Pa_ppx_utils
 
 open Antlr
 open Antlrtest
-open ST4
-open Lexers
+open ST4.Lexers
+open ST4.Api
 
 Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
 
@@ -145,14 +145,14 @@ end
 
 let check_zeroth_raw startloc t =
   let open Exec.T in
-  let open St_util in
+  let open ST4.St_util in
   let raw = triple2raw t in
   assert_equal ~msg:"zeroth raw.start <> 0" 0 (Std.outSome raw.start)
 ; assert_equal ~msg:"zeroth raw.line <> 1" 1 (Std.outSome raw.line)
 
 let check_zeroth_location startloc t =
   let open Exec.T in
-  let open St_util in
+  let open ST4.St_util in
   let raw = triple2raw t in
   let ploc = triple2ploc t in
   let msg =
@@ -166,7 +166,7 @@ triple[0]: %a
 
 let check_raw_pair startloc i a b =
   let open Exec.T in
-  let open St_util in
+  let open ST4.St_util in
   let raw_a = triple2raw a in
   let raw_b = triple2raw b in
   let msg = Fmt.(str "check_raw_pair: mismatched raw start/end.@.a: %a@. b: %a@."
@@ -177,7 +177,7 @@ let check_raw_pair startloc i a b =
 
 let check_raw startloc bpmap i t =
   let open Exec.T in
-  let open St_util in
+  let open ST4.St_util in
   let raw = triple2raw t in
   let line = Std.outSome raw.line in
   let column = Std.outSome raw.column in
@@ -198,7 +198,7 @@ bol_pos+column: %d
 
 let check_location startloc bpmap i t =
   let open Exec.T in
-  let open St_util in
+  let open ST4.St_util in
   let startloc = Ploc.Internal.of_t startloc in
   let raw = triple2raw t in
   let raw_start = Std.outSome raw.start in

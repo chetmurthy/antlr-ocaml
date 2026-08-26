@@ -369,16 +369,13 @@ end
 
 let mk() = Int._mk ([],[],[])
 
-let load ?(here_filecache=[]) ?(ploc_filecache=[]) file =
-  let ctxt = GLC.mk (FC.mk here_filecache ploc_filecache) in
+let load ctxt file =
   Int._mk (Int.load ~ctxt file)
 
-let of_located_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
-  let ctxt = GLC.mk (FC.mk here_filecache ploc_filecache) in
+let of_located_string ctxt ~stg locs =
   Int._mk (Int.of_located_string ~ctxt ~stg locs)
 
-let of_here_string ?(here_filecache=[]) ?(ploc_filecache=[]) ~stg locs =
-  let ctxt = GLC.mk (FC.mk here_filecache ploc_filecache) in
+let of_here_string ctxt ~stg locs =
   Int._mk (Int.of_here_string ~ctxt ~stg locs)
 
 end
@@ -446,9 +443,8 @@ let read_group ~ctxt dirkey files =
         (defs, [], [])
 
 
-let load ?(here_filecache=[]) ?(ploc_filecache=[]) dir =
+let load ctxt dir =
   let dir = Fpath.normalize dir in
-  let ctxt = GLC.mk (FC.mk here_filecache ploc_filecache) in
   let ctxt = GLC.set_in_dir ctxt in
   let files = FC.all_files ctxt.filecache dir in
   let grouped_files = classify_files files in
@@ -655,7 +651,7 @@ let isBOOL = function BOOL _ -> true | _ -> false
 
 end
 
-module Context = struct
+module EvalContext = struct
   open Sttypes2
   open Stg_types.Cooked
 
@@ -697,6 +693,7 @@ let mk ?group ?groupdir () =
   ; error = default_error
   }
 end
+module EC = EvalContext
 
 module Environ = struct
 
@@ -737,13 +734,13 @@ type frame_t = binding_t list
 type t = frame_t list
 [@@deriving show,located_sexp {exn=true}]
 
-let has_id (ctxt : Context.t) (env : t) varname : bool =
+let has_id (ctxt : EC.t) (env : t) varname : bool =
   List.exists (List.mem_assoc varname) env
 
 let lookup_id_opt ctxt (env : t) varname : env_val_t option =
   let rec lookrec = function
       [] ->
-       Context.warning ctxt Fmt.(str "Environ.lookup_id_opt: name %a not found" Dump.string varname) ;
+       EC.warning ctxt Fmt.(str "Environ.lookup_id_opt: name %a not found" Dump.string varname) ;
        None
     | fh::tl when List.mem_assoc varname fh ->
        Some (List.assoc varname fh)
@@ -1031,7 +1028,7 @@ and eval_funcall ctxt env fname args =
       | _ -> SV NULL
     end
 
-  | _ -> Context.warning ctxt Fmt.(str "unrecognized function call %s with %d args" fname (List.length av_l)) ;
+  | _ -> EC.warning ctxt Fmt.(str "unrecognized function call %s with %d args" fname (List.length av_l)) ;
          SV NULL
 
 and eval_mexpr ctxt env = function
@@ -1077,14 +1074,14 @@ and eval_mexpr ctxt env = function
      eval_funcall ctxt env id args
 
   | ME_TEMPLATE (MTR_INCLUDE (qid, args)) ->
-     let t = Context.lookup_template ctxt qid in
+     let t = EC.lookup_template ctxt qid in
      let formals = t.formals in
      let body = t.body in
      let bindings =
        match args with
          ARGS_EMPTY ->
           if formals |> List.exists (function (_, None) -> true | _ -> false) then
-            Context.warning ctxt Fmt.(str "eval_mexpr: no-arg include calls template with args that require values") ;
+            EC.warning ctxt Fmt.(str "eval_mexpr: no-arg include calls template with args that require values") ;
           List.filter_map (function
                 (vname, Some rhs) -> Some (bind_formal_arg vname rhs)
               | _ -> None) formals
@@ -1093,7 +1090,7 @@ and eval_mexpr ctxt env = function
             named_actuals
             |> List.iter (fun (name,_) ->
                    if not (List.mem_assoc name formals) then
-                     Context.warning ctxt Fmt.(str "eval_mexpr: actual named-arg %s not in formals" name)) ;
+                     EC.warning ctxt Fmt.(str "eval_mexpr: actual named-arg %s not in formals" name)) ;
             formals
             |> List.filter_map (fun (vname, dflt_opt) ->
                    match (List.assoc_opt vname named_actuals, dflt_opt) with
@@ -1103,7 +1100,7 @@ and eval_mexpr ctxt env = function
                    | (None, Some rhs) -> Some (bind_formal_arg vname rhs)
                    | (None, None) when ellipsis -> None
                    | _ when not ellipsis ->
-                      Context.warning ctxt Fmt.(str "eval_mexpr: var %s has no arg (and ellipsis not present)" vname) ;
+                      EC.warning ctxt Fmt.(str "eval_mexpr: var %s has no arg (and ellipsis not present)" vname) ;
                       None
                  )
 
@@ -1164,7 +1161,7 @@ and eval_mexpr ctxt env = function
             if LM.in_dom d key then
               SV (LM.map d key)
             else SV NULL
-         | _ -> Context.warning ctxt Fmt.(str "eval_mexpr: expression did not evaluate to DICT: %a" pp_mexpr_t me1) ;
+         | _ -> EC.warning ctxt Fmt.(str "eval_mexpr: expression did not evaluate to DICT: %a" pp_mexpr_t me1) ;
                 SV NULL
        end
 
@@ -1197,7 +1194,7 @@ and eval_mexpr_template_ref_multi ctxt env attrval_l mtr =
             f (MTR_INCLUDE ({rooted=false; ids=[id]}, ARGS_LIST me_l))
 
           | MTR_INCLUDE (qid, args) ->
-           let t = Context.lookup_template ctxt qid in
+           let t = EC.lookup_template ctxt qid in
            let formals = t.formals in
            if List.length formals < nattrs then
              Fmt.(failwithf "eval_mexpr_template_ref_multi:#formals %d < #attrvals %d"
@@ -1241,7 +1238,7 @@ and eval_mexpr_template_ref ctxt env attrval mtr =
     | _ -> attrval in
   match mtr with
     MTR_INCLUDE (qid, args) ->
-     let t = Context.lookup_template ctxt qid in
+     let t = EC.lookup_template ctxt qid in
      let formals = t.formals in
      let varname = fst (List.hd formals) in
      let args = match args with

@@ -78,10 +78,11 @@ let verify ~verbose th =
       STG2_STPa.Template.of_located_string r.input) th.runs ;
   let ploc_filecache =
     (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
+  let ctxt = GLC.mk (FC.mk [] ploc_filecache) in
   ploc_filecache
   |> List.iter (fun (file,_) ->
       if verbose then Fmt.(pf stderr "\t[groupfile %s]@." file) ;
-         ignore (Eval.Group.load ~ploc_filecache (Fpath.v file) : Eval.Group.t)) ;
+         ignore (Eval.Group.load ctxt (Fpath.v file) : Eval.Group.t)) ;
   ()
 
 module Multi = struct
