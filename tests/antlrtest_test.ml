@@ -53,10 +53,14 @@ let test_stg ctxt =
   ; assert_equal ~printer {|{print($ctx.toStringTree(recog=self), file=self._output)}|} (trans {|{<ToStringTree("$ctx"):writeln()>}|})
   ; assert_equal ~printer (trans {||}) {||}
 
+let official_Python3_stg = "/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/templates/Python3.test.stg"
+let my_Python3_stg = "fixtures/Python3.test.stg"
+let _Python3_stg = official_Python3_stg
+
 let test_stg_new ctxt =
   let open ST4.Api in
   let ctxt = GLC.mk FC.mt in
-  let group = Group.load ctxt (Fpath.v "fixtures/Python3.test.stg") in
+  let group = Group.load ctxt (Fpath.v _Python3_stg) in
   let env = [] in
   let trans x = Template.(eval ~group env (of_string x)) in
   let printer x = x in

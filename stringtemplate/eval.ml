@@ -547,6 +547,8 @@ module FIW = struct
     ; emitted_indent = false
     }
 
+  let dedent t = {(t) with cur_indent = Indent.pop t.cur_indent}
+
   let emit t = function
       (TEXT s|ESCAPE s) when not t.emitted_indent ->
       ({(t) with emitted_indent = true},
@@ -559,12 +561,14 @@ module FIW = struct
        ({(t) with cur_indent = Indent.add_string s t.cur_indent},
         [])
     | DEDENT ->
-       ({(t) with cur_indent = Indent.pop t.cur_indent},
+       (dedent t,
        [])
 
 let render_stream ?(init=mt) strm =
   let rec rerec t = parser
-    [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ ; 'VERT_WS _ ; strm >] -> rerec t strm
+    [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ ; 'DEDENT ; 'VERT_WS _ ; strm >] -> rerec (dedent t) strm
+
+  | [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ ; 'VERT_WS _ ; strm >] -> rerec t strm
 
   | [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ ; 'TEXT s ; strm >] ->
      let s = [%subst {|^.|} / {||} / s] s in
@@ -575,6 +579,8 @@ let render_stream ?(init=mt) strm =
   | [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ ; strm >] -> rerec t strm
 
   | [< '(ESCAPE "\\" as lit) ; 'HORZ_WS _ >] -> [< >]
+
+  | [< '(ESCAPE "\\" as lit) ; 'DEDENT ; 'VERT_WS _ ; strm >] -> rerec (dedent t) strm
 
   | [< '(ESCAPE "\\" as lit) ; 'TEXT s ; strm >] ->
      let s = [%subst {|^.|} / {||} / s] s in

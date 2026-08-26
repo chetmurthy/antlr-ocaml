@@ -87,6 +87,15 @@ module Simple = struct
       | l -> (n, VAL (MV (List.map (fun s -> STRING s) l))) in
     let env = [(List.map mk_binding env)] in
     eval ?group ?groupdir env t
+
+  let transform_file ?group ?groupdir env file =
+    let t =
+      file |> Fpath.to_string
+      |> STPa.Template.load
+      |> St_ops.coalesce
+      |> St_ops.insert_indentation in
+    eval ?group ?groupdir env t
+
 end
 
 end

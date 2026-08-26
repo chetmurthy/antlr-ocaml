@@ -4,6 +4,15 @@ open Pa_ppx_utils
 open Pa_ppx_base
 open Ppxutil
 
+Pa_ppx_runtime.Exceptions.Ploc.pp_loc_verbose := true ;;
+
+open Antlr
+
+let caches = Simulate.Caches.mk () ;;
+Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.ac () ;;
+
+open ST4.Api
+
 (** generate an antlrtest directory from a test
     descriptor and a template directory
 
@@ -52,7 +61,7 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
     failwith "must specify --test-name|-t" ;
   let destroot = Fpath.v destroot in
   let destdir = Fpath.(append destroot (v testname)) in
-  if destdir |> Bos.OS.Dir.exists |> Result.get_ok then
+  if destdir |> Bos.OS.Dir.exists |> Rresult.R.failwith_error_msg then
     Fmt.(failwithf "destdir %s must not already exist!" (Fpath.to_string destdir));
   let destexpected_dir = Fpath.(append destdir (v "expected")) in
 
@@ -62,19 +71,32 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
   let includes = Stg.Group.load helperfile in
   let env = {(env) with includes = includes } in
 
+  let ctxt = GLC.mk FC.mt in
+  let group = Group.load ctxt helperfile in
+  let st4simple_env = List.map (fun (n,v) -> (n, [v])) env.attributes in
+
   if [%match {|python3|} / s i pcre2 pred] (match D.stanza_opt d "skip" with None -> "" | Some (_,(_, s)) -> s) then
     Fmt.(pf stderr "SKIP %s@." file)
  else
 
   let templatefiles =
-    templatedir |> (Bos.OS.Dir.contents ~rel:true) |> Result.get_ok in
+    templatedir
+    |> (Bos.OS.Dir.contents ~rel:true)
+    |> Rresult.R.failwith_error_msg
+    |> List.filter (fun fp -> not Fpath.(has_ext ".ST4" fp))
+  in
 
   let gen_one f =
     let full = Fpath.append templatedir f in
+    let full_st4 = Fpath.(add_ext ".ST4" full) in
     let dstfull = Fpath.append destdir f in
-    (dstfull, Stg.transform_file env full) in
+    let dstnew = Fpath.(add_ext ".ST4" dstfull) in
+    [(dstfull, Stg.transform_file env full)
+    ;(dstnew, Template.Simple.transform_file ~group st4simple_env full_st4)
+    ]
+  in
 
-  let generated_files = List.map gen_one templatefiles in
+  let generated_files = List.concat_map gen_one templatefiles in
   let generated_files =
     [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar.name))),
      Stg.transform ~file:Fmt.(str "%s grammar %s" file d.grammar.name) env d.D.grammar.txt
@@ -130,12 +152,12 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
              (f, Stg.clean_blank_lines txt)
            else (f,txt)) in
 
-  ignore(destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok : bool) ;
-  ignore(destexpected_dir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Result.get_ok : bool);
+  ignore(destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg : bool) ;
+  ignore(destexpected_dir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg : bool);
   generated_files
   |> List.iter
        (fun (full, txt) ->
-         Bos.OS.File.write ~mode:0o644 full txt |> Result.get_ok) ;
+         Bos.OS.File.write ~mode:0o644 full txt |> Rresult.R.failwith_error_msg) ;
   ()
   
 

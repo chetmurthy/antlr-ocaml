@@ -179,6 +179,8 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/STG2.txt \
 
 DTEST := \
+	fixtures/descriptors/ParserExec/Basic.txt \
+	fixtures/descriptors/LexerExec/CharSet.txt \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 	fixtures/custom-descriptors/antlr4/STG2.txt \
 

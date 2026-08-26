@@ -459,10 +459,6 @@ let runtest ~ignorews ~ignore_errors ~verbose testname th =
           | (Some (file, _), _) ->
              (Some (Group.load ctxt (Fpath.v file)), None)
           | (None, _::_) ->
-             let files =
-               th.groupfiles
-               |> List.map fst
-               |> List.map Fpath.v in
              (None, Some (GroupDir.load ctxt (Fpath.v "."))) in
 
         th.runs
