@@ -96,6 +96,10 @@ module Simple = struct
       |> St_ops.insert_indentation in
     eval ?group ?groupdir env t
 
+  let transform ?group ?groupdir env s =
+    let t = of_string s in
+    eval ?group ?groupdir env t
+
 end
 
 end

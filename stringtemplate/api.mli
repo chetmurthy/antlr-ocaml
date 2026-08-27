@@ -52,6 +52,11 @@ module Template :
           ?groupdir:GroupDir.t ->
           (string * string list) list -> t -> string
 
+        val transform :
+          ?group:Group.t ->
+          ?groupdir:GroupDir.t ->
+          (string * string list) list -> string -> string
+
         val transform_file :
           ?group:Group.t ->
           ?groupdir:GroupDir.t ->

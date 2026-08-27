@@ -90,17 +90,26 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
     let full = Fpath.append templatedir f in
     let full_st4 = Fpath.(add_ext ".ST4" full) in
     let dstfull = Fpath.append destdir f in
+(*
+    let dstold = dstfull in
     let dstnew = Fpath.(add_ext ".ST4" dstfull) in
-    [(dstfull, Stg.transform_file env full)
+ *)
+    let dstold = Fpath.(add_ext ".OLD" dstfull) in
+    let dstnew = dstfull in
+    [(dstold, Stg.transform_file env full)
     ;(dstnew, Template.Simple.transform_file ~group st4simple_env full_st4)
     ]
   in
 
   let generated_files = List.concat_map gen_one templatefiles in
   let generated_files =
-    [Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar.name))),
-     Stg.transform ~file:Fmt.(str "%s grammar %s" file d.grammar.name) env d.D.grammar.txt
-    ]@generated_files in
+    let grammar_file = Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar.name))) in
+    let grammar_filenew = Fpath.(add_ext ".ST4" grammar_file) in
+    [grammar_file,
+     Stg.transform ~file:Fmt.(str "%s grammar %s" file d.grammar.name) env d.D.grammar.txt]
+    @[grammar_filenew,
+      Template.Simple.transform ~group st4simple_env d.D.grammar.txt]
+    @generated_files in
 
   let expected_generated_files =
     let input_l = D.stanza_all d "input" in
