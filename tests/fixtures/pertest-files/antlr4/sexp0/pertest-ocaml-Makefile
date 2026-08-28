@@ -1,9 +1,5 @@
 ML=lexerBase.ml l_constants.ml ActionFuns_sexp.ml l.ml test.ml
 
-all-tests::
-	$(NOVERBOSE) $(MAKE) NAME=B named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=C named-{python,ocaml}-test{,-named-output} || true
-
 test.cmo: l_constants.cmo
 
 clean::

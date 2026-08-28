@@ -1,18 +1,5 @@
 ML=lexerBase.ml l_constants.ml l.ml test.ml
 
-all-tests::
-	$(NOVERBOSE) $(MAKE) NAME=B named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=C named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=D named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=E named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=F named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=G named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=H named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=I named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=J named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=K named-{python,ocaml}-test{,-named-output} || true
-
-
 test.cmo: l_constants.cmo
 
 clean::

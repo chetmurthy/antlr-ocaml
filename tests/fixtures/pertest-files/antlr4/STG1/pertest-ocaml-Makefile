@@ -1,25 +1,5 @@
 ML=lexerBase.ml l_constants.ml ActionFuns_STG1.ml l.ml test.ml
 
-all-tests::
-	$(NOVERBOSE) $(MAKE) NAME=B named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=C named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=D named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=E named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=F named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=G named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=H named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=I named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=J named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=K named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=L named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=M named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=N named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=O named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=O2 named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=P named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=P2 named-{python,ocaml}-test{,-named-output} || true
-	$(NOVERBOSE) $(MAKE) NAME=Q named-{python,ocaml}-test{,-named-output} || true
-
 test.cmo: l_constants.cmo
 
 clean::

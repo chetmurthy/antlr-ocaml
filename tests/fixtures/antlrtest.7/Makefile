@@ -57,6 +57,8 @@ compare::
 
 all-tests::
 	$(NOVERBOSE) $(MAKE) {python,ocaml}-test{,-named-output} || true
+<namedTests:{ n |<\t>$(NOVERBOSE) $(MAKE) NAME=<n> named-{python,ocaml\}-test{,-named-output\} || true
+}>
 
 save-json-log: json.log
 	cp json.log json.log.SAVED

@@ -41,6 +41,14 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
   let grammar_names = d.D.grammar.name ::(List.map (fun (_,sg) -> sg.D.name) d.D.slaveGrammars) in
   let st4simple_env = ("grammarNames",grammar_names)::st4simple_env in
 
+  let named_tests =
+    ((D.stanza_all d "input")@(D.stanza_all d "output")@(D.stanza_all d "errors"))
+    |> List.filter_map (fun (pl,_) -> List.assoc_opt "name" pl)
+    |> Std.uniquize
+    |> List.stable_sort Stdlib.compare
+  in
+  let st4simple_env = ("namedTests", named_tests)::st4simple_env in
+
   if [%match {|python3|} / s i pcre2 pred] (match D.stanza_opt d "skip" with None -> "" | Some (_,(_, s)) -> s) then
     Fmt.(pf stderr "SKIP %s@." file)
  else
