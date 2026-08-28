@@ -13,40 +13,6 @@ Exec.file_init ~dfast_cache:caches.dfast ~acs_cache:caches.acs ~ac_cache:caches.
 
 open ST4.Api
 
-(** generate an antlrtest directory from a test
-    descriptor and a template directory
-
-    (a) read the descriptor
-    (b) 
-
- *)
-
-[
-  (
-    {|<ToStringTree("$r.ctx"):writeln()>|},
-    {|print($r.ctx.toStringTree(recog=self), file=self._output)|}
-  )
-; (
-    {|<ToStringTree("$ctx"):writeln()>|},
-    {|print($ctx.toStringTree(recog=self), file=self._output)|}
-  )
-; (
-    {|<ContextMember("$ctx", "r"):ToStringTree():writeln()>|},
-    {|print($ctx.r.toStringTree(recog=self), file=self._output)|}
-  )
-; (
-    {|<ContextMember("$ctx", "r"):WalkListener()>|},
-    {|if "." in __name__:
-    from .TListener import TListener
-else:
-    from TListener import TListener
-TParser.LeafListener.__bases__ = (TListener,)
-walker = ParseTreeWalker()
-walker.walk(TParser.LeafListener(self._output), $ctx.r)|}
-  )
-] |> List.iter
-Antlrtest.Stg.Template.add_include_hack ;;
-
 let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file =
   let open Antlrtest in
   if templatedir = "" then
@@ -68,13 +34,10 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
 
   let module D = Descriptor in
   let d = D.load ~testname file in
-  let env = D.to_env d in
-  let includes = Stg.Group.load helperfile in
-  let env = {(env) with includes = includes } in
-
+  let attributes = D.to_env d in
   let ctxt = GLC.mk FC.mt in
   let group = Group.load ctxt helperfile in
-  let st4simple_env = List.map (fun (n,v) -> (n, [v])) env.attributes in
+  let st4simple_env = List.map (fun (n,v) -> (n, [v])) attributes in
   let grammar_names = d.D.grammar.name ::(List.map (fun (_,sg) -> sg.D.name) d.D.slaveGrammars) in
   let st4simple_env = ("grammarNames",grammar_names)::st4simple_env in
 
@@ -152,7 +115,7 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
     generated_files
     |> List.map (fun (f, txt) ->
            if Std.ends_with ~pat:".py" (Fpath.to_string f) then
-             (f, Stg.clean_blank_lines txt)
+             (f, (* Stg.clean_blank_lines *) txt)
            else (f,txt)) in
 
   ignore(destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg : bool) ;

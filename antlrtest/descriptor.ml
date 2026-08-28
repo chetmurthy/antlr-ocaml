@@ -4,7 +4,8 @@ open Pa_ppx_base
 open Ppxutil
 open Pa_ppx_utils
 open Std
-open Stg
+
+let is_ws = [%match {|^\s+$|} / pcre2 s pred]
 
 module Pos = struct
   type t = {
@@ -304,4 +305,4 @@ let to_env d =
       None -> attributes
     | Some r -> ("parserStartRuleName", r)::attributes in
 
-  Stg.Env.{ attributes ; includes = [] }
+  attributes
