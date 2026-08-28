@@ -425,3 +425,9 @@ let with_return (type a) f =
     (match exn with
      | Return a -> a
      | _ -> raise exn)
+
+let with_loc loc f x =
+  try
+    f x
+  with ex ->
+    Ploc.raise loc ex

@@ -121,7 +121,11 @@ open St4internals_test ;;
 open Antlrtest_util ;;
 open ST4.Api ;;
 
-
+(*
+#trace Eval.Intern.template_def ;;
+#trace STPa.Template.of_located_string;;
+ *)
+Group.load (GLC.mk FC.mt) (Fpath.v "/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/templates/Cpp.test.stg");;
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***

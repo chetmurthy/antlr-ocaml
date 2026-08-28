@@ -31,6 +31,16 @@ let test_stg_new ctxt =
   ; assert_equal ~printer {|{print($ctx.toStringTree(recog=self), file=self._output)}|} (trans {|{<ToStringTree("$ctx"):writeln()>}|})
   ; assert_equal ~printer (trans {||}) {||}
 
+let test_stg_new0 ctxt =
+  let open ST4.Api in
+  let ctxt = GLC.mk FC.mt in
+  let group = Group.load ctxt (Fpath.v _Python3_stg) in
+  let env = [] in
+  let trans x = Template.(eval ~group env (of_string x)) in
+  let printer x = x in
+  ()
+  ; assert_equal ~printer {|{print("S.A", file=self._output)}|} (trans {|{<writeln("\"S.A\"")>}|})
+
 let test_descriptor ctxt =
   let module D = Descriptor in
   let printer = [%show: [ `Delim of string * string * string | `Text of string ] list] in

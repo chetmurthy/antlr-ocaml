@@ -271,7 +271,12 @@ mexpr_basic: [
 
 mexpr_primary: [
     [ id = ID -> ME_ID id
-    | s = STRING -> ME_STRING (snd (St_util.unescape_stg_string (loc, s)))
+    | s = STRING ->
+       let locs =
+         (loc, s)
+         |> St_util.unwrap_dq_string
+         |> St_util.unescape_st_string
+       in ME_STRING (snd locs)
     | "true" -> ME_BOOL True
     | "false" -> ME_BOOL False
     | "[" ; "]" -> ME_LIST []
@@ -379,7 +384,7 @@ delimiters: [ [
   ;
 
 imports: [ [
-      l = LIST1 [ "import" ; s = STRING -> snd (St_util.unescape_stg_string (loc, s)) ] -> l
+      l = LIST1 [ "import" ; s = STRING -> snd (St_util.unwrap_dq_string (loc, s)) ] -> l
   ] ]
   ;
 

@@ -32,7 +32,8 @@ module Intern = struct
        |> (fun t -> DVAL_VALUE (VALUE_TEMPLATE t))
     | KEYVAL_STRING (loc, s) ->
        (loc, s)
-       |> St_util.unescape_stg_string 
+       |> St_util.unwrap_dq_string
+       |> St_util.unescape_st_string
        |> STPa.Template.of_located_string
        |> St_ops.coalesce
        |> St_ops.insert_indentation
@@ -51,7 +52,7 @@ module Intern = struct
     let kv =
       kv
       |> List.map (fun (k, v) ->
-             (snd (St_util.unescape_stg_string k),
+             (snd (k |> St_util.unwrap_dq_string |> St_util.unescape_st_string),
               dict_value v)) in
     let kv = LM.ofList () kv in
     let default = Option.map dict_value dflt_opt in
@@ -67,7 +68,8 @@ module Intern = struct
                |> Option.map (function
                         FORMAL_STRING s ->
                          s
-                         |> St_util.unescape_stg_string
+                         |> St_util.unwrap_dq_string
+                         |> St_util.unescape_st_string
                          |> STPa.Template.of_located_string
                          |> St_ops.coalesce
                          |> St_ops.insert_indentation
@@ -86,7 +88,8 @@ module Intern = struct
       match rhs with
         TDEF_STRING s ->
          s
-         |> St_util.unescape_stg_string
+         |> St_util.unwrap_dq_string
+         |> St_util.unescape_st_string
          |> STPa.Template.of_located_string
          |> St_ops.coalesce
          |> St_ops.insert_indentation

@@ -30,13 +30,22 @@ let narrow_loc (leftlen,rightlen) loc =
   let len = Ploc.((last_pos loc) - (first_pos loc)) in
   Ploc.sub loc leftlen (len-(leftlen+rightlen))
 
-let unescape_stg_string (loc, s) =
+let unwrap_dq_string (loc, s) =
   let s =
     match [%match {|^"(.*)"$|} / s strings !1] s with
       None ->
-      Fmt.(raise_failwithf loc "unescape_stg_string: malformed string %a" Dump.string s)
+      Fmt.(raise_failwithf loc "unwrap_dq_string: malformed string %a" Dump.string s)
     | Some s -> s in
-  (narrow_loc (1,1) loc, Util.unescape_string s)
+  (narrow_loc (1,1) loc, s)
+
+let unescape_st_string (loc, s) =
+  let replace = function
+      "\"" -> "\""
+    | "\\" -> "\\"
+    | "n" -> "\n"
+    | "r" -> ""
+    | s -> "\\"^s
+  in (loc, [%subst {|\\(.)|} / {|replace $1$|} / g s e pcre2] s)
 
 let unwrap_stg_bigstring (loc, s) =
   match [%match {|^<<\n?(.*?)\n?>>$|} / s strings !1] s with
