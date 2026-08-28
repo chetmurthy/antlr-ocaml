@@ -1,0 +1,8 @@
+#!/bin/bash -x
+
+G=ANTLRv4Lexer.g4
+${TOP}/tests/st4_util.opt transform --group ${TOP}/tests/fixtures/OCaml.extended.stg ${TOP}/tests/_generated/antlr4/ANTLRv4Lexer/raw/ANTLRv4Lexer.g4 > grammars/${G}.NEW && mv grammars/${G}.NEW grammars/${G}
+
+(cd grammars && antlr4 -Dlanguage=Python3 ${G})
+${TOP}/tests/atn_util.opt emit-ocaml-lexer -i grammars/ANTLRv4Lexer.interp --grammar-lib grammars --constants-module L_constants grammars/ANTLRv4Lexer.g4 > l.ml.NEW && mv l.ml.NEW l.ml
+${TOP}/tests/atn_util.opt emit-ocaml-constants grammars/ANTLRv4Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
