@@ -53,7 +53,7 @@ basic variable-reference
        )
       )
      ((input {|{ <prerrln(AppendStr(location(), dquotes(" '\\n' in string")))> }|})
-      (output {bar|{ print(("line %s:%s:" % (self._tokenStartLine, self._tokenStartColumn)) + " '\n' in string", file=sys.stderr) }|bar})
+      (output {bar|{ (prerr_string (Fmt.(str "line %d:%d:" self._tokenStartLine self._tokenStartColumn) ^ " '\n' in string"); prerr_newline()) }|bar})
       (comments {|
 basic variable-reference
 |}
