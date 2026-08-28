@@ -48,8 +48,6 @@ module Pos = struct
 
 end
 
-
-
 let clean_triple_quotes (pos, txt) =
   match [%match {|^(\s*""")(.*?)""".*|} / pcre2 strings (!1,!2) s] txt with
     None -> (pos, txt)

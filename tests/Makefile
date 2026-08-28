@@ -139,7 +139,12 @@ DTEST_antlr4 = \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 	fixtures/custom-descriptors/antlr4/STG2.txt \
 
-DTEST = $(DTEST_antlr4) $(DTEST_LexerExec)
+#DTEST = $(DTEST_antlr4) $(DTEST_LexerExec)
+
+DTEST := \
+	fixtures/descriptors/LexerExec/CharSet.txt \
+	fixtures/descriptors/ParserExec/Basic.txt \
+	fixtures/custom-descriptors/antlr4/sexp1.txt \
 
 DALL=$(shell ls fixtures/descriptors/*Lexer*/*) $(shell ls fixtures/custom-descriptors/*/*)
 

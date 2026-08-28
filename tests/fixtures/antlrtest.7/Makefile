@@ -78,6 +78,16 @@ gen-python/<lexerName>.py: <grammarNames:{ n | gen-python/<n>.g4 }>
 
 }>
 
+gen-cpp/<lexerName>.cpp: <grammarNames:{ n | gen-cpp/<n>.g4 }>
+	$(NOVERBOSE) (cd gen-cpp && antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Cpp <grammarName>.g4)
+
+CPPTESTSTG=/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/templates/Cpp.test.stg
+<grammarNames:{ n |gen-cpp/<n>.g4: raw/<n>.g4
+	$(NOVERBOSE) mkdir -p gen-cpp
+	$(NOVERBOSE) (cd gen-cpp && $(ST4UTIL) transform --group $(CPPTESTSTG) ../raw/<n>.g4 > <n>.g4.NEW && mv <n>.g4.NEW <n>.g4)
+
+}>
+
 <grammarNames:{ n |gen-ocaml/<n>.g4: raw/<n>.g4
 	$(NOVERBOSE) mkdir -p gen-ocaml
 	$(NOVERBOSE) (cd gen-ocaml && $(ST4UTIL) transform --group ../OCaml.stg ../raw/<n>.g4 > <n>.g4.NEW && mv <n>.g4.NEW <n>.g4)
@@ -158,9 +168,11 @@ visualize-lexer: gen-python/<lexerName>.interp
 	xdot \<( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot gen-python/<lexerName>.interp )
 
 <if(parserName)>
-visualize-parser: <grammarName>.interp
-	xdot \<( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot <grammarName>.interp )
+visualize-parser: gen-python/<grammarName>.interp
+	xdot \<( $(TOP)/tests/atn_util.opt graph --with-rule-index --xdot gen-python/<grammarName>.interp )
 <endif>
+
+.SECONDARY:
 
 realclean:: clean
 	rm -rf __pycache__ $(GENLEXFILES) $(GENPAFILES) $(GENGRAMFILES)

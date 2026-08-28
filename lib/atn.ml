@@ -346,7 +346,7 @@ module State = struct
             [@with edge_t := Edge.t]
            ]
 and atn_state_type_t = [%import: Types.atn_state_type_t]
-[@@deriving yojson,located_yojson, show]
+[@@deriving yojson,located_yojson, show { with_path = false }]
 
 let isDecisionState = Types.isDecisionState
 
