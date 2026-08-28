@@ -46,7 +46,7 @@ type group_t = {
     loc : Ploc.t
   ; filename : Fpath.t
   ; header : header_t option
-  ; imports : string list
+  ; imports : (Ploc.t * string) list
   ; defs : group_def_t list
   }
 end

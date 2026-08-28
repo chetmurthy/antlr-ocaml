@@ -164,6 +164,17 @@ let all_files filecache dir =
     |> Rresult.R.failwith_error_msg
     |> List.filter (fun fp -> is_st fp || is_stg fp)
 
+let directory_exists filecache dir =
+  if is_empty filecache then
+    dir
+    |> Bos.OS.Dir.exists
+    |> Rresult.R.failwith_error_msg
+  else
+    filecache.files
+    |> List.map fst
+    |> List.filter (Fpath.is_prefix dir)
+    |> (fun l -> l <> [])
+
 let children filecache dir =
   if is_empty filecache then
     dir
@@ -308,7 +319,7 @@ module Int = struct
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and load ~ctxt file =
+  and load ~loc ~ctxt file =
     let (file,stg) =
       if  is_st file && FC.file_exists ctxt.filecache file then
         (file, false)
@@ -318,14 +329,14 @@ module Int = struct
         (Fpath.(file |> add_ext ".st"),false)
       else if FC.file_exists ctxt.filecache Fpath.(file |> add_ext ".stg") then
         (Fpath.(file |> add_ext ".stg"),true)
-      else Fmt.(failwithf "Group.load: no such file %a@." Fpath.pp file) in
-    load1 ~ctxt ~stg file
+      else Fmt.(raise_failwithf loc "Group.load: no such file %a@." Fpath.pp file) in
+    load1 ~loc ~ctxt ~stg file
     
-  and load1 ~ctxt ~stg file =
+  and load1 ~loc ~ctxt ~stg file =
     assert (FC.file_exists ctxt.filecache file) ;
     let raw =
       match FC.get_maybe_cached_file_opt ctxt.filecache file with
-        None -> Fmt.(failwithf "Group.load1: file %a doesn't exist" Fpath.pp file)
+        None -> Fmt.(raise_failwithf loc "Group.load1: file %a doesn't exist" Fpath.pp file)
       | Some (Some x) ->
          let g = STGPa.Group.of_located_string x in
          { (g) with filename = file }
@@ -335,29 +346,51 @@ module Int = struct
     let interned = intern_group raw in
     merge_imports ~imported interned
 
-  and load_import ~ctxt ~from file =
+  and load_import ~ctxt ~from (loc, file) =
     let file = Fpath.(file |> v |> normalize) in
 (*
     let file =
       if Fpath.is_rel file then Fpath.(file |> append (parent from) |> normalize)
       else file in
  *)
-    if is_stg file || is_st file then
-      [load ~ctxt file]
-    else if FC.file_exists ctxt.filecache Fpath.(file |> add_ext ".st") then
-      [load ~ctxt Fpath.(file |> add_ext ".st")]
-    else  if FC.file_exists ctxt.filecache Fpath.(file |> add_ext ".stg") then
-      [load ~ctxt Fpath.(file |> add_ext ".stg")]
-    else let subfiles = FC.children ctxt.filecache file in
-         subfiles
-         |> List.filter is_st
-         |> List.map (load ~ctxt)
+    let candidates =
+      [(false, file)
+      ;(false, Fpath.(file |> add_ext ".st"))
+      ;(false, Fpath.(file |> add_ext ".stg"))
+      ;(true, file)] in
+
+    let rel_candidates =
+      if Fpath.is_rel file then
+        let file = Fpath.(file |> append (parent from) |> normalize) in
+        [(false, file)
+        ;(false, Fpath.(file |> add_ext ".st"))
+        ;(false, Fpath.(file |> add_ext ".stg"))
+        ;(true, file)]
+      else [] in
+
+    (candidates@rel_candidates)
+    |> List.find_map (fun (is_dir, file) ->
+           if not is_dir then
+             if FC.file_exists ctxt.filecache file
+                && (is_stg file || is_st file) then
+               Some [load ~loc ~ctxt file]
+             else None
+           else if FC.directory_exists ctxt.filecache file then
+             let subfiles = FC.children ctxt.filecache file in
+             if subfiles = [] then None
+             else
+               Some (subfiles
+                     |> List.filter is_st
+                     |> List.map (load ~loc ~ctxt))
+           else None
+         )
+    |> Option.fold ~none:[] ~some:(fun x -> x)
 
   and read_imports ~ctxt raw =
     let files = raw.Raw.imports in
     if GLC.in_dir ctxt && files <> [] then
       Fmt.(failwithf "Group.read_imports: while loading GroupDir, in file %a, found imports [%a] which are forbidden"
-           Fpath.pp raw.Raw.filename (list string) files) ;
+           Fpath.pp raw.Raw.filename (list string) (List.map snd files)) ;
     let imported_l = List.concat_map (load_import ~ctxt ~from:raw.filename) files in
     List.fold_left merge1 ([], [], []) imported_l
 
@@ -373,7 +406,7 @@ end
 let mk() = Int._mk ([],[],[])
 
 let load ctxt file =
-  Int._mk (Int.load ~ctxt file)
+  Int._mk (Int.load ~loc:Ploc.dummy ~ctxt file)
 
 let of_located_string ctxt ~stg locs =
   Int._mk (Int.of_located_string ~ctxt ~stg locs)
@@ -410,7 +443,7 @@ let classify_files files =
 let read_group ~ctxt dirkey files =
   match files with
     [file] ->
-     Group.Int.load ~ctxt file
+     Group.Int.load ~loc:Ploc.dummy ~ctxt file
   | files ->
      let stg_files = List.filter is_stg files in
      let st_files = List.filter is_st files in
@@ -424,13 +457,13 @@ let read_group ~ctxt dirkey files =
               Fpath.pp (List.hd stg_files) (list Fpath.pp) st_files) ;
 
      match stg_files with
-       [file] -> Group.Int.load ~ctxt file
+       [file] -> Group.Int.load ~loc:Ploc.dummy ~ctxt file
      | _ ->
         let defs =
           st_files
           |> List.concat_map (fun file ->
                  let key = Fpath.(file |> rem_ext |> basename) in
-                 let (defs, aliases, dicts) = Group.Int.load ~ctxt file in
+                 let (defs, aliases, dicts) = Group.Int.load ~loc:Ploc.dummy ~ctxt file in
                  if aliases <> [] then
                    Fmt.(failwithf "ST file %a should not contain aliases" Fpath.pp file) ;
                  if dicts <> [] then

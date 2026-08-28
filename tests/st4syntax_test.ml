@@ -55,10 +55,10 @@ let list_all_descriptors () =
   |> List.filter (Fpath.has_ext "txt")
   |> List.map Fpath.to_string
 
-let test_parse_all_descriptors ctxt =
+let test_parse_all_descriptors =
   (list_all_descriptors())
-  |> List.iter (fun f ->
-         test_parse_descriptor f ())
+  |> List.map (fun f ->
+         ("parse "^f) >:: (test_parse_descriptor f))
 
 let test_parse_st_file file ctxt =
   ()
@@ -127,7 +127,6 @@ stat(name,value={<x>}) ::= "x=<value>; // <name>"
 let list_all_stg () =
   [
     "/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/templates"
-  ; "/home/chet/Hack/Antlr/src/antlr4/tool/resources/org/antlr/v4/tool/templates/codegen"
   ; "/home/chet/Hack/Antlr/src/antlr4/tool/resources/org/antlr/v4/tool/templates"
   ; "/home/chet/Hack/Github/antlr/stringtemplate4/"
   ; "fixtures"
@@ -142,19 +141,31 @@ let test_parse_stg_file file ctxt =
   ()
   ; assert_equal () (ignore (STGPa.Group.load ~file))
 
-let test_parse_all_stg ctxt =
+let test_parse_all_stg =
   (list_all_stg())
   |>
-    List.iter (fun f ->
-        (test_parse_stg_file f ()))
+    List.map (fun f ->
+        ("parse "^f) >:: (test_parse_stg_file f))
+
+let test_load_stg_file file ctxt =
+  let ctxt = GLC.mk FC.mt in
+  ()
+  ; assert_equal () (ignore (Group.load ctxt (Fpath.v file)))
+
+let test_load_all_stg =
+  (list_all_stg())
+  |>
+    List.map (fun f ->
+        ("load "^f) >:: (test_load_stg_file f))
 
 let suite = "Test Stringtemplate" >::: [
       "parse st"   >:: test_parse_st
     ; "parse stg"   >:: test_parse_stg
     ; "load stg"   >:: test_load_stg
     ; "parse fixed files" >::: parse_fixed_files
-    ; "parse descriptors" >:: test_parse_all_descriptors
-    ; "parse stg files" >:: test_parse_all_stg
+    ; "parse descriptors" >::: test_parse_all_descriptors
+    ; "parse stg files" >::: test_parse_all_stg
+    ; "load stg files" >::: test_load_all_stg
     ]
 
 let _ = 

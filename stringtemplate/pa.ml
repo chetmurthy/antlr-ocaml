@@ -384,7 +384,7 @@ delimiters: [ [
   ;
 
 imports: [ [
-      l = LIST1 [ "import" ; s = STRING -> snd (St_util.unwrap_dq_string (loc, s)) ] -> l
+      l = LIST1 [ "import" ; s = STRING -> St_util.unwrap_dq_string (loc, s) ] -> l
   ] ]
   ;
 
