@@ -9,6 +9,7 @@ t2(x,y) ::= "<x><y>"
     (
      (input "<foo:{f | <f>}>")
      (output ac)
+     (output_ocaml " ac")
      (attributes ((foo (SV (DICT ((a (STRING b)) (c (STRING d))))))))
      )
     (

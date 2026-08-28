@@ -16,6 +16,9 @@ type run_t = {
   ; output : string
     [@located_sexp.default ""]
     [@located_sexp.sexp_drop_default (=)]
+  ; output_ocaml : string
+    [@located_sexp.default ""]
+    [@located_sexp.sexp_drop_default (=)]
   ; attributes : Environ.frame_t
     [@located_sexp.default []]
     [@located_sexp.sexp_drop_default (=)]
@@ -116,6 +119,7 @@ let eg1 = {
                name = ""
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
+             ; output_ocaml = ""
              ; attributes = [
                  ("name", VAL (SV (STRING "World")))
                ]
@@ -138,6 +142,7 @@ let eg2 = {
                name = ""
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
+             ; output_ocaml = ""
              ; attributes = [
                  ("name", VAL (MV [STRING "World1"; STRING "World2"]))
                ]
@@ -160,6 +165,7 @@ let eg3 = {
                name = ""
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
+             ; output_ocaml = ""
              ; attributes = [
                  ("name", VAL (SV NULL))
                ]
@@ -182,6 +188,7 @@ let eg4 = {
                name = ""
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
+             ; output_ocaml = ""
              ; attributes = [
                  ("name", VAL (SV (LIST [STRING "World1"; STRING "World2"])))
                ]
@@ -204,6 +211,7 @@ let eg5 = {
                name = ""
              ; input = (Ploc.dummy, "<{Hello, <name>!}>")
              ; output = "Hello, World!"
+             ; output_ocaml = ""
              ; attributes = [
                  ("name", VAL (SV (DICT [("a",STRING "b"); ("c",STRING "d")])))
                ]

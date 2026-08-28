@@ -479,8 +479,9 @@ let runtest ~ignorews ~ignore_errors ~verbose testname th =
                    else Fmt.(str "%d/%a" i Dump.string (snd r.input)) in
                  if verbose then
                    Fmt.(pf stderr "[run %s]@." name) ;
+                 let expected_output = if r.output_ocaml <> "" then r.output_ocaml else r.output in
                  let (output, errors) = doit ?group ?groupdir r in
-                 Std.push outputs (name, output, r.output) ;
+                 Std.push outputs (name, output, expected_output) ;
                  Buffer.add_string errorbuf errors
              )
       with ex -> 

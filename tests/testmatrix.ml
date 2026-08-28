@@ -50,6 +50,7 @@ test(x) ::= %a
                name = ""
              ; input = (Ploc.dummy, "<test(x)>")
              ; output = stt.expecting
+             ; output_ocaml = ""
              ; attributes
              ; comments = ""
              ; disabled = false
