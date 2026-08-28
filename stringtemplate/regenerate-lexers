@@ -1,15 +1,19 @@
 #!/bin/bash -x
 
-for L in STG2Lexer
-do
-(cd grammars && antlr4 -Dlanguage=Python3 ${L}.g4)
+L=STG2Lexer
+
+(cd grammars/raw && \
+     for G in *.g4 ; \
+     do
+	 ${TOP}/tests/st4_util.opt transform --group ../OCaml.stg ${G} > ../gen-ocaml/${G}.NEW && mv ../gen-ocaml/${G}.NEW ../gen-ocaml/${G} ; \
+     done)
+
+(cd grammars/gen-ocaml && antlr4 -Dlanguage=Python3 ${L}.g4)
 ${TOP}/tests/atn_util.opt emit-ocaml-lexer \
-  -i grammars/${L}.interp \
-  --grammar-lib grammars \
-  -t grammars/${L}-translation.json \
+  -i grammars/gen-ocaml/${L}.interp \
+  --grammar-lib grammars/gen-ocaml \
   --constants-module ${L}_constants \
-  grammars/${L}.g4 > ${L}.ml.NEW && mv ${L}.ml.NEW ${L}.ml
+  grammars/gen-ocaml/${L}.g4 > ${L}.ml.NEW && mv ${L}.ml.NEW ${L}.ml
 ${TOP}/tests/atn_util.opt emit-ocaml-constants \
-  grammars/${L}.interp > ${L}_constants.ml.NEW && \
+  grammars/gen-ocaml/${L}.interp > ${L}_constants.ml.NEW && \
   mv ${L}_constants.ml.NEW ${L}_constants.ml
-done

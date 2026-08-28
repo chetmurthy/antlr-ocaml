@@ -30,6 +30,9 @@ let renaming = [
   ; ((Some "SLASH", None), (Some "SLASH",Some "/"))
   ; ((Some "TMPL_ASSIGN", None), (Some "TMPL_ASSIGN", Some "::="))
   ; ((Some "TRUE", None), (Some "TRUE", Some "true"))
+  ; ((Some "INSIDEMode", None), (Some "INSIDEMode", Some "#inside"))
+  ; ((Some "OUTSIDEMode", None), (Some "OUTSIDEMode", Some "#outside"))
+  ; ((Some "GROUPMode", None), (Some "GROUPMode", Some "#group"))
   ]
 end
 

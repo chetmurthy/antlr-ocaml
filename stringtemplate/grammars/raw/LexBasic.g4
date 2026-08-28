@@ -52,14 +52,14 @@ import LexUnicode;
 // Whitespace & Comments
 
 fragment Ws  : Hws | Vws;
-fragment Hws : [ \t];
-fragment Vws : [\r\n\f];
+fragment Hws : [ \\t];
+fragment Vws : [\\r\\n\\f];
 
 fragment DocComment   : '/**' .*? ('*/' | EOF);
 fragment BlockComment : '/*' .*? ('*/' | EOF);
 
-fragment LineComment    : '//' ~[\r\n]*;
-fragment LineCommentExt : '//' ~'\n'* ( '\n' Hws* '//' ~'\n'*)*;
+fragment LineComment    : '//' ~[\\r\\n]*;
+fragment LineCommentExt : '//' ~'\\n'* ( '\\n' Hws* '//' ~'\\n'*)*;
 
 // -----------------------------------
 // Escapes
@@ -67,7 +67,7 @@ fragment LineCommentExt : '//' ~'\n'* ( '\n' Hws* '//' ~'\n'*)*;
 // Any kind of escaped character that we can embed within ANTLR literal strings.
 fragment EscSeq:
     Esc (
-        [btnfr"'\\]  // The standard escaped character set such as tab, newline, etc.
+        [btnfr"'\\\\]  // The standard escaped character set such as tab, newline, etc.
         | UnicodeEsc // A Unicode escape sequence
         | .          // Invalid escape character
         | EOF        // Incomplete at EOF
@@ -109,10 +109,10 @@ fragment BinaryDigit : [01];
 
 fragment BoolLiteral: True_ | False_;
 
-fragment CharLiteral    : SQuote ( EscSeq | ~['\r\n\\]) SQuote;
-fragment SQuoteLiteral  : SQuote ( EscSeq | ~['\r\n\\])* SQuote;
-fragment DQuoteLiteral  : DQuote ( EscSeq | ~["\r\n\\])* DQuote;
-fragment USQuoteLiteral : SQuote ( EscSeq | ~['\r\n\\])*;
+fragment CharLiteral    : SQuote ( EscSeq | ~['\\r\\n\\\\]) SQuote;
+fragment SQuoteLiteral  : SQuote ( EscSeq | ~['\\r\\n\\\\])* SQuote;
+fragment DQuoteLiteral  : DQuote ( EscSeq | ~["\\r\\n\\\\])* DQuote;
+fragment USQuoteLiteral : SQuote ( EscSeq | ~['\\r\\n\\\\])*;
 
 fragment DecimalFloatingPointLiteral:
     DecDigits Dot DecDigits? ExponentPart? FloatTypeSuffix?
@@ -138,26 +138,26 @@ fragment NameChar:
     NameStartChar
     | '0' ..'9'
     | Underscore
-    | '\u00B7'
-    | '\u0300' ..'\u036F'
-    | '\u203F' ..'\u2040'
+    | '\\u00B7'
+    | '\\u0300' ..'\\u036F'
+    | '\\u203F' ..'\\u2040'
 ;
 
 fragment NameStartChar:
     'A' ..'Z'
     | 'a' ..'z'
-    | '\u00C0' ..'\u00D6'
-    | '\u00D8' ..'\u00F6'
-    | '\u00F8' ..'\u02FF'
-    | '\u0370' ..'\u037D'
-    | '\u037F' ..'\u1FFF'
-    | '\u200C' ..'\u200D'
-    | '\u2070' ..'\u218F'
-    | '\u2C00' ..'\u2FEF'
-    | '\u3001' ..'\uD7FF'
-    | '\uF900' ..'\uFDCF'
-    | '\uFDF0' ..'\uFFFD'
-; // ignores | ['\u10000-'\uEFFFF] ;
+    | '\\u00C0' ..'\\u00D6'
+    | '\\u00D8' ..'\\u00F6'
+    | '\\u00F8' ..'\\u02FF'
+    | '\\u0370' ..'\\u037D'
+    | '\\u037F' ..'\\u1FFF'
+    | '\\u200C' ..'\\u200D'
+    | '\\u2070' ..'\\u218F'
+    | '\\u2C00' ..'\\u2FEF'
+    | '\\u3001' ..'\\uD7FF'
+    | '\\uF900' ..'\\uFDCF'
+    | '\\uFDF0' ..'\\uFFFD'
+; // ignores | ['\\u10000-'\\uEFFFF] ;
 
 fragment JavaLetter:
     [a-zA-Z$_] // "java letters" below 0xFF
@@ -172,8 +172,8 @@ fragment JavaLetterOrDigit:
 // covers all characters above 0xFF which are not a surrogate
 // and UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
 fragment JavaUnicodeChars:
-    ~[\u0000-\u00FF\uD800-\uDBFF]     { False }?
-    | [\uD800-\uDBFF] [\uDC00-\uDFFF] { False }?
+    ~[\\u0000-\\u00FF\\uD800-\\uDBFF]     { <False()> }?
+    | [\\uD800-\\uDBFF] [\\uDC00-\\uDFFF] { <False()> }?
 ;
 
 // -----------------------------------
@@ -194,10 +194,10 @@ fragment False_ : 'false';
 // -----------------------------------
 // Symbols
 
-fragment Esc           : '\\';
+fragment Esc           : '\\\\';
 fragment Colon         : ':';
 fragment DColon        : '::';
-fragment SQuote        : '\'';
+fragment SQuote        : '\\'';
 fragment DQuote        : '"';
 fragment BQuote        : '`';
 fragment LParen        : '(';
@@ -207,9 +207,9 @@ fragment RBrace        : '}';
 fragment LBrack        : '[';
 fragment RBrack        : ']';
 fragment RArrow        : '->';
-fragment Lt            : '<';
+fragment Lt            : '\<';
 fragment Gt            : '>';
-fragment Lte           : '<=';
+fragment Lte           : '\<=';
 fragment Gte           : '>=';
 fragment Equal         : '=';
 fragment NotEqual      : '!=';
@@ -229,7 +229,7 @@ fragment AndAssign     : '&=';
 fragment OrAssign      : '|=';
 fragment XOrAssign     : '^=';
 fragment ModAssign     : '%=';
-fragment LShiftAssign  : '<<=';
+fragment LShiftAssign  : '\<\<=';
 fragment RShiftAssign  : '>>=';
 fragment URShiftAssign : '>>>=';
 fragment Underscore    : '_';
@@ -239,7 +239,7 @@ fragment And           : '&&';
 fragment Or            : '||';
 fragment Inc           : '++';
 fragment Dec           : '--';
-fragment LShift        : '<<';
+fragment LShift        : '\<\<';
 fragment RShift        : '>>';
 fragment Dollar        : '$';
 fragment Comma         : ',';

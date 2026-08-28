@@ -56,7 +56,7 @@ NOTHING : ;
 mode Outside ;
 // default mode = Outside
 
-INSIDE : '#inside' -> mode(Inside) ;
+INSIDE : '#' 'inside' -> mode(Inside) ;
 
 DOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL);
 BLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL);
@@ -67,11 +67,11 @@ TMPL_COMMENT: TmplComment -> channel(OFF_CHANNEL);
 HORZ_WS : Hws+ ;
 VERT_WS : Vws+ ;
 
-ESCAPE : .      { self.isLDelimNotComment() }? EscSeq . { self.isRDelim() }?; // self contained
-LDELIM : .      { self.isLDelimNotComment() }? -> pushMode(Inside); // switch mode to inside
-RBRACE : RBrace { self.exitSubTemplate(); }; // conditional switch to inside
+ESCAPE : .      { <isLDelimNotComment()> }? EscSeq . { <isRDelim()> }?; // self contained
+LDELIM : .      { <isLDelimNotComment()> }? -> pushMode(Inside); // switch mode to inside
+RBRACE : RBrace { <exitSubTemplate()> }; // conditional switch to inside
 
-TEXT: . { self.adjText(); }; // have to handle weird terminals
+TEXT: . { <adjText()> }; // have to handle weird terminals
 
 // -----------------------------------
 mode Inside;
@@ -79,9 +79,9 @@ mode Inside;
 INS_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
 INS_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
 
-LBRACE : LBrace { self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> pushMode(SubTemplate);
-LBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(Outside);
-RDELIM : .      { self.isRDelim() }? -> popMode;
+LBRACE : LBrace { <subTemplateHasIDs()> }? { <enterSubTemplate()> } -> pushMode(SubTemplate);
+LBRACENoPipe : LBrace { <Not(subTemplateHasIDs())> }? { <enterSubTemplate()> } -> type(LBRACE), pushMode(Outside);
+RDELIM : .      { <isRDelim()> }? -> popMode;
 
 STRING: DQuoteLiteral;
 
@@ -132,5 +132,5 @@ PIPE      : Pipe  -> mode(Outside);
 
 fragment TmplComment: LTmplMark .*? RTmplMark;
 
-fragment LTmplMark : .      { self.isLTmplComment() }? Bang;
-fragment RTmplMark : Bang . { self.isRTmplComment() }?;
+fragment LTmplMark : .      { <isLTmplComment()> }? Bang;
+fragment RTmplMark : Bang . { <isRTmplComment()> }?;

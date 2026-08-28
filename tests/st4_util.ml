@@ -57,6 +57,14 @@ let testname =
   let docv = "The name of the test directory (if absent, taken from test JSON)." in
   Arg.(value & opt string "" & info ["n"; "test-name"] ~docv)
 
+let group =
+  let docv = "The name of the group-file." in
+  Arg.(value & opt file "" & info ["group"] ~docv)
+
+let groupdir =
+  let docv = "The name of the group-directory." in
+  Arg.(value & opt dir "" & info ["group-dir"] ~docv)
+
 let destroot =
   let docv = "The generated destination root directory." in
   Arg.(value & opt string "" & info ["d"; "dest-root"] ~docv)
@@ -522,10 +530,36 @@ let cmd =
   Cmdliner.Cmd.Exit.ok
 end
 
+module Transform = struct
+open ST4.Api
+
+let transform ~verbose ~group ~groupdir file =
+  let ctxt = GLC.mk FC.mt in
+  if group <> "" && groupdir <> "" then
+    failwith "both --group and --group-are are specified: only one can be" ;
+  let (group, groupdir) =
+    match (group, groupdir) with
+      ("", "") -> (None, None)
+    | (group, "") -> (Some (Group.load ctxt Fpath.(v group)), None)
+    | ("", groupdir) -> (None, Some (GroupDir.load ctxt Fpath.(v groupdir)))
+    | _ ->  failwith "both --group and --group-are are specified: only one can be" in
+  print_string (Template.Simple.transform_file ?group ?groupdir [] Fpath.(v file))
+
+let cmd =
+  let doc = "Run ST4 transformation on a file" in
+  let man = [
+    `S Manpage.s_bugs;
+    `P "Email bug reports to <bugs@example.org>." ]
+  in
+  Cmd.make (Cmd.info "transform" ~version:"%%VERSION%%" ~doc ~man) @@
+  let+ file and+ verbose and+ group and+ groupdir in
+  transform ~verbose ~group ~groupdir file ;
+  Cmdliner.Cmd.Exit.ok
+end
 let cmd =
   let doc = "The tool synopsis is TODO" in
   Cmd.group (Cmd.info "TODO" ~version:"%%VERSION%%" ~doc) @@
-  [Generate.cmd; Compile.cmd; Execute.cmd; Check.cmd; Verify.cmd; Full.cmd; TestOCaml.cmd]
+  [Generate.cmd; Compile.cmd; Execute.cmd; Check.cmd; Verify.cmd; Full.cmd; TestOCaml.cmd; Transform.cmd]
 
 let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then () else exit (main ())

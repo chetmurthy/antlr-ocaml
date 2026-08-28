@@ -64,6 +64,7 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
   if destdir |> Bos.OS.Dir.exists |> Rresult.R.failwith_error_msg then
     Fmt.(failwithf "destdir %s must not already exist!" (Fpath.to_string destdir));
   let destexpected_dir = Fpath.(append destdir (v "expected")) in
+  let destraw_dir = Fpath.(append destdir (v "raw")) in
 
   let module D = Descriptor in
   let d = D.load ~testname file in
@@ -74,6 +75,8 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
   let ctxt = GLC.mk FC.mt in
   let group = Group.load ctxt helperfile in
   let st4simple_env = List.map (fun (n,v) -> (n, [v])) env.attributes in
+  let grammar_names = d.D.grammar.name ::(List.map (fun (_,sg) -> sg.D.name) d.D.slaveGrammars) in
+  let st4simple_env = ("grammarNames",grammar_names)::st4simple_env in
 
   if [%match {|python3|} / s i pcre2 pred] (match D.stanza_opt d "skip" with None -> "" | Some (_,(_, s)) -> s) then
     Fmt.(pf stderr "SKIP %s@." file)
@@ -83,32 +86,21 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
     templatedir
     |> (Bos.OS.Dir.contents ~rel:true)
     |> Rresult.R.failwith_error_msg
-    |> List.filter (fun fp -> not Fpath.(has_ext ".ST4" fp))
   in
 
   let gen_one f =
     let full = Fpath.append templatedir f in
-    let full_st4 = Fpath.(add_ext ".ST4" full) in
     let dstfull = Fpath.append destdir f in
-(*
-    let dstold = dstfull in
-    let dstnew = Fpath.(add_ext ".ST4" dstfull) in
- *)
-    let dstold = Fpath.(add_ext ".OLD" dstfull) in
     let dstnew = dstfull in
-    [(dstold, Stg.transform_file env full)
-    ;(dstnew, Template.Simple.transform_file ~group st4simple_env full_st4)
+    [(dstnew, Template.Simple.transform_file ~group st4simple_env full)
     ]
   in
 
   let generated_files = List.concat_map gen_one templatefiles in
   let generated_files =
-    let grammar_file = Fpath.(append destdir (v Fmt.(str "%s.g4" d.grammar.name))) in
-    let grammar_filenew = Fpath.(add_ext ".ST4" grammar_file) in
-    [grammar_file,
-     Stg.transform ~file:Fmt.(str "%s grammar %s" file d.grammar.name) env d.D.grammar.txt]
-    @[grammar_filenew,
-      Template.Simple.transform ~group st4simple_env d.D.grammar.txt]
+    let grammar_file = Fpath.(append destraw_dir (v Fmt.(str "%s.g4" d.grammar.name))) in
+    []
+    @[grammar_file, d.D.grammar.txt]
     @generated_files in
 
   let expected_generated_files =
@@ -146,11 +138,13 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
     if d.D.is_composite then
       let l =
         d.D.slaveGrammars
-        |> List.map (fun (_, slaveg) ->
+        |> List.concat_map (fun (_, slaveg) ->
                let slave_name = slaveg.D.name in
                let slavetxt = slaveg.D.txt in
-               (Fpath.(append destdir (v Fmt.(str "%s.g4" slave_name))),
-                Stg.transform ~file:Fmt.(str "%s slaveGrammar %s" file slave_name) env slavetxt)) in
+               let slavefull = Fpath.(append destraw_dir (v Fmt.(str "%s.g4" slave_name))) in
+               [(slavefull, slavetxt)
+               ]
+             ) in
       l@generated_files
     else generated_files in
 
@@ -162,6 +156,7 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
            else (f,txt)) in
 
   ignore(destdir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg : bool) ;
+  ignore(destraw_dir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg : bool) ;
   ignore(destexpected_dir |> Bos.OS.Dir.create ~mode:0o755 ~path:true |> Rresult.R.failwith_error_msg : bool);
   generated_files
   |> List.iter

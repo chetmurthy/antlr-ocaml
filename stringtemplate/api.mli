@@ -41,6 +41,8 @@ module Template :
   sig
     type t
     val of_string : string -> t
+    val of_here_string : (Lexing.position * string) -> t
+    val of_located_string : (Ploc.t * string) -> t
     val eval :
       ?group:Group.t ->
       ?groupdir:GroupDir.t ->
@@ -56,6 +58,16 @@ module Template :
           ?group:Group.t ->
           ?groupdir:GroupDir.t ->
           (string * string list) list -> string -> string
+
+        val transform_here_string :
+          ?group:Group.t ->
+          ?groupdir:GroupDir.t ->
+          (string * string list) list -> (Lexing.position * string) -> string
+
+        val transform_located_string :
+          ?group:Group.t ->
+          ?groupdir:GroupDir.t ->
+          (string * string list) list -> (Ploc.t * string) -> string
 
         val transform_file :
           ?group:Group.t ->

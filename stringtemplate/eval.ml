@@ -1362,11 +1362,11 @@ and eval_elements ctxt env l =
   match l with
     [h] -> eval_element ctxt env h
   | _ ->
-     let rec erec = function
-         [] -> RLIST []
-       | h::t -> RLIST [render_attr_value (eval_element ctxt env h) ; erec t]
+     let rec erec acc = function
+         [] -> RLIST (List.rev acc)
+       | h::t -> erec ((render_attr_value (eval_element ctxt env h))::acc) t
      in
-     SV (RENDERED (erec l))
+     SV (RENDERED (erec [] l))
 
 and eval_cond ctxt env me_cond : bool =
   match me_cond with

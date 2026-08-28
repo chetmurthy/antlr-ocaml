@@ -23,6 +23,7 @@ def inLexerRule(self):
 
 import ANTLRv4Lexer;
 
+[slaveGrammar file=fixtures/grammar-lib/ANTLRv4Lexer.g4]
 [slaveGrammar]
 lexer grammar S;
 A : 'a' {<writeln("\"S.A\"")>};

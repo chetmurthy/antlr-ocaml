@@ -1,11 +1,14 @@
 [type]
-Lexer
+CompositeLexer
 
 [grammar]
 lexer grammar M;
 
 import STG0Lexer;
 
+[slaveGrammar file=fixtures/grammar-lib/STG0Lexer.g4]
+[slaveGrammar file=fixtures/grammar-lib/LexBasic.g4]
+[slaveGrammar file=fixtures/grammar-lib/LexUnicode.g4]
 [input]
 typeInit ::= ["int":"0", "float":"0.0"]
 [output]

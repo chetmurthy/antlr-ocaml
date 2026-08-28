@@ -1,6 +1,6 @@
 import Trace
 Trace.start("json.log.RAW")
-import Util
+import Util<\\>
 <if(!python3)>from __future__ import print_function<endif>
 import sys
 import codecs
@@ -30,7 +30,7 @@ class TreeShapeListener(ParseTreeListener):
                 raise IllegalStateException("Invalid parse tree shape detected.")
 <endif>
 
-def main(argv):
+def main(argv):<\\>
 <if(traceATN)>
     ParserATNSimulator.trace_atn_sim = True
     PredictionContext._trace_atn_sim = True
@@ -48,13 +48,13 @@ def main(argv):
     txt = Util.file_contents(args.input, encoding='utf-8', errors='replace')
     input = InputStream(txt)
     lexer = <lexerName>(input)
-    stream = CommonTokenStream(lexer)
+    stream = CommonTokenStream(lexer)<\\>
 <if(parserName)>
     parser = <parserName>(stream)
-    parser._interp.predictionMode = PredictionMode.<predictionMode>
+    parser._interp.predictionMode = PredictionMode.<predictionMode><\\>
 <if(!buildParseTree)>
     parser.buildParseTrees = False
-<endif>
+<endif><\\>
 <if(showDiagnosticErrors)>
     parser.addErrorListener(DiagnosticErrorListener())
 <endif>
@@ -75,9 +75,9 @@ def main(argv):
 def Token__str(lexer, t):
     txt = t.text
     if txt is not None:
-        txt = txt.replace("\n","\\n")
-        txt = txt.replace("\r","\\r")
-        txt = txt.replace("\t","\\t")
+        txt = txt.replace("\n","\\\\n")
+        txt = txt.replace("\r","\\\\r")
+        txt = txt.replace("\t","\\\\t")
     else:
         txt = "\<no text>"
     if t.type == -1:

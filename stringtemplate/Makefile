@@ -53,12 +53,12 @@ clean::
 LEXERS=ST0Lexer ST1Lexer ST2Lexer
 
 bootstrap:: ../tests/atn_util.opt
-	env TOP=$(TOP) ./bootstrap-lexers
-	env TOP=$(TOP) ./regenerate-lexers
+	env TOP=$(WD)/$(TOP) ./bootstrap-lexers
+	env TOP=$(WD)/$(TOP) ./regenerate-lexers
 #	$(TOP)/tests/atn_util.opt emit-ocaml-atn grammars/Lexer.interp > ANTLRv4Lexer_atn.ml.NEW && mv ANTLRv4Lexer_atn.ml.NEW ANTLRv4Lexer_atn.ml
 
 regenerate:: ../tests/atn_util.opt
-	env TOP=$(TOP) ./regenerate-lexers
+	env TOP=$(WD)/$(TOP) ./regenerate-lexers
 
 $(TARGET_PACKAGE).cmo $(TARGET_PACKAGE).cmi: $(CMO)
 	$(OCAMLFIND) ocamlc $(DEBUG) -pack -o $(TARGET_PACKAGE).cmo $^

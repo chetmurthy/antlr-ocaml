@@ -109,50 +109,18 @@ open St4_util ;;
 open St4syntax_test ;;
 #load "st4eval_test.cmo";;
 open St4eval_test ;;
+#load "antlrtest_test.cmo";;
+open Antlrtest_test ;;
+#load "location_handling_test.cmo";;
+open Location_handling_test ;;
 
-open Sttypes2 ;;
-open Stg_types ;;
-open Lexers ;;
-open Cooked ;;
-open Eval ;;
-open Environ ;;
+#load "st4internals_test.cmo";;
+open St4internals_test ;;
 
-#install_printer OutputToken.pp_render_t ;;
+#load "antlrtest_util.cmo";;
+open Antlrtest_util ;;
+open ST4.Api ;;
 
-#trace Group.Int._mk ;;
-(*
-#trace Doit.eval_mexpr_template_ref ;;
-#trace Doit.render_attr_value ;;
-#trace Doit.eval_element ;;
-#trace Doit.eval_mexpr ;;
-#trace Doit.eval_elements ;;
-#trace Doit.eval_mexpr_template_ref_multi ;;
-#trace Doit.attrval_list_mapi ;;
- *)
-#trace OutputToken.flatten ;;
-
-let th = Testharness.load "xx.sexp" ;;
-
-let group = match th.groupfile with
-      None -> Group.mk()
-    | Some (file,_) ->
-       let ploc_filecache =
-         (Option.fold ~none:[] ~some:(fun x -> [x]) th.groupfile)@th.groupfiles in
-       Group.load ~ploc_filecache file
-;;
-
-let r = (List.nth th.runs 0) ;;
-let t = TestOCaml.stparse (snd r.input) ;;
-let env = [r.attributes] ;;
-
-TestOCaml.steval ~group env t ;;
-(*
-TestOCaml.st4_test ~debug:true ~verbose:true ~force:true ~onlytest:None ~multi:false ~testname:"basic" "xx.sexp" ;;
-
-TestOCaml.one_test ~debug:true ~verbose:true ~force:true ~testname:"basic" th ;;
-
-TestOCaml.runtest ~verbose:true "basic" th ;;
- *)
 
 (*
 ;;; Local Variables: ***
@@ -160,4 +128,3 @@ TestOCaml.runtest ~verbose:true "basic" th ;;
 ;;; End: ***
 
 *)
- 

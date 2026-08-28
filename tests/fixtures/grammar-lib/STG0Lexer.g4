@@ -65,7 +65,7 @@ STRING
 	:	'"'
 		(	'\\' '"'
 		|	'\\' ~'"'
-		|	{print("line %s:%s: '\\n' in string" % (self._tokenStartLine, self._tokenStartColumn), file=sys.stderr)}
+		|	{ <prerrln(AppendStr(location(), dquotes(" '\\n' in string")))> }
 			'\n'
 		|	~('\\'|'"'|'\n')
 		)*

@@ -202,7 +202,28 @@ let _mk ~testname ~file stanzas =
   let slaveGrammars =
     stanzas
     |> List.filter_map (function
-             ("slaveGrammar",(pl, x)) -> Some (pl, mk_grammar x)
+             ("slaveGrammar",(pl, x)) ->
+               let x =
+                 match List.assoc_opt "file" pl with
+                   None -> x
+                 | Some fname ->
+                    let txt =
+                      fname
+                      |> Fpath.v
+                      |> Bos.OS.File.read
+                      |> Rresult.R.failwith_error_msg
+                      |> [%subst {|\\|} / {|\\|} / g s]
+                      |> [%split {|({.*?})|} / strings !1 pcre2 s]
+                      |> List.map (function
+                               `Delim s -> s
+                             | `Text s ->
+                                [%subst {|<|} / {|\<|} / g s] s)
+                    |> String.concat ""
+                    in
+
+                    let pos = Pos.mk fname in
+                    (pos, txt)
+               in Some (pl, mk_grammar x)
            | _ -> None) in
 
   let flags_txt =

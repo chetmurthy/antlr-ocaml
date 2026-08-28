@@ -1,0 +1,4 @@
+import "/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/tests/fixtures/Python3.test.stg"
+
+handleBeginArgument() ::= <<self.handleBeginArgument();>>
+handleEndArgument() ::= <<self.handleEndArgument();>>

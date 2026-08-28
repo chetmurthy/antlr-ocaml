@@ -1,0 +1,6 @@
+import "/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/tests/fixtures/Python3.test.stg"
+
+prerrln(s) ::= <<print(<s>, file=sys.stderr)>>
+prerr(s) ::= <<print(<s>,end='',file=sys.stderr)>>
+location() ::= <<("line %s:%s:" % (self._tokenStartLine, self._tokenStartColumn))>>
+dquotes(s) ::= <<"<s>">>

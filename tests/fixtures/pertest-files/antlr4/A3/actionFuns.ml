@@ -30,7 +30,7 @@ let handleBeginArgument self cu =
     R.pushMode self 1
 
 let handleEndArgument self cu =
-  R.popMode self ;
+  ignore (R.popMode self : int) ;
   if (List.length self.R._modeStack) > 0 then
     self._type <- _ARGUMENT_CONTENT
 

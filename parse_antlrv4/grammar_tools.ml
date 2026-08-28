@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.yojson,pa_ppx.deriving_plugins.located_yojson,pa_ppx.deriving_plugins.std,pa_ppx_regexp *)
 
 open Pa_ppx_base
 open Ppxutil
@@ -142,38 +142,15 @@ let groupby_fst l =
     | [] -> List.rev acc in
   grec [] l
 
-module TF = struct
-open Coll
+let unwrap_action = function
+    ACTION s -> 
+    [%subst {|^{(.*)}$|} / {|$1|} / s pcre2] s
 
-type _t =
-  (string * string) list
-    [@@deriving located_yojson { exn = true }]
+let unwrap_sempred = function
+    SEMPRED s ->
+    [%subst {|^{(.*)}$|} / {|$1|} / s pcre2] s
 
-type t = (string, string) MHM.t
-
-let load file =
-  let j = Pa_ppx_located_yojson.Json.JsonEOI.load ~file in
-  let l = j |> _t_of_located_yojson_exn in
-  MHM.ofList 23 l
-
-let map t lhs =
-  match MHM.map t lhs with
-    rhs -> rhs
-  | exception Not_found ->
-     Fmt.(failwithf "TranslationFile.map: key %a not found"
-            Dump.string lhs)
-
-let map_action t = function
-    ACTION s -> map t s
-
-let map_sempred t = function
-    SEMPRED s -> map t s
-
-end
-module TranslationFile = TF
-
-let generate_lexer ~path ~translation_file ~constants_module gramfile =
-  let tf = TF.load (Fpath.to_string translation_file) in
+let generate_lexer ~path ~constants_module gramfile =
   let g =
     gramfile
     |> Fpath.to_string
@@ -188,7 +165,7 @@ let generate_lexer ~path ~translation_file ~constants_module gramfile =
            {| if actionIndex = %d then ignore(%s)
 else |}
            actionIndex
-           (TF.map_action tf action)) in
+           (unwrap_action action)) in
 
   let pp_action_name pps lab = Fmt.(pf pps "_%s_action" lab) in
   let pp_sempred_name pps lab = Fmt.(pf pps "_%s_sempred" lab) in
@@ -209,7 +186,7 @@ else |}
            {| if predIndex = %d then %s
 else |}
            predIndex
-           (TF.map_sempred tf sempred)) in
+           (unwrap_sempred sempred)) in
 
   let pp_sempred_func pps ((lab, ruleIndex), sempreds)  =
     Fmt.(pf pps 

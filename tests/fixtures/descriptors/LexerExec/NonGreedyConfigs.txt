@@ -3,9 +3,9 @@ Lexer
 
 [grammar]
 lexer grammar L;
-I : .*? ('a' | 'ab') {print(self.text, file=self._output)} ;
+I : .*? ('a' | 'ab') {<Text():writeln()>} ;
 WS : (' '|'\n') -> skip ;
-J : . {print(self.text, file=self._output)};
+J : . {<Text():writeln()>};
 
 [input]
 ab

@@ -1,14 +1,14 @@
 
 let raw_atn = Antlr.Interp.Raw.{
-  token_literal_names = [|None;
-Some "#inside"; Some "#outside"; Some "#group"; None; None; None;
-Some "delimiters"; Some "import"; Some "default"; Some "group"; None; None;
-None; None; None; None; None; None; None; None; None; None; None; Some "if";
-Some "elseif"; Some "else"; Some "endif"; Some "super"; Some "@end"; None;
-None; None; None; None; None; None; None; None; None; None; None; None; None;
-None; None; None; None; None|]
-; token_symbolic_names = [|None;
-Some "INSIDEMode"; Some "OUTSIDEMode"; Some "GROUPMode"; Some "BIGSTRING";
+  token_literal_names = [|None; None; None;
+None; None; None; None; Some "delimiters"; Some "import"; Some "default";
+Some "group"; None; None; None; None; None; None; None; None; None; None;
+None; None; None; Some "if"; Some "elseif"; Some "else"; Some "endif";
+Some "super"; Some "@end"; None; None; None; None; None; None; None; None;
+None; None; None; None; None; None; None; None; None; None;
+None|]
+; token_symbolic_names = [|None; Some "INSIDEMode";
+Some "OUTSIDEMode"; Some "GROUPMode"; Some "BIGSTRING";
 Some "BIGSTRING_NO_NL"; Some "TMPL_ASSIGN"; Some "DELIMITERS"; Some "IMPORT";
 Some "DEFAULT"; Some "GROUP"; Some "DOC_COMMENT"; Some "BLOCK_COMMENT";
 Some "LINE_COMMENT"; Some "TMPL_COMMENT"; Some "HORZ_WS"; Some "VERT_WS";
@@ -775,111 +775,111 @@ module Full = struct
 let full_atn = Exec.Atns.read_atn ~grammarType:LEXER ~raw:raw_atn ()
 let atn = snd full_atn
 let _GroupSTRING_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 0 then ignore(Printf.fprintf stderr "line %d:%d: '\\n' in string\n" self._tokenStartLine self._tokenStartColumn)
+ if actionIndex = 0 then ignore( (prerr_string (Fmt.(str "line %d:%d:" self._tokenStartLine self._tokenStartColumn) ^ " '\\n' in string"); prerr_newline()) )
 else 
  Fmt.(failwithf "_GroupSTRING_action: unrecognized actionIndex %d" actionIndex)
  
 let _GroupLBRACE_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 1 then ignore(ActionFuns_STG2.enterSubTemplate self cu)
+ if actionIndex = 1 then ignore( ActionFuns_STG2.enterSubTemplate self cu )
 else 
  Fmt.(failwithf "_GroupLBRACE_action: unrecognized actionIndex %d" actionIndex)
  
 let _GroupLBRACENoPipe_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 2 then ignore(ActionFuns_STG2.enterSubTemplate self cu)
+ if actionIndex = 2 then ignore( ActionFuns_STG2.enterSubTemplate self cu )
 else 
  Fmt.(failwithf "_GroupLBRACENoPipe_action: unrecognized actionIndex %d" actionIndex)
  
 let _RBRACE_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 3 then ignore(ActionFuns_STG2.exitSubTemplate self cu)
+ if actionIndex = 3 then ignore( ActionFuns_STG2.exitSubTemplate self cu )
 else 
  Fmt.(failwithf "_RBRACE_action: unrecognized actionIndex %d" actionIndex)
  
 let _TEXT_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 4 then ignore(ActionFuns_STG2.adjText self cu)
+ if actionIndex = 4 then ignore( ActionFuns_STG2.adjText self cu )
 else 
  Fmt.(failwithf "_TEXT_action: unrecognized actionIndex %d" actionIndex)
  
 let _LBRACE_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 5 then ignore(ActionFuns_STG2.enterSubTemplate self cu)
+ if actionIndex = 5 then ignore( ActionFuns_STG2.enterSubTemplate self cu )
 else 
  Fmt.(failwithf "_LBRACE_action: unrecognized actionIndex %d" actionIndex)
  
 let _LBRACENoPipe_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 6 then ignore(ActionFuns_STG2.enterSubTemplate self cu)
+ if actionIndex = 6 then ignore( ActionFuns_STG2.enterSubTemplate self cu )
 else 
  Fmt.(failwithf "_LBRACENoPipe_action: unrecognized actionIndex %d" actionIndex)
  
 let _JavaUnicodeChars_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 0 then false
+ if predIndex = 0 then  false 
 else 
- if predIndex = 1 then false
+ if predIndex = 1 then  false 
 else 
  Fmt.(failwithf "_JavaUnicodeChars_sempred: unrecognized predIndex %d" predIndex)
  
 let _GroupTMPL_COMMENT_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 2 then false
+ if predIndex = 2 then  false 
 else 
  Fmt.(failwithf "_GroupTMPL_COMMENT_sempred: unrecognized predIndex %d" predIndex)
  
 let _GroupLBRACE_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 3 then ActionFuns_STG2.subTemplateHasIDs self cu
+ if predIndex = 3 then  ActionFuns_STG2.subTemplateHasIDs self cu 
 else 
  Fmt.(failwithf "_GroupLBRACE_sempred: unrecognized predIndex %d" predIndex)
  
 let _GroupLBRACENoPipe_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 4 then not (ActionFuns_STG2.subTemplateHasIDs self cu)
+ if predIndex = 4 then  not (ActionFuns_STG2.subTemplateHasIDs self cu) 
 else 
  Fmt.(failwithf "_GroupLBRACENoPipe_sempred: unrecognized predIndex %d" predIndex)
  
 let _DOC_COMMENT_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 5 then false
+ if predIndex = 5 then  false 
 else 
  Fmt.(failwithf "_DOC_COMMENT_sempred: unrecognized predIndex %d" predIndex)
  
 let _BLOCK_COMMENT_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 6 then false
+ if predIndex = 6 then  false 
 else 
  Fmt.(failwithf "_BLOCK_COMMENT_sempred: unrecognized predIndex %d" predIndex)
  
 let _LINE_COMMENT_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 7 then false
+ if predIndex = 7 then  false 
 else 
  Fmt.(failwithf "_LINE_COMMENT_sempred: unrecognized predIndex %d" predIndex)
  
 let _ESCAPE_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 8 then ActionFuns_STG2.isLDelimNotComment self cu
+ if predIndex = 8 then  ActionFuns_STG2.isLDelimNotComment self cu 
 else 
- if predIndex = 9 then ActionFuns_STG2.isRDelim self cu
+ if predIndex = 9 then  ActionFuns_STG2.isRDelim self cu 
 else 
  Fmt.(failwithf "_ESCAPE_sempred: unrecognized predIndex %d" predIndex)
  
 let _LDELIM_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 10 then ActionFuns_STG2.isLDelimNotComment self cu
+ if predIndex = 10 then  ActionFuns_STG2.isLDelimNotComment self cu 
 else 
  Fmt.(failwithf "_LDELIM_sempred: unrecognized predIndex %d" predIndex)
  
 let _LBRACE_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 11 then ActionFuns_STG2.subTemplateHasIDs self cu
+ if predIndex = 11 then  ActionFuns_STG2.subTemplateHasIDs self cu 
 else 
  Fmt.(failwithf "_LBRACE_sempred: unrecognized predIndex %d" predIndex)
  
 let _LBRACENoPipe_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 12 then not (ActionFuns_STG2.subTemplateHasIDs self cu)
+ if predIndex = 12 then  not (ActionFuns_STG2.subTemplateHasIDs self cu) 
 else 
  Fmt.(failwithf "_LBRACENoPipe_sempred: unrecognized predIndex %d" predIndex)
  
 let _RDELIM_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 13 then ActionFuns_STG2.isRDelim self cu
+ if predIndex = 13 then  ActionFuns_STG2.isRDelim self cu 
 else 
  Fmt.(failwithf "_RDELIM_sempred: unrecognized predIndex %d" predIndex)
  
 let _LTmplMark_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 14 then ActionFuns_STG2.isLTmplComment self cu
+ if predIndex = 14 then  ActionFuns_STG2.isLTmplComment self cu 
 else 
  Fmt.(failwithf "_LTmplMark_sempred: unrecognized predIndex %d" predIndex)
  
 let _RTmplMark_sempred (self : R.recognizer_t) (cu : LASC.t) localCtx predIndex =
- if predIndex = 15 then ActionFuns_STG2.isRTmplComment self cu
+ if predIndex = 15 then  ActionFuns_STG2.isRTmplComment self cu 
 else 
  Fmt.(failwithf "_RTmplMark_sempred: unrecognized predIndex %d" predIndex)
  

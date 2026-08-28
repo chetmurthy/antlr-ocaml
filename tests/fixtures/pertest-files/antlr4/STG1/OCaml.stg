@@ -1,0 +1,18 @@
+import "/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/tests/fixtures/OCaml.test.stg"
+
+handleBeginArgument() ::= <<ActionFuns_STG1.handleBeginArgument self cu>>
+handleEndArgument() ::= <<ActionFuns_STG1.handleEndArgument self cu>>
+isLDelimNotComment() ::= <<ActionFuns_STG1.isLDelimNotComment self cu>>
+isRDelim() ::= <<ActionFuns_STG1.isRDelim self cu>>
+adjText() ::= <<ActionFuns_STG1.adjText self cu>>
+subTemplateHasIDs() ::= <<ActionFuns_STG1.subTemplateHasIDs self cu>>
+notsubTemplateHasIDs() ::= <<not (ActionFuns_STG1.subTemplateHasIDs self cu)>>
+enterSubTemplate() ::= <<ActionFuns_STG1.enterSubTemplate self cu>>
+exitSubTemplate() ::= <<ActionFuns_STG1.exitSubTemplate self cu>>
+isLTmplComment() ::= <<ActionFuns_STG1.isLTmplComment self cu>>
+isRTmplComment() ::= <<ActionFuns_STG1.isRTmplComment self cu>>
+
+prerrln(s) ::= <<(prerr_string (<s>); prerr_newline())>>
+prerr(s) ::= <<(prerr_string (<s>))>>
+location() ::= <<Fmt.(str "line %d:%d:" self._tokenStartLine self._tokenStartColumn)>>
+dquotes(s) ::= <<"<s>">>

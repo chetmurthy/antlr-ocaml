@@ -63,6 +63,26 @@ let of_string s =
   assert (St_ops.balanced_indentation t) ;
   t
 
+let of_here_string s =
+  let t =
+    s
+    |> STPa.Template.of_here_string
+    |> St_ops.coalesce
+    |> St_ops.insert_indentation
+  in
+  assert (St_ops.balanced_indentation t) ;
+  t
+
+let of_located_string s =
+  let t =
+    s
+    |> STPa.Template.of_located_string
+    |> St_ops.coalesce
+    |> St_ops.insert_indentation
+  in
+  assert (St_ops.balanced_indentation t) ;
+  t
+
 let eval ?group ?groupdir env t =
   let open Eval in
   let open Doit in
@@ -98,6 +118,14 @@ module Simple = struct
 
   let transform ?group ?groupdir env s =
     let t = of_string s in
+    eval ?group ?groupdir env t
+
+  let transform_here_string ?group ?groupdir env s =
+    let t = of_here_string s in
+    eval ?group ?groupdir env t
+
+  let transform_located_string ?group ?groupdir env s =
+    let t = of_located_string s in
     eval ?group ?groupdir env t
 
 end

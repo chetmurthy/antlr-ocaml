@@ -1,0 +1,6 @@
+import "/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/tests/fixtures/OCaml.test.stg"
+
+prerrln(s) ::= <<(prerr_string (<s>); prerr_newline())>>
+prerr(s) ::= <<(prerr_string (<s>))>>
+location() ::= <<Fmt.(str "line %d:%d:" self._tokenStartLine self._tokenStartColumn)>>
+dquotes(s) ::= <<"<s>">>

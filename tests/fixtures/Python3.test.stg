@@ -6,7 +6,7 @@ False() ::= "False"
 
 True() ::= "True"
 
-Not(v) ::= "not <v>"
+Not(v) ::= "not (<v>)"
 
 Assert(s) ::= ""
 
@@ -26,7 +26,7 @@ InitIntMember(n,v) ::= <%<n> = <v>%>
 
 InitBooleanMember(n,v) ::= <%<n> = <v>%>
 
-InitIntVar(n,v) ::= <%<n> = <v>%>
+InitIntVar(n,v) ::= <%<InitIntMember(n,v)>%>
 
 IntArg(n) ::= "<n>"
 

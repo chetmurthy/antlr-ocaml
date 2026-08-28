@@ -8,7 +8,7 @@ import argparse
 from antlr4 import *
 from <lexerName> import <lexerName>
 
-def main(argv):
+def main(argv):<\\>
 <if(traceATN)>
     ParserATNSimulator.trace_atn_sim = True
     PredictionContext._trace_atn_sim = True
@@ -38,9 +38,9 @@ def main(argv):
 def Token__str(lexer, t):
     txt = t.text
     if txt is not None:
-        txt = txt.replace("\n","\\n")
-        txt = txt.replace("\r","\\r")
-        txt = txt.replace("\t","\\t")
+        txt = txt.replace("\n","\\\\n")
+        txt = txt.replace("\r","\\\\r")
+        txt = txt.replace("\t","\\\\t")
     else:
         txt = "\<no text>"
     if t.type == -1:

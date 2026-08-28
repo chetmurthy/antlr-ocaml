@@ -1,8 +1,0 @@
-[
-    ["{ False }",
-     "false"],
-    ["{ True }",
-     "true"],
-    ["{ self.canEndRawString() }",
-     "ActionFuns_sexp.canEndRawString self cu"]
-]

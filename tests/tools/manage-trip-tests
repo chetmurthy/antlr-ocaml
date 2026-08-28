@@ -88,8 +88,9 @@ $ENV{'TOP'} = ".." ;
 
   @make = ("make", "--no-print-directory") unless ($verbose) ;
 
-  my @full1 = qw(python-prepare compare-atns update-pertest) ;
-  my @full2 = qw(all-tests compare) ;
+  my @full1 = qw(update-pertest) ;
+  my @full2 = qw(python-prepare compare-atns) ;
+  my @full3 = qw(all-tests compare) ;
 
   my @testfiles = @ARGV ;
 
@@ -236,6 +237,7 @@ $ENV{'TOP'} = ".." ;
       generate($tf) ;
       v_systemx([0], [@make, "-C", $dir, @full1]) ;
       v_systemx([0], [@make, "-C", $dir, @full2]) ;
+      v_systemx([0], [@make, "-C", $dir, @full3]) ;
     }
   }
 

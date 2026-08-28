@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o *)
+(**pp -syntax camlp5o -package pa_ppx_regexp *)
 
 open OUnit2
 
@@ -20,7 +20,8 @@ let parse_grammars_test () =
     |> Result.get_ok
     |> List.filter (Fpath.has_ext "g4")
     |> List.map Fpath.to_string
- in
+    |> List.filter (fun s -> not ([%match {|/raw/|} / pred] s))
+  in
  let test_parse f ctxt =
    let _ = Pa.Grammar.load ~file:f in () in
  let tests =

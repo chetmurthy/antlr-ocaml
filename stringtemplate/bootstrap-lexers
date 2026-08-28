@@ -2,9 +2,10 @@
 
 echo "TOP: " ${TOP}
 
-cp ${TOP}/tests/fixtures/grammar-lib/Lex* grammars/
-cp ${TOP}/tests/fixtures/grammar-lib/STG2Lexer.g4 grammars/
+rm -rf grammars/{raw,gen-ocaml}
+mkdir -p grammars/{raw,gen-ocaml}
+cp ${TOP}/tests/_generated/antlr4/STG2/raw/*.g4 grammars/raw/
 
 echo "module L_constants = STG2Lexer_constants" > ActionFuns_STG2.ml 
 cat ${TOP}/tests/fixtures/pertest-files/antlr4/STG2/ActionFuns_STG2.ml >> ActionFuns_STG2.ml 
-cp ${TOP}/tests/fixtures/pertest-files/antlr4/STG2/translation.json grammars/STG2Lexer-translation.json
+cp ${TOP}/tests/fixtures/pertest-files/antlr4/STG2/OCaml.stg grammars/OCaml.stg

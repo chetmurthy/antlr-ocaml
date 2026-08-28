@@ -53,7 +53,7 @@ simulate-all:: replay_util.opt
 #	./replay_util.opt simulate -it "ENTER PredictionContext.mergeArrays" _generated/*/*/json.log
 #	./replay_util.opt simulate -it "ENTER PredictionContext.mergeRoot" _generated/*/*/json.log
 
-DTEST=\
+DTEST_LexerExec=\
 	fixtures/descriptors/LexerExec/CharSet.txt \
 	fixtures/descriptors/LexerExec/CharSetRange.txt \
 	fixtures/descriptors/LexerExec/CharSetInSet.txt \
@@ -97,7 +97,7 @@ DTEST=\
 	fixtures/descriptors/LexerExec/ZeroLengthToken.txt \
 
 
-DTEST += \
+DTEST_LexerErrors = \
 	fixtures/descriptors/LexerErrors/DFAToATNThatFailsBackToDFA.txt \
 	fixtures/descriptors/LexerErrors/DFAToATNThatMatchesThenFailsInATN.txt \
 	fixtures/descriptors/LexerErrors/EnforcedGreedyNestedBraces_1.txt \
@@ -111,11 +111,11 @@ DTEST += \
 	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_1.txt \
 	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_2.txt \
 
-DTEST += \
+DTEST_CompositeLexers = \
 	fixtures/descriptors/CompositeLexers/LexerDelegatorInvokesDelegateRule.txt \
 	fixtures/descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.txt \
 
-DTEST += \
+DTEST_SemPredEvalLexer = \
 	fixtures/descriptors/SemPredEvalLexer/DisableRule.txt \
 	fixtures/descriptors/SemPredEvalLexer/EnumNotID.txt \
 	fixtures/descriptors/SemPredEvalLexer/IDnotEnum.txt \
@@ -125,52 +125,13 @@ DTEST += \
 	fixtures/descriptors/SemPredEvalLexer/PredicatedKeywords.txt \
 	fixtures/descriptors/SemPredEvalLexer/RuleSempredFunction.txt \
 
-#DTEST := \
-#	fixtures/descriptors/ParserExec/Basic.txt
-
-DTEST += \
-	fixtures/custom-descriptors/antlr4/ANTLRv4Lexer.txt \
-	fixtures/custom-descriptors/antlr4/A2.txt \
-	fixtures/custom-descriptors/SemPredEvalLexer/IdentKinds.txt \
-
-DTEST += \
-	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.txt \
-	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.2.txt \
-	fixtures/custom-descriptors/SemPredEvalLexer/ManyPredsActions.3.txt \
-
-DTEST += \
-	fixtures/custom-descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.1.txt \
-	fixtures/custom-descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.2.txt \
-
-DTEST := \
-	fixtures/descriptors/ParserExec/Basic.txt \
-	fixtures/descriptors/LexerExec/CharSet.txt \
-	fixtures/custom-descriptors/antlr4/ANTLRv4Lexer.txt \
+DTEST_antlr4 = \
 	fixtures/custom-descriptors/antlr4/A2.txt \
 	fixtures/custom-descriptors/antlr4/A3.txt \
-
-DTEST := \
+	fixtures/custom-descriptors/antlr4/ANTLRv4Lexer.txt \
 	fixtures/custom-descriptors/antlr4/DTestTest.txt \
-	fixtures/descriptors/ParserExec/Basic.txt \
-	fixtures/custom-descriptors/antlr4/ST0.txt \
-	fixtures/custom-descriptors/antlr4/ST1.txt \
-	fixtures/custom-descriptors/antlr4/ST2.txt \
-	fixtures/custom-descriptors/antlr4/STG0.txt \
-	fixtures/descriptors/SemPredEvalLexer/Indent.txt \
-
-DTEST := \
-	fixtures/custom-descriptors/antlr4/DTestTest.txt \
-	fixtures/custom-descriptors/antlr4/ST0.txt \
-	fixtures/custom-descriptors/antlr4/ST1.txt \
-	fixtures/custom-descriptors/antlr4/ST2.txt \
-	fixtures/custom-descriptors/antlr4/STG0.txt \
-	fixtures/custom-descriptors/antlr4/STG1.txt \
-	fixtures/descriptors/SemPredEvalLexer/Indent.txt \
 	fixtures/custom-descriptors/antlr4/Mode1.txt \
 	fixtures/custom-descriptors/antlr4/Mode2.txt \
-
-DTEST := \
-	fixtures/custom-descriptors/antlr4/DTestTest.txt \
 	fixtures/custom-descriptors/antlr4/ST0.txt \
 	fixtures/custom-descriptors/antlr4/ST1.txt \
 	fixtures/custom-descriptors/antlr4/ST2.txt \
@@ -178,11 +139,7 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 	fixtures/custom-descriptors/antlr4/STG2.txt \
 
-DTEST := \
-	fixtures/descriptors/LexerExec/CharSet.txt \
-	fixtures/descriptors/ParserExec/Basic.txt \
-	fixtures/custom-descriptors/antlr4/STG1.txt \
-	fixtures/custom-descriptors/antlr4/STG2.txt \
+DTEST = $(DTEST_antlr4) $(DTEST_LexerExec)
 
 DALL=$(shell ls fixtures/descriptors/*Lexer*/*) $(shell ls fixtures/custom-descriptors/*/*)
 

@@ -1,0 +1,13 @@
+import "/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/tests/fixtures/OCaml.test.stg"
+
+handleBeginArgument() ::= <<ActionFuns_ST1.handleBeginArgument self cu>>
+handleEndArgument() ::= <<ActionFuns_ST1.handleEndArgument self cu>>
+isLDelimNotComment() ::= <<ActionFuns_ST1.isLDelimNotComment self cu>>
+isRDelim() ::= <<ActionFuns_ST1.isRDelim self cu>>
+adjText() ::= <<ActionFuns_ST1.adjText self cu>>
+subTemplateHasIDs() ::= <<ActionFuns_ST1.subTemplateHasIDs self cu>>
+notsubTemplateHasIDs() ::= <<not (ActionFuns_ST1.subTemplateHasIDs self cu)>>
+enterSubTemplate() ::= <<ActionFuns_ST1.enterSubTemplate self cu>>
+exitSubTemplate() ::= <<ActionFuns_ST1.exitSubTemplate self cu>>
+isLTmplComment() ::= <<ActionFuns_ST1.isLTmplComment self cu>>
+isRTmplComment() ::= <<ActionFuns_ST1.isRTmplComment self cu>>

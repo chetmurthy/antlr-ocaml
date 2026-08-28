@@ -1,0 +1,7 @@
+writeln(s) ::= <<output_string stdout (<s>^"\n")>>
+Text() ::= <<(R.text self cu)>>
+PlusText(a) ::= <<("<a>" ^ <Text()>)>>
+False() ::= "false"
+True() ::= "true"
+Not(v) ::= "not (<v>)"
+AppendStr(a,b) ::= "<a> ^ <b>"

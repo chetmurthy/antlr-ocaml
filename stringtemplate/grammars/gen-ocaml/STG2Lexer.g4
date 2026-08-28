@@ -51,21 +51,21 @@ channels {
 // ------------------------------------------------------------------------------
 // mode default
 
-INSIDEMode : '#inside' -> mode(Inside) ;
-OUTSIDEMode : '#outside' -> mode(Outside) ;
-GROUPMode : '#group' -> mode(Group) ;
+INSIDEMode : '#' 'inside' -> mode(Inside) ;
+OUTSIDEMode : '#' 'outside' -> mode(Outside) ;
+GROUPMode : '#' 'group' -> mode(Group) ;
 
 mode Group ;
 
-Group_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
-Group_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
-Group_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
+Group_INSIDEMode : '#' 'inside' -> mode(Inside), type(INSIDEMode) ;
+Group_OUTSIDEMode : '#' 'outside' -> mode(Outside), type(OUTSIDEMode) ;
+Group_GROUPMode : '#' 'group' -> mode(Group), type(GROUPMode) ;
 
 GroupDOC_COMMENT   : DocComment   -> channel(OFF_CHANNEL), type(DOC_COMMENT);
 GroupBLOCK_COMMENT : BlockComment -> channel(OFF_CHANNEL), type(BLOCK_COMMENT);
 GroupLINE_COMMENT  : LineComment  -> channel(OFF_CHANNEL), type(LINE_COMMENT);
 
-GroupTMPL_COMMENT: { False }? LBang .? RBang -> channel(OFF_CHANNEL), type(TMPL_COMMENT);
+GroupTMPL_COMMENT: { false }? LBang .? RBang -> channel(OFF_CHANNEL), type(TMPL_COMMENT);
 
 GroupHORZ_WS : Hws+ -> channel(OFF_CHANNEL), type(HORZ_WS);
 GroupVERT_WS : Vws+ -> channel(OFF_CHANNEL), type(VERT_WS);
@@ -75,7 +75,7 @@ GroupSTRING
 	:	'"'
 		(	'\\' '"'
 		|	'\\' ~'"'
-		|	{print("line %s:%s: '\\n' in string" % (self._tokenStartLine, self._tokenStartColumn), file=sys.stderr)}
+		|	{ (prerr_string (Fmt.(str "line %d:%d:" self._tokenStartLine self._tokenStartColumn) ^ " '\\n' in string"); prerr_newline()) }
 			'\n'
 		|	~('\\'|'"'|'\n')
 		)*
@@ -86,8 +86,8 @@ BIGSTRING       : LDAngle ( ('\\' .) | ~'\\' )*? RDAngle;
 BIGSTRING_NO_NL : LPct .*? RPct;
 // ANON_TEMPLATE   : LBrace .*? RBrace;
 
-GroupLBRACE : LBrace { self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(SubTemplate);
-GroupLBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(Outside);
+GroupLBRACE : LBrace { ActionFuns_STG2.subTemplateHasIDs self cu }? { ActionFuns_STG2.enterSubTemplate self cu } -> type(LBRACE), pushMode(SubTemplate);
+GroupLBRACENoPipe : LBrace { not (ActionFuns_STG2.subTemplateHasIDs self cu) }? { ActionFuns_STG2.enterSubTemplate self cu } -> type(LBRACE), pushMode(Outside);
 
 
 // -----------------------------------
@@ -150,38 +150,38 @@ fragment RDAngle    : RShift;
 mode Outside ;
 // default mode = Outside
 
-Outside_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
-Outside_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
-Outside_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
+Outside_INSIDEMode : '#' 'inside' -> mode(Inside), type(INSIDEMode) ;
+Outside_OUTSIDEMode : '#' 'outside' -> mode(Outside), type(OUTSIDEMode) ;
+Outside_GROUPMode : '#' 'group' -> mode(Group), type(GROUPMode) ;
 
-DOC_COMMENT   : { False }? . ;
-BLOCK_COMMENT : { False }? . ;
-LINE_COMMENT  : { False }? . ;
+DOC_COMMENT   : { false }? . ;
+BLOCK_COMMENT : { false }? . ;
+LINE_COMMENT  : { false }? . ;
 
 TMPL_COMMENT: TmplComment -> channel(OFF_CHANNEL);
 
 HORZ_WS : Hws+ ;
 VERT_WS : Vws+ ;
 
-ESCAPE : .      { self.isLDelimNotComment() }? EscSeq . { self.isRDelim() }?; // self contained
-LDELIM : .      { self.isLDelimNotComment() }? -> pushMode(Inside); // switch mode to inside
-RBRACE : RBrace { self.exitSubTemplate(); }; // conditional switch to inside
+ESCAPE : .      { ActionFuns_STG2.isLDelimNotComment self cu }? EscSeq . { ActionFuns_STG2.isRDelim self cu }?; // self contained
+LDELIM : .      { ActionFuns_STG2.isLDelimNotComment self cu }? -> pushMode(Inside); // switch mode to inside
+RBRACE : RBrace { ActionFuns_STG2.exitSubTemplate self cu }; // conditional switch to inside
 
-TEXT: . { self.adjText(); }; // have to handle weird terminals
+TEXT: . { ActionFuns_STG2.adjText self cu }; // have to handle weird terminals
 
 // -----------------------------------
 mode Inside;
 
-Inside_INSIDEMode : '#inside' -> mode(Inside), type(INSIDEMode) ;
-Inside_OUTSIDEMode : '#outside' -> mode(Outside), type(OUTSIDEMode) ;
-Inside_GROUPMode : '#group' -> mode(Group), type(GROUPMode) ;
+Inside_INSIDEMode : '#' 'inside' -> mode(Inside), type(INSIDEMode) ;
+Inside_OUTSIDEMode : '#' 'outside' -> mode(Outside), type(OUTSIDEMode) ;
+Inside_GROUPMode : '#' 'group' -> mode(Group), type(GROUPMode) ;
 
 INS_HORZ_WS : Hws+ -> type(HORZ_WS), channel(OFF_CHANNEL);
 INS_VERT_WS : Vws+ -> type(VERT_WS), channel(OFF_CHANNEL);
 
-LBRACE : LBrace { self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> pushMode(SubTemplate);
-LBRACENoPipe : LBrace { not self.subTemplateHasIDs() }? { self.enterSubTemplate() } -> type(LBRACE), pushMode(Outside);
-RDELIM : .      { self.isRDelim() }? -> popMode;
+LBRACE : LBrace { ActionFuns_STG2.subTemplateHasIDs self cu }? { ActionFuns_STG2.enterSubTemplate self cu } -> pushMode(SubTemplate);
+LBRACENoPipe : LBrace { not (ActionFuns_STG2.subTemplateHasIDs self cu) }? { ActionFuns_STG2.enterSubTemplate self cu } -> type(LBRACE), pushMode(Outside);
+RDELIM : .      { ActionFuns_STG2.isRDelim self cu }? -> popMode;
 
 STRING: DQuoteLiteral;
 
@@ -232,5 +232,5 @@ PIPE      : Pipe  -> mode(Outside);
 
 fragment TmplComment: LTmplMark .*? RTmplMark;
 
-fragment LTmplMark : .      { self.isLTmplComment() }? Bang;
-fragment RTmplMark : Bang . { self.isRTmplComment() }?;
+fragment LTmplMark : .      { ActionFuns_STG2.isLTmplComment self cu }? Bang;
+fragment RTmplMark : Bang . { ActionFuns_STG2.isRTmplComment self cu }?;

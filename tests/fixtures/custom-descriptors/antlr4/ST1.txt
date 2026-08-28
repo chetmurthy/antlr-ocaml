@@ -1,5 +1,5 @@
 [type]
-Lexer
+CompositeLexer
 
 [grammar]
 lexer grammar M;
@@ -20,9 +20,9 @@ def isRTmplComment(self):
 
 def adjText(self):
     c1 = self._input.LA(-1)
-    if c1 == ord('\\'):
+    if c1 == ord('\\\\'):
         c2 = self._input.LA(1)
-        if c2 == ord('\\'):
+        if c2 == ord('\\\\'):
             self._input.consume()
         elif c2 == ord('\<') or c2 == ord('}'):
             self._input.consume()
@@ -57,6 +57,9 @@ def subTemplateHasIDs(self):
 import ST1Lexer;
 
 
+[slaveGrammar file=fixtures/grammar-lib/ST1Lexer.g4]
+[slaveGrammar file=fixtures/grammar-lib/LexBasic.g4]
+[slaveGrammar file=fixtures/grammar-lib/LexUnicode.g4]
 [input]
 \<{<writeln("\"I\"")>}
 <!xy!>
