@@ -303,6 +303,7 @@ Some "COMMENT"]
 
  }
  
+ module Constants = L_constants
  open Pa_ppx_utils
  open Pa_ppx_base
  open Ppxutil
@@ -312,12 +313,12 @@ module Full = struct
 let full_atn = Exec.Atns.read_atn ~grammarType:LEXER ~raw:raw_atn ()
 let atn = snd full_atn
 let _BEGIN_ARGUMENT_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 0 then ignore(ActionFuns.handleBeginArgument self cu)
+ if actionIndex = 0 then ignore( ActionFuns.handleBeginArgument self cu )
 else 
  Fmt.(failwithf "_BEGIN_ARGUMENT_action: unrecognized actionIndex %d" actionIndex)
  
 let _END_ARGUMENT_action (self : R.recognizer_t) (cu : LASC.t) localCtx actionIndex =
- if actionIndex = 1 then ignore(ActionFuns.handleEndArgument self cu)
+ if actionIndex = 1 then ignore( ActionFuns.handleEndArgument self cu )
 else 
  Fmt.(failwithf "_END_ARGUMENT_action: unrecognized actionIndex %d" actionIndex)
  

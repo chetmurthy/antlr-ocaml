@@ -141,7 +141,7 @@ UNTERMINATED_STRING_LITERAL
 // to a rule invocation, or input parameters to a rule specification
 // are contained within square brackets.
 BEGIN_ARGUMENT
-    : '[' { self.handleBeginArgument(); }
+    : '[' { ActionFuns.handleBeginArgument self cu }
     ;
 
 // Many language targets use {} as block delimiters and so we
@@ -379,7 +379,7 @@ ARGUMENT_CHAR_LITERAL
     ;
 
 END_ARGUMENT
-    : ']' { self.handleEndArgument(); }
+    : ']' { ActionFuns.handleEndArgument self cu }
     ;
 
 // added this to return non-EOF token type here. EOF does something weird

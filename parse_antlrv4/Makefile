@@ -37,11 +37,8 @@ local-install::
 clean::
 	rm -rf META mk_meta mk_meta.ml
 
-bootstrap:: ../tests/atn_util.opt
-	(cd grammars && antlr4 -Dlanguage=Python3 ANTLRv4Lexer.g4)
-	$(TOP)/tests/atn_util.opt emit-ocaml-lexer -i grammars/ANTLRv4Lexer.interp --grammar-lib $(TOP)/tests/fixtures/grammar-lib -t $(TOP)/tests/translation.json grammars/ANTLRv4Lexer.g4 > l.ml.NEW && mv l.ml.NEW l.ml
-	$(TOP)/tests/atn_util.opt emit-ocaml-constants grammars/ANTLRv4Lexer.interp > l_constants.ml.NEW && mv l_constants.ml.NEW l_constants.ml
-
+bootstrap:: ../tests/atn_util.opt ../tests/st4_util.opt
+	env TOP=$(WD)/$(TOP) ./bootstrap-lexers
 
 $(TARGET_PACKAGE).cmo $(TARGET_PACKAGE).cmi: $(CMO)
 	$(OCAMLFIND) ocamlc $(DEBUG) -pack -o $(TARGET_PACKAGE).cmo $^
