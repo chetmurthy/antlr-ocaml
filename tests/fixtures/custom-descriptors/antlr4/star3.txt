@@ -1,0 +1,29 @@
+[type]
+Parser
+
+[grammar]
+grammar star1;
+
+top : item* A EOF ;
+
+item : ((A B) | (A C)) ;
+
+A : 'a' ;
+B : 'b' ;
+C : 'c' ;
+
+[start]
+top
+
+[input]
+"""a"""
+[output]
+[output type=lexer-only-named-types]
+[input name=B]
+"""aba"""
+[output name=B]
+[output name=B type=lexer-only-named-types]
+[input name=C]
+"""aa"""
+[output name=C]
+[output name=C type=lexer-only-named-types]

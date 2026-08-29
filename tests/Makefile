@@ -145,6 +145,9 @@ DTEST := \
 	fixtures/descriptors/LexerExec/CharSet.txt \
 	fixtures/descriptors/ParserExec/Basic.txt \
 	fixtures/custom-descriptors/antlr4/sexp1.txt \
+	fixtures/custom-descriptors/antlr4/choice1.txt \
+	fixtures/custom-descriptors/antlr4/star1.txt \
+	fixtures/custom-descriptors/antlr4/star2.txt \
 
 DALL=$(shell ls fixtures/descriptors/*Lexer*/*) $(shell ls fixtures/custom-descriptors/*/*)
 

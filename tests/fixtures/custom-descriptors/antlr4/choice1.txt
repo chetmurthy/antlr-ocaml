@@ -1,0 +1,23 @@
+[type]
+Parser
+
+[grammar]
+grammar choice1;
+
+top : (( A B ) | (A C)) EOF ;
+
+A : 'a' ;
+B : 'b' ;
+C : 'c' ;
+
+[start]
+top
+
+[input]
+"""ab"""
+[output]
+[output type=lexer-only-named-types]
+[input name=B]
+"""ac"""
+[output name=B]
+[output name=B type=lexer-only-named-types]

@@ -78,6 +78,8 @@ gen-python/<lexerName>.py: <grammarNames:{ n | gen-python/<n>.g4 }>
 
 }>
 
+cpp-prepare:: gen-cpp/<lexerName>.cpp
+
 gen-cpp/<lexerName>.cpp: <grammarNames:{ n | gen-cpp/<n>.g4 }>
 	$(NOVERBOSE) (cd gen-cpp && antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Cpp <grammarName>.g4)
 
