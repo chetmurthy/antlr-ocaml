@@ -113,9 +113,8 @@ DTEST := \
 	fixtures/custom-descriptors/antlr4/star1.txt \
 	fixtures/custom-descriptors/antlr4/star2.txt \
 
-DALL=$(DTEST_all) $(DTEST_custom)
 
-$(info $(DALL))
+DALL=$(DTEST_all) $(DTEST_custom)
 
 DTESTCMD=full -v
 

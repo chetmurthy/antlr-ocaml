@@ -45,6 +45,9 @@ $ENV{'TOP'} = ".." ;
     elsif ($ARGV[0] eq 'python-prepare') {
       $subcommand = shift @ARGV ;
     }
+    elsif ($ARGV[0] eq 'python-test') {
+      $subcommand = shift @ARGV ;
+    }
     elsif ($ARGV[0] eq 'depend') {
       $subcommand = shift @ARGV ;
     }
@@ -52,6 +55,9 @@ $ENV{'TOP'} = ".." ;
       $subcommand = shift @ARGV ;
     }
     elsif ($ARGV[0] eq 'all-tests') {
+      $subcommand = shift @ARGV ;
+    }
+    elsif ($ARGV[0] eq 'all-python-tests') {
       $subcommand = shift @ARGV ;
     }
     elsif ($ARGV[0] eq 'clean') {
@@ -214,6 +220,14 @@ $ENV{'TOP'} = ".." ;
       my $dir = "_generated/$p" ;
       next unless (-d $dir) ;
       v_systemx([0], [@make, "-C", $dir, "all-tests"]) ;
+    }
+  }
+  elsif ($subcommand eq 'all-python-tests') {
+    foreach my $tf (@testfiles) {
+      my $p = test_name($tf) ;
+      my $dir = "_generated/$p" ;
+      next unless (-d $dir) ;
+      v_systemx([0], [@make, "-C", $dir, "all-python-tests"]) ;
     }
   }
   elsif ($subcommand eq 'compare') {

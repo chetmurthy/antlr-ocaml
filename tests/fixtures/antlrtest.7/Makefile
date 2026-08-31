@@ -60,6 +60,11 @@ all-tests::
 <namedTests:{ n |<\t>$(NOVERBOSE) $(MAKE) NAME=<n> named-{python,ocaml\}-test{,-named-output\} || true
 }>
 
+all-python-tests::
+	$(NOVERBOSE) $(MAKE) python-test{,-named-output} || true
+<namedTests:{ n |<\t>$(NOVERBOSE) $(MAKE) NAME=<n> named-{python,ocaml\}-test{,-named-output\} || true
+}>
+
 save-json-log: json.log
 	cp json.log json.log.SAVED
 
