@@ -131,7 +131,7 @@ class BufferedTokenStream(TokenStream):
     def get(self, marker:int):
         Trace.writej(lambda:[ 'ENTER BufferedTokenStream.get', self.asdict(), marker ])
         rv = self._get(marker)
-        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.get', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.get', self.asdict(), rv.asdict() ])
         return rv
 
     def _get(self, index:int):
@@ -266,7 +266,7 @@ class BufferedTokenStream(TokenStream):
     def LT(self, marker:int):
         Trace.writej(lambda:[ 'ENTER BufferedTokenStream.LT', self.asdict(), marker ])
         rv = self._LT(marker)
-        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.LTa',
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.LT',
                               self.asdict(),
                               rv.asdict()
                              ])

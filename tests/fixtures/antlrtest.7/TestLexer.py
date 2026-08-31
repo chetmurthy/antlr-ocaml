@@ -24,6 +24,7 @@ def main(argv):<\\>
     parser.add_argument('--show-dfa',action='store_true')
     args = parser.parse_args()
     if args.disable_logging: Trace.disable()
+    loadTokenMap()
     txt = Util.file_contents(args.input, encoding='utf-8', errors='replace')
     input = InputStream(txt)
     lexer = <lexerName>(input)
@@ -51,6 +52,7 @@ def loadTokenMap():
                 symbolicNames[num] = name
 
 def Token__str(lexer, t):
+    global symbolicNames
     txt = t.text
     if txt is not None:
         txt = txt.replace("\n","\\\\n")

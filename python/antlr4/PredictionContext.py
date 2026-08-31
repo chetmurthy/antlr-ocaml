@@ -94,7 +94,7 @@ class PredictionContextCache(object):
 
     def asdict(self):
         l = []
-        for k,v in self.cache:
+        for k,v in self.cache.items():
             l.append(v.asdict())
         return l
 

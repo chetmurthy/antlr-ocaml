@@ -537,7 +537,10 @@ class ParserATNSimulator(ATNSimulator):
                               previousD.asdict(), t
                              ])
         rv = self._getExistingTargetState(previousD, t)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getExistingTargetState', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getExistingTargetState',
+                              self.asdict(),
+                              None if rv is None else rv.asdict(),
+                             ])
         return rv
 
     def _getExistingTargetState(self, previousD:DFAState, t:int):
@@ -565,7 +568,10 @@ class ParserATNSimulator(ATNSimulator):
                               dfa.asdict(), previousD.asdict(), t
                              ])
         rv = self._computeTargetState(dfa, previousD, t)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.computeTargetState', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.computeTargetState',
+                              self.asdict(),
+                              None if rv is None else rv.asdict(),
+                             ])
         return rv
 
     def _computeTargetState(self, dfa:DFA, previousD:DFAState, t:int):
@@ -771,7 +777,10 @@ class ParserATNSimulator(ATNSimulator):
                               fullCtx
                              ])
         rv = self._computeReachSet(closure, t, fullCtx)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.computeReachSet', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.computeReachSet', 
+                              self.asdict(),
+                              (None if rv is None else rv.asdict()),
+                             ])
         return rv
 
     def _computeReachSet(self, closure:ATNConfigSet, t:int, fullCtx:bool):
@@ -1073,7 +1082,10 @@ class ParserATNSimulator(ATNSimulator):
                               ttype
                              ])
         rv = self._getReachableTarget(trans, ttype)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getReachableTarget', self.asdict(), rv.stateNumber ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getReachableTarget', 
+                              self.asdict(),
+                              None if rv is None else rv.stateNumber,
+                             ])
         return rv
 
 
@@ -1093,7 +1105,7 @@ class ParserATNSimulator(ATNSimulator):
         rv = self._getPredsForAmbigAlts(ambigAlts, configs, nalts)
         Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getPredsForAmbigAlts',
                               self.asdict(),
-                              rv.asdict(),
+                              None if rv is None else [(None if x is None else x.asdict()) for x in rv],
                              ])
         return rv
 
@@ -1133,12 +1145,12 @@ class ParserATNSimulator(ATNSimulator):
         Trace.writej(lambda:[ 'ENTER ParserATNSimulator.getPredicatePredictions',
                               self.asdict(),
                               [x for x in ambigAlts],
-                              altToPred
+                              [(None if x is None else x.asdict()) for x in altToPred],
                              ])
         rv = self._getPredicatePredictions(ambigAlts, altToPred)
         Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getPredicatePredictions',
                               self.asdict(),
-                              None if rv is None else [(p[0].asdict(), p[1]) for p in rv]
+                              (None if rv is None else [p.asdict() for p in rv]),
                              ])
         return rv
 
@@ -1295,7 +1307,7 @@ class ParserATNSimulator(ATNSimulator):
         rv = self._evalSemanticContext(predPredictions, outerContext, complete)
         Trace.writej(lambda:[ 'EXIT ParserATNSimulator.evalSemanticContext',
                               self.asdict(),
-                              [ [x[0].asdict(), x[1] ] for x in rv ]
+                              [x for x in rv],
                              ])
         return rv
     # Look through a list of predicate/alt pairs, returning alts for the
@@ -1338,7 +1350,7 @@ class ParserATNSimulator(ATNSimulator):
                               self.asdict(),
                               config.asdict(),
                               configs.asdict(),
-                              [x for x in closureBusy],
+                              [x.asdict() for x in closureBusy],
                               collectPredicates,
                               fullCtx,
                               treatEofAsEpsilon,
@@ -1361,7 +1373,7 @@ class ParserATNSimulator(ATNSimulator):
                               self.asdict(),
                               config.asdict(),
                               configs.asdict(),
-                              [x for x in closureBusy],
+                              [x.asdict() for x in closureBusy],
                               collectPredicates,
                               fullCtx,
                               depth,
@@ -1421,7 +1433,7 @@ class ParserATNSimulator(ATNSimulator):
                               self.asdict(),
                               config.asdict(),
                               configs.asdict(),
-                              [x for x in closureBusy],
+                              [x.asdict() for x in closureBusy],
                               collectPredicates,
                               fullCtx,
                               depth,
@@ -1685,7 +1697,10 @@ class ParserATNSimulator(ATNSimulator):
                               treatEofAsEpsilon,
                              ])
         rv = self._getEpsilonTarget(config, t, collectPredicates, inContext, fullCtx, treatEofAsEpsilon)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getEpsilonTarget', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getEpsilonTarget',
+                              self.asdict(),
+                              None if rv is None else rv.asdict(),
+                             ])
         return rv
 
     def _getEpsilonTarget(self, config:ATNConfig, t:Transition, collectPredicates:bool, inContext:bool, fullCtx:bool, treatEofAsEpsilon:bool):
@@ -1701,7 +1716,10 @@ class ParserATNSimulator(ATNSimulator):
                               t.asdict(),
                              ])
         rv = self._actionTransition(config, t)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.actionTransition', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.actionTransition',
+                              self.asdict(),
+                              rv.asdict(),
+                             ])
         return rv
 
     def _actionTransition(self, config:ATNConfig, t:ActionTransition):
@@ -1719,7 +1737,10 @@ class ParserATNSimulator(ATNSimulator):
                               fullCtx,
                              ])
         rv = self._precedenceTransition(config, pt,  collectPredicates, inContext, fullCtx)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.precedenceTransition', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.precedenceTransition', 
+                              self.asdict(),
+                              rv.asdict(),
+                             ])
         return rv
 
     def _precedenceTransition(self, config:ATNConfig, pt:PrecedencePredicateTransition,  collectPredicates:bool, inContext:bool, fullCtx:bool):
@@ -1761,7 +1782,10 @@ class ParserATNSimulator(ATNSimulator):
                               fullCtx,
                              ])
         rv = self._predTransition(config, pt,  collectPredicates, inContext, fullCtx)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.predTransition', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.predTransition', 
+                              self.asdict(), 
+                              (None if rv is None else rv.asdict()),
+                             ])
         return rv
 
     def _predTransition(self, config:ATNConfig, pt:PredicateTransition, collectPredicates:bool, inContext:bool, fullCtx:bool):
@@ -1801,7 +1825,7 @@ class ParserATNSimulator(ATNSimulator):
                               t.asdict()
                              ])
         rv = self._ruleTransition(config, t)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.ruleTransition', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.ruleTransition', self.asdict(), rv.asdict() ])
         return rv
 
     def _ruleTransition(self, config:ATNConfig, t:RuleTransition):
@@ -1816,7 +1840,10 @@ class ParserATNSimulator(ATNSimulator):
                               configs.asdict(),
                              ])
         rv = self._getConflictingAlts(configs)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getConflictingAlts', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.getConflictingAlts', 
+                              self.asdict(),
+                              [x for x in rv]
+                             ])
         return rv
 
     def _getConflictingAlts(self, configs:ATNConfigSet):
@@ -1981,7 +2008,10 @@ class ParserATNSimulator(ATNSimulator):
                               to.asdict(),
                              ])
         rv = self._addDFAEdge(dfa, from_, t, to)
-        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.addDFAEdge', self.asdict(), rv ])
+        Trace.writej(lambda:[ 'EXIT ParserATNSimulator.addDFAEdge', 
+                              self.asdict(),
+                              None if rv is None else rv.asdict(),
+ ])
         return rv
 
     def _addDFAEdge(self, dfa:DFA, from_:DFAState, t:int, to:DFAState):
@@ -2098,7 +2128,7 @@ class ParserATNSimulator(ATNSimulator):
                               startIndex,
                               stopIndex,
                               exact,
-                              [x for x in ambigAlts],
+                              None if ambigAlts is None else [x for x in ambigAlts],
                               configs.asdict(),
                              ])
         rv = self._reportAmbiguity(dfa, D, startIndex, stopIndex,

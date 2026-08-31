@@ -88,6 +88,7 @@ def loadTokenMap():
                 symbolicNames[num] = name
 
 def Token__str(lexer, t):
+    global symbolicNames
     txt = t.text
     if txt is not None:
         txt = txt.replace("\n","\\\\n")

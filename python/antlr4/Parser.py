@@ -98,7 +98,7 @@ class Parser (Recognizer):
     def asdict(self):
         d = {
 #            '_factory' : self._factory.asdict(),
-            '_input': self._input.asdict(terse=True),
+            '_input': None if self._input is None else self._input.asdict(terse=True),
             '_precedenceStack' : self._precedenceStack,
             '_ctx': None if self._ctx is None else self._ctx.asdict(),
             'buildParseTrees': self.buildParseTrees,
@@ -112,7 +112,7 @@ class Parser (Recognizer):
                              ])
         rv = self._reset()
         Trace.writej(lambda:[ 'EXIT Parser.reset',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
 
@@ -374,7 +374,7 @@ class Parser (Recognizer):
                              ])
         rv = self._setInputStream(input)
         Trace.writej(lambda:[ 'EXIT Parser.setInputStream',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     def _setInputStream(self, input:InputStream):
@@ -390,7 +390,7 @@ class Parser (Recognizer):
                              ])
         rv = self._setTokenStream(input)
         Trace.writej(lambda:[ 'EXIT Parser.setTokenStream',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     # Set the token stream and reset the parser.#
@@ -480,7 +480,7 @@ class Parser (Recognizer):
                              ])
         rv = self._addContextToParseTree()
         Trace.writej(lambda:[ 'EXIT Parser.addContextToParseTree',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     def _addContextToParseTree(self):
@@ -501,7 +501,7 @@ class Parser (Recognizer):
                              ])
         rv = self._enterRule(localctx , state , ruleIndex)
         Trace.writej(lambda:[ 'EXIT Parser.enterRule',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     def _enterRule(self, localctx:ParserRuleContext , state:int , ruleIndex:int):
@@ -520,7 +520,7 @@ class Parser (Recognizer):
                              ])
         rv = self._exitRule()
         Trace.writej(lambda:[ 'EXIT Parser.exitRule',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     def _exitRule(self):
@@ -539,7 +539,7 @@ class Parser (Recognizer):
                              ])
         rv = self._enterOuterAlt(localctx, altNum)
         Trace.writej(lambda:[ 'EXIT Parser.enterOuterAlt',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     def _enterOuterAlt(self, localctx:ParserRuleContext, altNum:int):
@@ -582,7 +582,9 @@ class Parser (Recognizer):
                              ])
         rv = self._enterRecursionRule(localctx, state, ruleIndex, precedence)
         Trace.writej(lambda:[ 'EXIT Parser.enterRecursionRule',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(),
+                                 (None if rv is None else rv.asdict()),
+ ])
         return rv
 
     def _enterRecursionRule(self, localctx:ParserRuleContext, state:int, ruleIndex:int, precedence:int):
@@ -605,7 +607,7 @@ class Parser (Recognizer):
                              ])
         rv = self._pushNewRecursionContext(localctx, state, ruleIndex)
         Trace.writej(lambda:[ 'EXIT Parser.pushNewRecursionContext',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     def _pushNewRecursionContext(self, localctx:ParserRuleContext, state:int, ruleIndex:int):
@@ -625,11 +627,13 @@ class Parser (Recognizer):
     def unrollRecursionContexts(self, parentCtx:ParserRuleContext):
         Trace.writej(lambda:[ 'ENTER Parser.unrollRecursionContexts',
                               self.asdict(),
-                              parentCtx.asdict(),
+                              (None if parentCtx is None else parentCtx.asdict()),
                              ])
         rv = self._unrollRecursionContexts(parentCtx)
         Trace.writej(lambda:[ 'EXIT Parser.unrollRecursionContexts',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(),
+                                 (None if rv is None else rv.asdict()),
+                             ])
         return rv
 
     def _unrollRecursionContexts(self, parentCtx:ParserRuleContext):
@@ -678,7 +682,9 @@ class Parser (Recognizer):
                              ])
         rv = self._precpred(localctx , precedence)
         Trace.writej(lambda:[ 'EXIT Parser.precpred',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(),
+                                 rv,
+                             ])
         return rv
 
     def _precpred(self, localctx:RuleContext , precedence:int):
@@ -811,7 +817,7 @@ class Parser (Recognizer):
                              ])
         rv = self._getRuleInvocationStack(p)
         Trace.writej(lambda:[ 'EXIT Parser.getRuleInvocationStack',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     def _getRuleInvocationStack(self, p:RuleContext=None):
@@ -850,7 +856,7 @@ class Parser (Recognizer):
                              ])
         rv = self._dumpDFA()
         Trace.writej(lambda:[ 'EXIT Parser.dumpDFA',
-                                 self.asdict(), rv.asdict() ])
+                                 self.asdict(), rv ])
         return rv
 
     def _dumpDFA(self):

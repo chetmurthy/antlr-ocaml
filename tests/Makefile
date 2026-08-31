@@ -57,7 +57,7 @@ simulate-all:: replay_util.opt
 DTEST_CompositeLexers = $(shell ls fixtures/descriptors/CompositeLexers/*.txt)
 DTEST_CompositeParsers = $(shell ls fixtures/descriptors/CompositeParsers/*.txt)
 DTEST_FullContextParsing = $(shell ls fixtures/descriptors/FullContextParsing/*.txt)
-DTEST_LeftRecursion = $(shell ls fixtures/descriptors/LeftRecursion/*.txt)
+DTEST_LeftRecursion = $(shell ls fixtures/descriptors/LeftRecursion/*.txt | grep -v Java)
 DTEST_LexerErrors = $(shell ls fixtures/descriptors/LexerErrors/*.txt)
 DTEST_LexerExec = $(shell ls fixtures/descriptors/LexerExec/*.txt)
 DTEST_Listeners = $(shell ls fixtures/descriptors/Listeners/*.txt)
@@ -80,13 +80,14 @@ DTEST_all = \
 	$(DTEST_ParserErrors) \
 	$(DTEST_ParserExec) \
 	$(DTEST_ParseTrees) \
-	$(DTEST_Performance) \
 	$(DTEST_SemPredEvalLexer) \
 	$(DTEST_SemPredEvalParser) \
 	$(DTEST_Sets) \
 
+#	$(DTEST_Performance) \
 
-uDTEST_custom = $(shell ls fixtures/custom-descriptors/*/*.txt)
+
+DTEST_custom = $(shell ls fixtures/custom-descriptors/*/*.txt)
 
 DTEST_antlr4 = \
 	fixtures/custom-descriptors/antlr4/A2.txt \

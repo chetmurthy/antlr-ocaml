@@ -117,6 +117,8 @@ let generate_antlrtest ~debug ~helperfile ~destroot ~testname ~templatedir file 
                ]
              ) in
       l@generated_files
+    else if d.D.slaveGrammars <> [] then
+      failwith "not a composite grammar, but slaveGrammars <> []"
     else generated_files in
 
   let generated_files =
