@@ -11,7 +11,7 @@ file_ @init{
 <BailErrorStrategy()>
 }
 @after {
-print($ctx.toStringTree(recog=self), file=self._output)
+<ToStringTree("$ctx"):writeln()>
 }
   :   item (SEMICOLON item)* SEMICOLON? EOF ;
 item : A B?;

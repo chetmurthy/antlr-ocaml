@@ -8,7 +8,7 @@ Parser
 [grammar]
 grammar T;
 <ParserPropertyMember()>
-a : {$parser.Property()}? ID {print("valid", file=self._output)}
+a : {<ParserPropertyCall({$parser}, "Property()")>}? ID {<writeln("\"valid\"")>}
   ;
 ID : 'a'..'z'+ ;
 WS : (' '|'\n') -> skip ;
