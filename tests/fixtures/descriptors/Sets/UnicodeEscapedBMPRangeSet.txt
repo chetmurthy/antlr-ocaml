@@ -3,10 +3,10 @@ Parser
 
 [grammar]
 grammar T;
-a : LETTERS* 'd' {print(self._input.getText(), file=self._output)} ;
+a : LETTERS* 'd' {<InputText():writeln()>} ;
 // Note the double-backslash to avoid Java passing
 // unescaped values as part of the grammar.
-LETTERS : ('a'|'\u00E0'..'\u00E5');
+LETTERS : ('a'|'\\u00E0'..'\\u00E5');
 
 [start]
 a
