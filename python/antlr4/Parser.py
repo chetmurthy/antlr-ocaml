@@ -1,3 +1,7 @@
+import sys
+import json
+import Trace
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -58,6 +62,9 @@ class Parser (Recognizer):
     bypassAltsAtnCache = dict()
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
+        Trace.writej(lambda:[ 'ENTER Parser.__init__',
+                       input.asdict(),
+                      ])
         super().__init__()
         # The input stream.
         self._input = None
@@ -86,9 +93,31 @@ class Parser (Recognizer):
         # incremented each time {@link #notifyErrorListeners} is called.
         self._syntaxErrors = 0
         self.setInputStream(input)
+        Trace.writej(lambda:[ 'EXIT Parser.__init__', self.asdict() ])
+
+    def asdict(self):
+        d = {
+#            '_factory' : self._factory.asdict(),
+            '_input': self._input.asdict(terse=True),
+            '_precedenceStack' : self._precedenceStack,
+            '_ctx': None if self._ctx is None else self._ctx.asdict(),
+            'buildParseTrees': self.buildParseTrees,
+            '_syntaxErrors' : self._syntaxErrors,
+        }
+        return ["Parser", d]
+
+    def reset(self):
+        Trace.writej(lambda:[ 'ENTER Parser.reset',
+                              self.asdict(),
+                             ])
+        rv = self._reset()
+        Trace.writej(lambda:[ 'EXIT Parser.reset',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
 
     # reset the parser's state#
-    def reset(self):
+    def _reset(self):
         if self._input is not None:
             self._input.seek(0)
         self._errHandler.reset(self)
@@ -118,6 +147,16 @@ class Parser (Recognizer):
     # mismatched symbol
 
     def match(self, ttype:int):
+        Trace.writej(lambda:[ 'ENTER Parser.match',
+                              self.asdict(),
+                              ttype,
+                             ])
+        rv = self._match(ttype)
+        Trace.writej(lambda:[ 'EXIT Parser.match',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _match(self, ttype:int):
         t = self.getCurrentToken()
         if t.type==ttype:
             self._errHandler.reportMatch(self)
@@ -146,7 +185,17 @@ class Parser (Recognizer):
     # a wildcard and the error strategy could not recover from the mismatched
     # symbol
 
+
     def matchWildcard(self):
+        Trace.writej(lambda:[ 'ENTER Parser.matchWildcard',
+                              self.asdict(),
+                             ])
+        rv = self._matchWildcard()
+        Trace.writej(lambda:[ 'EXIT Parser.matchWildcard',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _matchWildcard(self):
         t = self.getCurrentToken()
         if t.type > 0:
             self._errHandler.reportMatch(self)
@@ -256,7 +305,17 @@ class Parser (Recognizer):
     # @throws UnsupportedOperationException if the current parser does not
     # implement the {@link #getSerializedATN()} method.
     #
+
     def getATNWithBypassAlts(self):
+        Trace.writej(lambda:[ 'ENTER Parser.getATNWithBypassAlts',
+                              self.asdict(),
+                             ])
+        rv = self._getATNWithBypassAlts()
+        Trace.writej(lambda:[ 'EXIT Parser.getATNWithBypassAlts',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _getATNWithBypassAlts(self):
         serializedAtn = self.getSerializedATN()
         if serializedAtn is None:
             raise UnsupportedOperationException("The current parser does not support an ATN with bypass alternatives.")
@@ -278,7 +337,20 @@ class Parser (Recognizer):
     # String id = m.get("ID");
     # </pre>
     #
+
     def compileParseTreePattern(self, pattern:str, patternRuleIndex:int, lexer:Lexer = None):
+        Trace.writej(lambda:[ 'ENTER Parser.compileParseTreePattern',
+                              self.asdict(),
+                              pattern,
+                              patternRuleIndex,
+                              lexer.asdict(),
+                             ])
+        rv = self._compileParseTreePattern(pattern, patternRuleIndex, lexer)
+        Trace.writej(lambda:[ 'EXIT Parser.compileParseTreePattern',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _compileParseTreePattern(self, pattern:str, patternRuleIndex:int, lexer:Lexer = None):
         if lexer is None:
             if self.getTokenStream() is not None:
                 tokenSource = self.getTokenStream().tokenSource
@@ -294,14 +366,35 @@ class Parser (Recognizer):
     def getInputStream(self):
         return self.getTokenStream()
 
+
     def setInputStream(self, input:InputStream):
+        Trace.writej(lambda:[ 'ENTER Parser.setInputStream',
+                              self.asdict(),
+                              input.asdict(),
+                             ])
+        rv = self._setInputStream(input)
+        Trace.writej(lambda:[ 'EXIT Parser.setInputStream',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _setInputStream(self, input:InputStream):
         self.setTokenStream(input)
 
     def getTokenStream(self):
         return self._input
 
-    # Set the token stream and reset the parser.#
     def setTokenStream(self, input:TokenStream):
+        Trace.writej(lambda:[ 'ENTER Parser.setTokenStream',
+                              self.asdict(),
+                              input.asdict(),
+                             ])
+        rv = self._setTokenStream(input)
+        Trace.writej(lambda:[ 'EXIT Parser.setTokenStream',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    # Set the token stream and reset the parser.#
+    def _setTokenStream(self, input:TokenStream):
         self._input = None
         self.reset()
         self._input = input
@@ -309,7 +402,17 @@ class Parser (Recognizer):
     # Match needs to return the current input symbol, which gets put
     #  into the label for the associated token ref; e.g., x=ID.
     #
+
     def getCurrentToken(self):
+        Trace.writej(lambda:[ 'ENTER Parser.getCurrentToken',
+                              self.asdict(),
+                             ])
+        rv = self._getCurrentToken()
+        Trace.writej(lambda:[ 'EXIT Parser.getCurrentToken',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _getCurrentToken(self):
         return self._input.LT(1)
 
     def notifyErrorListeners(self, msg:str, offendingToken:Token = None, e:RecognitionException = None):
@@ -342,6 +445,16 @@ class Parser (Recognizer):
     # {@link ParseTreeListener#visitErrorNode} is called on any parse
     # listeners.
     #
+
+    def consume(self):
+        Trace.writej(lambda:[ 'ENTER Parser.consume',
+                              self.asdict(),
+                             ])
+        rv = self._consume()
+        Trace.writej(lambda:[ 'EXIT Parser.consume',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
     def consume(self):
         o = self.getCurrentToken()
         if o.type != Token.EOF:
@@ -360,7 +473,17 @@ class Parser (Recognizer):
                         listener.visitTerminal(node)
         return o
 
+
     def addContextToParseTree(self):
+        Trace.writej(lambda:[ 'ENTER Parser.addContextToParseTree',
+                              self.asdict(),
+                             ])
+        rv = self._addContextToParseTree()
+        Trace.writej(lambda:[ 'EXIT Parser.addContextToParseTree',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _addContextToParseTree(self):
         # add current context to parent if we have a parent
         if self._ctx.parentCtx is not None:
             self._ctx.parentCtx.addChild(self._ctx)
@@ -368,7 +491,20 @@ class Parser (Recognizer):
     # Always called by generated parsers upon entry to a rule. Access field
     # {@link #_ctx} get the current context.
     #
+
     def enterRule(self, localctx:ParserRuleContext , state:int , ruleIndex:int):
+        Trace.writej(lambda:[ 'ENTER Parser.enterRule',
+                              self.asdict(),
+                              localctx.asdict() ,
+                              state ,
+                              ruleIndex,
+                             ])
+        rv = self._enterRule(localctx , state , ruleIndex)
+        Trace.writej(lambda:[ 'EXIT Parser.enterRule',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _enterRule(self, localctx:ParserRuleContext , state:int , ruleIndex:int):
         self.state = state
         self._ctx = localctx
         self._ctx.start = self._input.LT(1)
@@ -377,7 +513,17 @@ class Parser (Recognizer):
         if self._parseListeners  is not None:
             self.triggerEnterRuleEvent()
 
+
     def exitRule(self):
+        Trace.writej(lambda:[ 'ENTER Parser.exitRule',
+                              self.asdict(),
+                             ])
+        rv = self._exitRule()
+        Trace.writej(lambda:[ 'EXIT Parser.exitRule',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _exitRule(self):
         self._ctx.stop = self._input.LT(-1)
         # trigger event on _ctx, before it reverts to parent
         if self._parseListeners is not None:
@@ -386,6 +532,17 @@ class Parser (Recognizer):
         self._ctx = self._ctx.parentCtx
 
     def enterOuterAlt(self, localctx:ParserRuleContext, altNum:int):
+        Trace.writej(lambda:[ 'ENTER Parser.enterOuterAlt',
+                              self.asdict(),
+                              localctx.asdict(),
+                              altNum,
+                             ])
+        rv = self._enterOuterAlt(localctx, altNum)
+        Trace.writej(lambda:[ 'EXIT Parser.enterOuterAlt',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _enterOuterAlt(self, localctx:ParserRuleContext, altNum:int):
         localctx.setAltNumber(altNum)
         # if we have new localctx, make sure we replace existing ctx
         # that is previous child of parse tree
@@ -401,12 +558,34 @@ class Parser (Recognizer):
     # the parser context is not nested within a precedence rule.
     #
     def getPrecedence(self):
+        Trace.writej(lambda:[ 'ENTER Parser.getPrecedence',
+                              self.asdict(),
+                             ])
+        rv = self._getPrecedence()
+        Trace.writej(lambda:[ 'EXIT Parser.getPrecedence',
+                                 self.asdict(), rv ])
+        return rv
+
+    def _getPrecedence(self):
         if len(self._precedenceStack)==0:
             return -1
         else:
             return self._precedenceStack[-1]
 
     def enterRecursionRule(self, localctx:ParserRuleContext, state:int, ruleIndex:int, precedence:int):
+        Trace.writej(lambda:[ 'ENTER Parser.enterRecursionRule',
+                              self.asdict(),
+                              localctx.asdict(),
+                              state,
+                              ruleIndex,
+                              precedence,
+                             ])
+        rv = self._enterRecursionRule(localctx, state, ruleIndex, precedence)
+        Trace.writej(lambda:[ 'EXIT Parser.enterRecursionRule',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _enterRecursionRule(self, localctx:ParserRuleContext, state:int, ruleIndex:int, precedence:int):
         self.state = state
         self._precedenceStack.append(precedence)
         self._ctx = localctx
@@ -418,6 +597,18 @@ class Parser (Recognizer):
     # Like {@link #enterRule} but for recursive rules.
     #
     def pushNewRecursionContext(self, localctx:ParserRuleContext, state:int, ruleIndex:int):
+        Trace.writej(lambda:[ 'ENTER Parser.pushNewRecursionContext',
+                              self.asdict(),
+                              localctx.asdict(),
+                              state,
+                              ruleIndex,
+                             ])
+        rv = self._pushNewRecursionContext(localctx, state, ruleIndex)
+        Trace.writej(lambda:[ 'EXIT Parser.pushNewRecursionContext',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _pushNewRecursionContext(self, localctx:ParserRuleContext, state:int, ruleIndex:int):
         previous = self._ctx
         previous.parentCtx = localctx
         previous.invokingState = state
@@ -432,6 +623,16 @@ class Parser (Recognizer):
             self.triggerEnterRuleEvent() # simulates rule entry for left-recursive rules
 
     def unrollRecursionContexts(self, parentCtx:ParserRuleContext):
+        Trace.writej(lambda:[ 'ENTER Parser.unrollRecursionContexts',
+                              self.asdict(),
+                              parentCtx.asdict(),
+                             ])
+        rv = self._unrollRecursionContexts(parentCtx)
+        Trace.writej(lambda:[ 'EXIT Parser.unrollRecursionContexts',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _unrollRecursionContexts(self, parentCtx:ParserRuleContext):
         self._precedenceStack.pop()
         self._ctx.stop = self._input.LT(-1)
         retCtx = self._ctx # save current ctx (return value)
@@ -451,6 +652,16 @@ class Parser (Recognizer):
             parentCtx.addChild(retCtx)
 
     def getInvokingContext(self, ruleIndex:int):
+        Trace.writej(lambda:[ 'ENTER Parser.getInvokingContext',
+                              self.asdict(),
+                              ruleIndex,
+                             ])
+        rv = self._getInvokingContext(ruleIndex)
+        Trace.writej(lambda:[ 'EXIT Parser.getInvokingContext',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _getInvokingContext(self, ruleIndex:int):
         ctx = self._ctx
         while ctx is not None:
             if ctx.getRuleIndex() == ruleIndex:
@@ -460,9 +671,30 @@ class Parser (Recognizer):
 
 
     def precpred(self, localctx:RuleContext , precedence:int):
+        Trace.writej(lambda:[ 'ENTER Parser.precpred',
+                              self.asdict(),
+                              localctx.asdict() ,
+                              precedence,
+                             ])
+        rv = self._precpred(localctx , precedence)
+        Trace.writej(lambda:[ 'EXIT Parser.precpred',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _precpred(self, localctx:RuleContext , precedence:int):
         return precedence >= self._precedenceStack[-1]
 
     def inContext(self, context:str):
+        Trace.writej(lambda:[ 'ENTER Parser.inContext',
+                              self.asdict(),
+                              context,
+                             ])
+        rv = self._inContext(context)
+        Trace.writej(lambda:[ 'EXIT Parser.inContext',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _inContext(self, context:str):
         # TODO: useful in parser?
         return False
 
@@ -481,6 +713,16 @@ class Parser (Recognizer):
     # the ATN, otherwise {@code false}.
     #
     def isExpectedToken(self, symbol:int):
+        Trace.writej(lambda:[ 'ENTER Parser.isExpectedToken',
+                              self.asdict(),
+                              symbol,
+                             ])
+        rv = self._isExpectedToken(symbol)
+        Trace.writej(lambda:[ 'EXIT Parser.isExpectedToken',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _isExpectedToken(self, symbol:int):
         atn = self._interp.atn
         ctx = self._ctx
         s = atn.states[self.state]
@@ -510,15 +752,45 @@ class Parser (Recognizer):
     # @see ATN#getExpectedTokens(int, RuleContext)
     #
     def getExpectedTokens(self):
+        Trace.writej(lambda:[ 'ENTER Parser.getExpectedTokens',
+                              self.asdict(),
+                             ])
+        rv = self._getExpectedTokens()
+        Trace.writej(lambda:[ 'EXIT Parser.getExpectedTokens',
+                                 self.asdict(),
+                                 [x for x in rv],
+                             ])
+        return rv
+
+    def _getExpectedTokens(self):
         return self._interp.atn.getExpectedTokens(self.state, self._ctx)
 
     def getExpectedTokensWithinCurrentRule(self):
+        Trace.writej(lambda:[ 'ENTER Parser.getExpectedTokensWithinCurrentRule',
+                              self.asdict(),
+                             ])
+        rv = self._getExpectedTokensWithinCurrentRule()
+        Trace.writej(lambda:[ 'EXIT Parser.getExpectedTokensWithinCurrentRule',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _getExpectedTokensWithinCurrentRule(self):
         atn = self._interp.atn
         s = atn.states[self.state]
         return atn.nextTokens(s)
 
     # Get a rule's index (i.e., {@code RULE_ruleName} field) or -1 if not found.#
     def getRuleIndex(self, ruleName:str):
+        Trace.writej(lambda:[ 'ENTER Parser.getRuleIndex',
+                              self.asdict(),
+                              ruleName,
+                             ])
+        rv = self._getRuleIndex(ruleName)
+        Trace.writej(lambda:[ 'EXIT Parser.getRuleIndex',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _getRuleIndex(self, ruleName:str):
         ruleIndex = self.getRuleIndexMap().get(ruleName, None)
         if ruleIndex is not None:
             return ruleIndex
@@ -533,6 +805,16 @@ class Parser (Recognizer):
     #  this is very useful for error messages.
     #
     def getRuleInvocationStack(self, p:RuleContext=None):
+        Trace.writej(lambda:[ 'ENTER Parser.getRuleInvocationStack',
+                              self.asdict(),
+                              None if p is None else p.asdict(),
+                             ])
+        rv = self._getRuleInvocationStack(p)
+        Trace.writej(lambda:[ 'EXIT Parser.getRuleInvocationStack',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _getRuleInvocationStack(self, p:RuleContext=None):
         if p is None:
             p = self._ctx
         stack = list()
@@ -548,10 +830,30 @@ class Parser (Recognizer):
 
     # For debugging and other purposes.#
     def getDFAStrings(self):
+        Trace.writej(lambda:[ 'ENTER Parser.getDFAStrings',
+                              self.asdict(),
+                             ])
+        rv = self._getDFAStrings()
+        Trace.writej(lambda:[ 'EXIT Parser.getDFAStrings',
+                                 self.asdict(),
+                                 rv,
+                             ])
+        return rv
+
+    def _getDFAStrings(self):
         return [ str(dfa) for dfa in self._interp.decisionToDFA]
 
     # For debugging and other purposes.#
     def dumpDFA(self):
+        Trace.writej(lambda:[ 'ENTER Parser.dumpDFA',
+                              self.asdict(),
+                             ])
+        rv = self._dumpDFA()
+        Trace.writej(lambda:[ 'EXIT Parser.dumpDFA',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _dumpDFA(self):
         seenOne = False
         for i in range(0, len(self._interp.decisionToDFA)):
             dfa = self._interp.decisionToDFA[i]
@@ -564,6 +866,15 @@ class Parser (Recognizer):
 
 
     def getSourceName(self):
+        Trace.writej(lambda:[ 'ENTER Parser.getSourceName',
+                              self.asdict(),
+                             ])
+        rv = self._getSourceName()
+        Trace.writej(lambda:[ 'EXIT Parser.getSourceName',
+                                 self.asdict(), rv.asdict() ])
+        return rv
+
+    def _getSourceName(self):
         return self._input.sourceName
 
     # During a parse is sometimes useful to listen in on the rule entry and exit

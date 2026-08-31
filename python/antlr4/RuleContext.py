@@ -1,3 +1,5 @@
+import Trace
+
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
 # can be found in the LICENSE.txt file in the project root.
@@ -45,6 +47,12 @@ class RuleContext(RuleNode):
         #  If parent is null, this should be -1.
         self.invokingState = invokingState
 
+
+    def asdict(self):
+        d = {}
+        d['parentCtx'] = None if self.parentCtx is None else self.parentCtx.asdict()
+        d['invokingState'] = self.invokingState
+        return ["RuleContext", d]
 
     def depth(self):
         n = 0
@@ -102,7 +110,15 @@ class RuleContext(RuleNode):
     # trees that don't need it.  Create
     # a subclass of ParserRuleContext with backing field and set
     # option contextSuperClass.
+
     def setAltNumber(self, altNumber:int):
+        Trace.writej(lambda:[ 'ENTER RuleContext.setAltNumber', self.asdict(), altNumber ])
+        rv = self._setAltNumber(altNumber)
+        Trace.writej(lambda:[ 'EXIT RuleContext.setAltNumber', self.asdict(), rv ])
+        return rv
+
+
+    def _setAltNumber(self, altNumber:int):
         pass
 
     def getChild(self, i:int):

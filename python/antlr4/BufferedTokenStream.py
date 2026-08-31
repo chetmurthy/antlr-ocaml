@@ -1,3 +1,5 @@
+import Trace
+
 #
 # Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 # Use of this file is governed by the BSD 3-clause license that
@@ -26,10 +28,16 @@ class TokenStream(object):
     pass
 
 
+tokenStreamCounter = 0
+
 class BufferedTokenStream(TokenStream):
-    __slots__ = ('tokenSource', 'tokens', 'index', 'fetchedEOF')
+    __slots__ = ('tokenSource', 'tokens', 'index', 'fetchedEOF', 'id')
 
     def __init__(self, tokenSource:Lexer):
+        global tokenStreamCounter
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.__init__', tokenStreamCounter, tokenSource.asdict() ])
+        self.id = tokenStreamCounter
+        tokenStreamCounter += 1
         # The {@link TokenSource} from which tokens for this stream are fetched.
         self.tokenSource = tokenSource
 
@@ -61,26 +69,82 @@ class BufferedTokenStream(TokenStream):
         # {@link #tokens} is trivial with this field.</li>
         # <ul>
         self.fetchedEOF = False
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.__init__', self.asdict(terse=False) ])
+
+    def asdict(self, terse=True):
+        if terse:
+            return ["BufferedTokenStreamTerse", {
+                'id' : self.id,
+                'index' : self.index,
+                'fetchedEOF' : self.fetchedEOF,
+            }]
+        else:
+            return ["BufferedTokenStream", {
+                'id' : self.id,
+                'tokenSource' : self.tokenSource.asdict(),
+                'tokens' : [ t.asdict() for t in self.tokens ],
+                'index' : self.index,
+                'fetchedEOF' : self.fetchedEOF,
+            }]
+
 
     def mark(self):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.mark', self.asdict() ])
+        rv = self._mark()
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.mark', self.asdict(), rv ])
+        return rv
+
+    def _mark(self):
         return 0
 
     def release(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.release', self.asdict(), marker ])
+        rv = self._release(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.release', self.asdict(), rv ])
+        return rv
+
+    def _release(self, marker:int):
         # no resources to release
         pass
 
+
     def reset(self):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.reset', self.asdict() ])
+        rv = self._reset()
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.reset', self.asdict(terse=False), rv ])
+        return rv
+
+    def _reset(self):
         self.seek(0)
 
-    def seek(self, index:int):
+    def seek(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.seek', self.asdict(), marker ])
+        rv = self._seek(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.seek', self.asdict(), rv ])
+        return rv
+
+    def _seek(self, index:int):
         self.lazyInit()
         self.index = self.adjustSeekIndex(index)
 
-    def get(self, index:int):
+
+    def get(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.get', self.asdict(), marker ])
+        rv = self._get(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.get', self.asdict(), rv ])
+        return rv
+
+    def _get(self, index:int):
         self.lazyInit()
         return self.tokens[index]
 
     def consume(self):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.consume', self.asdict() ])
+        rv = self._consume()
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.consume', self.asdict(), rv ])
+        return rv
+
+    def _consume(self):
         skipEofCheck = False
         if self.index >= 0:
             if self.fetchedEOF:
@@ -100,24 +164,37 @@ class BufferedTokenStream(TokenStream):
         if self.sync(self.index + 1):
             self.index = self.adjustSeekIndex(self.index + 1)
 
+
+    def sync(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.sync', self.asdict(), marker ])
+        rv = self._sync(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.sync', self.asdict(), rv ])
+        return rv
+
     # Make sure index {@code i} in tokens has a token.
     #
     # @return {@code true} if a token is located at index {@code i}, otherwise
     #    {@code false}.
     # @see #get(int i)
     #/
-    def sync(self, i:int):
+    def _sync(self, i:int):
         n = i - len(self.tokens) + 1 # how many more elements we need?
         if n > 0 :
             fetched = self.fetch(n)
             return fetched >= n
         return True
 
+    def fetch(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.fetch', self.asdict(), marker ])
+        rv = self._fetch(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.fetch', self.asdict(), rv ])
+        return rv
+
     # Add {@code n} elements to buffer.
     #
     # @return The actual number of elements added to the buffer.
     #/
-    def fetch(self, n:int):
+    def _fetch(self, n:int):
         if self.fetchedEOF:
             return 0
         for i in range(0, n):
@@ -130,8 +207,22 @@ class BufferedTokenStream(TokenStream):
         return n
 
 
-    # Get all tokens from start..stop inclusively#/
     def getTokens(self, start:int, stop:int, types:set=None):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.getTokens',
+                              self.asdict(),
+                              start,
+                              stop,
+                              sorted([t for t in types])
+                             ])
+        rv = self._getTokens(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.getTokens',
+                              self.asdict(),
+                              [x.asdict() for x in rv]
+                             ])
+        return rv
+
+    # Get all tokens from start..stop inclusively#/
+    def _getTokens(self, start:int, stop:int, types:set=None):
         if start<0 or stop<0:
             return None
         self.lazyInit()
@@ -146,15 +237,43 @@ class BufferedTokenStream(TokenStream):
                 subset.append(t)
         return subset
 
-    def LA(self, i:int):
+
+    def LA(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.LA', self.asdict(), marker ])
+        rv = self._LA(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.LA', self.asdict(), rv ])
+        return rv
+
+    def _LA(self, i:int):
         return self.LT(i).type
 
-    def LB(self, k:int):
+
+    def LB(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.LB', self.asdict(), marker ])
+        rv = self._LB(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.LB',
+                              self.asdict(),
+                              rv.asdict()
+                             ])
+        return rv
+
+    def _LB(self, k:int):
         if (self.index-k) < 0:
             return None
         return self.tokens[self.index-k]
 
-    def LT(self, k:int):
+
+    def LT(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.LT', self.asdict(), marker ])
+        rv = self._LT(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.LTa',
+                              self.asdict(),
+                              rv.asdict()
+                             ])
+        return rv
+
+
+    def _LT(self, k:int):
         self.lazyInit()
         if k==0:
             return None
@@ -179,10 +298,22 @@ class BufferedTokenStream(TokenStream):
     # @param i The target token index.
     # @return The adjusted target token index.
 
-    def adjustSeekIndex(self, i:int):
+    def adjustSeekIndex(self, marker:int):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.adjustSeekIndex', self.asdict(), marker ])
+        rv = self._adjustSeekIndex(marker)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.adjustSeekIndex', self.asdict(), rv ])
+        return rv
+
+    def _adjustSeekIndex(self, i:int):
         return i
 
     def lazyInit(self):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.lazyInit', self.asdict() ])
+        rv = self._lazyInit()
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.lazyInit', self.asdict(terse=False) ])
+        return rv
+
+    def _lazyInit(self):
         if self.index == -1:
             self.setup()
 
@@ -190,8 +321,14 @@ class BufferedTokenStream(TokenStream):
         self.sync(0)
         self.index = self.adjustSeekIndex(0)
 
+    def setTokenSource(self, tokenSource):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.setTokenSource', self.asdict(), tokenSource.asdict() ])
+        rv = self._setTokenSource(tokenSource)
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.setTokenSource', self.asdict(terse=False), rv ])
+        return rv
+
     # Reset this token stream by setting its token source.#/
-    def setTokenSource(self, tokenSource:Lexer):
+    def _setTokenSource(self, tokenSource:Lexer):
         self.tokenSource = tokenSource
         self.tokens = []
         self.index = -1
@@ -295,8 +432,14 @@ class BufferedTokenStream(TokenStream):
             return buf.getvalue()
 
 
-    # Get all tokens from lexer until EOF#/
     def fill(self):
+        Trace.writej(lambda:[ 'ENTER BufferedTokenStream.fill', self.asdict() ])
+        rv = self._fill()
+        Trace.writej(lambda:[ 'EXIT BufferedTokenStream.fill', self.asdict(terse=False) ])
+        return rv
+
+    # Get all tokens from lexer until EOF#/
+    def _fill(self):
         self.lazyInit()
         while self.fetch(1000)==1000:
             pass
