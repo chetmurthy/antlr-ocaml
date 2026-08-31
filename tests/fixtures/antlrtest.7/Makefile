@@ -130,6 +130,9 @@ GENGRAMFILES=<grammarName>.interp <grammarName>.tokens
 GENLEXFILES=<lexerName>.py <lexerName>.interp <lexerName>.tokens
 <endif>
 
+python-toplevel::
+	$(NOVERBOSE) env TOP=$(TOP) PYTHONPATH=$(WD)/gen-python:$(PYTHONPATH) python3
+
 deserialize-python-json::
 	env PYTHONPATH=$(PYTHONPATH) python3 $(TOP)/tests/deserialize_test.py <lexerName>.interp<\\>
 <if(parserName)>

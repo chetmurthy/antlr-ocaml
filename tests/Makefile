@@ -53,77 +53,40 @@ simulate-all:: replay_util.opt
 #	./replay_util.opt simulate -it "ENTER PredictionContext.mergeArrays" _generated/*/*/json.log
 #	./replay_util.opt simulate -it "ENTER PredictionContext.mergeRoot" _generated/*/*/json.log
 
-DTEST_LexerExec=\
-	fixtures/descriptors/LexerExec/CharSet.txt \
-	fixtures/descriptors/LexerExec/CharSetRange.txt \
-	fixtures/descriptors/LexerExec/CharSetInSet.txt \
-	fixtures/descriptors/LexerExec/CharSetNot.txt \
-	fixtures/descriptors/LexerExec/CharSetPlus.txt \
-	fixtures/descriptors/LexerExec/CharSetWithEscapedChar.txt \
-	fixtures/descriptors/LexerExec/CharSetWithMissingEscapeChar.txt \
-	fixtures/descriptors/LexerExec/CharSetWithQuote1.txt \
-	fixtures/descriptors/LexerExec/CharSetWithQuote2.txt \
-	fixtures/descriptors/LexerExec/EOFByItself.txt \
-	fixtures/descriptors/LexerExec/EOFSuffixInFirstRule_1.txt \
-	fixtures/descriptors/LexerExec/EOFSuffixInFirstRule_2.txt \
-	fixtures/descriptors/LexerExec/EscapedCharacters.txt \
-	fixtures/descriptors/LexerExec/EscapeTargetStringLiteral.txt \
-	fixtures/descriptors/LexerExec/GreedyClosure.txt \
-	fixtures/descriptors/LexerExec/GreedyOptional.txt \
-	fixtures/descriptors/LexerExec/GreedyPositiveClosure.txt \
-	fixtures/descriptors/LexerExec/HexVsID.txt \
-	fixtures/descriptors/LexerExec/KeywordID.txt \
-	fixtures/descriptors/LexerExec/NonGreedyClosure.txt \
-	fixtures/descriptors/LexerExec/NonGreedyOptional.txt \
-	fixtures/descriptors/LexerExec/NonGreedyPositiveClosure.txt \
-	fixtures/descriptors/LexerExec/NonGreedyTermination1.txt \
-	fixtures/descriptors/LexerExec/NonGreedyTermination2.txt \
-	fixtures/descriptors/LexerExec/Parentheses.txt \
-	fixtures/descriptors/LexerExec/QuoteTranslation.txt \
-	fixtures/descriptors/LexerExec/GreedyConfigs.txt \
-	fixtures/descriptors/LexerExec/NonGreedyConfigs.txt \
-	fixtures/descriptors/LexerExec/ActionPlacement.txt \
-	fixtures/descriptors/LexerExec/RecursiveLexerRuleRefWithWildcardPlus_1.txt \
-	fixtures/descriptors/LexerExec/RecursiveLexerRuleRefWithWildcardPlus_2.txt \
-	fixtures/descriptors/LexerExec/RecursiveLexerRuleRefWithWildcardStar_1.txt \
-	fixtures/descriptors/LexerExec/RecursiveLexerRuleRefWithWildcardStar_2.txt \
-	fixtures/descriptors/LexerExec/RefToRuleDoesNotSetTokenNorEmitAnother.txt \
-	fixtures/descriptors/LexerExec/ReservedWordsEscaping_NULL.txt \
-	fixtures/descriptors/LexerExec/ReservedWordsEscaping.txt \
-	fixtures/descriptors/LexerExec/Slashes.txt \
-	fixtures/descriptors/LexerExec/StackoverflowDueToNotEscapedHyphen.txt \
-	fixtures/descriptors/LexerExec/TokenType0xFFFF.txt \
-	fixtures/descriptors/LexerExec/UnicodeCharSet.txt \
-	fixtures/descriptors/LexerExec/ZeroLengthToken.txt \
+
+DTEST_CompositeLexers = $(shell ls fixtures/descriptors/CompositeLexers/*.txt)
+DTEST_CompositeParsers = $(shell ls fixtures/descriptors/CompositeParsers/*.txt)
+DTEST_FullContextParsing = $(shell ls fixtures/descriptors/FullContextParsing/*.txt)
+DTEST_LeftRecursion = $(shell ls fixtures/descriptors/LeftRecursion/*.txt)
+DTEST_LexerErrors = $(shell ls fixtures/descriptors/LexerErrors/*.txt)
+DTEST_LexerExec = $(shell ls fixtures/descriptors/LexerExec/*.txt)
+DTEST_Listeners = $(shell ls fixtures/descriptors/Listeners/*.txt)
+DTEST_ParserErrors = $(shell ls fixtures/descriptors/ParserErrors/*.txt)
+DTEST_ParserExec = $(shell ls fixtures/descriptors/ParserExec/*.txt)
+DTEST_ParseTrees = $(shell ls fixtures/descriptors/ParseTrees/*.txt)
+DTEST_Performance = $(shell ls fixtures/descriptors/Performance/*.txt)
+DTEST_SemPredEvalLexer = $(shell ls fixtures/descriptors/SemPredEvalLexer/*.txt)
+DTEST_SemPredEvalParser = $(shell ls fixtures/descriptors/SemPredEvalParser/*.txt)
+DTEST_Sets = $(shell ls fixtures/descriptors/Sets/*.txt)
+
+DTEST_all = \
+	$(DTEST_CompositeLexers) \
+	$(DTEST_CompositeParsers) \
+	$(DTEST_FullContextParsing) \
+	$(DTEST_LeftRecursion) \
+	$(DTEST_LexerErrors) \
+	$(DTEST_LexerExec) \
+	$(DTEST_Listeners) \
+	$(DTEST_ParserErrors) \
+	$(DTEST_ParserExec) \
+	$(DTEST_ParseTrees) \
+	$(DTEST_Performance) \
+	$(DTEST_SemPredEvalLexer) \
+	$(DTEST_SemPredEvalParser) \
+	$(DTEST_Sets) \
 
 
-DTEST_LexerErrors = \
-	fixtures/descriptors/LexerErrors/DFAToATNThatFailsBackToDFA.txt \
-	fixtures/descriptors/LexerErrors/DFAToATNThatMatchesThenFailsInATN.txt \
-	fixtures/descriptors/LexerErrors/EnforcedGreedyNestedBraces_1.txt \
-	fixtures/descriptors/LexerErrors/EnforcedGreedyNestedBraces_2.txt \
-	fixtures/descriptors/LexerErrors/ErrorInMiddle.txt \
-	fixtures/descriptors/LexerErrors/InvalidCharAtStartAfterDFACache.txt \
-	fixtures/descriptors/LexerErrors/InvalidCharAtStart.txt \
-	fixtures/descriptors/LexerErrors/InvalidCharInTokenAfterDFACache.txt \
-	fixtures/descriptors/LexerErrors/InvalidCharInToken.txt \
-	fixtures/descriptors/LexerErrors/LexerExecDFA.txt \
-	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_1.txt \
-	fixtures/descriptors/LexerErrors/StringsEmbeddedInActions_2.txt \
-
-DTEST_CompositeLexers = \
-	fixtures/descriptors/CompositeLexers/LexerDelegatorInvokesDelegateRule.txt \
-	fixtures/descriptors/CompositeLexers/LexerDelegatorRuleOverridesDelegate.txt \
-
-DTEST_SemPredEvalLexer = \
-	fixtures/descriptors/SemPredEvalLexer/DisableRule.txt \
-	fixtures/descriptors/SemPredEvalLexer/EnumNotID.txt \
-	fixtures/descriptors/SemPredEvalLexer/IDnotEnum.txt \
-	fixtures/descriptors/SemPredEvalLexer/IDvsEnum.txt \
-	fixtures/descriptors/SemPredEvalLexer/Indent.txt \
-	fixtures/descriptors/SemPredEvalLexer/LexerInputPositionSensitivePredicates.txt \
-	fixtures/descriptors/SemPredEvalLexer/PredicatedKeywords.txt \
-	fixtures/descriptors/SemPredEvalLexer/RuleSempredFunction.txt \
+uDTEST_custom = $(shell ls fixtures/custom-descriptors/*/*.txt)
 
 DTEST_antlr4 = \
 	fixtures/custom-descriptors/antlr4/A2.txt \
@@ -139,17 +102,20 @@ DTEST_antlr4 = \
 	fixtures/custom-descriptors/antlr4/STG1.txt \
 	fixtures/custom-descriptors/antlr4/STG2.txt \
 
-#DTEST = $(DTEST_antlr4) $(DTEST_LexerExec)
+DTEST = $(DTEST_antlr4) $(DTEST_LexerExec)
 
 DTEST := \
 	fixtures/descriptors/LexerExec/CharSet.txt \
 	fixtures/descriptors/ParserExec/Basic.txt \
 	fixtures/custom-descriptors/antlr4/sexp1.txt \
+	fixtures/custom-descriptors/antlr4/choice0.txt \
 	fixtures/custom-descriptors/antlr4/choice1.txt \
 	fixtures/custom-descriptors/antlr4/star1.txt \
 	fixtures/custom-descriptors/antlr4/star2.txt \
 
-DALL=$(shell ls fixtures/descriptors/*Lexer*/*) $(shell ls fixtures/custom-descriptors/*/*)
+DALL=$(DTEST_all) $(DTEST_custom)
+
+$(info $(DALL))
 
 DTESTCMD=full -v
 

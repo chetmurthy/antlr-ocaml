@@ -14,9 +14,8 @@ def nextToken(self):
     return rv
 
 }
-top : (( A B ) | (A C)) EOF ;
+top : (( 'a' B ) | ('a' C)) EOF ;
 
-A : 'a' ;
 B : 'b' ;
 C : 'c' ;
 

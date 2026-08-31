@@ -1,7 +1,19 @@
 writeln(s) ::= <<output_string stdout (<s>^"\n")>>
+write(s) ::= <<output_string stdout (<s>)>>
 Text() ::= <<(R.text self cu)>>
 PlusText(a) ::= <<("<a>" ^ <Text()>)>>
 False() ::= "false"
 True() ::= "true"
 Not(v) ::= "not (<v>)"
 AppendStr(a,b) ::= "<a> ^ <b>"
+
+Declare_foo() ::= <<let foo self cu = output_string stdout ("foo\n")>>
+
+Invoke_foo() ::= "foo self cu"
+
+InitIntMember(n,v) ::= <%let <n> = <v>%>
+InitIntVar(n,v) ::= <%<InitIntMember(n,v)>%>
+
+LL_EXACT_AMBIG_DETECTION() ::= <<self._interp.predictionMode :=  PredictionMode.LL_EXACT_AMBIG_DETECTION>>
+
+DumpDFA() ::= "dumpDFA self"

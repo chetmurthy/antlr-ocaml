@@ -4,6 +4,7 @@ import Util
 <if(!python3)>from __future__ import print_function<endif>
 import sys
 import codecs
+import re
 import argparse
 from antlr4 import *
 from <lexerName> import <lexerName>
@@ -35,6 +36,20 @@ def main(argv):<\\>
     if args.show_dfa:
         print(lexer._interp.decisionToDFA[Lexer.DEFAULT_MODE].toLexerString(), end='')
 
+linere = re.compile(r"^([a-zA-Z0-9_]+)=([0-9]+)$")
+symbolicNames = {}
+tokensfile = '../../gen-python/<lexerName>.tokens'
+
+def loadTokenMap():
+    global symbolicNames, linere, tokensfile
+    with open(tokensfile, 'r', encoding='utf-8') as file:
+        for line in file:
+            r = linere.match(line)
+            if r is not None:
+                name = r.group(1)
+                num = int(r.group(2))
+                symbolicNames[num] = name
+
 def Token__str(lexer, t):
     txt = t.text
     if txt is not None:
@@ -45,8 +60,10 @@ def Token__str(lexer, t):
         txt = "\<no text>"
     if t.type == -1:
         type_string = "EOF"
+    elif t.type in symbolicNames:
+        type_string = symbolicNames[t.type]
     else:
-        type_string = lexer.symbolicNames[t.type]
+        type_string = "None"
     return ("[@%s,%s:%s='%s',\<%s>,channel=%s,%s:%s]" %
             (t.tokenIndex, t.start, t.stop, txt, type_string,t.channel,t.line,t.column))
 
