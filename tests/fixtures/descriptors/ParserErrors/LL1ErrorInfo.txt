@@ -14,7 +14,7 @@ SOFTWARE: 'software';
 WS : ' ' -> skip ;
 acClass
 @init
-{print(self.getExpectedTokens().toString(self.literalNames, self.symbolicNames), file=self._output)}
+{<GetExpectedTokenNames():writeln()>}
   : ;
 
 [start]
