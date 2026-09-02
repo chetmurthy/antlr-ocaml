@@ -221,6 +221,20 @@ and input_stream_t =
 and edge_serialization_type_t = [%import: Types.edge_serialization_type_t]
 and edge_t = [%import: Types.edge_t]
 
+and buffered_token_stream_t =
+  BufferedTokenStreamTerse of {
+      id : int
+    ; index : int
+    ; fetchedEOF : bool
+    }
+| BufferedTokenStream of {
+      id : int
+    ; tokenSource : lexer_t
+    ; tokens : token_t list
+    ; index : int
+    ; fetchedEOF : bool
+    }
+
 [@@deriving yojson,located_yojson, show]
 
 type json_log_t =
@@ -737,6 +751,118 @@ type json_log_t =
 | Transition_EXIT_matches of bool
                                     [@yojson.name "EXIT Transition.matches"]
                                     [@located_yojson.name "EXIT Transition.matches"]
+
+| BTS_ENTER_init of int * lexer_t
+                                    [@yojson.name "ENTER BufferedTokenStream.__init__"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.__init__"]
+| BTS_EXIT_init of buffered_token_stream_t
+                                    [@yojson.name "EXIT BufferedTokenStream.__init__"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.__init__"]
+
+| BTS_ENTER_mark of buffered_token_stream_t
+                                    [@yojson.name "ENTER BufferedTokenStream.mark"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.mark"]
+| BTS_EXIT_mark of buffered_token_stream_t * int
+                                    [@yojson.name "EXIT BufferedTokenStream.mark"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.mark"]
+
+| BTS_ENTER_release of buffered_token_stream_t
+                                    [@yojson.name "ENTER BufferedTokenStream.release"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.release"]
+| BTS_EXIT_release of buffered_token_stream_t * unit option
+                                    [@yojson.name "EXIT BufferedTokenStream.release"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.release"]
+
+| BTS_ENTER_adjustSeekIndex of buffered_token_stream_t * int
+                                    [@yojson.name "ENTER BufferedTokenStream.adjustSeekIndex"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.adjustSeekIndex"]
+| BTS_EXIT_adjustSeekIndex of buffered_token_stream_t * int
+                                    [@yojson.name "EXIT BufferedTokenStream.adjustSeekIndex"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.adjustSeekIndex"]
+
+| BTS_ENTER_fetch of buffered_token_stream_t * int
+                                    [@yojson.name "ENTER BufferedTokenStream.fetch"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.fetch"]
+| BTS_EXIT_fetch of buffered_token_stream_t * int
+                                    [@yojson.name "EXIT BufferedTokenStream.fetch"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.fetch"]
+
+| BTS_ENTER_sync of buffered_token_stream_t * int
+                                    [@yojson.name "ENTER BufferedTokenStream.sync"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.sync"]
+| BTS_EXIT_sync of buffered_token_stream_t * bool
+                                    [@yojson.name "EXIT BufferedTokenStream.sync"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.sync"]
+
+| BTS_ENTER_setup of buffered_token_stream_t
+                                    [@yojson.name "ENTER BufferedTokenStream.setup"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.setup"]
+| BTS_EXIT_setup of buffered_token_stream_t * unit option
+                                    [@yojson.name "EXIT BufferedTokenStream.setup"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.setup"]
+
+| BTS_ENTER_lazyInit of buffered_token_stream_t
+                                    [@yojson.name "ENTER BufferedTokenStream.lazyInit"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.lazyInit"]
+| BTS_EXIT_lazyInit of buffered_token_stream_t
+                                    [@yojson.name "EXIT BufferedTokenStream.lazyInit"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.lazyInit"]
+
+| BTS_ENTER_seek of buffered_token_stream_t * int
+                                    [@yojson.name "ENTER BufferedTokenStream.seek"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.seek"]
+| BTS_EXIT_seek of buffered_token_stream_t * unit option
+                                    [@yojson.name "EXIT BufferedTokenStream.seek"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.seek"]
+
+| BTS_ENTER_reset of buffered_token_stream_t
+                                    [@yojson.name "ENTER BufferedTokenStream.reset"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.reset"]
+| BTS_EXIT_reset of buffered_token_stream_t * unit option
+                                    [@yojson.name "EXIT BufferedTokenStream.reset"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.reset"]
+
+| BTS_ENTER_get of buffered_token_stream_t * int
+                                    [@yojson.name "ENTER BufferedTokenStream.get"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.get"]
+| BTS_EXIT_get of buffered_token_stream_t * token_t
+                                    [@yojson.name "EXIT BufferedTokenStream.get"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.get"]
+
+| BTS_ENTER_LB of buffered_token_stream_t * int
+                                    [@yojson.name "ENTER BufferedTokenStream.LB"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.LB"]
+| BTS_EXIT_LB of buffered_token_stream_t * token_t option
+                                    [@yojson.name "EXIT BufferedTokenStream.LB"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.LB"]
+
+| BTS_ENTER_LT of buffered_token_stream_t * int
+                                    [@yojson.name "ENTER BufferedTokenStream.LT"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.LT"]
+| BTS_EXIT_LT of buffered_token_stream_t * token_t option
+                                    [@yojson.name "EXIT BufferedTokenStream.LT"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.LT"]
+
+| BTS_ENTER_LA of buffered_token_stream_t * int
+                                    [@yojson.name "ENTER BufferedTokenStream.LA"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.LA"]
+| BTS_EXIT_LA of buffered_token_stream_t * int option
+                                    [@yojson.name "EXIT BufferedTokenStream.LA"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.LA"]
+
+| BTS_ENTER_consume of buffered_token_stream_t
+                                    [@yojson.name "ENTER BufferedTokenStream.consume"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.consume"]
+| BTS_EXIT_consume of buffered_token_stream_t * unit option
+                                    [@yojson.name "EXIT BufferedTokenStream.consume"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.consume"]
+
+| BTS_ENTER_fill of buffered_token_stream_t
+                                    [@yojson.name "ENTER BufferedTokenStream.fill"]
+                                    [@located_yojson.name "ENTER BufferedTokenStream.fill"]
+| BTS_EXIT_fill of buffered_token_stream_t
+                                    [@yojson.name "EXIT BufferedTokenStream.fill"]
+                                    [@located_yojson.name "EXIT BufferedTokenStream.fill"]
 
 | Msg of string * json_t
                                     [@yojson.name "msg"]

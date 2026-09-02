@@ -3055,3 +3055,383 @@ let file_init  ~dfast_cache ~acs_cache ~ac_cache () =
     AS.module_init ~dfast_cache ~acs_cache ~ac_cache () ;
     LAS.module_init ~dfast_cache ~acs_cache ~ac_cache ()
   end
+
+module BTS = struct
+module Counter = Counter(struct let name = "BTS" end)
+
+exception IllegalStateException of string
+
+type t = {
+    id : int
+  ; mutable tokenSource : L.t
+  ; mutable tokens : T.t Dynarray.t
+  ; mutable index : int
+  ; mutable fetchedEOF : bool
+  }
+
+let to_mimick ~terse t =
+  if terse then
+    M.BufferedTokenStreamTerse {
+        id = t.id
+      ; index = t.index
+      ; fetchedEOF = t.fetchedEOF
+      }
+  else 
+    BufferedTokenStream {
+        id = t.id
+      ; tokenSource = L.to_mimick t.tokenSource
+      ; tokens = t.tokens |> Dynarray.to_list |> List.map T.to_mimick
+      ; index = t.index
+      ; fetchedEOF = t.fetchedEOF
+      }
+
+  let init tokenSource =
+    let id = Counter.get_incr() in
+  [%trace
+      (BTS_ENTER_init (Counter.get(), L.to_mimick tokenSource))] ;
+  let rv = {
+      id
+    ; tokenSource
+    ; tokens = Dynarray.create ()
+    ; index = -1
+    ; fetchedEOF = false
+    } in
+  [%trace
+      (BTS_EXIT_init (to_mimick ~terse:false rv))] ;
+  rv
+
+  let _mark self = 0
+
+  let mark self =
+  [%trace
+      (BTS_ENTER_mark (to_mimick ~terse:true self))] ;
+  let rv = _mark self in
+  [%trace
+      (BTS_EXIT_mark (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _release self = None
+  let release self =
+  [%trace
+      (BTS_ENTER_release (to_mimick ~terse:true self))] ;
+  let rv = _release self in
+  [%trace
+      (BTS_EXIT_release (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _adjustSeekIndex self i =
+    i
+
+  let adjustSeekIndex self i =
+  [%trace
+      (BTS_ENTER_adjustSeekIndex (to_mimick ~terse:true self, i))] ;
+  let rv = _adjustSeekIndex self i in
+  [%trace
+      (BTS_EXIT_adjustSeekIndex (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _fetch self n =
+    if self.fetchedEOF then 0
+    else
+      let rec frec i =
+        if i = n then
+          n
+        else
+          let t = L.nextToken self.tokenSource in
+          t.tokenIndex <- Some (Dynarray.length self.tokens) ;
+          Dynarray.add_last self.tokens t ;
+          if Std.outSome t.type_ = C._EOF then begin
+              self.fetchedEOF <- true ;
+              (i+1)
+            end
+          else
+            frec (i+1)
+      in frec 0
+
+  let fetch self i =
+  [%trace
+      (BTS_ENTER_fetch (to_mimick ~terse:true self, i))] ;
+  let rv = _fetch self i in
+  [%trace
+      (BTS_EXIT_fetch (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _sync self i =
+    let n = i - (Dynarray.length self.tokens) + 1 in
+    if n > 0 then
+      let fetched = fetch self n in
+      fetched >= n
+    else
+      true
+
+  let sync self i =
+  [%trace
+      (BTS_ENTER_sync (to_mimick ~terse:true self, i))] ;
+  let rv = _sync self i in
+  [%trace
+      (BTS_EXIT_sync (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _setup self =
+    sync self 0 ;
+    self.index <- adjustSeekIndex self 0 ;
+    None
+
+  let setup self =
+  [%trace
+      (BTS_ENTER_setup (to_mimick ~terse:true self))] ;
+  let rv = _setup self in
+  [%trace
+      (BTS_EXIT_setup (to_mimick ~terse:true self, rv))] ;
+  assert (rv = None)
+
+  let _lazyInit self =
+    if self.index = -1 then
+      setup self
+
+  let lazyInit self =
+  [%trace
+      (BTS_ENTER_lazyInit (to_mimick ~terse:true self))] ;
+  let () = _lazyInit self in
+  [%trace
+      (BTS_EXIT_lazyInit (to_mimick ~terse:true self))] ;
+  ()
+
+
+  let _seek self index =
+    lazyInit self ;
+    self.index <- adjustSeekIndex self index ;
+    None
+  let seek self index =
+  [%trace
+      (BTS_ENTER_seek (to_mimick ~terse:true self, index))] ;
+  let rv = _seek self index in
+  [%trace
+      (BTS_EXIT_seek (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _reset self =
+    seek self 0
+  let reset self =
+  [%trace
+      (BTS_ENTER_reset (to_mimick ~terse:true self))] ;
+  let rv = _reset self in
+  [%trace
+      (BTS_EXIT_reset (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _get self index =
+    lazyInit self ;
+    Dynarray.get self.tokens index
+
+  let get self index =
+  [%trace
+      (BTS_ENTER_get (to_mimick ~terse:true self, index))] ;
+  let rv = _get self index in
+  [%trace
+      (BTS_EXIT_get (to_mimick ~terse:true self, T.to_mimick rv))] ;
+  rv
+
+  let __LB self k =
+    if self.index - k < 0 then
+      None
+    else Some (Dynarray.get self.tokens (self.index - k))
+  let _LB self index =
+  [%trace
+      (BTS_ENTER_LB (to_mimick ~terse:true self, index))] ;
+  let rv = __LB self index in
+  [%trace
+      (BTS_EXIT_LB (to_mimick ~terse:true self, Option.map T.to_mimick rv))] ;
+  rv
+
+  let __LT self k =
+    lazyInit self ;
+    if k = 0 then None
+    else if k < 0 then _LB self (-k)
+    else begin
+        let i = self.index + k - 1 in
+        if i >= Dynarray.length self.tokens then
+          Some (Dynarray.get self.tokens (Dynarray.length self.tokens - 1))
+        else
+          Some (Dynarray.get self.tokens i)
+      end
+  let _LT self index =
+  [%trace
+      (BTS_ENTER_LT (to_mimick ~terse:true self, index))] ;
+  let rv = __LT self index in
+  [%trace
+      (BTS_EXIT_LT (to_mimick ~terse:true self, Option.map T.to_mimick rv))] ;
+  rv
+
+      
+  let __LA self i =
+    (Std.outSome (_LT self i)).type_
+  let _LA self index =
+  [%trace
+      (BTS_ENTER_LA (to_mimick ~terse:true self, index))] ;
+  let rv = __LA self index in
+  [%trace
+      (BTS_EXIT_LA (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _consume self =
+    let skipEofCheck = ref false in
+    if self.index = 0 then
+      if self.fetchedEOF then
+        skipEofCheck := self.index < (Dynarray.length self.tokens - 1)
+      else
+        skipEofCheck := self.index < (Dynarray.length self.tokens)
+    else
+      skipEofCheck := false ;
+    if not !skipEofCheck && Std.outSome (_LA self 1) = C._EOF then
+      raise (IllegalStateException "cannot consume EOF") ;
+    if sync self (self.index + 1) then
+      self.index <- adjustSeekIndex self (self.index + 1) ;
+    None
+
+  let consume self =
+  [%trace
+      (BTS_ENTER_consume (to_mimick ~terse:true self))] ;
+  let rv = _consume self in
+  [%trace
+      (BTS_EXIT_consume (to_mimick ~terse:true self, rv))] ;
+  rv
+
+  let _getTokens self start stop types =
+    let stop = ref stop in 
+    if start < 0 || !stop > 0 then
+      None
+    else begin
+        lazyInit self ;
+        let subset = ref [] in
+        if !stop >= Dynarray.length self.tokens then
+          stop := (Dynarray.length self.tokens) - 1 ;
+        let rec grec i =
+          if i = !stop then ()
+          else begin
+              let t = Dynarray.get self.tokens i in
+              if Std.outSome t.type_ = C._EOF then
+                ()
+              else begin
+                  if types = None || List.mem t.type_ (Std.outSome types) then
+                    Std.push subset t ;
+                  grec (i+1)
+                end
+            end
+        in grec start ;
+           Some (List.rev !subset)
+      end
+
+  let _setTokenSource self tokenSource =
+    self.tokenSource <- tokenSource ;
+    self.tokens <- Dynarray.create () ;
+    self.index <- -1 ;
+    self.fetchedEOF <- false
+
+  let nextTokenOnChannel self i channel =
+    let i = ref i in
+    sync self !i ;
+    if !i >= Dynarray.length self.tokens then
+      (Dynarray.length self.tokens) - 1
+    else
+      with_return (fun return ->
+          let token = ref (Dynarray.get self.tokens !i) in
+          while (!token).channel <> channel do
+            if Std.outSome (!token).type_ = C._EOF then
+              return.return !i ;
+            incr i ;
+            sync self !i ;
+            token := Dynarray.get self.tokens !i
+          done ;
+          return.return !i
+        )
+
+  let previousTokenOnChannel self i (channel : int) =
+    let i = ref i in
+    while !i >= 0 && Std.outSome (Dynarray.get self.tokens !i).channel <> channel do
+      decr i
+    done ;
+    !i
+
+  let filterForChannel self left right channel =
+    let hidden = ref [] in
+    for i = left to right do
+      let t = Dynarray.get self.tokens i in
+      if channel = -1 then
+        if Std.outSome t.channel <> C._DEFAULT_TOKEN_CHANNEL then
+          Std.push hidden t
+        else ()
+      else if Std.outSome t.channel = channel then
+        Std.push hidden t
+    done ;
+    if !hidden = [] then None
+    else Some !hidden
+
+  let getHiddenTokensToRight self tokenIndex channel =
+    lazyInit self ;
+    if tokenIndex < 0 || tokenIndex >= Dynarray.length self.tokens then
+      Fmt.(failwithf "%d not in 0..%d" tokenIndex (Dynarray.length self.tokens - 1)) ;
+    let prevOnChannel = ref (previousTokenOnChannel self (tokenIndex - 1) C._DEFAULT_TOKEN_CHANNEL) in
+    if !prevOnChannel = tokenIndex - 1 then
+      None
+    else
+      let from_ = !prevOnChannel + 1 in
+      let to_ = tokenIndex-1 in
+             filterForChannel self from_ to_ channel
+
+let getHiddenTokensToLeft self tokenIndex ?(channel= -1) () =
+  lazyInit self ;
+  if tokenIndex < 0 || tokenIndex >= Dynarray.length self.tokens then
+    Fmt.(failwithf "%d not in 0..%d" tokenIndex (Dynarray.length self.tokens - 1)) ;
+  let prevOnChannel = ref (previousTokenOnChannel self (tokenIndex - 1) C._DEFAULT_TOKEN_CHANNEL) in
+  if !prevOnChannel = tokenIndex - 1 then
+    None
+  else
+    let from_ = !prevOnChannel + 1 in
+    let to_ = tokenIndex - 1 in
+    filterForChannel self from_ to_ channel
+
+  let _fill self =
+    lazyInit self ;
+    while fetch self 1000 = 1000 do
+      ()
+    done
+
+  let fill self =
+  [%trace
+      (BTS_ENTER_fill (to_mimick ~terse:true self))] ;
+  let rv = _fill self in
+  [%trace
+      (BTS_EXIT_fill (to_mimick ~terse:true self))] ;
+  rv
+
+
+  let getText self start stop =
+    lazyInit self ;
+    fill self ;
+    let start =
+      match start with
+        None -> 0
+      | Some n -> n in
+    let stop =
+      match stop with
+        None -> Dynarray.length self.tokens - 1
+      | Some n when n >= Dynarray.length self.tokens -> Dynarray.length self.tokens - 1
+      | Some n -> n in
+    if start < 0 || stop < 0 || stop < start then
+      ""
+    else
+      let rec grec acc i =
+        if i = stop+1 then List.rev acc
+        else
+          let t = Dynarray.get self.tokens i in
+          if Std.outSome t.type_ = C._EOF then
+            List.rev acc
+          else
+            grec (t::acc) (i+1)
+      in
+      let l = grec [] start in
+      String.concat "" (List.map T.text l)
+
+end
+module BufferedTokenStream = BTS
