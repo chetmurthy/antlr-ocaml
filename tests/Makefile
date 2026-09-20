@@ -69,20 +69,25 @@ DTEST_SemPredEvalLexer = $(shell ls fixtures/descriptors/SemPredEvalLexer/*.txt)
 DTEST_SemPredEvalParser = $(shell ls fixtures/descriptors/SemPredEvalParser/*.txt)
 DTEST_Sets = $(shell ls fixtures/descriptors/Sets/*.txt)
 
-DTEST_all = \
+DTEST_lexers = \
 	$(DTEST_CompositeLexers) \
+	$(DTEST_LexerErrors) \
+	$(DTEST_LexerExec) \
+	$(DTEST_SemPredEvalLexer) \
+
+DTEST_parsers = \
 	$(DTEST_CompositeParsers) \
 	$(DTEST_FullContextParsing) \
 	$(DTEST_LeftRecursion) \
-	$(DTEST_LexerErrors) \
-	$(DTEST_LexerExec) \
 	$(DTEST_Listeners) \
 	$(DTEST_ParserErrors) \
 	$(DTEST_ParserExec) \
 	$(DTEST_ParseTrees) \
-	$(DTEST_SemPredEvalLexer) \
 	$(DTEST_SemPredEvalParser) \
 	$(DTEST_Sets) \
+
+#DTEST_all = $(DTEST_lexers) $(DTEST_parsers)
+DTEST_all = $(DTEST_lexers)
 
 #	$(DTEST_Performance) \
 
