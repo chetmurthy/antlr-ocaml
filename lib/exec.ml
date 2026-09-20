@@ -3435,3 +3435,42 @@ let getHiddenTokensToLeft self tokenIndex ?(channel= -1) () =
 
 end
 module BufferedTokenStream = BTS
+
+module PAS = struct
+
+type pas_t = {
+    id : int
+  ; atn : Atn.t
+    [@printer (fun pps x -> Fmt.(pf pps "<atn 0x%08x>" (Hashtbl.hash x)))]
+    [@equal (fun x y -> x==y)]
+  ; sharedContextCache : (PC.t MHS.t
+                           [@equal mhs_equal]
+                                 [@printer (fun pps _ -> Fmt.(pf pps "_"))])
+  ; decisionToDFA : DFA.t array
+  ; mutable predictionMode : M.prediction_mode_t
+  ; mutable _input : BTS.t option
+  ; mutable _startIndex : int
+  ; mutable _outerContext : RC.t option
+  ; mutable _dfa : DFA.t option
+  }
+
+let init ?predicted_id atn decisionToDFA sharedContextCache () =
+  AS.Counter.check predicted_id ;
+  decisionToDFA
+  |> Array.iter
+       (fun dfa -> DFA.add_ERROR dfa (Std.outSome !AS._ERROR)) ;
+  let id = AS.Counter.get_incr () in
+  {
+    id
+  ; atn
+  ; sharedContextCache = MHS.ofList sharedContextCache 23
+  ; decisionToDFA
+  ; predictionMode = M.LL
+  ; _input = None
+  ; _startIndex = 0
+  ; _outerContext = None
+  ; _dfa = None
+  }
+
+end
+module ParserATNSimulator = PAS
