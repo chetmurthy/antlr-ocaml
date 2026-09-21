@@ -269,3 +269,6 @@ StringType() ::= "String"
 ContextMember(ctx, member) ::= "<ctx>.<member>"
 SubContextLocal(ctx, subctx, local) ::= "<ctx>.<subctx>.<local>"
 SubContextMember(ctx, subctx, member) ::= "<ctx>.<subctx>.<member>"
+
+IsUID() ::= << self.text[0].isupper() >>
+IsLID() ::= << self.text[0].islower() >>

@@ -3,8 +3,8 @@ Lexer
 
 [grammar]
 lexer grammar L;
-UID   : [a-zA-Z]+ { self.text[0].isupper() }? { print("UID " + self.text, file=self._output) } ;
-LID   : [a-zA-Z]+ { self.text[0].islower() }? { print("LID " + self.text, file=self._output) } ;
+UID   : [a-zA-Z]+ { <IsUID()> }? { <PlusText("UID "):writeln()> } ;
+LID   : [a-zA-Z]+ { <IsLID()> }? { <PlusText("LID "):writeln()> } ;
 WS   : [ \n] -> skip ;
 
 [input]

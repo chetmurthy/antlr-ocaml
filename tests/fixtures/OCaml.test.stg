@@ -30,3 +30,6 @@ let type2string lexer n =
   else ty2name.(n)
 
 >>
+
+IsUID() ::= << Char.Ascii.is_upper (R.text self cu).[0] >>
+IsLID() ::= << Char.Ascii.is_lower (R.text self cu).[0] >>
