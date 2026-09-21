@@ -5,6 +5,9 @@ include $(TOP)/config/Makefile.sub
 PYTHONPATH:=$(TOP)/python:$(PYTHONPATH)
 #PYTHONPATH:=/home/chet/Hack/Antlr/src/antlr4/runtime/Python3/src:$(PYTHONPATH)
 SHELL := /bin/bash
+export CLASSPATH=/home/chet/Hack/Antlr/src/antlr4/tool/target/antlr4-4.13.3-SNAPSHOT-complete.jar:
+#ANTLR4 = /home/chet/Hack/Antlr/antlr-install/antlr4
+ANTLR4 = java -cp $(CLASSPATH) org.antlr.v4.Tool
 ADJUST=$(TOP)/tests/tools/adjust-dfa
 TESTBASEDIR=$(TOP)/tests/fixtures/test-base-files
 PERTESTDIR=$(TOP)/tests/fixtures/pertest-files/<testName>
@@ -75,7 +78,8 @@ compare-json-log:: json.log.SAVED json.log
 VISITOR=-visitor
 <endif>
 gen-python/<lexerName>.py: <grammarNames:{ n | gen-python/<n>.g4 }>
-	$(NOVERBOSE) (cd gen-python && antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Python3 <grammarName>.g4)
+	$(NOVERBOSE) (cd gen-python && $(ANTLR4) $(VISITOR) $(LIBARG) -Dlanguage=Python3 <grammarName>.g4)
+	$(NOVERBOSE) (cd gen-python && $(ANTLR4) $(VISITOR) $(LIBARG) -Dlanguage=Python3 -print-atn <grammarName>.g4 > <grammarName>.printed-atn.NEW && mv <grammarName>.printed-atn.NEW  <grammarName>.printed-atn )
 
 <grammarNames:{ n |gen-python/<n>.g4: raw/<n>.g4
 	$(NOVERBOSE) mkdir -p gen-python
@@ -86,7 +90,7 @@ gen-python/<lexerName>.py: <grammarNames:{ n | gen-python/<n>.g4 }>
 cpp-prepare:: gen-cpp/<lexerName>.cpp
 
 gen-cpp/<lexerName>.cpp: <grammarNames:{ n | gen-cpp/<n>.g4 }>
-	$(NOVERBOSE) (cd gen-cpp && antlr4 $(VISITOR) $(LIBARG) -Dlanguage=Cpp <grammarName>.g4)
+	$(NOVERBOSE) (cd gen-cpp && $(ANTLR4) $(VISITOR) $(LIBARG) -Dlanguage=Cpp <grammarName>.g4)
 
 CPPTESTSTG=/home/chet/Hack/Antlr/src/antlr4/runtime-testsuite/resources/org/antlr/v4/test/runtime/templates/Cpp.test.stg
 <grammarNames:{ n |gen-cpp/<n>.g4: raw/<n>.g4
