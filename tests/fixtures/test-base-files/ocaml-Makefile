@@ -50,5 +50,8 @@ test.exe: $(ML:.ml=.cmo)
 test.opt: $(ML:.ml=.cmx)
 	$(LAUNCH) $(OCAMLFIND) ocamlopt -linkall -linkpkg $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $^
 
+test.ml: test.ml.TEMPLATE
+	$(ST4UTIL) transform --group OCaml.stg test.ml.TEMPLATE > test.ml.NEW && mv test.ml.NEW test.ml
+
 clean::
 	rm -f *.cm* *.opt *.exe ocaml-errors* ocaml-output* ocaml-json* *.RAW

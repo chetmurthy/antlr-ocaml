@@ -1,6 +1,10 @@
 writeln(s) ::= <<output_string stdout (<s>^"\n")>>
 write(s) ::= <<output_string stdout (<s>)>>
 Text() ::= <<(R.text self cu)>>
+
+TextEquals(a) ::= <%<Text()> = "<a>"%>
+TokenStartColumnEquals(i) ::= <%self._tokenStartColumn = <i>%>
+Column() ::= "cu.column"
 PlusText(a) ::= <<("<a>" ^ <Text()>)>>
 False() ::= "false"
 True() ::= "true"
@@ -17,3 +21,12 @@ InitIntVar(n,v) ::= <%<InitIntMember(n,v)>%>
 LL_EXACT_AMBIG_DETECTION() ::= <<self._interp.predictionMode :=  PredictionMode.LL_EXACT_AMBIG_DETECTION>>
 
 DumpDFA() ::= "dumpDFA self"
+
+Type2String() ::= <<
+
+let type2string lexer n =
+  let ty2name = (fst Lex.full_atn).Interp.Raw.token_symbolic_names in
+  if n \< 0 then Some "EOF"
+  else ty2name.(n)
+
+>>

@@ -51,6 +51,16 @@ def loadTokenMap():
                 num = int(r.group(2))
                 symbolicNames[num] = name
 
+def type2string(ty):
+    global symbolicNames
+    if ty == -1:
+        type_string = "EOF"
+    elif ty in symbolicNames:
+        type_string = symbolicNames[ty]
+    else:
+        type_string = str(ty)
+    return type_string
+
 def Token__str(lexer, t):
     global symbolicNames
     txt = t.text
@@ -60,12 +70,7 @@ def Token__str(lexer, t):
         txt = txt.replace("\t","\\\\t")
     else:
         txt = "\<no text>"
-    if t.type == -1:
-        type_string = "EOF"
-    elif t.type in symbolicNames:
-        type_string = symbolicNames[t.type]
-    else:
-        type_string = "None"
+    type_string = type2string(t.type)
     return ("[@%s,%s:%s='%s',\<%s>,channel=%s,%s:%s]" %
             (t.tokenIndex, t.start, t.stop, txt, type_string,t.channel,t.line,t.column))
 

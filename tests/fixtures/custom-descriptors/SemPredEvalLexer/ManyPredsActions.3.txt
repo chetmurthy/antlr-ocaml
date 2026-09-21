@@ -4,40 +4,40 @@ CompositeLexer
 [grammar]
 lexer grammar L;
 import T, S;
-WORD1 : ID1+ { print(self.text) } ;
-WORD2 : ID2+ { print(self.text) } ;
+WORD1 : ID1+ { <Text():writeln()> } ;
+WORD2 : ID2+ { <Text():writeln()> } ;
 fragment ID1 : { <Column()> \< 2 }? [a-zA-Z];
 fragment ID2 : { <Column()> >= 2 }? [a-zA-Z];
 WS : (' '|'\n') -> skip;
 
-A1 :  { print("A1.1") } { <Column()> \< 2 }? { print("A1.2") } [a-z] { print("A1.3") }  { <Column()> \< 2 }? { print("A1.4") } -> more ;
+A1 :  { <writeln("\"A1.1\"")> } { <Column()> \< 2 }? { <writeln("\"A1.2\"")> } [a-z] { <writeln("\"A1.3\"")> }  { <Column()> \< 2 }? { <writeln("\"A1.4\"")> } -> more ;
 A2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
 
 
 mode A;
-A3 :  { print("A3.1") } { <Column()> \< 2 }? { print("A3.2") } [a-z] { print("A3.3") }  { <Column()> \< 2 }? { print("A3.4") } -> more ;
+A3 :  { <writeln("\"A3.1\"")> } { <Column()> \< 2 }? { <writeln("\"A3.2\"")> } [a-z] { <writeln("\"A3.3\"")> }  { <Column()> \< 2 }? { <writeln("\"A3.4\"")> } -> more ;
 A4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
 
 [slaveGrammar]
 lexer grammar S;
-SA1 :  { print("SA1.1") } { <Column()> \< 2 }? { print("SA1.2") } [a-z] { print("SA1.3") }  { <Column()> \< 2 }? { print("SA1.4") } -> more ;
+SA1 :  { <writeln("\"SA1.1\"")> } { <Column()> \< 2 }? { <writeln("\"SA1.2\"")> } [a-z] { <writeln("\"SA1.3\"")> }  { <Column()> \< 2 }? { <writeln("\"SA1.4\"")> } -> more ;
 SA2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
 
 mode SA;
-SA3 :  { print("SA3.1") } { <Column()> \< 2 }? { print("SA3.2") } [a-z] { print("SA3.3") }  { <Column()> \< 2 }? { print("SA3.4") } -> more ;
+SA3 :  { <writeln("\"SA3.1\"")> } { <Column()> \< 2 }? { <writeln("\"SA3.2\"")> } [a-z] { <writeln("\"SA3.3\"")> }  { <Column()> \< 2 }? { <writeln("\"SA3.4\"")> } -> more ;
 SA4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
 
 [slaveGrammar]
 lexer grammar T;
-TA1 :  { print("TA1.1") } { <Column()> \< 2 }? { print("TA1.2") } [a-z] { print("TA1.3") }  { <Column()> \< 2 }? { print("TA1.4") } -> more ;
+TA1 :  { <writeln("\"TA1.1\"")> } { <Column()> \< 2 }? { <writeln("\"TA1.2\"")> } [a-z] { <writeln("\"TA1.3\"")> }  { <Column()> \< 2 }? { <writeln("\"TA1.4\"")> } -> more ;
 TA2 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
 
 mode TB;
-TA3 :  { print("TA3.1") } { <Column()> \< 2 }? { print("TA3.2") } [a-z] { print("TA3.3") }  { <Column()> \< 2 }? { print("TA3.4") } -> more ;
+TA3 :  { <writeln("\"TA3.1\"")> } { <Column()> \< 2 }? { <writeln("\"TA3.2\"")> } [a-z] { <writeln("\"TA3.3\"")> }  { <Column()> \< 2 }? { <writeln("\"TA3.4\"")> } -> more ;
 TA4 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
 
 mode A;
-TA5 :  { print("TA5.1") } { <Column()> \< 2 }? { print("TA5.2") } [a-z] { print("TA5.3") }  { <Column()> \< 2 }? { print("TA5.4") } -> more ;
+TA5 :  { <writeln("\"TA5.1\"")> } { <Column()> \< 2 }? { <writeln("\"TA5.2\"")> } [a-z] { <writeln("\"TA5.3\"")> }  { <Column()> \< 2 }? { <writeln("\"TA5.4\"")> } -> more ;
 TA6 :  { <Column()> \< 2 }? [a-z]  { <Column()> \< 2 }? -> more ;
 
 [input]

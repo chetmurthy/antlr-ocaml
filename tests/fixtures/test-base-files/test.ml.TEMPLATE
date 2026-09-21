@@ -7,10 +7,7 @@ open Cmdliner.Term.Syntax
 
 module TestLexer(Lex : Exec.FULL_LEXER with type lexer_t = Exec.L.lexer_t) = struct
 
-let type2string lexer n =
-  let ty2name = (fst Lex.full_atn).Interp.Raw.token_symbolic_names in
-  if n < 0 then Some "EOF"
-  else ty2name.(n)
+<Type2String()>
 
 let _Token_named_type__str__ lexer (self : Exec.T.t) =
   let open Exec.T in
@@ -26,7 +23,7 @@ let _Token_named_type__str__ lexer (self : Exec.T.t) =
   (* else Fmt.(pf pps "") *)
  in
   let esc_text = Util.escape_string (Exec.T.text self) in
-  Fmt.(str "[%@%a,%a:%a='%s',<%a>%a,%a:%a]"
+  Fmt.(str "[%@%a,%a:%a='%s',\<%a>%a,%a:%a]"
          (fmt_option fmt_int) self.tokenIndex
          (fmt_option fmt_int) self.start
          (fmt_option fmt_int) self.stop
@@ -85,7 +82,7 @@ let cmd =
   let doc = "test" in
   let man = [
     `S Manpage.s_bugs;
-    `P "Email bug reports to <bugs@example.org>." ]
+    `P "Email bug reports to \<bugs@example.org>." ]
   in
   Cmd.make (Cmd.info "test" ~version:"%%VERSION%%" ~doc ~man) @@
   let+ file and+ disable_logging and+ named_types and+ show_dfa and+ json_log_file in

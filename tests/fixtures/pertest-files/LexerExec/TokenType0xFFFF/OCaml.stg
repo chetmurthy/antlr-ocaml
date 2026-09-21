@@ -1,0 +1,11 @@
+import "/home/chet/Hack/Camlp5/src/ALL/antlr-ocaml/tests/fixtures/OCaml.test.stg"
+
+Type2String() ::= <<
+
+let type2string lexer n =
+  let ty2name = (fst Lex.full_atn).Interp.Raw.token_symbolic_names in
+  if n \< 0 then Some "EOF"
+  else if n = 65535 then Some "65535"
+  else ty2name.(n)
+
+>>
